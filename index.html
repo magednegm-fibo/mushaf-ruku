@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#16493A">
+<meta name="description" content="المصحف الشريف كاملًا — مقسّم صفحات حسب علامات الركوع">
+<title>مصحف الركوع</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icons/favicon.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Amiri+Quran&family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="app">
+
+  <!-- ============ HOME SCREEN ============ -->
+  <section id="homeScreen" class="home">
+    <div class="home-brand">
+      <div class="home-logo"><span>ع</span></div>
+      <h1>مصحف الركوع</h1>
+      <p>المصحف الشريف كاملًا، مقسّمًا حسب علامات الركوع</p>
+    </div>
+
+    <button class="progress-card" id="btnContinue">
+      <div class="progress-card-top">
+        <span class="progress-label">استكمال آخر قراءة</span>
+        <span class="progress-percent" id="homeProgressPercent">٠٪</span>
+      </div>
+      <div class="progress-bar"><div class="progress-bar-fill" id="homeProgressFill"></div></div>
+      <div class="progress-sub" id="homeProgressText">قرأ ٠ من ٥٥٦ ركوعًا</div>
+    </button>
+
+    <div class="home-grid">
+      <button class="home-tile" id="tileSurah">
+        <svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+        <span>فهرس السور</span>
+      </button>
+      <button class="home-tile" id="tileJuz">
+        <svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M9 3v18"/></svg>
+        <span>فهرس الأجزاء</span>
+      </button>
+      <button class="home-tile" id="tileSearch">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+        <span>البحث</span>
+      </button>
+      <button class="home-tile" id="tileFavorites">
+        <svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2l2.9 6.5 7.1.7-5.4 4.7 1.6 7-6.2-3.8-6.2 3.8 1.6-7L2 9.2l7.1-.7z"/></svg>
+        <span>المفضلة</span>
+      </button>
+      <button class="home-tile wide" id="tileSettings">
+        <svg viewBox="0 0 24 24"><path d="M12 15.5a3.5 3.5 0 100-7 3.5 3.5 0 000 7z"/><path d="M19.4 13a7.97 7.97 0 000-2l2-1.6-2-3.4-2.4 1a8 8 0 00-1.7-1L15 3h-6l-.3 2.6a8 8 0 00-1.7 1l-2.4-1-2 3.4L4.6 11a7.97 7.97 0 000 2l-2 1.6 2 3.4 2.4-1a8 8 0 001.7 1L9 21h6l.3-2.6a8 8 0 001.7-1l2.4 1 2-3.4-2-1.6z"/></svg>
+        <span>الإعدادات</span>
+      </button>
+    </div>
+  </section>
+
+  <!-- ============ READER SCREEN ============ -->
+  <div id="readerScreen" class="hidden">
+  <header class="topbar">
+    <button id="btnIndex" class="icon-btn" title="الفهرس" aria-label="الفهرس">
+      <svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+    </button>
+    <div class="topbar-title" id="topbarTitle">
+      <span class="eyebrow" id="eyebrowText">مصحف الركوع</span>
+      <span class="subtitle" id="pageSubtitle">بالركوعات</span>
+    </div>
+    <div class="topbar-left">
+      <button id="btnHome" class="icon-btn" title="الرئيسية" aria-label="الرئيسية">
+        <svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>
+      </button>
+      <button id="btnSettings" class="icon-btn" title="الإعدادات" aria-label="الإعدادات">
+        <svg viewBox="0 0 24 24"><path d="M12 15.5a3.5 3.5 0 100-7 3.5 3.5 0 000 7z"/><path d="M19.4 13a7.97 7.97 0 000-2l2-1.6-2-3.4-2.4 1a8 8 0 00-1.7-1L15 3h-6l-.3 2.6a8 8 0 00-1.7 1l-2.4-1-2 3.4L4.6 11a7.97 7.97 0 000 2l-2 1.6 2 3.4 2.4-1a8 8 0 001.7 1L9 21h6l.3-2.6a8 8 0 001.7-1l2.4 1 2-3.4-2-1.6z"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- reading progress strip -->
+  <div class="read-progress-strip">
+    <div class="read-progress-strip-fill" id="stripFill"></div>
+  </div>
+
+  <main id="reader" class="reader">
+    <div class="page-frame">
+      <div class="corner tl"></div><div class="corner tr"></div>
+      <div class="corner bl"></div><div class="corner br"></div>
+      <button class="fav-btn" id="btnFavorite" aria-label="إضافة إلى المفضلة">
+        <svg viewBox="0 0 24 24"><path d="M12 2l2.9 6.5 7.1.7-5.4 4.7 1.6 7-6.2-3.8-6.2 3.8 1.6-7L2 9.2l7.1-.7z"/></svg>
+      </button>
+      <div class="page-scroll" id="pageScroll">
+        <div class="surah-cartouche" id="surahCartouche"></div>
+        <p class="ayah-flow" id="ayahFlow" dir="rtl" lang="ar"></p>
+        <div class="ruku-end" id="rukuEnd">
+          <span class="ruku-mark"><span>ع</span></span>
+          <span class="ruku-label" id="rukuLabel"></span>
+        </div>
+      </div>
+    </div>
+
+    <nav class="page-nav">
+      <button id="btnPrev" class="nav-btn" aria-label="السابق">
+        <svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg>
+      </button>
+      <div class="page-indicator" id="pageIndicator">١ / ٣٩</div>
+      <button id="btnNext" class="nav-btn" aria-label="التالي">
+        <svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>
+      </button>
+    </nav>
+  </main>
+  </div>
+
+  <!-- ============ INDEX / TOC PANEL (by ruku) ============ -->
+  <div id="indexPanel" class="panel hidden">
+    <div class="panel-head">
+      <h2>الفهرس</h2>
+      <button class="icon-btn" id="btnCloseIndex" aria-label="إغلاق">
+        <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6l-12 12"/></svg>
+      </button>
+    </div>
+    <div class="panel-body" id="indexList"></div>
+  </div>
+
+  <!-- ============ SURAH INDEX PANEL ============ -->
+  <div id="surahPanel" class="panel hidden">
+    <div class="panel-head">
+      <h2>فهرس السور</h2>
+      <button class="icon-btn" id="btnCloseSurah" aria-label="إغلاق">
+        <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6l-12 12"/></svg>
+      </button>
+    </div>
+    <div class="panel-body" id="surahList"></div>
+  </div>
+
+  <!-- ============ JUZ INDEX PANEL ============ -->
+  <div id="juzPanel" class="panel hidden">
+    <div class="panel-head">
+      <h2>فهرس الأجزاء</h2>
+      <button class="icon-btn" id="btnCloseJuz" aria-label="إغلاق">
+        <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6l-12 12"/></svg>
+      </button>
+    </div>
+    <div class="panel-body" id="juzList"></div>
+  </div>
+
+  <!-- ============ SEARCH PANEL ============ -->
+  <div id="searchPanel" class="panel hidden">
+    <div class="panel-head">
+      <h2>البحث</h2>
+      <button class="icon-btn" id="btnCloseSearch" aria-label="إغلاق">
+        <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6l-12 12"/></svg>
+      </button>
+    </div>
+    <div class="panel-body">
+      <input type="text" id="searchInput" class="search-input" placeholder="ابحث عن اسم سورة أو جزء...">
+      <div id="searchResults"></div>
+    </div>
+  </div>
+
+  <!-- ============ FAVORITES PANEL ============ -->
+  <div id="favoritesPanel" class="panel hidden">
+    <div class="panel-head">
+      <h2>المفضلة</h2>
+      <button class="icon-btn" id="btnCloseFavorites" aria-label="إغلاق">
+        <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6l-12 12"/></svg>
+      </button>
+    </div>
+    <div class="panel-body" id="favoritesList"></div>
+  </div>
+
+  <!-- ============ FAVORITE NAME MODAL ============ -->
+  <div id="favModal" class="modal-overlay hidden">
+    <div class="modal-box">
+      <h3>حفظ في المفضلة</h3>
+      <input type="text" id="favNameInput" class="search-input" placeholder="اسم (اختياري)... مثلاً: ورد الجمعة">
+      <div class="modal-actions">
+        <button id="favModalCancel" class="modal-btn ghost">إلغاء</button>
+        <button id="favModalSave" class="modal-btn primary">حفظ</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ SETTINGS PANEL ============ -->
+  <div id="settingsPanel" class="panel hidden">
+    <div class="panel-head">
+      <h2>الإعدادات</h2>
+      <button class="icon-btn" id="btnCloseSettings" aria-label="إغلاق">
+        <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6l-12 12"/></svg>
+      </button>
+    </div>
+    <div class="panel-body">
+      <div class="setting-row">
+        <span>حجم الخط</span>
+        <div class="stepper">
+          <button id="fontMinus">−</button>
+          <span id="fontSizeLabel">28</span>
+          <button id="fontPlus">+</button>
+        </div>
+      </div>
+      <div class="setting-row">
+        <span>الوضع الليلي</span>
+        <label class="switch">
+          <input type="checkbox" id="nightToggle">
+          <span class="slider"></span>
+        </label>
+      </div>
+      <div class="setting-row static">
+        <span>عدد الركوعات</span>
+        <b id="rukuCount">٣٩ ركوعًا</b>
+      </div>
+      <div class="setting-row static">
+        <span>عدد الآيات</span>
+        <b id="ayahCount">٥٦٤ آية</b>
+      </div>
+      <div class="setting-row static">
+        <span>نسبة القراءة</span>
+        <b id="settingsProgress">٠٪</b>
+      </div>
+      <button class="reset-btn" id="btnResetProgress">إعادة ضبط تقدّم القراءة</button>
+      <p class="about-text" id="aboutText">
+        كل صفحة في هذا التطبيق تمثّل ركوعًا واحدًا كاملًا كما تحدّده علامات الركوع (ع) في المصحف الشريف.
+        النص من مصحف حفص عن عاصم برواية Tanzil / QPC.
+      </p>
+    </div>
+  </div>
+
+</div>
+
+<script src="juz-info.js"></script>
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
