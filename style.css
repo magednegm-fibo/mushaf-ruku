@@ -1,3 +1,8 @@
+@font-face{
+  font-family: 'Uthmanic Hafs';
+  src: url('fonts/UthmanicHafs.woff2') format('woff2');
+  font-display: swap;
+}
 :root{
   --paper: #F6EFDD;
   --paper-edge: #EDE2C6;
@@ -312,6 +317,16 @@ body.night .index-juz-header{ background:#161310; color:#D8B662; border-color:#8
   font-size:18px; line-height:1;
   display:flex; align-items:center; justify-content:center;
 }
+.font-choice{ display:flex; gap:8px; }
+.font-choice-btn{
+  padding:7px 12px; border-radius:20px;
+  border:1px solid var(--gold);
+  background:transparent; color:var(--ink-soft);
+  font-family: var(--font-ui); font-size:12.5px; font-weight:600;
+}
+.font-choice-btn.active{ background: var(--emerald); border-color: var(--emerald); color:#fff; }
+body.night .font-choice-btn{ color:#9c8f6d; border-color:#5b4a26; }
+body.night .font-choice-btn.active{ background:#D8B662; border-color:#D8B662; color:#161310; }
 .switch{ position:relative; width:46px; height:26px; display:inline-block; }
 .switch input{ opacity:0; width:0; height:0; }
 .slider{

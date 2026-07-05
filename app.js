@@ -82,9 +82,9 @@
   function loadState(){
     try{
       var raw = localStorage.getItem(STORAGE_KEY);
-      if(raw) return Object.assign({page:0, fontSize:28, night:false, furthest:0}, JSON.parse(raw));
+      if(raw) return Object.assign({page:0, fontSize:28, night:false, furthest:0, fontStyle:'amiri'}, JSON.parse(raw));
     }catch(e){}
-    return {page:0, fontSize:28, night:false, furthest:0};
+    return {page:0, fontSize:28, night:false, furthest:0, fontStyle:'amiri'};
   }
   function saveState(){
     try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){}
@@ -284,6 +284,26 @@
     applyFontSize(); saveState();
   });
 
+  function applyFontStyle(){
+    var family = state.fontStyle === 'uthmani'
+      ? "'Uthmanic Hafs', 'Amiri Quran', 'Noto Naskh Arabic', serif"
+      : "'Amiri Quran', 'Noto Naskh Arabic', serif";
+    document.documentElement.style.setProperty('--font-quran', family);
+    document.body.classList.toggle('uthmani-font', state.fontStyle === 'uthmani');
+    var btnAmiri = document.getElementById('btnFontAmiri');
+    var btnUthmani = document.getElementById('btnFontUthmani');
+    if(btnAmiri) btnAmiri.classList.toggle('active', state.fontStyle !== 'uthmani');
+    if(btnUthmani) btnUthmani.classList.toggle('active', state.fontStyle === 'uthmani');
+  }
+  var btnFontAmiri = document.getElementById('btnFontAmiri');
+  var btnFontUthmani = document.getElementById('btnFontUthmani');
+  if(btnFontAmiri) btnFontAmiri.addEventListener('click', function(){
+    state.fontStyle = 'amiri'; applyFontStyle(); saveState();
+  });
+  if(btnFontUthmani) btnFontUthmani.addEventListener('click', function(){
+    state.fontStyle = 'uthmani'; applyFontStyle(); saveState();
+  });
+
   function applyNight(){
     document.body.classList.toggle('night', !!state.night);
     els.nightToggle.checked = !!state.night;
@@ -477,6 +497,7 @@
   }
 
   applyFontSize();
+  applyFontStyle();
   applyNight();
   buildIndex();
   updateProgressUI();
