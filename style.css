@@ -18,7 +18,7 @@
   --radius: 18px;
   --font-quran: 'Amiri Quran', 'Noto Naskh Arabic', serif;
   --font-ui: 'Cairo', 'Noto Sans Arabic', sans-serif;
-  --ayah-size: 28px;
+  --ayah-size: 30px;
 }
 
 *{box-sizing:border-box; -webkit-tap-highlight-color: transparent;}

@@ -82,9 +82,9 @@
   function loadState(){
     try{
       var raw = localStorage.getItem(STORAGE_KEY);
-      if(raw) return Object.assign({page:0, fontSize:28, night:false, furthest:0, fontStyle:'amiri'}, JSON.parse(raw));
+      if(raw) return Object.assign({page:0, fontSize:28, night:false, furthest:0, fontStyle:'uthmani'}, JSON.parse(raw));
     }catch(e){}
-    return {page:0, fontSize:28, night:false, furthest:0, fontStyle:'amiri'};
+    return {page:0, fontSize:28, night:false, furthest:0, fontStyle:'uthmani'};
   }
   function saveState(){
     try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){}
@@ -106,6 +106,14 @@
     return '<span class="ayah-num" aria-hidden="false">' +
       '<svg viewBox="0 0 40 40"><path d="M20 2 L23 10 L31 6 L27 14 L36 15 L28 20 L36 25 L27 26 L31 34 L23 30 L20 38 L17 30 L9 34 L13 26 L4 25 L12 20 L4 15 L13 14 L9 6 L17 10 Z" fill="none" stroke="currentColor" stroke-width="1.4"/></svg>' +
       '<span>' + num + '</span></span>';
+  }
+
+  // The bundled "Uthmanic Hafs" webfont has a shaping bug: U+06ED (the rare
+  // "sakt" small-low-meem pause mark) renders as a solid black dot instead of
+  // its proper tiny glyph. Strip it so it never displays as a stray dot.
+  var BROKEN_MARK_REGEX = /\u06ED/g;
+  function cleanAyahText(text){
+    return text.replace(BROKEN_MARK_REGEX, '');
   }
 
   function progressRatio(){
@@ -150,7 +158,7 @@
       if(a.juzStart){
         html += '<span class="juz-marker">بداية الجزء ' + toArabicDigits(a.juzStart) + '</span>';
       }
-      html += a.text + ' ' + ayahMarker(a.surah, a.ayah) + ' ';
+      html += cleanAyahText(a.text) + ' ' + ayahMarker(a.surah, a.ayah) + ' ';
       lastSurah = a.surah;
     });
     els.ayahFlow.innerHTML = html;
@@ -221,7 +229,7 @@
       var dx = t.clientX - startX;
       var dy = t.clientY - startY;
       if(Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5){
-        if(dx < 0) goTo(state.page + 1);
+        if(dx > 0) goTo(state.page + 1);
         else goTo(state.page - 1);
       }
       startX = null; startY = null;
