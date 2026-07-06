@@ -320,6 +320,18 @@
     els.btnNext.disabled = idx >= PAGES.length - 1;
 
     els.pageScroll.scrollTop = 0;
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    // Re-apply on the next frame too: if the Quranic webfont is still
+    // swapping in (font-display:swap) it can reflow the page a moment after
+    // this line runs, and some browsers' scroll-anchoring will then nudge
+    // the scroll position away from 0 to "compensate". This guarantees we
+    // still land at the top after that settles.
+    requestAnimationFrame(function(){
+      els.pageScroll.scrollTop = 0;
+      window.scrollTo(0, 0);
+    });
     updateFavButton();
     updateBookmarkButton();
     updateProgressUI();
