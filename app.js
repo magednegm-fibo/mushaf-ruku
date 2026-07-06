@@ -5,9 +5,13 @@
   var JUZ_INFO = window.JUZ_INFO || {name: 'جزء عمّ', shortName: 'جزء عمّ', rukuCount: PAGES.length, ayahCount: 0};
   var STORAGE_KEY = 'juzamma_v1';
   var FAV_KEY = 'quranRuku_favorites_v1';
+  var BOOKMARK_KEY = 'quranRuku_bookmark_v1';
+  var WAQF_KEY = 'quranRuku_waqfMarks_v1';
 
   var state = loadState();
   var favorites = loadFavorites();
+  var bookmark = loadBookmark();
+  var waqfMarks = loadWaqfMarks();
   var pendingFavPage = null;
 
   var els = {
@@ -69,7 +73,27 @@
     favModal: document.getElementById('favModal'),
     favNameInput: document.getElementById('favNameInput'),
     favModalCancel: document.getElementById('favModalCancel'),
-    favModalSave: document.getElementById('favModalSave')
+    favModalSave: document.getElementById('favModalSave'),
+
+    btnBookmark: document.getElementById('btnBookmark'),
+    bookmarkCard: document.getElementById('bookmarkCard'),
+    bookmarkCardText: document.getElementById('bookmarkCardText'),
+    toast: document.getElementById('toast'),
+
+    btnGoto: document.getElementById('btnGoto'),
+    gotoModal: document.getElementById('gotoModal'),
+    gotoInput: document.getElementById('gotoInput'),
+    gotoModalCancel: document.getElementById('gotoModalCancel'),
+    gotoModalGo: document.getElementById('gotoModalGo'),
+    gotoError: document.getElementById('gotoError'),
+
+    waqfMenu: document.getElementById('waqfMenu'),
+    waqfMenuItem: document.getElementById('waqfMenuItem'),
+    waqfMenuIcon: document.getElementById('waqfMenuIcon'),
+    waqfMenuLabel: document.getElementById('waqfMenuLabel'),
+    waqfToggle: document.getElementById('waqfToggle'),
+    btnExportWaqf: document.getElementById('btnExportWaqf'),
+    importWaqfInput: document.getElementById('importWaqfInput')
   };
 
   var ARABIC_DIGITS = ['٠','١','٢','٣','٤','٥','٦','٧','٨','٩'];
@@ -82,9 +106,9 @@
   function loadState(){
     try{
       var raw = localStorage.getItem(STORAGE_KEY);
-      if(raw) return Object.assign({page:0, fontSize:28, night:false, furthest:0, fontStyle:'uthmani'}, JSON.parse(raw));
+      if(raw) return Object.assign({page:0, fontSize:28, night:false, furthest:0, fontStyle:'uthmani', showWaqfMarks:true}, JSON.parse(raw));
     }catch(e){}
-    return {page:0, fontSize:28, night:false, furthest:0, fontStyle:'uthmani'};
+    return {page:0, fontSize:28, night:false, furthest:0, fontStyle:'uthmani', showWaqfMarks:true};
   }
   function saveState(){
     try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){}
@@ -101,19 +125,105 @@
     try{ localStorage.setItem(FAV_KEY, JSON.stringify(favorites)); }catch(e){}
   }
 
+  function loadBookmark(){
+    try{
+      var raw = localStorage.getItem(BOOKMARK_KEY);
+      if(raw) return JSON.parse(raw);
+    }catch(e){}
+    return null;
+  }
+  function saveBookmarkToStorage(){
+    try{
+      if(bookmark) localStorage.setItem(BOOKMARK_KEY, JSON.stringify(bookmark));
+      else localStorage.removeItem(BOOKMARK_KEY);
+    }catch(e){}
+  }
+
+  // ---- علامات الوقف الشخصية (per-word personal stop marks) ----
+  // Stored as a flat map: { "surah:ayah:wordIndex": timestamp }. Purely a
+  // personal reading aid layered on top of the Qur'an text — it never
+  // touches or alters a.text itself.
+  function loadWaqfMarks(){
+    try{
+      var raw = localStorage.getItem(WAQF_KEY);
+      if(raw) return JSON.parse(raw);
+    }catch(e){}
+    return {};
+  }
+  function saveWaqfMarks(){
+    try{ localStorage.setItem(WAQF_KEY, JSON.stringify(waqfMarks)); }catch(e){}
+  }
+  function updateWordMarkUI(key){
+    var safeKey = key.replace(/"/g, '\\"');
+    var wordEl = els.pageScroll.querySelector('.quran-word[data-key="' + safeKey + '"]');
+    if(wordEl) wordEl.classList.toggle('has-waqf', !!waqfMarks[key]);
+  }
+  function addWaqfMark(key){
+    waqfMarks[key] = Date.now();
+    saveWaqfMarks();
+    updateWordMarkUI(key);
+    showToast('تمت إضافة علامة الوقف');
+  }
+  function removeWaqfMark(key){
+    delete waqfMarks[key];
+    saveWaqfMarks();
+    updateWordMarkUI(key);
+    showToast('تم حذف علامة الوقف');
+  }
+  function applyWaqfVisibility(){
+    document.body.classList.toggle('hide-waqf-marks', !state.showWaqfMarks);
+  }
+
+  var toastTimer = null;
+  function showToast(msg){
+    if(!els.toast) return;
+    els.toast.textContent = msg;
+    els.toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function(){ els.toast.classList.remove('show'); }, 1800);
+  }
+
   function ayahMarker(surah, ayah){
     var num = toArabicDigits(ayah);
-    return '<span class="ayah-num" aria-hidden="false">' +
-      '<svg viewBox="0 0 40 40"><path d="M20 2 L23 10 L31 6 L27 14 L36 15 L28 20 L36 25 L27 26 L31 34 L23 30 L20 38 L17 30 L9 34 L13 26 L4 25 L12 20 L4 15 L13 14 L9 6 L17 10 Z" fill="none" stroke="currentColor" stroke-width="1.4"/></svg>' +
+    var digitClass = ayah >= 100 ? ' three-digit' : '';
+    return '<span class="ayah-num' + digitClass + '" aria-hidden="false">' +
+      '<svg viewBox="0 0 40 40"><path d="M20 2 L23 10 L31 6 L27 14 L36 15 L28 20 L36 25 L27 26 L31 34 L23 30 L20 38 L17 30 L9 34 L13 26 L4 25 L12 20 L4 15 L13 14 L9 6 L17 10 Z" fill="none" stroke="currentColor" stroke-width="1.7"/></svg>' +
       '<span>' + num + '</span></span>';
   }
 
-  // The bundled "Uthmanic Hafs" webfont has a shaping bug: U+06ED (the rare
-  // "sakt" small-low-meem pause mark) renders as a solid black dot instead of
-  // its proper tiny glyph. Strip it so it never displays as a stray dot.
-  var BROKEN_MARK_REGEX = /\u06ED/g;
+  // U+06ED (ARABIC SMALL LOW MEEM) is NOT decorative — it is the classical
+  // Uthmani-script mark for "إقلاب" (iqlab): when a kasra tanween is
+  // followed by a ب, the Madinah mushaf draws the tanween as a single kasra
+  // plus this small low meem instead of the usual doubled kasra, to cue the
+  // reader that it is pronounced as a meem sound. Deleting it (an earlier,
+  // mistaken fix) silently turns a tanween into a plain kasra and erases a
+  // real tajweed rule from the text — never do that again.
+  //
+  // The actual bug is narrower: the bundled "Uthmanic Hafs" webfont's glyph
+  // for U+06ED is broken (a mis-built composite that falls back to a solid
+  // black dot) instead of drawing the correct tiny meem. The fix is to
+  // render our own small meem in its place — using the ordinary, correctly
+  // drawn Arabic letter meem at a reduced size — not to remove the mark.
+  var IQLAB_MEEM_REGEX = /\u06ED/g;
+  var IQLAB_MEEM_HTML = '<span class="iqlab-mark" aria-hidden="true">\u200cم</span>';
   function cleanAyahText(text){
-    return text.replace(BROKEN_MARK_REGEX, '');
+    return text.replace(IQLAB_MEEM_REGEX, IQLAB_MEEM_HTML);
+  }
+
+  // Wraps every word of an ayah in its own span so a personal waqf star can
+  // be anchored above any single word. The star itself is always in the
+  // DOM (hidden by default via CSS) and only switched on per-word via the
+  // "has-waqf" class, so toggling/updating marks never requires re-building
+  // this HTML.
+  function renderAyahWords(a){
+    var words = a.text.split(/\s+/).filter(Boolean);
+    return words.map(function(w, idx){
+      var key = a.surah + ':' + a.ayah + ':' + idx;
+      return '<span class="quran-word" data-key="' + key + '">' +
+        cleanAyahText(w) +
+        '<span class="waqf-mark" aria-hidden="true">\u2605</span>' +
+      '</span>';
+    }).join(' ');
   }
 
   function progressRatio(){
@@ -139,6 +249,26 @@
     els.btnFavorite.classList.toggle('active', isFavorited(state.page));
   }
 
+  function updateBookmarkButton(){
+    if(!els.btnBookmark) return;
+    els.btnBookmark.classList.toggle('active', !!bookmark && bookmark.page === state.page);
+  }
+
+  function updateBookmarkCard(){
+    if(!els.bookmarkCard) return;
+    if(!bookmark || !PAGES[bookmark.page]){
+      els.bookmarkCard.classList.add('hidden');
+      return;
+    }
+    els.bookmarkCard.classList.remove('hidden');
+    var p = PAGES[bookmark.page];
+    var surahName = p.ayahs[0].surahName;
+    var rukuLabel = JUZ_INFO.fullMushaf ? p.ruku : p.rukuInJuz;
+    if(els.bookmarkCardText){
+      els.bookmarkCardText.textContent = surahName + ' \u2022 الركوع ' + toArabicDigits(rukuLabel);
+    }
+  }
+
   function render(){
     var idx = state.page;
     var p = PAGES[idx];
@@ -158,10 +288,14 @@
       if(a.juzStart){
         html += '<span class="juz-marker">بداية الجزء ' + toArabicDigits(a.juzStart) + '</span>';
       }
-      html += cleanAyahText(a.text) + ' ' + ayahMarker(a.surah, a.ayah) + ' ';
+      html += renderAyahWords(a) + ' ' + ayahMarker(a.surah, a.ayah) + ' ';
       lastSurah = a.surah;
     });
     els.ayahFlow.innerHTML = html;
+    els.ayahFlow.querySelectorAll('.quran-word').forEach(function(el){
+      var key = el.getAttribute('data-key');
+      if(waqfMarks[key]) el.classList.add('has-waqf');
+    });
 
     var rukuMarkSpan = document.querySelector('#rukuEnd .ruku-mark span');
     if(JUZ_INFO.fullMushaf){
@@ -187,6 +321,7 @@
 
     els.pageScroll.scrollTop = 0;
     updateFavButton();
+    updateBookmarkButton();
     updateProgressUI();
     saveState();
   }
@@ -198,11 +333,16 @@
   }
 
   function showReader(){
+    var wasHome = !els.homeScreen.classList.contains('hidden');
     els.homeScreen.classList.add('hidden');
     els.readerScreen.classList.remove('hidden');
+    if(wasHome){
+      history.pushState({tag:'reader'}, '');
+    }
   }
   function showHome(){
     updateProgressUI();
+    updateBookmarkCard();
     els.readerScreen.classList.add('hidden');
     els.homeScreen.classList.remove('hidden');
   }
@@ -213,17 +353,93 @@
 
   els.btnPrev.addEventListener('click', function(){ goTo(state.page - 1); });
   els.btnNext.addEventListener('click', function(){ goTo(state.page + 1); });
-  els.btnHome.addEventListener('click', showHome);
+  els.btnHome.addEventListener('click', function(){
+    if(history.state && history.state.tag === 'reader'){
+      history.back();
+    } else {
+      showHome();
+    }
+  });
   els.btnContinue.addEventListener('click', function(){ openReaderAt(state.page || 0); });
 
-  (function swipe(){
+  (function swipeAndPinch(){
+    // RTL page-turn convention used throughout this app: dragging the finger
+    // to the right (dx > 0) advances forward (like turning a page in an
+    // Arabic book), dragging left goes back. This must stay in sync with the
+    // ArrowLeft/ArrowRight handling below. If a deployed copy (e.g. on
+    // GitHub Pages) ever behaves the other way round, it is running an
+    // older/different app.js than this one — redeploy this exact file.
     var startX = null, startY = null;
     var frame = document.querySelector('.page-frame');
+
+    // Two-finger pinch zoom: reuses the exact same state.fontSize used by
+    // the "+"/"−" buttons in الإعدادات, so pinching and those buttons always
+    // agree and the result is remembered the same way.
+    var FONT_MIN = 18, FONT_MAX = 44;
+    var pinching = false;
+    var pinchStartDist = null;
+    var pinchStartFontSize = null;
+
+    function touchDistance(t1, t2){
+      var dx = t1.clientX - t2.clientX;
+      var dy = t1.clientY - t2.clientY;
+      return Math.sqrt(dx * dx + dy * dy);
+    }
+
     frame.addEventListener('touchstart', function(e){
-      var t = e.touches[0];
-      startX = t.clientX; startY = t.clientY;
+      if(e.touches.length === 2){
+        pinching = true;
+        startX = null; startY = null; // a pinch is never a one-finger swipe
+        pinchStartDist = touchDistance(e.touches[0], e.touches[1]);
+        pinchStartFontSize = state.fontSize;
+      } else if(e.touches.length === 1 && !pinching){
+        var t = e.touches[0];
+        startX = t.clientX; startY = t.clientY;
+      }
     }, {passive:true});
+
+    function onPinchMove(e){
+      if(!pinching || e.touches.length !== 2) return;
+      e.preventDefault(); // stop the browser from also trying its own zoom
+      var dist = touchDistance(e.touches[0], e.touches[1]);
+      var ratio = dist / pinchStartDist;
+      var newSize = Math.max(FONT_MIN, Math.min(FONT_MAX, Math.round(pinchStartFontSize * ratio)));
+      if(newSize !== state.fontSize){
+        state.fontSize = newSize;
+        applyFontSize();
+      }
+    }
+
+    function endPinch(){
+      pinching = false;
+      pinchStartDist = null;
+      frame.removeEventListener('touchmove', onPinchMove, {passive:false});
+      saveState();
+      showToast('حجم الخط: ' + toArabicDigits(state.fontSize));
+    }
+
+    frame.addEventListener('touchstart', function(e){
+      if(e.touches.length === 2){
+        pinching = true;
+        startX = null; startY = null; // a pinch is never a one-finger swipe
+        pinchStartDist = touchDistance(e.touches[0], e.touches[1]);
+        pinchStartFontSize = state.fontSize;
+        // Only registered for the brief duration of an actual pinch, so
+        // ordinary one-finger scrolling never has a non-passive touchmove
+        // listener in its way (that alone is enough to make Chrome/Android
+        // hand scrolling off to the main thread and feel noticeably heavier).
+        frame.addEventListener('touchmove', onPinchMove, {passive:false});
+      } else if(e.touches.length === 1 && !pinching){
+        var t = e.touches[0];
+        startX = t.clientX; startY = t.clientY;
+      }
+    }, {passive:true});
+
     frame.addEventListener('touchend', function(e){
+      if(pinching){
+        if(e.touches.length < 2) endPinch();
+        return; // releasing a pinch is never a page-turn swipe
+      }
       if(startX === null) return;
       var t = e.changedTouches[0];
       var dx = t.clientX - startX;
@@ -240,6 +456,146 @@
     if(els.readerScreen.classList.contains('hidden')) return;
     if(e.key === 'ArrowLeft') goTo(state.page + 1);
     if(e.key === 'ArrowRight') goTo(state.page - 1);
+  });
+
+  // ---- علامة الوقف الشخصية: ضغط مطول على أي كلمة ----
+  (function waqfLongPress(){
+    var LONG_PRESS_MS = 550;
+    var MOVE_TOLERANCE = 10; // px — small jitter shouldn't cancel the long-press
+    var timer = null;
+    var startPos = null;
+    var cancelled = false;
+    var root = els.ayahFlow;
+
+    function openMenuFor(wordEl, x, y){
+      var key = wordEl.getAttribute('data-key');
+      var exists = !!waqfMarks[key];
+      els.waqfMenu.dataset.key = key;
+      els.waqfMenuIcon.textContent = exists ? '❌' : '⭐';
+      els.waqfMenuLabel.textContent = exists ? 'حذف علامة الوقف الشخصية' : 'إضافة علامة وقف شخصية';
+      els.waqfMenu.classList.remove('hidden');
+      // Position after it's visible, so we can measure its real size and
+      // keep it fully on-screen near the finger.
+      requestAnimationFrame(function(){
+        var rect = els.waqfMenu.getBoundingClientRect();
+        var left = Math.min(Math.max(8, x - rect.width / 2), window.innerWidth - rect.width - 8);
+        var top = Math.max(8, y - rect.height - 18);
+        els.waqfMenu.style.left = left + 'px';
+        els.waqfMenu.style.top = top + 'px';
+      });
+    }
+    function closeMenu(){
+      els.waqfMenu.classList.add('hidden');
+      delete els.waqfMenu.dataset.key;
+    }
+
+    function onStart(x, y, target){
+      var wordEl = target.closest ? target.closest('.quran-word') : null;
+      if(!wordEl) return;
+      cancelled = false;
+      startPos = {x: x, y: y};
+      clearTimeout(timer);
+      timer = setTimeout(function(){
+        if(!cancelled) openMenuFor(wordEl, x, y);
+      }, LONG_PRESS_MS);
+    }
+    function onMove(x, y){
+      if(!startPos) return;
+      if(Math.abs(x - startPos.x) > MOVE_TOLERANCE || Math.abs(y - startPos.y) > MOVE_TOLERANCE){
+        cancelled = true;
+        clearTimeout(timer);
+      }
+    }
+    function onEnd(target){
+      clearTimeout(timer);
+      // Tapping the red star itself is a direct shortcut to the same popup
+      // (pre-filled with "حذف علامة الوقف"), rather than deleting instantly —
+      // one accidental tap should never silently remove a saved mark.
+      var markEl = target && target.closest ? target.closest('.waqf-mark') : null;
+      if(markEl && !cancelled){
+        var wordEl = markEl.closest('.quran-word');
+        if(wordEl){
+          var pos = startPos || {x: 0, y: 0};
+          openMenuFor(wordEl, pos.x, pos.y);
+        }
+      }
+      startPos = null;
+    }
+
+    root.addEventListener('touchstart', function(e){
+      var t = e.touches[0];
+      onStart(t.clientX, t.clientY, e.target);
+    }, {passive:true});
+    root.addEventListener('touchmove', function(e){
+      var t = e.touches[0];
+      onMove(t.clientX, t.clientY);
+    }, {passive:true});
+    root.addEventListener('touchend', function(e){
+      onEnd(e.target);
+    }, {passive:true});
+    // Some Android WebViews fall back to a native long-press context menu
+    // even with user-select:none; make sure it never appears here. (This is
+    // a 'contextmenu' listener, not 'touchmove', so it has no effect on
+    // scroll performance.)
+    root.addEventListener('contextmenu', function(e){ e.preventDefault(); });
+
+    // Mouse equivalents, for testing on desktop browsers.
+    root.addEventListener('mousedown', function(e){ onStart(e.clientX, e.clientY, e.target); });
+    root.addEventListener('mousemove', function(e){ onMove(e.clientX, e.clientY); });
+    root.addEventListener('mouseup', function(e){ onEnd(e.target); });
+
+    els.waqfMenuItem.addEventListener('click', function(){
+      var key = els.waqfMenu.dataset.key;
+      if(!key) return;
+      if(waqfMarks[key]) removeWaqfMark(key);
+      else addWaqfMark(key);
+      closeMenu();
+    });
+
+    // Tapping anywhere outside the menu closes it without acting.
+    document.addEventListener('touchstart', function(e){
+      if(els.waqfMenu.classList.contains('hidden')) return;
+      if(!els.waqfMenu.contains(e.target)) closeMenu();
+    }, {passive:true});
+    document.addEventListener('mousedown', function(e){
+      if(els.waqfMenu.classList.contains('hidden')) return;
+      if(!els.waqfMenu.contains(e.target)) closeMenu();
+    });
+  })();
+
+  // ---- تصدير/استيراد علامات الوقف الشخصية (JSON) ----
+  els.btnExportWaqf && els.btnExportWaqf.addEventListener('click', function(){
+    var payload = JSON.stringify({app: 'مصحف الركوع', type: 'waqf-marks', marks: waqfMarks}, null, 2);
+    var blob = new Blob([payload], {type: 'application/json'});
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'علامات_الوقف.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 2000);
+    showToast('تم تصدير علامات الوقف');
+  });
+  els.importWaqfInput && els.importWaqfInput.addEventListener('change', function(){
+    var file = els.importWaqfInput.files && els.importWaqfInput.files[0];
+    if(!file) return;
+    var reader = new FileReader();
+    reader.onload = function(){
+      try{
+        var data = JSON.parse(reader.result);
+        var incoming = (data && data.marks) ? data.marks : data;
+        if(!incoming || typeof incoming !== 'object') throw new Error('bad format');
+        Object.keys(incoming).forEach(function(k){ waqfMarks[k] = incoming[k]; });
+        saveWaqfMarks();
+        render(); // refresh the currently open page so imported marks show immediately
+        showToast('تم استيراد علامات الوقف');
+      }catch(err){
+        showToast('ملف غير صالح');
+      }
+      els.importWaqfInput.value = '';
+    };
+    reader.readAsText(file);
   });
 
   function buildIndex(){
@@ -270,10 +626,71 @@
     });
   }
 
-  function openPanel(p){ p.classList.remove('hidden'); }
-  function closePanel(p){ p.classList.add('hidden'); }
+  // Highlights the ruku currently open and scrolls it into the middle of the
+  // index list, so opening the index from deep inside the mushaf doesn't
+  // dump the user back at الفاتحة every time.
+  function highlightAndScrollIndexToCurrent(){
+    var prev = els.indexList.querySelector('.index-item.current');
+    if(prev) prev.classList.remove('current');
+    var current = els.indexList.querySelector('.index-item[data-idx="' + state.page + '"]');
+    if(current){
+      current.classList.add('current');
+      current.scrollIntoView({block: 'center'});
+    }
+  }
 
-  els.btnIndex.addEventListener('click', function(){ openPanel(els.indexPanel); });
+  function openPanel(p){
+    p.classList.remove('hidden');
+    history.pushState({tag:'panel'}, '');
+  }
+  function closePanel(p){
+    if(p.classList.contains('hidden')) return; // already closed — nothing to pop
+    p.classList.add('hidden');
+    if(history.state && history.state.tag === 'panel'){
+      history.back();
+    }
+  }
+
+  // ---- Android/PWA hardware & gesture back button ----
+  // By default a web page has no history entries of its own, so the very
+  // first back-press exits the app entirely. We push one entry per "layer"
+  // (an open panel/modal, or the reader screen) so each back-press peels
+  // off exactly one layer: topmost open panel/modal first, then reader ->
+  // home, then (nothing left to pop) the platform's normal back/exit
+  // behaviour takes over on the next press.
+  var OVERLAY_MODALS = [els.favModal, els.gotoModal];
+  var OVERLAY_PANELS = [els.indexPanel, els.surahPanel, els.juzPanel, els.searchPanel, els.favoritesPanel, els.settingsPanel];
+  function isOverlayOpen(el){ return el && !el.classList.contains('hidden'); }
+  function closeTopmostOverlay(){
+    for(var i=0;i<OVERLAY_MODALS.length;i++){
+      if(isOverlayOpen(OVERLAY_MODALS[i])){
+        OVERLAY_MODALS[i].classList.add('hidden');
+        pendingFavPage = null;
+        return true;
+      }
+    }
+    for(var j=0;j<OVERLAY_PANELS.length;j++){
+      if(isOverlayOpen(OVERLAY_PANELS[j])){
+        OVERLAY_PANELS[j].classList.add('hidden');
+        return true;
+      }
+    }
+    return false;
+  }
+  history.replaceState({tag:'home'}, '');
+  window.addEventListener('popstate', function(e){
+    if(closeTopmostOverlay()) return;
+    var tag = e.state && e.state.tag;
+    if(tag !== 'reader' && !els.readerScreen.classList.contains('hidden')){
+      showHome();
+    }
+  });
+
+  els.btnIndex.addEventListener('click', function(){
+    openPanel(els.indexPanel);
+    // Wait a frame so the panel is laid out/visible before scrolling.
+    requestAnimationFrame(function(){ highlightAndScrollIndexToCurrent(); });
+  });
   els.btnCloseIndex.addEventListener('click', function(){ closePanel(els.indexPanel); });
   els.btnSettings.addEventListener('click', function(){ openPanel(els.settingsPanel); });
   els.btnCloseSettings.addEventListener('click', function(){ closePanel(els.settingsPanel); });
@@ -319,6 +736,11 @@
   els.nightToggle.addEventListener('change', function(){
     state.night = els.nightToggle.checked;
     applyNight(); saveState();
+  });
+
+  els.waqfToggle && els.waqfToggle.addEventListener('change', function(){
+    state.showWaqfMarks = els.waqfToggle.checked;
+    applyWaqfVisibility(); saveState();
   });
 
   els.btnResetProgress.addEventListener('click', function(){
@@ -467,7 +889,7 @@
     }
     pendingFavPage = state.page;
     els.favNameInput.value = '';
-    els.favModal.classList.remove('hidden');
+    openPanel(els.favModal);
     setTimeout(function(){ els.favNameInput.focus(); }, 150);
   });
 
@@ -477,7 +899,7 @@
     favorites.push({page: pendingFavPage, label: label, ts: Date.now()});
     saveFavorites();
     updateFavButton();
-    els.favModal.classList.add('hidden');
+    closePanel(els.favModal);
     pendingFavPage = null;
   }
   els.favModalSave.addEventListener('click', saveFavoriteFromModal);
@@ -485,8 +907,55 @@
     if(e.key === 'Enter') saveFavoriteFromModal();
   });
   els.favModalCancel.addEventListener('click', function(){
-    els.favModal.classList.add('hidden');
+    closePanel(els.favModal);
     pendingFavPage = null;
+  });
+
+  // ---- Bookmark (علامة القراءة): a single saved spot, separate from
+  // favorites. Tapping the bookmark button always saves/moves it to the
+  // ruku currently open. Tapping the home-screen bookmark card jumps
+  // straight back to that saved spot.
+  els.btnBookmark && els.btnBookmark.addEventListener('click', function(){
+    bookmark = {page: state.page, ts: Date.now()};
+    saveBookmarkToStorage();
+    updateBookmarkButton();
+    showToast('تم حفظ علامة القراءة هنا');
+  });
+
+  els.bookmarkCard && els.bookmarkCard.addEventListener('click', function(){
+    if(!bookmark) return;
+    openReaderAt(bookmark.page);
+  });
+
+  // ---- الذهاب إلى ركوع/صفحة رقم ----
+  function openGotoModal(){
+    if(!els.gotoModal) return;
+    els.gotoError.textContent = '';
+    els.gotoInput.value = toArabicDigits(state.page + 1);
+    openPanel(els.gotoModal);
+    setTimeout(function(){ els.gotoInput.focus(); els.gotoInput.select(); }, 150);
+  }
+  function closeGotoModal(){
+    closePanel(els.gotoModal);
+  }
+  function submitGoto(){
+    var raw = els.gotoInput.value.trim();
+    // accept Arabic-Indic digits too
+    raw = raw.replace(/[٠-٩]/g, function(d){ return ARABIC_DIGITS.indexOf(d); });
+    var n = parseInt(raw, 10);
+    if(!raw || isNaN(n) || n < 1 || n > PAGES.length){
+      els.gotoError.textContent = 'رقم غير صحيح، اكتب رقمًا من ١ إلى ' + toArabicDigits(PAGES.length);
+      return;
+    }
+    closeGotoModal();
+    openReaderAt(n - 1);
+  }
+  els.btnGoto && els.btnGoto.addEventListener('click', openGotoModal);
+  els.pageIndicator && els.pageIndicator.addEventListener('click', openGotoModal);
+  els.gotoModalCancel && els.gotoModalCancel.addEventListener('click', closeGotoModal);
+  els.gotoModalGo && els.gotoModalGo.addEventListener('click', submitGoto);
+  els.gotoInput && els.gotoInput.addEventListener('keydown', function(e){
+    if(e.key === 'Enter') submitGoto();
   });
 
   document.getElementById('eyebrowText') && (document.getElementById('eyebrowText').textContent = JUZ_INFO.shortName);
@@ -507,8 +976,11 @@
   applyFontSize();
   applyFontStyle();
   applyNight();
+  if(els.waqfToggle) els.waqfToggle.checked = state.showWaqfMarks !== false;
+  applyWaqfVisibility();
   buildIndex();
   updateProgressUI();
+  updateBookmarkCard();
 
   if('serviceWorker' in navigator){
     window.addEventListener('load', function(){

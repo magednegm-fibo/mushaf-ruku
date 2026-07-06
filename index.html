@@ -35,6 +35,14 @@
       <div class="progress-sub" id="homeProgressText">قرأ ٠ من ٥٥٦ ركوعًا</div>
     </button>
 
+    <button class="bookmark-card hidden" id="bookmarkCard">
+      <svg viewBox="0 0 24 24" class="bookmark-card-icon"><path d="M6 3h12v18l-6-4-6 4V3z"/></svg>
+      <div class="bookmark-card-info">
+        <span class="bookmark-card-label">علامة القراءة المحفوظة</span>
+        <span class="bookmark-card-text" id="bookmarkCardText"></span>
+      </div>
+    </button>
+
     <div class="home-grid">
       <button class="home-tile" id="tileSurah">
         <svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
@@ -91,6 +99,9 @@
       <button class="fav-btn" id="btnFavorite" aria-label="إضافة إلى المفضلة">
         <svg viewBox="0 0 24 24"><path d="M12 2l2.9 6.5 7.1.7-5.4 4.7 1.6 7-6.2-3.8-6.2 3.8 1.6-7L2 9.2l7.1-.7z"/></svg>
       </button>
+      <button class="bookmark-btn" id="btnBookmark" aria-label="حفظ علامة القراءة هنا" title="حفظ علامة القراءة هنا">
+        <svg viewBox="0 0 24 24"><path d="M6 3h12v18l-6-4-6 4V3z"/></svg>
+      </button>
       <div class="page-scroll" id="pageScroll">
         <div class="surah-cartouche" id="surahCartouche"></div>
         <p class="ayah-flow" id="ayahFlow" dir="rtl" lang="ar"></p>
@@ -105,7 +116,7 @@
       <button id="btnPrev" class="nav-btn" aria-label="السابق">
         <svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg>
       </button>
-      <div class="page-indicator" id="pageIndicator">١ / ٣٩</div>
+      <div class="page-indicator" id="pageIndicator" title="اضغط للذهاب إلى ركوع رقم">١ / ٣٩</div>
       <button id="btnNext" class="nav-btn" aria-label="التالي">
         <svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>
       </button>
@@ -117,9 +128,14 @@
   <div id="indexPanel" class="panel hidden">
     <div class="panel-head">
       <h2>الفهرس</h2>
-      <button class="icon-btn" id="btnCloseIndex" aria-label="إغلاق">
-        <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6l-12 12"/></svg>
-      </button>
+      <div class="panel-head-actions">
+        <button class="icon-btn" id="btnGoto" aria-label="الذهاب إلى ركوع رقم" title="الذهاب إلى ركوع رقم">
+          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M11 8v3l2 2"/></svg>
+        </button>
+        <button class="icon-btn" id="btnCloseIndex" aria-label="إغلاق">
+          <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6l-12 12"/></svg>
+        </button>
+      </div>
     </div>
     <div class="panel-body" id="indexList"></div>
   </div>
@@ -183,6 +199,30 @@
     </div>
   </div>
 
+  <!-- ============ GO TO PAGE/RUKU MODAL ============ -->
+  <div id="gotoModal" class="modal-overlay hidden">
+    <div class="modal-box">
+      <h3>الذهاب إلى ركوع رقم</h3>
+      <input type="number" id="gotoInput" class="search-input" placeholder="اكتب رقم الركوع (١ - ٥٥٦)" inputmode="numeric">
+      <div class="modal-error" id="gotoError"></div>
+      <div class="modal-actions">
+        <button id="gotoModalCancel" class="modal-btn ghost">إلغاء</button>
+        <button id="gotoModalGo" class="modal-btn primary">اذهب</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ TOAST ============ -->
+  <div id="toast" class="toast"></div>
+
+  <!-- ============ WAQF MARK LONG-PRESS MENU ============ -->
+  <div id="waqfMenu" class="waqf-menu hidden">
+    <button id="waqfMenuItem" class="waqf-menu-item">
+      <span id="waqfMenuIcon">⭐</span>
+      <span id="waqfMenuLabel">إضافة علامة وقف شخصية</span>
+    </button>
+  </div>
+
   <!-- ============ SETTINGS PANEL ============ -->
   <div id="settingsPanel" class="panel hidden">
     <div class="panel-head">
@@ -214,6 +254,13 @@
           <span class="slider"></span>
         </label>
       </div>
+      <div class="setting-row">
+        <span>إظهار علامات الوقف الشخصية</span>
+        <label class="switch">
+          <input type="checkbox" id="waqfToggle" checked>
+          <span class="slider"></span>
+        </label>
+      </div>
       <div class="setting-row static">
         <span>عدد الركوعات</span>
         <b id="rukuCount">٣٩ ركوعًا</b>
@@ -227,6 +274,14 @@
         <b id="settingsProgress">٠٪</b>
       </div>
       <button class="reset-btn" id="btnResetProgress">إعادة ضبط تقدّم القراءة</button>
+      <div class="setting-row static">
+        <span>علامات الوقف الشخصية</span>
+      </div>
+      <div class="waqf-io-row">
+        <button class="modal-btn ghost" id="btnExportWaqf">تصدير (JSON)</button>
+        <label class="modal-btn ghost" id="btnImportWaqf" for="importWaqfInput" style="cursor:pointer;">استيراد (JSON)</label>
+        <input type="file" id="importWaqfInput" accept="application/json" class="hidden">
+      </div>
       <p class="about-text" id="aboutText">
         كل صفحة في هذا التطبيق تمثّل ركوعًا واحدًا كاملًا كما تحدّده علامات الركوع (ع) في المصحف الشريف.
         النص من مصحف حفص عن عاصم برواية Tanzil / QPC.
