@@ -781,10 +781,18 @@
       return;
     }
     var html = list.map(function(s){
+      var meta = window.SURAH_META && window.SURAH_META[s.surah] ? window.SURAH_META[s.surah] : {};
+      var surahInfo = '';
+      if(meta.type && meta.ayahs){
+        surahInfo = meta.type + ' \u2022 ' + toArabicDigits(meta.ayahs) + ' آية';
+      }
       return '<div class="index-item" data-page="'+s.page+'">' +
         '<div class="index-item-inner">' +
           '<span class="num">' + toArabicDigits(s.surah) + '</span>' +
-          '<div class="name">' + s.name + '</div>' +
+          '<div>' +
+            '<div class="name">' + s.name + '</div>' +
+            (surahInfo ? '<div class="surah-info">' + surahInfo + '</div>' : '') +
+          '</div>' +
         '</div>' +
       '</div>';
     }).join('');
