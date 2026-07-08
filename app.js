@@ -267,6 +267,21 @@
   // So — same fix as the iqlab meem above — draw our own small meem in
   // its place instead of relying on the font's undersized glyph.
   var WAQF_LAZIM_HTML = '<span class="waqf-lazim-glyph" aria-hidden="true">م</span>';
+
+  // U+06DA (jeem, "jaiz") and U+06D6 (the sila ligature) only ever collide
+  // when they land in the SAME combining run above one letter (e.g. 2:1
+  // "رَيْبَ", where jaiz + sila + mu'anaqah all stack on the same ba').
+  // Verified directly against this font's compiled GPOS table (dumped via
+  // fontTools, not assumed): these two marks are NOT mark-to-mark anchored
+  // to each other at all — they're both members of one shared 8-glyph
+  // coverage set (U+0615, 06D6–06DB, 06E8) that a contextual lookup nudges
+  // as a single group, and absent that context each glyph falls back to
+  // its own raw, unrelated design position. For this pair those raw
+  // positions happen to coincide, so they render on top of each other
+  // instead of stacking. The mu'anaqah dots (06DB) land at a genuinely
+  // different position and are unaffected, so this fix touches only the
+  // sila mark, and only when jeem is also present in the run.
+  var WAQF_SILA_LIFT_HTML = '<span class="waqf-sila-lift" aria-hidden="true">\u06D6</span>';
   function wrapWaqfSigns(text){
     var out = '', buffer = '';
     for(var i=0; i<text.length; i++){
@@ -274,10 +289,18 @@
       if(WAQF_COMBINING[cp]){
         // Stacked waqf marks (e.g. jaiz immediately followed by muanaqah)
         // all belong in the same span as the base letter they sit above.
+        var runCps = [cp];
         var run = (cp === 0x06D8) ? WAQF_LAZIM_HTML : ch;
         while(i+1 < text.length && WAQF_COMBINING[text.codePointAt(i+1)]){
           i++;
+          runCps.push(text.codePointAt(i));
           run += (text.codePointAt(i) === 0x06D8) ? WAQF_LAZIM_HTML : text[i];
+        }
+        // Jeem+sila collision fix (see comment above WAQF_SILA_LIFT_HTML):
+        // only rewrite the raw sila character, only when jeem is also in
+        // this exact run, so every other mark combination is untouched.
+        if(runCps.indexOf(0x06DA) !== -1 && runCps.indexOf(0x06D6) !== -1){
+          run = run.replace('\u06D6', WAQF_SILA_LIFT_HTML);
         }
         out += '<span class="waqf-sign">' + buffer + run + '</span>';
         buffer = '';

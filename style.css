@@ -208,6 +208,25 @@ body.indopak-font .waqf-sign{
    the other marks even at a matched pixel height. Size (0.78em) is a
    modest reduction from the initial fix (0.85em), which was reported
    correct in shape but slightly large. */
+/* Fix for the jeem(06DA)/sila(06D6) overlap confirmed in this font's GPOS
+   table (see WAQF_SILA_LIFT_HTML in app.js) — the font draws both marks at
+   the same default position when no contextual lookup separates them, as
+   happens on words like 2:1 "رَيْبَ" where jaiz + sila + mu'anaqah all
+   stack together. Lifting just the sila glyph clear of the jeem glyph
+   restores the correct bottom-to-top reading order: mu'anaqah (unaffected,
+   stays lowest) → jeem (unmoved) → sila (lifted, now highest).
+   -0.35em is a STARTING ESTIMATE ONLY, derived offline from this font's
+   jeem glyph ink height (~0.27em of its own em-square, measured from the
+   raw glyf outline) plus a small clearance margin — it has NOT been
+   confirmed against the live rendered page. Open 2:1 in the app, check
+   this value against the real glyph stack, and nudge it in devtools until
+   sila clears jeem cleanly with a small visible gap; update the number
+   here once confirmed. */
+.waqf-sila-lift{
+  display: inline-block;
+  transform: translateY(-0.35em);
+}
+
 .waqf-lazim-glyph{
   position: absolute;
   left: 50%;
