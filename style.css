@@ -3,6 +3,11 @@
   src: url('fonts/UthmanicHafs.woff2') format('woff2');
   font-display: swap;
 }
+@font-face{
+  font-family: 'PDMS Saleem QuranFont';
+  src: url('fonts/PDMS-Saleem-QuranFont.woff2') format('woff2');
+  font-display: swap;
+}
 :root{
   --paper: #F6EFDD;
   --paper-edge: #EDE2C6;
@@ -16,7 +21,7 @@
   --gold-pale: #E8C874;
   --shadow: 0 18px 40px -18px rgba(14, 51, 42, .45);
   --radius: 18px;
-  --font-quran: 'Amiri Quran', 'Noto Naskh Arabic', serif;
+  --font-quran: 'Uthmanic Hafs', 'PDMS Saleem QuranFont', 'Amiri Quran', 'Noto Naskh Arabic', serif;
   --font-ui: 'Cairo', 'Noto Sans Arabic', sans-serif;
   --ayah-size: 30px;
 }
@@ -154,6 +159,11 @@ body{
   text-align-last: center;
   color: var(--ink);
   margin:0;
+  /* Let the font's own mark-to-base/mark-to-mark (mark/mkmk) tables position
+     combining Sajawandi waqf signs; without this some engines can drop
+     mkmk chaining when a word is wrapped in its own inline-block span. */
+  font-feature-settings: "mark" 1, "mkmk" 1, "ccmp" 1, "curs" 1;
+  font-kerning: normal;
   /* A long-press here is the gesture for adding/removing a personal waqf
      mark, not for the browser's native text selection. Without this, Chrome
      on Android shows its own Copy/Share/Select-all bar on long-press, which
@@ -161,6 +171,56 @@ body{
   user-select: none;
   -webkit-user-select: none;
   -webkit-touch-callout: none;
+}
+/* The Indopak/Sajawandi script stacks up to 2-3 combining waqf marks above
+   a single letter, which needs noticeably more headroom than the Uthmani
+   Hafs script (where marks are mostly single). Bump size + line spacing so
+   stacked marks don't collide with the line above or with each other. */
+body.indopak-font .ayah-flow{
+  font-size: calc(var(--ayah-size) + 6px);
+  line-height: 2.45;
+}
+/* The Sajawandi waqf signs are drawn as small combining glyphs that read as
+   nearly fused into the surrounding letters in this Naskh script — bump
+   them up so they stand out. The wrapping span always includes the base
+   letter (see wrapWaqfSigns/WAQF_SIGN_REGEX in app.js) since the mark's
+   position is computed relative to it, so the letter that carries the
+   mark grows slightly along with it; that's an unavoidable side effect of
+   scaling a font glyph, not a bug. Scoped to indopak-font only — the
+   marks are already clear enough in the Uthmani script. */
+body.indopak-font .waqf-sign{
+  font-size: 1.3em;
+  position: relative;
+}
+
+/* The waqf-lazim mark's own font glyph is abnormally small (see app.js
+   for the measured comparison), so we draw a manual replacement instead —
+   same approach as the iqlab meem elsewhere in this file. Positioned
+   absolutely above the base letter, centered.
+   Uses the page's own Naskh quran font (var(--font-quran)) and a plain
+   "م" — matching how it's traditionally shown in this mushaf style, per
+   direct user confirmation. (An earlier attempt switched to a different
+   font and to the "meem initial form" presentation glyph, on the theory
+   that the plain isolated meem read as the unrelated iqlab mark at very
+   small sizes — that theory was wrong; the plain isolated meem in this
+   font, at a size close to the surrounding marks, is the correct shape.)
+   Font-weight stays normal — bold made it read as heavier/bigger than
+   the other marks even at a matched pixel height. Size (0.78em) is a
+   modest reduction from the initial fix (0.85em), which was reported
+   correct in shape but slightly large. */
+.waqf-lazim-glyph{
+  position: absolute;
+  left: 50%;
+  top: -0.74em;
+  transform: translateX(-50%);
+  font-family: var(--font-quran);
+  font-size: 0.78em;
+  line-height: 1;
+  font-weight: normal;
+  color: inherit;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 /* Each Qur'an word is wrapped so a personal waqf star can be anchored
@@ -218,14 +278,21 @@ body.night .waqf-menu-item{ color:#EAE0C4; }
   display:inline-flex;
   align-items:center;
   justify-content:center;
-  width: clamp(22px, 1.15em, 48px);
-  height: clamp(22px, 1.15em, 48px);
+  width: clamp(30px, 1.5em, 54px);
+  height: clamp(30px, 1.5em, 54px);
   margin: 0 5px;
   color: var(--emerald);
   position:relative;
   vertical-align: middle;
+  /* Sized off the base ayah font-size explicitly, not inherited. Without
+     this, the star grows in Naskh (indopak-font) mode along with the
+     bumped-up .ayah-flow font-size below, so it no longer matches the
+     size it renders at in the Madinah Mushaf (uthmani) mode. Ayah-head
+     markers should stay the same size in both scripts. */
+  font-size: var(--ayah-size);
 }
 .ayah-num svg{ position:absolute; inset:0; width:100%; height:100%; }
+.ayah-num svg path{ stroke-width: 2.2; }
 .ayah-num span{
   position:relative;
   z-index:1;
@@ -243,13 +310,13 @@ body.night .waqf-menu-item{ color:#EAE0C4; }
      instead of squeezing them into a fixed circle. */
   background: var(--paper);
   font-family: var(--font-ui);
-  font-size: clamp(11px, 0.52em, 22px);
+  font-size: clamp(13px, 0.6em, 22px);
   font-weight:800;
   letter-spacing: -0.4px;
 }
 body.night .ayah-num span{ background:#1a1712; }
-.ayah-num.three-digit{ width: clamp(25px, 1.3em, 54px); height: clamp(25px, 1.3em, 54px); }
-.ayah-num.three-digit span{ font-size: clamp(9.5px, 0.42em, 17px); letter-spacing:-0.6px; padding:0 2px; }
+.ayah-num.three-digit{ width: clamp(33px, 1.65em, 58px); height: clamp(33px, 1.65em, 58px); }
+.ayah-num.three-digit span{ font-size: clamp(11px, 0.48em, 18px); letter-spacing:-0.6px; padding:0 2px; }
 
 /* Small meem mark for إقلاب (iqlab): drawn manually at reduced size and
    nudged below the baseline, since the bundled font's own glyph for the

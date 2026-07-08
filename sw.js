@@ -1,6 +1,6 @@
 // Bump this version on every release so old, previously-cached HTML/JS/data
 // files are guaranteed to be replaced instead of silently kept forever.
-const CACHE = 'juzamma-v15';
+const CACHE = 'juzamma-v17';
 
 // Assets whose CONTENT rarely/never changes once shipped: safe to serve
 // cache-first for speed and offline use.
@@ -8,7 +8,8 @@ const STATIC_ASSETS = [
   './icons/icon-192.png',
   './icons/icon-512.png',
   './icons/apple-touch-icon.png',
-  './fonts/UthmanicHafs.woff2'
+  './fonts/UthmanicHafs.woff2',
+  './fonts/PDMS-Saleem-QuranFont.woff2'
 ];
 
 // Assets that change whenever the app is updated: must always be fetched
