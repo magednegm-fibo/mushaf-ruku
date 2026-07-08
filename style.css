@@ -178,7 +178,7 @@ body{
    stacked marks don't collide with the line above or with each other. */
 body.indopak-font .ayah-flow{
   font-size: calc(var(--ayah-size) + 6px);
-  line-height: 2.45;
+  line-height: 1.9;
 }
 /* The Sajawandi waqf signs are drawn as small combining glyphs that read as
    nearly fused into the surrounding letters in this Naskh script — bump
