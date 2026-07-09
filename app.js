@@ -407,15 +407,19 @@
     if(cp>=0x200B && cp<=0x200F) return true;
     return false;
   }
-  // The waqf-lazim mark's own glyph (U+06D8) is drawn abnormally small in
-  // this font — measured directly from the font's outline data, its ink
-  // is roughly 2.5x smaller than the other five combining waqf marks in
-  // the same font. Scaling the whole letter+mark span (like we do for the
-  // others) can't fix that: it would need to blow the span up ~2.5x more
-  // just to match, which would make the base letter comically oversized.
-  // So — same fix as the iqlab meem above — draw our own small meem in
-  // its place instead of relying on the font's undersized glyph.
-  var WAQF_LAZIM_HTML = '<span class="waqf-lazim-glyph" aria-hidden="true">م</span>';
+  // CORRECTED (was wrong): U+06D8 is NOT an undersized/broken glyph that
+  // needs replacing. Measured directly from the font's outline data: its
+  // ink is genuinely small and sits high with no descender (glyph bbox
+  // height ~0.19em vs ~0.76em for a full meem letter) — that's the
+  // authentic, deliberately compact design of the classical waqf-lazim
+  // mark, confirmed against a real Madinah-mushaf page image. The earlier
+  // fix mistook "small" for "broken" and replaced it with a scaled-down
+  // plain letter meem — which made it visually indistinguishable from the
+  // iqlab meem mark (U+06ED, handled separately above), since both ended
+  // up drawn as the same full letterform at a reduced size. Letting the
+  // font's own U+06D8 glyph render (see wrapWaqfSigns below, which keeps
+  // it in the same span as its base letter for correct GPOS mark
+  // anchoring) is the correct, minimal fix.
 
   // U+06DA (jeem, "jaiz") and U+06D6 (the sila ligature) only ever collide
   // when they land in the SAME combining run above one letter (e.g. 2:1
@@ -439,11 +443,11 @@
         // Stacked waqf marks (e.g. jaiz immediately followed by muanaqah)
         // all belong in the same span as the base letter they sit above.
         var runCps = [cp];
-        var run = (cp === 0x06D8) ? WAQF_LAZIM_HTML : ch;
+        var run = ch;
         while(i+1 < text.length && WAQF_COMBINING[text.codePointAt(i+1)]){
           i++;
           runCps.push(text.codePointAt(i));
-          run += (text.codePointAt(i) === 0x06D8) ? WAQF_LAZIM_HTML : text[i];
+          run += text[i];
         }
         // Jeem+sila collision fix (see comment above WAQF_SILA_LIFT_HTML):
         // only rewrite the raw sila character, only when jeem is also in

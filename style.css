@@ -206,21 +206,15 @@ body.indopak-font .ayah-flow{
   position: relative;
 }
 
-/* The waqf-lazim mark's own font glyph is abnormally small (see app.js
-   for the measured comparison), so we draw a manual replacement instead —
-   same approach as the iqlab meem elsewhere in this file. Positioned
-   absolutely above the base letter, centered.
-   Uses the page's own Naskh quran font (var(--font-quran)) and a plain
-   "م" — matching how it's traditionally shown in this mushaf style, per
-   direct user confirmation. (An earlier attempt switched to a different
-   font and to the "meem initial form" presentation glyph, on the theory
-   that the plain isolated meem read as the unrelated iqlab mark at very
-   small sizes — that theory was wrong; the plain isolated meem in this
-   font, at a size close to the surrounding marks, is the correct shape.)
-   Font-weight stays normal — bold made it read as heavier/bigger than
-   the other marks even at a matched pixel height. Size (0.78em) is a
-   modest reduction from the initial fix (0.85em), which was reported
-   correct in shape but slightly large. */
+/* CORRECTED (was wrong): there used to be a manual "م" replacement here
+   for the waqf-lazim mark (U+06D8), on the theory that the font's own
+   glyph was abnormally/incorrectly small. It isn't — the font's own
+   glyph is a small, deliberately compact mark with no descender (that's
+   the authentic classical design, confirmed against a real Madinah-mushaf
+   page image), and drawing a scaled-down full letter meem in its place
+   made it visually indistinguishable from the iqlab meem mark. The font's
+   own glyph now renders natively (see wrapWaqfSigns in app.js), so no
+   CSS override is needed here. */
 /* Fix for the jeem(06DA)/sila(06D6) overlap confirmed in this font's GPOS
    table (see WAQF_SILA_LIFT_HTML in app.js) — the font draws both marks at
    the same default position when no contextual lookup separates them, as
@@ -238,21 +232,6 @@ body.indopak-font .ayah-flow{
 .waqf-sila-lift{
   display: inline-block;
   transform: translateY(-0.35em);
-}
-
-.waqf-lazim-glyph{
-  position: absolute;
-  left: 50%;
-  top: -0.74em;
-  transform: translateX(-50%);
-  font-family: var(--font-quran);
-  font-size: 0.78em;
-  line-height: 1;
-  font-weight: normal;
-  color: inherit;
-  pointer-events: none;
-  user-select: none;
-  -webkit-user-select: none;
 }
 
 /* Each Qur'an word is wrapped so a personal reminder star can be anchored
