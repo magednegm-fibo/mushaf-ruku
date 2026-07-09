@@ -26,22 +26,27 @@
       <p>المصحف الشريف كاملًا، مقسّمًا حسب علامات الركوع</p>
     </div>
 
-    <button class="progress-card" id="btnContinue">
-      <div class="progress-card-top">
-        <span class="progress-label">استكمال آخر قراءة</span>
-        <span class="progress-percent" id="homeProgressPercent">٠٪</span>
-      </div>
-      <div class="progress-bar"><div class="progress-bar-fill" id="homeProgressFill"></div></div>
-      <div class="progress-sub" id="homeProgressText">قرأ ٠ من ٥٥٦ ركوعًا</div>
-    </button>
-
-    <button class="bookmark-card hidden" id="bookmarkCard">
-      <svg viewBox="0 0 24 24" class="bookmark-card-icon"><path d="M6 3h12v18l-6-4-6 4V3z"/></svg>
-      <div class="bookmark-card-info">
-        <span class="bookmark-card-label">علامة القراءة المحفوظة</span>
-        <span class="bookmark-card-text" id="bookmarkCardText"></span>
-      </div>
-    </button>
+    <div class="home-status-card">
+      <button class="status-row status-row-continue" id="btnContinue">
+        <svg viewBox="0 0 24 24" class="status-row-icon"><path d="M8 5v14l11-7z"/></svg>
+        <div class="status-row-body">
+          <div class="status-row-top">
+            <span class="status-row-label">استكمال آخر قراءة</span>
+            <span class="status-row-value" id="homeProgressPercent">٠٪</span>
+          </div>
+          <div class="progress-bar"><div class="progress-bar-fill" id="homeProgressFill"></div></div>
+        </div>
+      </button>
+      <button class="status-row status-row-bookmark hidden" id="bookmarkCard">
+        <svg viewBox="0 0 24 24" class="status-row-icon"><path d="M6 3h12v18l-6-4-6 4V3z"/></svg>
+        <div class="status-row-body">
+          <div class="status-row-top">
+            <span class="status-row-label">علامة القراءة</span>
+            <span class="status-row-value" id="bookmarkCardText"></span>
+          </div>
+        </div>
+      </button>
+    </div>
 
     <div class="home-grid">
       <button class="home-tile" id="tileSurah">
@@ -171,7 +176,7 @@
       </button>
     </div>
     <div class="panel-body">
-      <input type="text" id="searchInput" class="search-input" placeholder="ابحث عن اسم سورة أو جزء...">
+      <input type="text" id="searchInput" class="search-input" placeholder="ابحث عن اسم سورة أو نص آية...">
       <div id="searchResults"></div>
     </div>
   </div>
@@ -215,11 +220,28 @@
   <!-- ============ TOAST ============ -->
   <div id="toast" class="toast"></div>
 
-  <!-- ============ WAQF MARK LONG-PRESS MENU ============ -->
+  <!-- ============ REMINDER MARK MENUS ============ -->
+  <!-- Step 1: long-press on any word offers to add a reminder mark. -->
   <div id="waqfMenu" class="waqf-menu hidden">
     <button id="waqfMenuItem" class="waqf-menu-item">
-      <span id="waqfMenuIcon">⭐</span>
-      <span id="waqfMenuLabel">إضافة علامة وقف شخصية</span>
+      <span id="waqfMenuIcon">🏷️</span>
+      <span id="waqfMenuLabel">إضافة علامة تذكير</span>
+    </button>
+  </div>
+
+  <!-- Step 2: pick a color. The app assigns no meaning to any color — each
+       reader decides for themselves what red/green/blue stands for. -->
+  <div id="waqfColorMenu" class="waqf-menu waqf-color-menu hidden">
+    <button class="waqf-color-btn" data-color="blue" aria-label="أزرق">🔵</button>
+    <button class="waqf-color-btn" data-color="red" aria-label="أحمر">🔴</button>
+    <button class="waqf-color-btn" data-color="green" aria-label="أخضر">🟢</button>
+  </div>
+
+  <!-- Tapping an existing mark directly opens this instead. -->
+  <div id="waqfDeleteMenu" class="waqf-menu hidden">
+    <button id="waqfDeleteMenuItem" class="waqf-menu-item">
+      <span>🗑</span>
+      <span>حذف العلامة</span>
     </button>
   </div>
 
@@ -233,6 +255,13 @@
     </div>
     <div class="panel-body">
       <div class="setting-row">
+        <span>رسم المصحف</span>
+        <div class="font-choice">
+          <button class="font-choice-btn" data-font="amiri" id="btnFontAmiri">نسخ تعليق</button>
+          <button class="font-choice-btn" data-font="uthmani" id="btnFontUthmani">مصحف المدينة</button>
+        </div>
+      </div>
+      <div class="setting-row">
         <span>حجم الخط</span>
         <div class="stepper">
           <button id="fontMinus">−</button>
@@ -241,11 +270,31 @@
         </div>
       </div>
       <div class="setting-row">
-        <span>رسم المصحف</span>
-        <div class="font-choice">
-          <button class="font-choice-btn" data-font="amiri" id="btnFontAmiri">نسخ تعليق</button>
-          <button class="font-choice-btn" data-font="uthmani" id="btnFontUthmani">مصحف المدينة</button>
-        </div>
+        <span>إظهار علامات التذكير</span>
+        <label class="switch">
+          <input type="checkbox" id="waqfToggle" checked>
+          <span class="slider"></span>
+        </label>
+      </div>
+      <div class="setting-row static">
+        <span>نسبة القراءة</span>
+        <b id="settingsProgress">٠٪</b>
+      </div>
+      <button class="reset-btn" id="btnResetProgress">إعادة ضبط تقدّم القراءة</button>
+
+      <div class="setting-row">
+        <span>التكبير بإصبعين (Pinch Zoom)</span>
+        <label class="switch">
+          <input type="checkbox" id="pinchZoomToggle" checked>
+          <span class="slider"></span>
+        </label>
+      </div>
+      <div class="setting-row" id="wakeLockRow">
+        <span>إبقاء الشاشة مضاءة</span>
+        <label class="switch">
+          <input type="checkbox" id="wakeLockToggle">
+          <span class="slider"></span>
+        </label>
       </div>
       <div class="setting-row">
         <span>الوضع الليلي</span>
@@ -254,12 +303,13 @@
           <span class="slider"></span>
         </label>
       </div>
-      <div class="setting-row">
-        <span>إظهار علامات الوقف الشخصية</span>
-        <label class="switch">
-          <input type="checkbox" id="waqfToggle" checked>
-          <span class="slider"></span>
-        </label>
+      <div class="setting-row static">
+        <span>علامات التذكير</span>
+      </div>
+      <div class="waqf-io-row">
+        <button class="modal-btn ghost" id="btnExportWaqf">تصدير (JSON)</button>
+        <label class="modal-btn ghost" id="btnImportWaqf" for="importWaqfInput" style="cursor:pointer;">استيراد (JSON)</label>
+        <input type="file" id="importWaqfInput" accept="application/json" class="hidden">
       </div>
       <div class="setting-row static">
         <span>عدد الركوعات</span>
@@ -268,19 +318,6 @@
       <div class="setting-row static">
         <span>عدد الآيات</span>
         <b id="ayahCount">٥٦٤ آية</b>
-      </div>
-      <div class="setting-row static">
-        <span>نسبة القراءة</span>
-        <b id="settingsProgress">٠٪</b>
-      </div>
-      <button class="reset-btn" id="btnResetProgress">إعادة ضبط تقدّم القراءة</button>
-      <div class="setting-row static">
-        <span>علامات الوقف الشخصية</span>
-      </div>
-      <div class="waqf-io-row">
-        <button class="modal-btn ghost" id="btnExportWaqf">تصدير (JSON)</button>
-        <label class="modal-btn ghost" id="btnImportWaqf" for="importWaqfInput" style="cursor:pointer;">استيراد (JSON)</label>
-        <input type="file" id="importWaqfInput" accept="application/json" class="hidden">
       </div>
       <p class="about-text" id="aboutText">
         كل صفحة في هذا التطبيق تمثّل ركوعًا واحدًا كاملًا كما تحدّده علامات الركوع (ع) في المصحف الشريف.

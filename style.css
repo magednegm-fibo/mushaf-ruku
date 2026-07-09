@@ -27,6 +27,17 @@
 }
 
 *{box-sizing:border-box; -webkit-tap-highlight-color: transparent;}
+/* Every tap target in the app is a <button> or one of these custom
+   clickable rows (index/search/favorites lists built dynamically in JS).
+   Without this, a long-press or slow tap on any of them pops up the
+   browser's native Copy/Share/Select-all bubble instead of just
+   registering the tap — inputs/textareas are deliberately left out so
+   typing (search box, "go to page" box) still works normally. */
+button, .index-item, .fav-item, .modal-btn{
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
 html,body{height:100%;}
 body{
   margin:0;
@@ -181,14 +192,16 @@ body.indopak-font .ayah-flow{
   line-height: 1.9;
 }
 /* The Sajawandi waqf signs are drawn as small combining glyphs that read as
-   nearly fused into the surrounding letters in this Naskh script — bump
-   them up so they stand out. The wrapping span always includes the base
-   letter (see wrapWaqfSigns/WAQF_SIGN_REGEX in app.js) since the mark's
-   position is computed relative to it, so the letter that carries the
-   mark grows slightly along with it; that's an unavoidable side effect of
-   scaling a font glyph, not a bug. Scoped to indopak-font only — the
-   marks are already clear enough in the Uthmani script. */
-body.indopak-font .waqf-sign{
+   nearly fused into the surrounding letters — bump them up so they stand
+   out. The wrapping span always includes the base letter (see
+   wrapWaqfSigns/WAQF_SIGN_REGEX in app.js) since the mark's position is
+   computed by the font's own GPOS mark-to-base table, which only works
+   when the base letter and the mark are in the same element; the letter
+   that carries the mark grows slightly along with it, an unavoidable side
+   effect of scaling a font glyph, not a bug. Applies to both script modes
+   per direct user confirmation (Uthmani/Madinah mushaf included, same
+   1.3em value as Indopak). */
+.waqf-sign{
   font-size: 1.3em;
   position: relative;
 }
@@ -242,7 +255,7 @@ body.indopak-font .waqf-sign{
   -webkit-user-select: none;
 }
 
-/* Each Qur'an word is wrapped so a personal waqf star can be anchored
+/* Each Qur'an word is wrapped so a personal reminder star can be anchored
    directly above it without shifting surrounding text. */
 .quran-word{
   position: relative;
@@ -256,16 +269,19 @@ body.indopak-font .waqf-sign{
   transform: translate(-50%, -48%);
   font-size: 0.4em;
   line-height:1;
-  color:#C62828;
+  color:#C62828; /* overridden per-mark by .mark-red/.mark-green/.mark-blue */
   pointer-events:auto;
   user-select:none;
   -webkit-user-select:none;
 }
 .quran-word.has-waqf .waqf-mark{ display:inline-block; }
+.waqf-mark.mark-red{ color:#C62828; }
+.waqf-mark.mark-green{ color:#2E7D32; }
+.waqf-mark.mark-blue{ color:#1565C0; }
 /* Global toggle in الإعدادات: hides every mark without deleting any of them. */
 body.hide-waqf-marks .waqf-mark{ display:none !important; }
 
-/* ---------- Long-press "add/remove waqf mark" popup ---------- */
+/* ---------- Long-press reminder-mark popups (add / pick color / delete) ---------- */
 .waqf-menu{
   position: fixed;
   z-index: 90;
@@ -290,6 +306,24 @@ body.hide-waqf-marks .waqf-mark{ display:none !important; }
 .waqf-menu-item:active{ background: var(--paper-edge); }
 body.night .waqf-menu{ background:#1a1712; border-color:#8a6c30; }
 body.night .waqf-menu-item{ color:#EAE0C4; }
+
+.waqf-color-menu{
+  display:flex;
+  align-items:center;
+  gap:4px;
+  padding:8px;
+}
+.waqf-color-btn{
+  width:34px;
+  height:34px;
+  font-size:17px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:transparent;
+  border-radius:8px;
+}
+.waqf-color-btn:active{ background: var(--paper-edge); }
 
 .waqf-io-row{ display:flex; gap:10px; margin: 6px 0 18px; }
 .waqf-io-row .modal-btn{ flex:1; font-size:12.5px; padding:9px 6px; }
@@ -502,6 +536,25 @@ body.night .index-item.current .num{ background:#D8B662; color:#161310; border-c
 .index-item-inner{ display:flex; align-items:center; gap: 8px; }
 .index-item-inner > div:last-child{ flex: 1; }
 
+/* Brief highlight flash on the ayah a search result jumps to, so it's
+   easy to spot among several ayaat on the same ruku page. Uses the same
+   emerald accent as the rest of the index UI rather than a new color. */
+@keyframes search-hit-flash{
+  0%, 100%{ background: transparent; }
+  30%{ background: rgba(11,92,74,0.18); }
+}
+body.night .quran-word.search-hit-flash{
+  animation-name: search-hit-flash-night;
+}
+@keyframes search-hit-flash-night{
+  0%, 100%{ background: transparent; }
+  30%{ background: rgba(216,182,98,0.25); }
+}
+.quran-word.search-hit-flash{
+  animation: search-hit-flash 2s ease-out;
+  border-radius: 4px;
+}
+
 .setting-row{
   display:flex; align-items:center; justify-content:space-between;
   padding: 16px 4px;
@@ -625,29 +678,57 @@ body.night .juz-header{ background:#161310; color:#D8B662; border-color:#8a6c30;
 }
 .home-brand p{ font-size:12.5px; color: var(--gold-pale); opacity:.9; margin:0; }
 
-.progress-card{
-  display:block; width:100%; text-align:right;
+/* ---------- Home status card: "استكمال آخر قراءة" + "علامة القراءة" ----------
+   Merged into one bordered card as two compact rows sharing a single
+   border/shadow/radius, instead of two full separate cards — the same
+   information in roughly half the vertical space. */
+.home-status-card{
   background: var(--paper);
   border: 1px solid var(--gold);
   border-radius: 16px;
-  padding: 16px 18px;
   box-shadow: var(--shadow);
+  overflow: hidden;
+}
+.status-row{
+  display:flex; align-items:center; gap:10px;
+  width:100%; box-sizing:border-box; text-align:right;
+  padding: 12px 16px;
+  background:transparent; border:none;
   font-family: var(--font-ui);
+  transition: background .12s ease;
 }
-.progress-card-top{
-  display:flex; align-items:center; justify-content:space-between;
-  margin-bottom:10px;
+.status-row:active{ background: var(--paper-edge); }
+.status-row-bookmark{ border-top: 1px solid var(--paper-edge); }
+.status-row-bookmark.hidden{ display:none; }
+.status-row-icon{
+  width:19px; height:19px; flex-shrink:0;
+  stroke: var(--emerald); stroke-width:1.6;
 }
-.progress-label{ font-weight:700; color: var(--emerald); font-size:15px; }
-.progress-percent{ font-weight:700; color: var(--gold); font-size:14px; }
+.status-row-continue .status-row-icon{ fill: var(--emerald); }
+.status-row-bookmark .status-row-icon{ fill:none; }
+.status-row-body{ flex:1; min-width:0; }
+.status-row-top{
+  display:flex; align-items:center; justify-content:space-between; gap:8px;
+}
+.status-row-label{ font-weight:700; color: var(--emerald); font-size:13px; white-space:nowrap; }
+.status-row-value{
+  font-size:12.5px; color: var(--ink-soft); font-weight:600;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.status-row-continue .progress-bar{ height:5px; margin-top:6px; }
 .progress-bar{
-  height:8px; border-radius:6px; background: var(--paper-edge); overflow:hidden;
+  border-radius:6px; background: var(--paper-edge); overflow:hidden;
 }
 .progress-bar-fill{
   height:100%; width:0%; background: linear-gradient(90deg, var(--gold), var(--emerald-light));
   border-radius:6px; transition: width .3s ease;
 }
-.progress-sub{ margin-top:8px; font-size:12px; color: var(--ink-soft); }
+body.night .home-status-card{ background:#1a1712; border-color:#8a6c30; }
+body.night .status-row-bookmark{ border-color:#332c20; }
+body.night .status-row-icon{ stroke:#D8B662; }
+body.night .status-row-continue .status-row-icon{ fill:#D8B662; }
+body.night .status-row-label{ color:#D8B662; }
+body.night .status-row-value{ color:#9c8f6d; }
 
 .home-grid{
   display:grid; grid-template-columns: 1fr 1fr; gap:12px;
@@ -751,28 +832,6 @@ body.night .search-input{ background:#211c15; color:#EAE0C4; border-color:#332c2
 .modal-error{
   color:#b5493f; font-size:12.5px; margin:-6px 0 12px; min-height:1em;
 }
-
-/* ---------- Bookmark home card ---------- */
-.bookmark-card{
-  display:flex; align-items:center; gap:12px; width:100%; text-align:right;
-  background: var(--paper);
-  border: 1px solid var(--emerald);
-  border-radius: 16px;
-  padding: 14px 16px;
-  box-shadow: var(--shadow);
-  font-family: var(--font-ui);
-}
-.bookmark-card-icon{
-  width:22px; height:22px; flex-shrink:0;
-  fill: var(--emerald); stroke: var(--emerald); stroke-width:1.4;
-}
-.bookmark-card-info{ display:flex; flex-direction:column; gap:3px; }
-.bookmark-card-label{ font-weight:700; color: var(--emerald); font-size:13px; }
-.bookmark-card-text{ font-size:12.5px; color: var(--ink-soft); }
-body.night .bookmark-card{ background:#1a1712; border-color:#8a6c30; }
-body.night .bookmark-card-icon{ fill:#D8B662; stroke:#D8B662; }
-body.night .bookmark-card-label{ color:#D8B662; }
-body.night .bookmark-card-text{ color:#9c8f6d; }
 
 /* ---------- Toast ---------- */
 .toast{

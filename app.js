@@ -6,7 +6,14 @@
   var STORAGE_KEY = 'juzamma_v1';
   var FAV_KEY = 'quranRuku_favorites_v1';
   var BOOKMARK_KEY = 'quranRuku_bookmark_v1';
-  var WAQF_KEY = 'quranRuku_waqfMarks_v1';
+  // Marks are stored per script mode (see waqfKeyForStyle below) so a
+  // reminder placed on the Madinah mushaf doesn't appear on the Naskh
+  // Ta'liq mushaf, or vice versa — the two are independent readings of
+  // the same ayaat, with independent word positions.
+  var WAQF_KEY_LEGACY = 'quranRuku_waqfMarks_v1';
+  function waqfKeyForStyle(style){
+    return WAQF_KEY_LEGACY + '_' + (style === 'uthmani' ? 'uthmani' : 'indopak');
+  }
 
   var state = loadState();
   var favorites = loadFavorites();
@@ -91,7 +98,13 @@
     waqfMenuItem: document.getElementById('waqfMenuItem'),
     waqfMenuIcon: document.getElementById('waqfMenuIcon'),
     waqfMenuLabel: document.getElementById('waqfMenuLabel'),
+    waqfColorMenu: document.getElementById('waqfColorMenu'),
+    waqfDeleteMenu: document.getElementById('waqfDeleteMenu'),
+    waqfDeleteMenuItem: document.getElementById('waqfDeleteMenuItem'),
     waqfToggle: document.getElementById('waqfToggle'),
+    pinchZoomToggle: document.getElementById('pinchZoomToggle'),
+    wakeLockToggle: document.getElementById('wakeLockToggle'),
+    wakeLockRow: document.getElementById('wakeLockRow'),
     btnExportWaqf: document.getElementById('btnExportWaqf'),
     importWaqfInput: document.getElementById('importWaqfInput')
   };
@@ -104,11 +117,44 @@
   }
 
   function loadState(){
+    var DEFAULTS = {page:0, fontSizeUthmani:28, fontSizeIndopak:28, night:false, furthestUthmani:0, furthestIndopak:0, lastPageUthmani:0, lastPageIndopak:0, fontStyle:'uthmani', showWaqfMarksUthmani:true, showWaqfMarksIndopak:true, pinchZoomEnabled:true, keepScreenAwake:false};
+    var result = DEFAULTS;
     try{
       var raw = localStorage.getItem(STORAGE_KEY);
-      if(raw) return Object.assign({page:0, fontSize:28, night:false, furthest:0, fontStyle:'uthmani', showWaqfMarks:true}, JSON.parse(raw));
+      if(raw) result = Object.assign({}, DEFAULTS, JSON.parse(raw));
     }catch(e){}
-    return {page:0, fontSize:28, night:false, furthest:0, fontStyle:'uthmani', showWaqfMarks:true};
+    // Migration: older saved states had a single shared `fontSize` field.
+    // Carry that value over into the size for whichever script mode was
+    // active, so upgrading doesn't silently reset the reader's chosen size.
+    if(result.fontSize !== undefined){
+      var migratedKey = result.fontStyle === 'uthmani' ? 'fontSizeUthmani' : 'fontSizeIndopak';
+      result[migratedKey] = result.fontSize;
+      delete result.fontSize;
+    }
+    // Migration: older saved states had a single shared `showWaqfMarks`
+    // toggle. Carry that value over into both script modes so upgrading
+    // doesn't silently reveal/hide marks the reader didn't ask to change.
+    if(result.showWaqfMarks !== undefined){
+      result.showWaqfMarksUthmani = result.showWaqfMarks;
+      result.showWaqfMarksIndopak = result.showWaqfMarks;
+      delete result.showWaqfMarks;
+    }
+    // Migration: older saved states had a single shared `furthest` (reading
+    // progress) field, and "continue last reading" always resumed at the
+    // single shared `page`. Seed both script modes' progress and last-read
+    // page from those old shared values — otherwise reading progress and
+    // the resume point would appear reset to zero after upgrading, even
+    // though the reader has already read that far.
+    if(result.furthest !== undefined){
+      result.furthestUthmani = result.furthest;
+      result.furthestIndopak = result.furthest;
+      delete result.furthest;
+    }
+    if(result.page){
+      result.lastPageUthmani = result.lastPageUthmani || result.page;
+      result.lastPageIndopak = result.lastPageIndopak || result.page;
+    }
+    return result;
   }
   function saveState(){
     try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){}
@@ -125,53 +171,124 @@
     try{ localStorage.setItem(FAV_KEY, JSON.stringify(favorites)); }catch(e){}
   }
 
+  // The saved reading bookmark (علامة القراءة) is kept independently per
+  // script mode, same as reading progress — a bookmark placed while reading
+  // Uthmani shouldn't jump you around when you're in Indopak, and vice versa.
+  // The card stays hidden until the reader actually saves one; there is no
+  // default position.
+  function currentBookmarkKey(){
+    return state.fontStyle === 'uthmani' ? 'uthmani' : 'amiri';
+  }
   function loadBookmark(){
     try{
       var raw = localStorage.getItem(BOOKMARK_KEY);
-      if(raw) return JSON.parse(raw);
+      if(raw){
+        var parsed = JSON.parse(raw);
+        // Migration: older saved data was a single flat {page, ts} bookmark
+        // shared across both scripts. Seed both script slots from it once,
+        // so upgrading doesn't make an existing bookmark disappear.
+        if(parsed && typeof parsed.page === 'number'){
+          return {uthmani: parsed, amiri: parsed};
+        }
+        return {uthmani: parsed.uthmani || null, amiri: parsed.amiri || null};
+      }
     }catch(e){}
-    return null;
+    return {uthmani: null, amiri: null};
   }
   function saveBookmarkToStorage(){
-    try{
-      if(bookmark) localStorage.setItem(BOOKMARK_KEY, JSON.stringify(bookmark));
-      else localStorage.removeItem(BOOKMARK_KEY);
-    }catch(e){}
+    try{ localStorage.setItem(BOOKMARK_KEY, JSON.stringify(bookmark)); }catch(e){}
   }
 
-  // ---- علامات الوقف الشخصية (per-word personal stop marks) ----
-  // Stored as a flat map: { "surah:ayah:wordIndex": timestamp }. Purely a
-  // personal reading aid layered on top of the Qur'an text — it never
-  // touches or alters a.text itself.
+  // ---- علامات التذكير الشخصية (per-word colored reminder marks) ----
+  // Stored as a flat map: { "surah:ayah:wordIndex": {c: 'red'|'green'|'blue', t: timestamp} }.
+  // Purely a personal reading aid layered on top of the Qur'an text — it
+  // never touches or alters a.text itself. The app assigns no meaning to
+  // any color; each reader decides for themselves what red/green/blue
+  // means to them.
+  var REMINDER_COLORS = {red:1, green:1, blue:1};
   function loadWaqfMarks(){
+    var marks = {};
+    var key = waqfKeyForStyle(state.fontStyle);
     try{
-      var raw = localStorage.getItem(WAQF_KEY);
-      if(raw) return JSON.parse(raw);
+      var raw = localStorage.getItem(key);
+      if(raw){
+        marks = JSON.parse(raw) || {};
+      }else{
+        // One-time migration, run independently the first time EACH script
+        // mode is loaded after this update: earlier versions kept a single
+        // shared list under WAQF_KEY_LEGACY. Seed this mode's new,
+        // independent list from that shared snapshot so existing marks
+        // don't silently disappear; from this point on the two modes
+        // diverge as the reader edits each separately.
+        var legacyRaw = localStorage.getItem(WAQF_KEY_LEGACY);
+        if(legacyRaw){
+          try{ marks = JSON.parse(legacyRaw) || {}; }catch(e){ marks = {}; }
+        }
+      }
     }catch(e){}
-    return {};
+    // Migrate marks saved by the older single-color "waqf star" version
+    // (a bare timestamp number) to the new {c, t} shape, defaulting to
+    // red so nobody's existing marks silently disappear after the update.
+    var changed = false;
+    Object.keys(marks).forEach(function(k){
+      if(typeof marks[k] === 'number'){
+        marks[k] = {c: 'red', t: marks[k]};
+        changed = true;
+      }
+    });
+    try{ localStorage.setItem(key, JSON.stringify(marks)); }catch(e){}
+    return marks;
   }
   function saveWaqfMarks(){
-    try{ localStorage.setItem(WAQF_KEY, JSON.stringify(waqfMarks)); }catch(e){}
+    try{ localStorage.setItem(waqfKeyForStyle(state.fontStyle), JSON.stringify(waqfMarks)); }catch(e){}
+  }
+  // Reads a given script mode's marks straight from storage, without
+  // touching the in-memory waqfMarks (which only ever holds the active
+  // mode's marks). Used by export/import so both mushafs' marks can be
+  // handled together even though only one mode is loaded at a time.
+  function readWaqfMarksFromStorage(style){
+    try{
+      var raw = localStorage.getItem(waqfKeyForStyle(style));
+      return raw ? (JSON.parse(raw) || {}) : {};
+    }catch(e){ return {}; }
+  }
+  function writeWaqfMarksToStorage(style, marks){
+    try{ localStorage.setItem(waqfKeyForStyle(style), JSON.stringify(marks)); }catch(e){}
   }
   function updateWordMarkUI(key){
     var safeKey = key.replace(/"/g, '\\"');
     var wordEl = els.pageScroll.querySelector('.quran-word[data-key="' + safeKey + '"]');
-    if(wordEl) wordEl.classList.toggle('has-waqf', !!waqfMarks[key]);
+    if(!wordEl) return;
+    var mark = waqfMarks[key];
+    wordEl.classList.toggle('has-waqf', !!mark);
+    var markSpan = wordEl.querySelector('.waqf-mark');
+    if(markSpan){
+      markSpan.classList.remove('mark-red', 'mark-green', 'mark-blue');
+      if(mark) markSpan.classList.add('mark-' + (REMINDER_COLORS[mark.c] ? mark.c : 'red'));
+    }
   }
-  function addWaqfMark(key){
-    waqfMarks[key] = Date.now();
+  function addWaqfMark(key, color){
+    waqfMarks[key] = {c: REMINDER_COLORS[color] ? color : 'red', t: Date.now()};
     saveWaqfMarks();
     updateWordMarkUI(key);
-    showToast('تمت إضافة علامة الوقف');
+    showToast('تمت إضافة علامة التذكير');
   }
   function removeWaqfMark(key){
     delete waqfMarks[key];
     saveWaqfMarks();
     updateWordMarkUI(key);
-    showToast('تم حذف علامة الوقف');
+    showToast('تم حذف علامة التذكير');
+  }
+  // Whether reminder marks are shown is remembered independently per script
+  // mode too, matching how the marks themselves are already stored per
+  // mode (see waqfKeyForStyle) — hiding marks in one script shouldn't hide
+  // them in the other.
+  function currentWaqfVisibilityKey(){
+    return state.fontStyle === 'uthmani' ? 'showWaqfMarksUthmani' : 'showWaqfMarksIndopak';
   }
   function applyWaqfVisibility(){
-    document.body.classList.toggle('hide-waqf-marks', !state.showWaqfMarks);
+    document.body.classList.toggle('hide-waqf-marks', state[currentWaqfVisibilityKey()] === false);
+    if(els.waqfToggle) els.waqfToggle.checked = state[currentWaqfVisibilityKey()] !== false;
   }
 
   var toastTimer = null;
@@ -181,6 +298,38 @@
     els.toast.classList.add('show');
     clearTimeout(toastTimer);
     toastTimer = setTimeout(function(){ els.toast.classList.remove('show'); }, 1800);
+  }
+
+  // ---- إبقاء الشاشة مضاءة (Screen Wake Lock) ----
+  var WAKE_LOCK_SUPPORTED = 'wakeLock' in navigator;
+  var wakeLockSentinel = null;
+  function releaseWakeLock(){
+    if(wakeLockSentinel){
+      wakeLockSentinel.release().catch(function(){});
+      wakeLockSentinel = null;
+    }
+  }
+  function requestWakeLock(){
+    if(!WAKE_LOCK_SUPPORTED || !state.keepScreenAwake) return;
+    navigator.wakeLock.request('screen').then(function(sentinel){
+      wakeLockSentinel = sentinel;
+      // The OS/browser releases the lock on its own if the page is hidden
+      // (e.g. switching apps); listen so it's re-acquired automatically
+      // when the reader comes back, without needing to retoggle the setting.
+      wakeLockSentinel.addEventListener('release', function(){ wakeLockSentinel = null; });
+    }).catch(function(){
+      // Can fail for reasons outside our control (low battery mode, some
+      // in-app browsers, etc.) — fail silently rather than nag the reader.
+    });
+  }
+  document.addEventListener('visibilitychange', function(){
+    if(document.visibilityState === 'visible') requestWakeLock();
+  });
+  if(els.wakeLockToggle && !WAKE_LOCK_SUPPORTED){
+    // Feature isn't available in this browser/WebView — disable the
+    // control instead of offering a setting that silently does nothing.
+    els.wakeLockToggle.disabled = true;
+    if(els.wakeLockRow) els.wakeLockRow.title = 'غير مدعوم في هذا المتصفح';
   }
 
   function ayahMarker(surah, ayah){
@@ -329,11 +478,11 @@
     return wrapWaqfSigns(text).replace(IQLAB_MEEM_REGEX, IQLAB_MEEM_HTML);
   }
 
-  // Wraps every word of an ayah in its own span so a personal waqf star can
-  // be anchored above any single word. The star itself is always in the
+  // Wraps every word of an ayah in its own span so a personal reminder star
+  // can be anchored above any single word. The dot itself is always in the
   // DOM (hidden by default via CSS) and only switched on per-word via the
-  // "has-waqf" class, so toggling/updating marks never requires re-building
-  // this HTML.
+  // "has-waqf" class plus a "mark-<color>" class, so toggling/updating
+  // marks never requires re-building this HTML.
   function renderAyahWords(a){
     var src = (state.fontStyle !== 'uthmani' && a.textIndopak) ? a.textIndopak : a.text;
     var words = src.split(/\s+/).filter(Boolean);
@@ -346,14 +495,21 @@
     }).join(' ');
   }
 
+  // "استكمال آخر قراءة" — both the visual bar/percentage and the resume
+  // point — are tracked per script mode, and reflect the reader's current
+  // (last-visited) position, moving up *and down* as they navigate, rather
+  // than only ever climbing to the furthest point ever reached.
+  function currentLastPageKey(){
+    return state.fontStyle === 'uthmani' ? 'lastPageUthmani' : 'lastPageIndopak';
+  }
   function progressRatio(){
-    var reached = Math.max(state.furthest || 0, state.page || 0) + 1;
+    var reached = (state[currentLastPageKey()] || 0) + 1;
     return Math.min(1, reached / PAGES.length);
   }
   function updateProgressUI(){
     var ratio = progressRatio();
     var pct = Math.round(ratio * 100);
-    var reachedCount = Math.max(state.furthest || 0, state.page || 0) + 1;
+    var reachedCount = (state[currentLastPageKey()] || 0) + 1;
     if(els.homeProgressFill) els.homeProgressFill.style.width = pct + '%';
     if(els.homeProgressPercent) els.homeProgressPercent.textContent = toArabicDigits(pct) + '٪';
     if(els.homeProgressText) els.homeProgressText.textContent = 'قرأ ' + toArabicDigits(reachedCount) + ' من ' + toArabicDigits(PAGES.length) + ' ركوعًا';
@@ -371,17 +527,19 @@
 
   function updateBookmarkButton(){
     if(!els.btnBookmark) return;
-    els.btnBookmark.classList.toggle('active', !!bookmark && bookmark.page === state.page);
+    var b = bookmark[currentBookmarkKey()];
+    els.btnBookmark.classList.toggle('active', !!b && b.page === state.page);
   }
 
   function updateBookmarkCard(){
     if(!els.bookmarkCard) return;
-    if(!bookmark || !PAGES[bookmark.page]){
+    var b = bookmark[currentBookmarkKey()];
+    if(!b || !PAGES[b.page]){
       els.bookmarkCard.classList.add('hidden');
       return;
     }
     els.bookmarkCard.classList.remove('hidden');
-    var p = PAGES[bookmark.page];
+    var p = PAGES[b.page];
     var surahName = p.ayahs[0].surahName;
     var rukuLabel = JUZ_INFO.fullMushaf ? p.ruku : p.rukuInJuz;
     if(els.bookmarkCardText){
@@ -393,8 +551,6 @@
     var idx = state.page;
     var p = PAGES[idx];
     if(!p) return;
-
-    if(idx > (state.furthest || 0)) state.furthest = idx;
 
     var names = p.surahNames.join(' \u2014 ');
     els.surahCartouche.innerHTML = '<span>سورة</span><b>' + names + '</b>';
@@ -414,7 +570,12 @@
     els.ayahFlow.innerHTML = html;
     els.ayahFlow.querySelectorAll('.quran-word').forEach(function(el){
       var key = el.getAttribute('data-key');
-      if(waqfMarks[key]) el.classList.add('has-waqf');
+      var mark = waqfMarks[key];
+      if(mark){
+        el.classList.add('has-waqf');
+        var markSpan = el.querySelector('.waqf-mark');
+        if(markSpan) markSpan.classList.add('mark-' + (REMINDER_COLORS[mark.c] ? mark.c : 'red'));
+      }
     });
 
     var rukuMarkSpan = document.querySelector('#rukuEnd .ruku-mark span');
@@ -461,6 +622,11 @@
   function goTo(i){
     if(i < 0 || i >= PAGES.length) return;
     state.page = i;
+    // The per-script resume point/progress is only updated here, on real
+    // navigation — not inside render(), which also runs when merely
+    // switching الرسم on the same page and must not credit that page as
+    // "read" in the newly-selected script.
+    state[currentLastPageKey()] = i;
     render();
   }
 
@@ -492,7 +658,7 @@
       showHome();
     }
   });
-  els.btnContinue.addEventListener('click', function(){ openReaderAt(state.page || 0); });
+  els.btnContinue.addEventListener('click', function(){ openReaderAt(state[currentLastPageKey()] || 0); });
 
   (function swipeAndPinch(){
     // RTL page-turn convention used throughout this app: dragging the finger
@@ -504,9 +670,13 @@
     var startX = null, startY = null;
     var frame = document.querySelector('.page-frame');
 
-    // Two-finger pinch zoom: reuses the exact same state.fontSize used by
-    // the "+"/"−" buttons in الإعدادات, so pinching and those buttons always
-    // agree and the result is remembered the same way.
+    // Two-finger pinch zoom: reuses the exact same per-script-mode font size
+    // (via currentFontSizeKey) used by the "+"/"−" buttons in الإعدادات, so
+    // pinching and those buttons always agree, each script mode keeps its
+    // own remembered size, and switching mode never carries a pinched size
+    // over to the other script. Can be turned off from الإعدادات
+    // (state.pinchZoomEnabled) for readers who trigger it by accident while
+    // turning pages with two fingers.
     var FONT_MIN = 18, FONT_MAX = 44;
     var pinching = false;
     var pinchStartDist = null;
@@ -518,26 +688,15 @@
       return Math.sqrt(dx * dx + dy * dy);
     }
 
-    frame.addEventListener('touchstart', function(e){
-      if(e.touches.length === 2){
-        pinching = true;
-        startX = null; startY = null; // a pinch is never a one-finger swipe
-        pinchStartDist = touchDistance(e.touches[0], e.touches[1]);
-        pinchStartFontSize = state.fontSize;
-      } else if(e.touches.length === 1 && !pinching){
-        var t = e.touches[0];
-        startX = t.clientX; startY = t.clientY;
-      }
-    }, {passive:true});
-
     function onPinchMove(e){
       if(!pinching || e.touches.length !== 2) return;
       e.preventDefault(); // stop the browser from also trying its own zoom
       var dist = touchDistance(e.touches[0], e.touches[1]);
       var ratio = dist / pinchStartDist;
+      var key = currentFontSizeKey();
       var newSize = Math.max(FONT_MIN, Math.min(FONT_MAX, Math.round(pinchStartFontSize * ratio)));
-      if(newSize !== state.fontSize){
-        state.fontSize = newSize;
+      if(newSize !== state[key]){
+        state[key] = newSize;
         applyFontSize();
       }
     }
@@ -547,15 +706,15 @@
       pinchStartDist = null;
       frame.removeEventListener('touchmove', onPinchMove, {passive:false});
       saveState();
-      showToast('حجم الخط: ' + toArabicDigits(state.fontSize));
+      showToast('حجم الخط: ' + toArabicDigits(state[currentFontSizeKey()]));
     }
 
     frame.addEventListener('touchstart', function(e){
-      if(e.touches.length === 2){
+      if(e.touches.length === 2 && state.pinchZoomEnabled !== false){
         pinching = true;
         startX = null; startY = null; // a pinch is never a one-finger swipe
         pinchStartDist = touchDistance(e.touches[0], e.touches[1]);
-        pinchStartFontSize = state.fontSize;
+        pinchStartFontSize = state[currentFontSizeKey()];
         // Only registered for the brief duration of an actual pinch, so
         // ordinary one-finger scrolling never has a non-passive touchmove
         // listener in its way (that alone is enough to make Chrome/Android
@@ -590,45 +749,63 @@
     if(e.key === 'ArrowRight') goTo(state.page - 1);
   });
 
-  // ---- علامة الوقف الشخصية: ضغط مطول على أي كلمة ----
-  (function waqfLongPress(){
+  // ---- علامة التذكير: ضغط مطول على كلمة بلا علامة يضيف علامة ملوّنة،
+  // وضغط مطول على كلمة عليها علامة بالفعل يعرض حذفها ----
+  (function reminderMarkMenus(){
     var LONG_PRESS_MS = 550;
     var MOVE_TOLERANCE = 10; // px — small jitter shouldn't cancel the long-press
     var timer = null;
     var startPos = null;
     var cancelled = false;
     var root = els.ayahFlow;
+    var pendingKey = null; // word targeted by whichever popup is open
+    var lastPos = {x: 0, y: 0};
 
-    function openMenuFor(wordEl, x, y){
-      var key = wordEl.getAttribute('data-key');
-      var exists = !!waqfMarks[key];
-      els.waqfMenu.dataset.key = key;
-      els.waqfMenuIcon.textContent = exists ? '❌' : '⭐';
-      els.waqfMenuLabel.textContent = exists ? 'حذف علامة الوقف الشخصية' : 'إضافة علامة وقف شخصية';
-      els.waqfMenu.classList.remove('hidden');
+    function positionMenu(menuEl, x, y){
       // Position after it's visible, so we can measure its real size and
       // keep it fully on-screen near the finger.
       requestAnimationFrame(function(){
-        var rect = els.waqfMenu.getBoundingClientRect();
+        var rect = menuEl.getBoundingClientRect();
         var left = Math.min(Math.max(8, x - rect.width / 2), window.innerWidth - rect.width - 8);
         var top = Math.max(8, y - rect.height - 18);
-        els.waqfMenu.style.left = left + 'px';
-        els.waqfMenu.style.top = top + 'px';
+        menuEl.style.left = left + 'px';
+        menuEl.style.top = top + 'px';
       });
     }
-    function closeMenu(){
+    function closeMenus(){
       els.waqfMenu.classList.add('hidden');
-      delete els.waqfMenu.dataset.key;
+      els.waqfColorMenu.classList.add('hidden');
+      els.waqfDeleteMenu.classList.add('hidden');
+      pendingKey = null;
+    }
+    function openColorMenu(wordEl, x, y){
+      pendingKey = wordEl.getAttribute('data-key');
+      lastPos = {x: x, y: y};
+      els.waqfMenu.classList.add('hidden');
+      els.waqfColorMenu.classList.remove('hidden');
+      positionMenu(els.waqfColorMenu, x, y);
+    }
+    function openDeleteMenu(wordEl, x, y){
+      pendingKey = wordEl.getAttribute('data-key');
+      els.waqfDeleteMenu.classList.remove('hidden');
+      positionMenu(els.waqfDeleteMenu, x, y);
     }
 
     function onStart(x, y, target){
+      if(state[currentWaqfVisibilityKey()] === false) return; // العلامات معطّلة من الإعدادات لهذا الرسم
       var wordEl = target.closest ? target.closest('.quran-word') : null;
       if(!wordEl) return;
       cancelled = false;
       startPos = {x: x, y: y};
       clearTimeout(timer);
       timer = setTimeout(function(){
-        if(!cancelled) openMenuFor(wordEl, x, y);
+        if(cancelled) return;
+        // Decide add vs. delete at fire time (not at press-start), so it
+        // always reflects this exact word's current state, no matter
+        // whether the finger landed on the dot or elsewhere on the word.
+        var key = wordEl.getAttribute('data-key');
+        if(waqfMarks[key]) openDeleteMenu(wordEl, x, y);
+        else openColorMenu(wordEl, x, y);
       }, LONG_PRESS_MS);
     }
     function onMove(x, y){
@@ -638,23 +815,23 @@
         clearTimeout(timer);
       }
     }
-    function onEnd(target){
+    function onEnd(){
       clearTimeout(timer);
-      // Tapping the red star itself is a direct shortcut to the same popup
-      // (pre-filled with "حذف علامة الوقف"), rather than deleting instantly —
-      // one accidental tap should never silently remove a saved mark.
-      var markEl = target && target.closest ? target.closest('.waqf-mark') : null;
-      if(markEl && !cancelled){
-        var wordEl = markEl.closest('.quran-word');
-        if(wordEl){
-          var pos = startPos || {x: 0, y: 0};
-          openMenuFor(wordEl, pos.x, pos.y);
-        }
-      }
       startPos = null;
     }
 
     root.addEventListener('touchstart', function(e){
+      if(e.touches.length > 1){
+        // A second finger just landed — this is the start of a pinch-zoom
+        // gesture, not a long-press on a word. Cancel any pending
+        // long-press right away; without this, a careful/slow pinch could
+        // hold the first finger still long enough to fire the long-press
+        // and pop the reminder-mark colour picker mid-pinch.
+        cancelled = true;
+        clearTimeout(timer);
+        startPos = null;
+        return;
+      }
       var t = e.touches[0];
       onStart(t.clientX, t.clientY, e.target);
     }, {passive:true});
@@ -676,39 +853,70 @@
     root.addEventListener('mousemove', function(e){ onMove(e.clientX, e.clientY); });
     root.addEventListener('mouseup', function(e){ onEnd(e.target); });
 
-    els.waqfMenuItem.addEventListener('click', function(){
-      var key = els.waqfMenu.dataset.key;
-      if(!key) return;
-      if(waqfMarks[key]) removeWaqfMark(key);
-      else addWaqfMark(key);
-      closeMenu();
+    els.waqfColorMenu.querySelectorAll('.waqf-color-btn').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        if(!pendingKey) return;
+        addWaqfMark(pendingKey, btn.getAttribute('data-color'));
+        closeMenus();
+      });
     });
 
-    // Tapping anywhere outside the menu closes it without acting.
-    document.addEventListener('touchstart', function(e){
-      if(els.waqfMenu.classList.contains('hidden')) return;
-      if(!els.waqfMenu.contains(e.target)) closeMenu();
-    }, {passive:true});
-    document.addEventListener('mousedown', function(e){
-      if(els.waqfMenu.classList.contains('hidden')) return;
-      if(!els.waqfMenu.contains(e.target)) closeMenu();
+    els.waqfDeleteMenuItem.addEventListener('click', function(){
+      if(!pendingKey) return;
+      removeWaqfMark(pendingKey);
+      closeMenus();
     });
+
+    // Tapping anywhere outside an open popup closes it without acting.
+    function outsideClose(e){
+      var openMenu = ![els.waqfMenu, els.waqfColorMenu, els.waqfDeleteMenu].every(function(m){
+        return m.classList.contains('hidden');
+      });
+      if(!openMenu) return;
+      var insideAny = els.waqfMenu.contains(e.target) ||
+        els.waqfColorMenu.contains(e.target) ||
+        els.waqfDeleteMenu.contains(e.target);
+      if(!insideAny) closeMenus();
+    }
+    document.addEventListener('touchstart', outsideClose, {passive:true});
+    document.addEventListener('mousedown', outsideClose);
   })();
 
-  // ---- تصدير/استيراد علامات الوقف الشخصية (JSON) ----
+  // ---- تصدير/استيراد علامات التذكير (JSON) ----
   els.btnExportWaqf && els.btnExportWaqf.addEventListener('click', function(){
-    var payload = JSON.stringify({app: 'مصحف الركوع', type: 'waqf-marks', marks: waqfMarks}, null, 2);
+    // Export both script modes together, each under its own key, since a
+    // reader may have separate marks on the Madinah and Naskh Ta'liq
+    // mushaf. Only the active mode lives in memory (waqfMarks); the other
+    // mode is read fresh from its own storage slot.
+    var uthmaniMarks = (state.fontStyle === 'uthmani') ? waqfMarks : readWaqfMarksFromStorage('uthmani');
+    var indopakMarks = (state.fontStyle !== 'uthmani') ? waqfMarks : readWaqfMarksFromStorage('indopak');
+    var payload = JSON.stringify({
+      app: 'مصحف الركوع',
+      type: 'reminder-marks',
+      marks: {uthmani: uthmaniMarks, indopak: indopakMarks}
+    }, null, 2);
     var blob = new Blob([payload], {type: 'application/json'});
     var url = URL.createObjectURL(blob);
     var a = document.createElement('a');
     a.href = url;
-    a.download = 'علامات_الوقف.json';
+    a.download = 'علامات_التذكير.json';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     setTimeout(function(){ URL.revokeObjectURL(url); }, 2000);
-    showToast('تم تصدير علامات الوقف');
+    showToast('تم تصدير علامات التذكير');
   });
+  // Merges an incoming mark set into one script mode's storage (not
+  // necessarily the active one), converting legacy bare-timestamp marks
+  // the same way loadWaqfMarks() does.
+  function importMarksIntoStyle(style, incoming){
+    var current = readWaqfMarksFromStorage(style);
+    Object.keys(incoming).forEach(function(k){
+      var v = incoming[k];
+      current[k] = (typeof v === 'number') ? {c: 'red', t: v} : v;
+    });
+    writeWaqfMarksToStorage(style, current);
+  }
   els.importWaqfInput && els.importWaqfInput.addEventListener('change', function(){
     var file = els.importWaqfInput.files && els.importWaqfInput.files[0];
     if(!file) return;
@@ -718,10 +926,25 @@
         var data = JSON.parse(reader.result);
         var incoming = (data && data.marks) ? data.marks : data;
         if(!incoming || typeof incoming !== 'object') throw new Error('bad format');
-        Object.keys(incoming).forEach(function(k){ waqfMarks[k] = incoming[k]; });
-        saveWaqfMarks();
+        // New exports nest marks under {uthmani, indopak}. Older exports
+        // (from before marks were split per mode) are a flat map at the
+        // top level — import those into the active mode only, matching
+        // the old behavior exactly.
+        var isPerMode = ('uthmani' in incoming) || ('indopak' in incoming);
+        if(isPerMode){
+          importMarksIntoStyle('uthmani', incoming.uthmani || {});
+          importMarksIntoStyle('indopak', incoming.indopak || {});
+          waqfMarks = loadWaqfMarks(); // refresh in-memory copy for the active mode
+        }else{
+          // Accept both the new {c, t} shape and legacy bare-timestamp marks.
+          Object.keys(incoming).forEach(function(k){
+            var v = incoming[k];
+            waqfMarks[k] = (typeof v === 'number') ? {c: 'red', t: v} : v;
+          });
+          saveWaqfMarks();
+        }
         render(); // refresh the currently open page so imported marks show immediately
-        showToast('تم استيراد علامات الوقف');
+        showToast('تم استيراد علامات التذكير');
       }catch(err){
         showToast('ملف غير صالح');
       }
@@ -828,16 +1051,26 @@
   els.btnCloseSettings.addEventListener('click', function(){ closePanel(els.settingsPanel); });
   els.tileSettings.addEventListener('click', function(){ openPanel(els.settingsPanel); });
 
+  // Font size is stored independently per script mode (Uthmani vs Indopak),
+  // since the two scripts read comfortably at different sizes. This key
+  // picks which stored size applies to whatever script is on screen right
+  // now, so the +/-، pinch-zoom، and settings label all always agree.
+  function currentFontSizeKey(){
+    return state.fontStyle === 'uthmani' ? 'fontSizeUthmani' : 'fontSizeIndopak';
+  }
   function applyFontSize(){
-    document.documentElement.style.setProperty('--ayah-size', state.fontSize + 'px');
-    els.fontSizeLabel.textContent = state.fontSize;
+    var size = state[currentFontSizeKey()];
+    document.documentElement.style.setProperty('--ayah-size', size + 'px');
+    els.fontSizeLabel.textContent = size;
   }
   els.fontMinus.addEventListener('click', function(){
-    state.fontSize = Math.max(18, state.fontSize - 2);
+    var key = currentFontSizeKey();
+    state[key] = Math.max(18, state[key] - 2);
     applyFontSize(); saveState();
   });
   els.fontPlus.addEventListener('click', function(){
-    state.fontSize = Math.min(44, state.fontSize + 2);
+    var key = currentFontSizeKey();
+    state[key] = Math.min(44, state[key] + 2);
     applyFontSize(); saveState();
   });
 
@@ -852,6 +1085,24 @@
     var btnUthmani = document.getElementById('btnFontUthmani');
     if(btnAmiri) btnAmiri.classList.toggle('active', state.fontStyle !== 'uthmani');
     if(btnUthmani) btnUthmani.classList.toggle('active', state.fontStyle === 'uthmani');
+    // Reminder marks are stored per script mode (see waqfKeyForStyle), so
+    // switching mode must reload the in-memory map before re-rendering —
+    // otherwise the previous mode's marks would keep showing on the new one.
+    waqfMarks = loadWaqfMarks();
+    // Each script mode has its own independent font size — re-apply it now
+    // so the page and the settings-panel label switch over to whichever
+    // size was last set for this mode, instead of keeping the other mode's.
+    applyFontSize();
+    // Whether marks are shown is also independent per script mode — refresh
+    // the toggle switch and the hide/show class to match this mode's value.
+    applyWaqfVisibility();
+    // Reading progress (percentage / reached count) is tracked per script
+    // mode too, so refresh it now to show this mode's own numbers.
+    updateProgressUI();
+    // The saved reading bookmark is per script mode too — refresh the
+    // bookmark button state and the home-screen bookmark card now.
+    updateBookmarkButton();
+    updateBookmarkCard();
     if(typeof render === 'function' && PAGES[state.page]) render();
   }
   var btnFontAmiri = document.getElementById('btnFontAmiri');
@@ -873,12 +1124,27 @@
   });
 
   els.waqfToggle && els.waqfToggle.addEventListener('change', function(){
-    state.showWaqfMarks = els.waqfToggle.checked;
+    state[currentWaqfVisibilityKey()] = els.waqfToggle.checked;
     applyWaqfVisibility(); saveState();
   });
 
+  els.pinchZoomToggle && els.pinchZoomToggle.addEventListener('change', function(){
+    state.pinchZoomEnabled = els.pinchZoomToggle.checked;
+    saveState();
+  });
+
+  els.wakeLockToggle && els.wakeLockToggle.addEventListener('change', function(){
+    state.keepScreenAwake = els.wakeLockToggle.checked;
+    saveState();
+    if(state.keepScreenAwake) requestWakeLock();
+    else releaseWakeLock();
+  });
+
   els.btnResetProgress.addEventListener('click', function(){
-    state.furthest = state.page || 0;
+    // Progress now mirrors the last-visited position directly, so "reset"
+    // means starting over from the beginning for this script mode —
+    // not re-baselining to wherever the reader currently is.
+    state[currentLastPageKey()] = 0;
     updateProgressUI();
     saveState();
   });
@@ -896,6 +1162,159 @@
     });
     surahOrder.sort(function(a,b){ return a.surah - b.surah; });
   })();
+
+  // Strips diacritics (harakat, tanween, sukun, shadda, Quranic annotation
+  // and small waqf marks) and folds letter variants (alef forms, ta
+  // marbuta, alef maksura) so a search for a plain-typed word like "الرحمن"
+  // matches the fully-vocalized Mushaf text "ٱلرَّحۡمَٰنِ" regardless of
+  // which diacritics/marks sit on top of the letters.
+  function normalizeArabic(s){
+    return (s || '')
+      .replace(/[\u064B-\u065F\u0610-\u061A\u06D6-\u06ED\u0670\u08F0-\u08FF\u06DF\u06E0-\u06E4\u06E7\u06E8\u06EA-\u06ED]/g, '')
+      .replace(/[\u0640]/g, '')            // tatweel
+      .replace(/[إأآٱ]/g, 'ا')
+      .replace(/ى/g, 'ي')
+      .replace(/ة/g, 'ه')
+      .replace(/ؤ/g, 'و')
+      .replace(/ئ/g, 'ي')
+      .replace(/[^\u0621-\u064A\s]/g, '')  // drop non-letter symbols (۩ ۞ ۚ ۖ ...)
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  // Flat, search-friendly index of every ayah in the mushaf, built once at
+  // startup. Each entry keeps the ruku page index so a match can jump the
+  // reader straight to it, the same way surah results already do.
+  var ayahIndex = [];
+  (function buildAyahIndex(){
+    PAGES.forEach(function(p, i){
+      p.ayahs.forEach(function(a){
+        ayahIndex.push({
+          surah: a.surah, surahName: a.surahName, ayah: a.ayah, page: i,
+          text: a.text, textIndopak: a.textIndopak || a.text,
+          norm: normalizeArabic(a.text),
+          normIndopak: normalizeArabic(a.textIndopak || a.text)
+        });
+      });
+    });
+  })();
+
+  var AYAH_SEARCH_LIMIT = 80; // keep the result list scrollable, not a full concordance
+  function searchAyahs(query){
+    var q = normalizeArabic(query);
+    if(!q) return [];
+    var out = [];
+    for(var i = 0; i < ayahIndex.length && out.length < AYAH_SEARCH_LIMIT; i++){
+      var e = ayahIndex[i];
+      if(e.norm.indexOf(q) !== -1 || e.normIndopak.indexOf(q) !== -1) out.push(e);
+    }
+    return out;
+  }
+
+  // Builds a short snippet centred on the match so long ayaat don't force
+  // the result list into a wall of text; falls back to the full ayah when
+  // it's already short enough.
+  function ayahSnippet(fullText, query){
+    var SNIPPET_RADIUS = 40;
+    if(fullText.length <= SNIPPET_RADIUS * 2) return fullText;
+    var idx = normalizeArabic(fullText).indexOf(normalizeArabic(query));
+    if(idx === -1) return fullText.slice(0, SNIPPET_RADIUS * 2) + '…';
+    var start = Math.max(0, idx - SNIPPET_RADIUS);
+    var end = Math.min(fullText.length, idx + query.length + SNIPPET_RADIUS);
+    return (start > 0 ? '…' : '') + fullText.slice(start, end) + (end < fullText.length ? '…' : '');
+  }
+
+  // Locates which word(s) of the ayah actually contain the search match
+  // (as opposed to just the ayah's first word), using the exact same
+  // whitespace-splitting renderAyahWords uses, so the returned indices
+  // line up with the real data-key word spans in the DOM. Returns
+  // {start, end} word indices (inclusive), or null if it can't be found
+  // (shouldn't normally happen since the ayah only got here by matching).
+  function findMatchWordRange(fullText, query){
+    var normQuery = normalizeArabic(query);
+    if(!normQuery) return null;
+    var words = fullText.split(/\s+/).filter(Boolean);
+    var offsets = [];
+    var acc = '';
+    words.forEach(function(w, i){
+      if(acc.length) acc += ' ';
+      var start = acc.length;
+      acc += normalizeArabic(w);
+      offsets.push({start: start, end: acc.length, idx: i});
+    });
+    var pos = acc.indexOf(normQuery);
+    if(pos === -1) return null;
+    var endPos = pos + normQuery.length;
+    var startIdx = null, endIdx = null;
+    offsets.forEach(function(o){
+      if(startIdx === null && o.start <= pos && pos < o.end) startIdx = o.idx;
+      if(o.start < endPos && endPos <= o.end) endIdx = o.idx;
+    });
+    if(startIdx === null) startIdx = 0;
+    if(endIdx === null || endIdx < startIdx) endIdx = startIdx;
+    return {start: startIdx, end: endIdx};
+  }
+
+  function renderAyahResults(list, container, query){
+    if(!list.length) return;
+    var heading = '<div class="setting-row static" style="margin-top:8px;"><span>آيات مطابقة</span></div>';
+    var html = list.map(function(e){
+      var src = state.fontStyle !== 'uthmani' ? e.textIndopak : e.text;
+      var range = findMatchWordRange(src, query) || {start: 0, end: 0};
+      return '<div class="index-item ayah-result-item" data-page="' + e.page + '" data-surah="' + e.surah + '" data-ayah="' + e.ayah + '" data-w-start="' + range.start + '" data-w-end="' + range.end + '">' +
+        '<div class="index-item-inner">' +
+          '<div style="flex:1;">' +
+            '<div class="name">' + e.surahName + ' \u2022 آية ' + toArabicDigits(e.ayah) + '</div>' +
+            '<div class="surah-info" style="direction:rtl; white-space:normal; line-height:1.6;">' + ayahSnippet(src, query) + '</div>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+    container.insertAdjacentHTML('beforeend', heading + html);
+    container.querySelectorAll('.ayah-result-item').forEach(function(el){
+      el.addEventListener('click', function(){
+        openReaderAtAyah(
+          parseInt(el.getAttribute('data-page'), 10),
+          parseInt(el.getAttribute('data-surah'), 10),
+          parseInt(el.getAttribute('data-ayah'), 10),
+          parseInt(el.getAttribute('data-w-start'), 10),
+          parseInt(el.getAttribute('data-w-end'), 10)
+        );
+        closePanel(els.searchPanel);
+      });
+    });
+  }
+
+  // Opens the reader at a given ruku and scrolls straight to the word(s)
+  // that actually matched the search term (not just the ayah's first
+  // word), with a brief highlight flash so the hit is easy to spot on a
+  // page that may hold several ayaat. wStart/wEnd default to the first
+  // word if not given.
+  function openReaderAtAyah(pageIdx, surah, ayah, wStart, wEnd){
+    if(typeof wStart !== 'number' || isNaN(wStart)) wStart = 0;
+    if(typeof wEnd !== 'number' || isNaN(wEnd)) wEnd = wStart;
+    openReaderAt(pageIdx);
+    // The reader screen has only just been unhidden/re-rendered, so its
+    // layout isn't settled yet on this same tick — scrollIntoView called
+    // right now would measure a container that still thinks it's empty
+    // and silently do nothing. Wait two frames (one for layout, one for
+    // paint) before measuring, same pattern used for the ruku index list.
+    requestAnimationFrame(function(){
+      requestAnimationFrame(function(){
+        var words = [];
+        for(var i = wStart; i <= wEnd; i++){
+          var w = els.ayahFlow && els.ayahFlow.querySelector('.quran-word[data-key="' + surah + ':' + ayah + ':' + i + '"]');
+          if(w) words.push(w);
+        }
+        if(!words.length) return;
+        words[Math.floor(words.length / 2)].scrollIntoView({block: 'center'});
+        words.forEach(function(w){
+          w.classList.add('search-hit-flash');
+          setTimeout(function(){ w.classList.remove('search-hit-flash'); }, 2000);
+        });
+      });
+    });
+  }
 
   function renderSurahList(list, container){
     if(!list.length){
@@ -974,7 +1393,16 @@
     var q = els.searchInput.value.trim();
     if(!q){ renderSurahList(surahOrder, els.searchResults); return; }
     var filtered = surahOrder.filter(function(s){ return s.name.indexOf(q) !== -1; });
-    renderSurahList(filtered, els.searchResults);
+    // Ayah text search only kicks in from 2 characters so a single letter
+    // doesn't return a huge, meaningless result set.
+    var ayahMatches = q.length >= 2 ? searchAyahs(q) : [];
+    if(!filtered.length && !ayahMatches.length){
+      els.searchResults.innerHTML = '<div class="empty-state">لا توجد نتائج</div>';
+      return;
+    }
+    if(filtered.length) renderSurahList(filtered, els.searchResults);
+    else els.searchResults.innerHTML = '';
+    if(ayahMatches.length) renderAyahResults(ayahMatches, els.searchResults, q);
   });
 
   function renderFavorites(){
@@ -1053,20 +1481,22 @@
     pendingFavPage = null;
   });
 
-  // ---- Bookmark (علامة القراءة): a single saved spot, separate from
-  // favorites. Tapping the bookmark button always saves/moves it to the
-  // ruku currently open. Tapping the home-screen bookmark card jumps
-  // straight back to that saved spot.
+  // ---- Bookmark (علامة القراءة): a single saved spot per script mode,
+  // separate from favorites. Tapping the bookmark button always saves/moves
+  // it to the ruku currently open, in whichever script is active right now.
+  // Tapping the home-screen bookmark card jumps back to that script's own
+  // saved spot.
   els.btnBookmark && els.btnBookmark.addEventListener('click', function(){
-    bookmark = {page: state.page, ts: Date.now()};
+    bookmark[currentBookmarkKey()] = {page: state.page, ts: Date.now()};
     saveBookmarkToStorage();
     updateBookmarkButton();
     showToast('تم حفظ علامة القراءة هنا');
   });
 
   els.bookmarkCard && els.bookmarkCard.addEventListener('click', function(){
-    if(!bookmark) return;
-    openReaderAt(bookmark.page);
+    var b = bookmark[currentBookmarkKey()];
+    if(!b) return;
+    openReaderAt(b.page);
   });
 
   // ---- الذهاب إلى ركوع/صفحة رقم ----
@@ -1118,8 +1548,12 @@
   applyFontSize();
   applyFontStyle();
   applyNight();
-  if(els.waqfToggle) els.waqfToggle.checked = state.showWaqfMarks !== false;
   applyWaqfVisibility();
+  if(els.pinchZoomToggle) els.pinchZoomToggle.checked = state.pinchZoomEnabled !== false;
+  if(els.wakeLockToggle){
+    els.wakeLockToggle.checked = !!state.keepScreenAwake && WAKE_LOCK_SUPPORTED;
+    requestWakeLock();
+  }
   buildIndex();
   updateProgressUI();
   updateBookmarkCard();
