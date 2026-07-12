@@ -9,9 +9,12 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icons/favicon.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Amiri+Quran&family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
+<!-- Warms up the connection (DNS + TLS) to the tafsir source ahead of
+     time, on page load, instead of only starting it the moment the user
+     taps تفسير الركوع for the first time — that handshake is normally
+     the biggest chunk of the "first tap" delay. See reader-tafsir.js. -->
+<link rel="preconnect" href="https://raw.githubusercontent.com" crossorigin>
+<link rel="dns-prefetch" href="https://raw.githubusercontent.com">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -65,7 +68,11 @@
         <svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2l2.9 6.5 7.1.7-5.4 4.7 1.6 7-6.2-3.8-6.2 3.8 1.6-7L2 9.2l7.1-.7z"/></svg>
         <span>المفضلة</span>
       </button>
-      <button class="home-tile wide" id="tileSettings">
+      <button class="home-tile" id="tileWaqfGuide">
+        <svg viewBox="0 0 24 24"><path d="M12 6c-2-1.5-5-2-8-1v13c3-1 6-.5 8 1 2-1.5 5-2 8-1V5c-3-1-6-.5-8 1z"/><path d="M12 6v13"/></svg>
+        <span>دليل القارئ</span>
+      </button>
+      <button class="home-tile" id="tileSettings">
         <svg viewBox="0 0 24 24"><path d="M12 15.5a3.5 3.5 0 100-7 3.5 3.5 0 000 7z"/><path d="M19.4 13a7.97 7.97 0 000-2l2-1.6-2-3.4-2.4 1a8 8 0 00-1.7-1L15 3h-6l-.3 2.6a8 8 0 00-1.7 1l-2.4-1-2 3.4L4.6 11a7.97 7.97 0 000 2l-2 1.6 2 3.4 2.4-1a8 8 0 001.7 1L9 21h6l.3-2.6a8 8 0 001.7-1l2.4 1 2-3.4-2-1.6z"/></svg>
         <span>الإعدادات</span>
       </button>
@@ -99,11 +106,18 @@
 
   <main id="reader" class="reader">
     <div class="page-frame">
-      <div class="corner tl"></div><div class="corner tr"></div>
-      <div class="corner bl"></div><div class="corner br"></div>
       <button class="fav-btn" id="btnFavorite" aria-label="إضافة إلى المفضلة">
         <svg viewBox="0 0 24 24"><path d="M12 2l2.9 6.5 7.1.7-5.4 4.7 1.6 7-6.2-3.8-6.2 3.8 1.6-7L2 9.2l7.1-.7z"/></svg>
       </button>
+      <button class="listen-btn" id="btnListen" aria-label="استماع لهذا الركوع" title="استماع لهذا الركوع">
+        <svg id="listenIconPlay" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+        <svg id="listenIconPause" viewBox="0 0 24 24" class="hidden"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>
+        <svg id="listenIconLoading" class="listen-spin hidden" viewBox="0 0 24 24"><path d="M12 2a10 10 0 0 1 10 10" fill="none" stroke-width="2.4"/></svg>
+      </button>
+      <button class="tafsir-btn" id="btnTafsir" aria-label="المختصر في تفسير القرآن" title="المختصر في تفسير القرآن">
+        <svg viewBox="0 0 24 24"><path d="M12 6c-2-1.5-5-2-8-1v13c3-1 6-.5 8 1 2-1.5 5-2 8-1V5c-3-1-6-.5-8 1z"/><path d="M12 6v13"/></svg>
+      </button>
+
       <button class="bookmark-btn" id="btnBookmark" aria-label="حفظ علامة القراءة هنا" title="حفظ علامة القراءة هنا">
         <svg viewBox="0 0 24 24"><path d="M6 3h12v18l-6-4-6 4V3z"/></svg>
       </button>
@@ -164,6 +178,13 @@
         <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6l-12 12"/></svg>
       </button>
     </div>
+    <div class="setting-row" id="juzOnlyRow">
+      <span>إظهار ركوعات الجزء الحالي فقط</span>
+      <label class="switch">
+        <input type="checkbox" id="juzOnlyToggle">
+        <span class="slider"></span>
+      </label>
+    </div>
     <div class="panel-body" id="juzList"></div>
   </div>
 
@@ -192,6 +213,164 @@
     <div class="panel-body" id="favoritesList"></div>
   </div>
 
+  <!-- ============ WAQF GUIDE PANEL ============ -->
+  <div id="waqfGuidePanel" class="panel hidden">
+    <div class="panel-head">
+      <h2>دليل القارئ</h2>
+      <button class="icon-btn" id="btnCloseWaqfGuide" aria-label="إغلاق">
+        <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6l-12 12"/></svg>
+      </button>
+    </div>
+    <div class="guide-tabs">
+      <button class="guide-tab-btn active" id="tabWaqfMarks">علامات الوقف</button>
+      <button class="guide-tab-btn" id="tabKhatmDua">دعاء ختم القرءان</button>
+    </div>
+    <div class="panel-body">
+      <div class="guide-tab-panel" id="waqfMarksTab">
+      <div class="waqf-guide-list">
+        <div class="waqf-guide-item">
+          <div class="waqf-guide-symbol">م</div>
+          <div class="waqf-guide-text">
+            <b>الوقف اللازم</b>
+            <p>يلزم الوقف عليه، لأن الوصل قد يغيّر المعنى أو يوهم غير المقصود.</p>
+          </div>
+        </div>
+        <div class="waqf-guide-item">
+          <div class="waqf-guide-symbol">لا</div>
+          <div class="waqf-guide-text">
+            <b>الوقف الممنوع</b>
+            <p>لا يوقف عليه، إلا إذا وافق رأس آية، فيجوز الوقف عند كثير من أهل العلم.</p>
+          </div>
+        </div>
+        <div class="waqf-guide-item">
+          <div class="waqf-guide-symbol">ط</div>
+          <div class="waqf-guide-text">
+            <b>الوقف المطلق</b>
+            <p>الوقف أولى من الوصل، ويحسن الابتداء بما بعده.</p>
+          </div>
+        </div>
+        <div class="waqf-guide-item">
+          <div class="waqf-guide-symbol">ج</div>
+          <div class="waqf-guide-text">
+            <b>الوقف الجائز</b>
+            <p>يجوز الوقف والوصل، وكلاهما صحيح لتجاذب الموجبين من الطرفين.</p>
+          </div>
+        </div>
+        <div class="waqf-guide-item">
+          <div class="waqf-guide-symbol">ز</div>
+          <div class="waqf-guide-text">
+            <b>الوقف المجوز لوجه</b>
+            <p>يجوز فيه الوقف لوجه من الوجوه المعتبرة، لكن الوصل أولى.</p>
+          </div>
+        </div>
+        <div class="waqf-guide-item">
+          <div class="waqf-guide-symbol">ص</div>
+          <div class="waqf-guide-text">
+            <b>الوقف المرخص ضرورة</b>
+            <p>يرخص الوقف ضرورة انقطاع النفس لطول الكلام، ولا يلزمه الوصل بالعود؛ لأن ما بعده جملة مفهومة.</p>
+          </div>
+        </div>
+        <div class="waqf-guide-item">
+          <div class="waqf-guide-symbol">قف</div>
+          <div class="waqf-guide-text">
+            <b>الوقف المستحب</b>
+            <p>يستحب الوقف عليه، ولا حرج في الوصل. وتوضع هذه العلامة أيضًا لإبراز معنى الكلام الموقوف عليه.</p>
+          </div>
+        </div>
+        <div class="waqf-guide-item">
+          <div class="waqf-guide-symbol">ق</div>
+          <div class="waqf-guide-text">
+            <b>وقف لبيان المعنى</b>
+            <p>موضع وقف قال به بعض العلماء، ولم يأخذ به أكثرهم. وتوضع هذه العلامة أيضًا لإبراز معنى الابتداء بالجملة التي بعدها.</p>
+          </div>
+        </div>
+        <div class="waqf-guide-item">
+          <div class="waqf-guide-symbol">صلي</div>
+          <div class="waqf-guide-text">
+            <b>الوصل أولى</b>
+            <p>يجوز الوقف، لكن الوصل أولى.</p>
+          </div>
+        </div>
+        <div class="waqf-guide-item">
+          <div class="waqf-guide-symbol">قلي</div>
+          <div class="waqf-guide-text">
+            <b>الوقف أولى</b>
+            <p>يجوز الوصل، لكن الوقف أولى.</p>
+          </div>
+        </div>
+        <div class="waqf-guide-item">
+          <div class="waqf-guide-symbol">س</div>
+          <div class="waqf-guide-text">
+            <b>السكتة</b>
+            <p>سكتة لطيفة من غير تنفس.</p>
+          </div>
+        </div>
+        <div class="waqf-guide-item">
+          <div class="waqf-guide-symbol">∴ ∴</div>
+          <div class="waqf-guide-text">
+            <b>وقف التعانق (المراقبة)</b>
+            <p>إذا وقف القارئ على أحد الموضعين، فلا يقف على الآخر.</p>
+          </div>
+        </div>
+        <div class="waqf-guide-item">
+          <div class="waqf-guide-symbol">ع</div>
+          <div class="waqf-guide-text">
+            <b>علامة انتهاء الركوع</b>
+            <p>تدل على نهاية الركوع، وهو التقسيم المعتمد في هذا التطبيق لتيسير الورد اليومي، ويمكن ختم القرآن في نحو عامين بمعدل ركوع واحد يوميًا.</p>
+          </div>
+        </div>
+        <div class="waqf-guide-item">
+          <div class="waqf-guide-symbol">۝</div>
+          <div class="waqf-guide-text">
+            <b>رأس الآية</b>
+            <p>تدل بهيئتها على نهاية الآية، والرقم داخلها هو رقم الآية في السورة وفق العد الكوفي.</p>
+          </div>
+        </div>
+      </div>
+      <p class="waqf-guide-footnote">تنبيه: هذه العلامات وضعت لتيسير القراءة وفهم المعنى، وهي اجتهادات لعلماء الوقف والابتداء، وليست جميعها محل اتفاق، لذلك قد تختلف بعض مواضعها بين المصاحف والروايات.</p>
+      </div>
+
+      <div class="guide-tab-panel hidden" id="khatmDuaTab">
+        <div class="khatm-dua-text">
+          <p>اللَّهُمَّ ارْحَمْنِي بالقُرْءَانِ وَاجْعَلهُ لِي إِمَاماً وَنُوراً وَهُدًى وَرَحْمَةً.</p>
+          <p>اللَّهُمَّ ذَكِّرْنِي مِنْهُ مَانَسِيتُ وَعَلِّمْنِي مِنْهُ مَاجَهِلْتُ وَارْزُقْنِي تِلاَوَتَهُ آنَاءَ اللَّيْلِ وَأَطْرَافَ النَّهَارِ وَاجْعَلْهُ لِي حُجَّةً يَارَبَّ العَالَمِينَ.</p>
+          <p>اللَّهُمَّ أَصْلِحْ لِي دِينِي الَّذِي هُوَ عِصْمَةُ أَمْرِي، وَأَصْلِحْ لِي دُنْيَايَ الَّتِي فِيهَا مَعَاشِي، وَأَصْلِحْ لِي آخِرَتِي الَّتِي فِيهَا مَعَادِي، وَاجْعَلِ الحَيَاةَ زِيَادَةً لِي فِي كُلِّ خَيْرٍ وَاجْعَلِ المَوْتَ رَاحَةً لِي مِنْ كُلِّ شَرٍّ.</p>
+          <p>اللَّهُمَّ اجْعَلْ خَيْرَ عُمْرِي آخِرَهُ وَخَيْرَ عَمَلِي خَوَاتِمَهُ وَخَيْرَ أَيَّامِي يَوْمَ أَلْقَاكَ فِيهِ.</p>
+          <p>اللَّهُمَّ إِنِّي أَسْأَلُكَ عِيشَةً هَنِيَّةً وَمِيتَةً سَوِيَّةً وَمَرَدًّا غَيْرَ مُخْزٍ وَلاَ فَاضِحٍ.</p>
+          <p>اللَّهُمَّ إِنِّي أَسْأَلُكَ خَيْرَ المَسْأَلةِ وَخَيْرَ الدُّعَاءِ وَخَيْرَ النَّجَاحِ وَخَيْرَ العِلْمِ وَخَيْرَ العَمَلِ وَخَيْرَ الثَّوَابِ وَخَيْرَ الحَيَاةِ وَخيْرَ المَمَاتِ وَثَبِّتْنِي وَثَقِّلْ مَوَازِينِي وَحَقِّقْ إِيمَانِي وَارْفَعْ دَرَجَتِي وَتَقَبَّلْ صَلاَتِي وَاغْفِرْ خَطِيئَاتِي وَأَسْأَلُكَ العُلَا مِنَ الجَنَّةِ.</p>
+          <p>اللَّهُمَّ إِنِّي أَسْأَلُكَ مُوجِبَاتِ رَحْمَتِكَ وَعَزَائِمِ مَغْفِرَتِكَ وَالسَّلاَمَةَ مِنْ كُلِّ إِثْمٍ وَالغَنِيمَةَ مِنْ كُلِّ بِرٍّ وَالفَوْزَ بِالجَنَّةِ وَالنَّجَاةَ مِنَ النَّارِ.</p>
+          <p>اللَّهُمَّ أَحْسِنْ عَاقِبَتَنَا فِي الأُمُورِ كُلِّهَا، وَأجِرْنَا مِنْ خِزْيِ الدُّنْيَا وَعَذَابِ الآخِرَةِ.</p>
+          <p>اللَّهُمَّ اقْسِمْ لَنَا مِنْ خَشْيَتِكَ مَاتَحُولُ بِهِ بَيْنَنَا وَبَيْنَ مَعْصِيَتِكَ وَمِنْ طَاعَتِكَ مَاتُبَلِّغُنَا بِهَا جَنَّتَكَ وَمِنَ اليَقِينِ مَاتُهَوِّنُ بِهِ عَلَيْنَا مَصَائِبَ الدُّنْيَا وَمَتِّعْنَا بِأَسْمَاعِنَا وَأَبْصَارِنَا وَقُوَّتِنَا مَاأَحْيَيْتَنَا وَاجْعَلْهُ الوَارِثَ مِنَّا وَاجْعَلْ ثَأْرَنَا عَلَى مَنْ ظَلَمَنَا وَانْصُرْنَا عَلَى مَنْ عَادَانَا وَلاَ تجْعَلْ مُصِيبَتَنَا فِي دِينِنَا وَلاَ تَجْعَلِ الدُّنْيَا أَكْبَرَ هَمِّنَا وَلَا مَبْلَغَ عِلْمِنَا وَلاَ تُسَلِّطْ عَلَيْنَا مَنْ لَا يَرْحَمُنَا.</p>
+          <p>اللَّهُمَّ لَا تَدَعْ لَنَا ذَنْبًا إِلَّا غَفَرْتَهُ وَلَا هَمَّا إِلَّا فَرَّجْتَهُ وَلَا دَيْنًا إِلَّا قَضَيْتَهُ وَلَا حَاجَةً مِنْ حَوَائِجِ الدُّنْيَا وَالآخِرَةِ إِلَّا قَضَيْتَهَا يَاأَرْحَمَ الرَّاحِمِينَ.</p>
+          <p>رَبَّنَا آتِنَا فِي الدُّنْيَا حَسَنَةً وَفِي الآخِرَةِ حَسَنَةً وَقِنَا عَذَابَ النَّارِ وَصَلَّى اللهُ عَلَى سَيِّدِنَا وَنَبِيِّنَا مُحَمَّدٍ وَعَلَى آلِهِ وَأَصْحَابِهِ الأَخْيَارِ وَسَلَّمَ تَسْلِيمًا كَثِيراً.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ TAFSIR PANEL (تفسير الركوع - المختصر) ============ -->
+  <div id="tafsirPanel" class="panel hidden">
+    <div class="panel-head">
+      <h2>المختصر في تفسير القرآن</h2>
+      <button class="icon-btn" id="btnCloseTafsir" aria-label="إغلاق">
+        <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6l-12 12"/></svg>
+      </button>
+    </div>
+    <div class="panel-body">
+      <div id="tafsirList"></div>
+      <nav class="tafsir-nav">
+        <button id="btnTafsirPrev" class="tafsir-nav-btn" aria-label="الركوع السابق">
+          <svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg>
+          <span>الركوع السابق</span>
+        </button>
+        <button id="btnTafsirNext" class="tafsir-nav-btn" aria-label="الركوع التالي">
+          <span>الركوع التالي</span>
+          <svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>
+        </button>
+      </nav>
+    </div>
+  </div>
+
   <!-- ============ FAVORITE NAME MODAL ============ -->
   <div id="favModal" class="modal-overlay hidden">
     <div class="modal-box">
@@ -213,6 +392,18 @@
       <div class="modal-actions">
         <button id="gotoModalCancel" class="modal-btn ghost">إلغاء</button>
         <button id="gotoModalGo" class="modal-btn primary">اذهب</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ CLEAR ALL REMINDER MARKS CONFIRM MODAL ============ -->
+  <div id="clearRemindersModal" class="modal-overlay hidden">
+    <div class="modal-box">
+      <h3>حذف جميع علامات التذكير</h3>
+      <p class="about-text" id="clearRemindersModalText" style="margin:0 0 24px;">سيتم حذف جميع علامات التذكير في المصحف الحالي، ولا يمكن التراجع عن هذا الإجراء.</p>
+      <div class="modal-actions" style="gap:18px; padding:0 14px;">
+        <button id="clearRemindersModalCancel" class="modal-btn primary" style="background:#7EB8A7; font-weight:700;">إلغاء</button>
+        <button id="clearRemindersModalConfirm" class="modal-btn primary" style="background:#CB5D52; font-weight:700;">حذف</button>
       </div>
     </div>
   </div>
@@ -257,8 +448,8 @@
       <div class="setting-row">
         <span>رسم المصحف</span>
         <div class="font-choice">
-          <button class="font-choice-btn" data-font="amiri" id="btnFontAmiri">نسخ تعليق</button>
           <button class="font-choice-btn" data-font="uthmani" id="btnFontUthmani">مصحف المدينة</button>
+          <button class="font-choice-btn" data-font="amiri" id="btnFontAmiri">نسخ تعليق</button>
         </div>
       </div>
       <div class="setting-row">
@@ -276,12 +467,52 @@
           <span class="slider"></span>
         </label>
       </div>
+      <p class="about-text" id="waqfMarksHint" style="margin-top:2px;">
+        🕒 اضغط مطولًا على الكلمة لإضافة علامة تذكير أو حذفها.
+      </p>
+      <hr class="settings-divider">
+      <div class="setting-row">
+        <span>القارئ</span>
+        <select class="reciter-select" id="reciterSelect">
+          <option value="abdulbasit">عبدالباسط عبدالصمد</option>
+          <option value="jibreel">محمد جبريل</option>
+        </select>
+      </div>
+      <div class="setting-row">
+        <span>التمرير التلقائي أثناء الاستماع</span>
+        <label class="switch">
+          <input type="checkbox" id="autoScrollToggle" checked>
+          <span class="slider"></span>
+        </label>
+      </div>
+      <div class="setting-row">
+        <span>تكرار تلاوة الآية</span>
+        <select class="reciter-select" id="recitationRepeatSelect">
+          <option value="1">مرة واحدة</option>
+          <option value="2">مرتان</option>
+          <option value="3">٣ مرات</option>
+        </select>
+      </div>
+      <div class="setting-row">
+        <span>بدء التلاوة من الآية</span>
+        <select class="reciter-select" id="longPressScopeSelect">
+          <option value="ayah">الآية فقط</option>
+          <option value="ruku">حتى الركوع</option>
+          <option value="surah">حتى السورة</option>
+          <option value="juz">حتى الجزء</option>
+        </select>
+      </div>
+      <p class="about-text" id="longPressScopeHint" style="margin-top:2px;">
+        🕒 اضغط مطولًا على رقم الآية لبدء التلاوة منها.
+      </p>
+      <hr class="settings-divider">
       <div class="setting-row static">
         <span>نسبة القراءة</span>
         <b id="settingsProgress">٠٪</b>
       </div>
       <button class="reset-btn" id="btnResetProgress">إعادة ضبط تقدّم القراءة</button>
 
+      <hr class="settings-divider">
       <div class="setting-row">
         <span>التكبير بإصبعين (Pinch Zoom)</span>
         <label class="switch">
@@ -303,6 +534,7 @@
           <span class="slider"></span>
         </label>
       </div>
+      <hr class="settings-divider">
       <div class="setting-row static">
         <span>علامات التذكير</span>
       </div>
@@ -311,6 +543,8 @@
         <label class="modal-btn ghost" id="btnImportWaqf" for="importWaqfInput" style="cursor:pointer;">استيراد (JSON)</label>
         <input type="file" id="importWaqfInput" accept="application/json" class="hidden">
       </div>
+      <button class="reset-btn" id="btnClearAllReminders">حذف جميع علامات التذكير (الرسم الحالي)</button>
+      <hr class="settings-divider">
       <div class="setting-row static">
         <span>عدد الركوعات</span>
         <b id="rukuCount">٣٩ ركوعًا</b>
@@ -329,8 +563,24 @@
 </div>
 
 <script src="surah-meta.js"></script>
+<script src="surah-names-vocalized.js"></script>
 <script src="juz-info.js"></script>
 <script src="data.js"></script>
+<script src="constants.js"></script>
+<script src="storage-manager.js"></script>
+<script src="searchManager.js"></script>
+<script src="audioManager.js"></script>
+<script src="readerManager.js"></script>
+<script src="ui.js"></script>
+<script src="dialogs.js"></script>
+<script src="reader-favorites.js"></script>
+<script src="reader-bookmark.js"></script>
+<script src="reader-reminders.js"></script>
+<script src="reader-guide.js"></script>
+<script src="reader-tafsir.js"></script>
+<script src="home.js"></script>
+<script src="settings.js"></script>
+<script src="navigation.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

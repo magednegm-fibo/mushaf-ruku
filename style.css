@@ -8,8 +8,48 @@
   src: url('fonts/PDMS-Saleem-QuranFont.woff2') format('woff2');
   font-display: swap;
 }
+/* Self-hosted replacements for the two Google Fonts (Cairo, Amiri Quran)
+   that index.html used to load from fonts.googleapis.com — same font
+   files (from the @fontsource npm packages, which mirror Google Fonts
+   exactly), just served locally so the app has no external network
+   dependency at all, matching the "offline PWA" requirement. */
+@font-face{
+  font-family: 'Cairo';
+  src: url('fonts/cairo-arabic-400-normal.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face{
+  font-family: 'Cairo';
+  src: url('fonts/cairo-arabic-500-normal.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face{
+  font-family: 'Cairo';
+  src: url('fonts/cairo-arabic-600-normal.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face{
+  font-family: 'Cairo';
+  src: url('fonts/cairo-arabic-700-normal.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face{
+  font-family: 'Amiri Quran';
+  src: url('fonts/amiri-quran-arabic-400-normal.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
 :root{
-  --paper: #F6EFDD;
+  --paper: #F6F1E4;
   --paper-edge: #EDE2C6;
   --ink: #2B2013;
   --ink-soft: #6b5a3e;
@@ -28,12 +68,14 @@
 
 *{box-sizing:border-box; -webkit-tap-highlight-color: transparent;}
 /* Every tap target in the app is a <button> or one of these custom
-   clickable rows (index/search/favorites lists built dynamically in JS).
+   clickable rows (index/search/favorites lists built dynamically in JS),
+   plus a few chrome text labels (surah name, ruku-end footer, page
+   indicator, topbar title) that are never meant to be selected either.
    Without this, a long-press or slow tap on any of them pops up the
    browser's native Copy/Share/Select-all bubble instead of just
    registering the tap — inputs/textareas are deliberately left out so
    typing (search box, "go to page" box) still works normally. */
-button, .index-item, .fav-item, .modal-btn{
+button, .index-item, .fav-item, .modal-btn, .surah-cartouche, .ruku-end, .page-indicator, .topbar-title{
   user-select: none;
   -webkit-user-select: none;
   -webkit-touch-callout: none;
@@ -44,7 +86,13 @@ body{
   font-family: var(--font-ui);
   background: var(--emerald-deep);
   color: var(--ink);
-  overscroll-behavior-y: contain;
+  /* "none" (not just "contain") — this is what actually stops the
+     browser's own native pull-to-refresh/reload gesture, which is what
+     was firing when pulling down inside a panel whose content was too
+     short to be scrollable yet (e.g. تفسير الركوع while still loading):
+     with nothing to scroll, the touch reached the document itself and
+     the browser treated it as a refresh pull instead of an app gesture. */
+  overscroll-behavior-y: none;
 }
 
 #app{
@@ -114,16 +162,6 @@ body{
   outline-offset: 4px;
   overflow:hidden;
 }
-.corner{
-  position:absolute; width:34px; height:34px;
-  border: 2px solid var(--gold);
-  opacity:.55;
-  pointer-events:none;
-}
-.corner.tl{ top:8px; left:8px; border-left:none; border-top:none; border-bottom:2px solid var(--gold); border-right:2px solid var(--gold); transform: rotate(0deg); border-radius: 0 0 10px 0; border-top:0; border-left:0;}
-.corner.tr{ top:8px; right:8px; border-left:2px solid var(--gold); border-top:0; border-right:0; border-bottom:2px solid var(--gold); border-radius:0 0 0 10px;}
-.corner.bl{ bottom:8px; left:8px; border-right:2px solid var(--gold); border-bottom:0; border-left:0; border-top:2px solid var(--gold); border-radius:0 10px 0 0;}
-.corner.br{ bottom:8px; right:8px; border-left:2px solid var(--gold); border-bottom:0; border-right:0; border-top:2px solid var(--gold); border-radius:10px 0 0 0;}
 
 .page-scroll{
   height:100%;
@@ -139,27 +177,31 @@ body{
   font-weight:600;
   color: var(--emerald);
   font-size:15px;
-  margin: 4px auto 20px;
+  line-height: 1.9;
+  margin: 4px auto 10px;
   padding: 8px 22px;
   position:relative;
   width:max-content;
   max-width: 92%;
 }
-.surah-cartouche::before,
-.surah-cartouche::after{
-  content:"";
-  position:absolute;
-  top:50%; width:34px; height:1px;
-  background: var(--gold);
-}
-.surah-cartouche::before{ right:100%; margin-right:8px;}
-.surah-cartouche::after{ left:100%; margin-left:8px;}
-.surah-cartouche b{
-  display:block;
+.surah-cartouche span{
   font-family: var(--font-quran);
   font-size:22px;
   color: var(--emerald);
-  margin-top:2px;
+}
+.surah-cartouche .cartouche-sep{
+  font-family: var(--font-ui);
+  font-size:15px;
+  color: var(--gold);
+  margin: 0 10px;
+}
+.surah-cartouche b{
+  display:block;
+  font-weight:normal;
+  font-family: var(--font-quran);
+  font-size:23px;
+  color: var(--emerald);
+  margin-top:6px;
 }
 
 .ayah-flow{
@@ -202,8 +244,40 @@ body.indopak-font .ayah-flow{
    per direct user confirmation (Uthmani/Madinah mushaf included, same
    1.3em value as Indopak). */
 .waqf-sign{
-  font-size: 1.3em;
   position: relative;
+  /* NOT scaled up by default (no font-size override here) — this is the
+     Indopak/Naskh (PDMS Saleem QuranFont) case. Tried 1.3em, then 1.1em
+     as smaller "safer" alternatives — both confirmed BROKEN on the real
+     device/browser (Chrome/WebView) for THIS font, even though a
+     synthetic test with an older WebKit engine suggested 1.1em was safe.
+     For this specific font and this specific mark, ANY font-size
+     difference between this span and its surrounding text — not just
+     large ones — breaks the mark's GPOS anchoring to its base letter, by
+     forcing the browser to shape it as a separate run. There is no
+     "small enough to be safe" scale-up available here. Leaving this at
+     the ambient font-size is the only confirmed-correct state for this
+     font. (Uthmanic Hafs — see body.uthmani-font override below — does
+     NOT show this problem and keeps its own enlargement.) */
+  /* wrapWaqfSigns() in app.js bundles the base letter with its combining
+     waqf mark in this span, but textIndopak (QUL dataset) frequently
+     places a ZERO WIDTH SPACE between the two — a valid line-break point
+     per Unicode, which could otherwise wrap the mark onto the next line,
+     away from its base letter, breaking GPOS anchoring the same way the
+     size mismatch above does. nowrap keeps them on one line always. */
+  white-space: nowrap;
+}
+/* Uthmanic Hafs (مصحف المدينة) doesn't share the Indopak font's problem:
+   its classical waqf marks (U+06D6–06DB) never sit next to a zero-width
+   space in this dataset's "text" field (unlike textIndopak), and a direct
+   side-by-side test at 1em/1.1em/1.3em on the real font file showed the
+   mark staying correctly joined to its base letter at every size tried.
+   So the original enlargement (1.3em, previously confirmed correct for
+   this script mode) is restored here, scoped to Uthmani mode only.
+   NEEDS on-device confirmation, same as every other change in this file
+   — the Indopak case above looked fine in the same kind of test and
+   still turned out to break on a real phone. */
+body.uthmani-font .waqf-sign{
+  font-size: 1.2em;
 }
 
 /* CORRECTED (was wrong): there used to be a manual "م" replacement here
@@ -364,6 +438,23 @@ body.night .ayah-num span{ background:#1a1712; }
   margin:0 -0.02em;
 }
 
+/* Tatweel used purely as a "seat" for a following superscript alef/madda
+   (فَٱدَّـٰرَٰٔتُمۡ, إِسۡرَـٰٓءِيلَ) — the text itself is authentic Uthmani
+   rasm, untouched; this only nudges the glyph a hair away from the letters
+   it's rendered hard against on *both* sides, so its own base-letter
+   shape stays legible. */
+.tatweel-seat{
+  transform: scaleX(0.55);
+  transform-origin: center;
+  margin-inline: 0.06em 0.12em;
+}
+/* The trailing gap above reads fine before a base letter like ra
+   (فَٱدَّـٰرَٰٔتُمۡ), but the same amount right before a hamza that's part
+   of the same seat cluster (إِسۡرَـٰٓءِيلَ, لِلۡمَلَـٰٓئِكَةِ) instead
+   looked like the word had broken apart there — so this shape gets a
+   much smaller trailing gap while keeping the same leading one. */
+.tatweel-seat-tight{ margin-inline-end: 0.02em; }
+
 .ruku-end{
   display:flex;
   align-items:center;
@@ -436,6 +527,11 @@ body.night .ayah-num span{ background:#1a1712; }
   flex-direction:column;
   transform: translateY(0);
   transition: transform .28s ease;
+  /* Covers the case where panel-body's own content is still short (e.g.
+     the tafsir "جارٍ التحميل" state) and isn't scrollable yet — without
+     this, a pull-down over that empty space reaches the document behind
+     the fixed panel and the browser's native pull-to-refresh fires. */
+  overscroll-behavior-y: none;
 }
 .panel.hidden{ transform: translateY(100%); pointer-events:none; }
 .panel-head{
@@ -449,7 +545,7 @@ body.night .ayah-num span{ background:#1a1712; }
 }
 .panel-head .icon-btn{ color: var(--emerald); border-color: rgba(22,73,58,.25); }
 .panel-head-actions{ display:flex; align-items:center; gap:8px; }
-.panel-body{ flex:1; overflow-y:auto; padding: 10px 16px 30px; }
+.panel-body{ flex:1; overflow-y:auto; overscroll-behavior-y: none; padding: 10px 16px 30px; }
 
 .index-juz-header{
   position: sticky;
@@ -512,8 +608,21 @@ body.night .index-item.current .num{ background:#D8B662; color:#161310; border-c
   flex-shrink:0;
   margin-left:10px;
 }
-.index-item-inner{ display:flex; align-items:center; gap: 8px; }
+.index-item-inner{ display:flex; align-items:center; gap: 8px; width:100%; }
 .index-item-inner > div:last-child{ flex: 1; }
+
+/* ---------- Play-whole-surah button (inside the surah index list) ---------- */
+.index-play-btn{
+  width:32px; height:32px; border-radius:50%; flex-shrink:0;
+  margin-inline-start:auto;
+  border:1px solid var(--gold);
+  background:transparent; color: var(--emerald);
+  display:flex; align-items:center; justify-content:center;
+}
+.index-play-btn svg{ width:15px; height:15px; fill:currentColor; margin-right:-2px; }
+.index-play-btn:active{ background: var(--emerald); border-color: var(--emerald); color:#fff; }
+body.night .index-play-btn{ color:#D8B662; border-color:#5b4a26; }
+body.night .index-play-btn:active{ background:#D8B662; border-color:#D8B662; color:#161310; }
 
 /* Brief highlight flash on the ayah a search result jumps to, so it's
    easy to spot among several ayaat on the same ruku page. Uses the same
@@ -541,7 +650,27 @@ body.night .quran-word.search-hit-flash{
   font-size:15px;
   color: var(--ink);
 }
+/* Groups the settings panel visually (رسم المصحف/حجم الخط/... together,
+   then القارئ/التمرير التلقائي/... together, etc.) without adding new
+   section headers or reordering anything the reader is already used to.
+   Inset (not edge-to-edge) so it reads as a subtle group separator rather
+   than a full page-width rule; kept faint (low-opacity gold) so it stays
+   in the background relative to the settings themselves. */
+.settings-divider{
+  border: none;
+  border-top: 1px solid rgba(169,121,59,.42);
+  margin: 18px 10px;
+}
+body.night .settings-divider{ border-top-color: rgba(216,182,98,.42); }
 .setting-row.static b{ color: var(--emerald); }
+#juzOnlyRow{
+  padding-right: 16px;
+  padding-left: 16px;
+  background: var(--paper);
+  border-color: var(--paper-edge);
+}
+body.night #juzOnlyRow{ background:#161310; border-color:#332c20; }
+
 .stepper{ display:flex; align-items:center; gap:14px; }
 .stepper button{
   width:34px; height:34px; border-radius:50%;
@@ -550,6 +679,7 @@ body.night .quran-word.search-hit-flash{
   font-size:18px; line-height:1;
   display:flex; align-items:center; justify-content:center;
 }
+body.night .stepper button{ color:#D8B662; border-color:#5b4a26; }
 .font-choice{ display:flex; gap:8px; }
 .font-choice-btn{
   padding:7px 12px; border-radius:20px;
@@ -560,6 +690,22 @@ body.night .quran-word.search-hit-flash{
 .font-choice-btn.active{ background: var(--emerald); border-color: var(--emerald); color:#fff; }
 body.night .font-choice-btn{ color:#9c8f6d; border-color:#5b4a26; }
 body.night .font-choice-btn.active{ background:#D8B662; border-color:#D8B662; color:#161310; }
+
+/* ---------- Reciter combo box (اختيار القارئ) ---------- */
+.reciter-select{
+  padding:7px 30px 7px 12px; border-radius:20px;
+  border:1px solid var(--gold);
+  background: transparent url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%23A9793B" stroke-width="1.8"><path d="M6 9l6 6 6-6"/></svg>') no-repeat left 8px center;
+  background-size:14px;
+  color: var(--ink-soft);
+  font-family: var(--font-ui); font-size:13px; font-weight:600;
+  -webkit-appearance:none; appearance:none;
+}
+body.night .reciter-select{
+  color:#D8B662; border-color:#5b4a26;
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%23D8B662" stroke-width="1.8"><path d="M6 9l6 6 6-6"/></svg>');
+}
+.reciter-select option{ color:#000; }
 .switch{ position:relative; width:46px; height:26px; display:inline-block; }
 .switch input{ opacity:0; width:0; height:0; }
 .slider{
@@ -573,14 +719,38 @@ body.night .font-choice-btn.active{ background:#D8B662; border-color:#D8B662; co
 .switch input:checked + .slider::before{ transform: translateX(-20px); }
 .about-text{
   margin-top:18px; font-size:13px; line-height:1.9; color: var(--ink-soft);
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
+/* .about-text also appears inside .modal-box confirm dialogs (e.g.
+   clearRemindersModal), whose background stays the light "paper" color
+   even in night mode (no body.night .modal-box override exists) — so this
+   is scoped to .panel only (index/settings/etc.), where the background
+   really does go dark and the default var(--ink-soft) brown becomes
+   unreadable. An unscoped override would instead hurt contrast inside
+   the still-light modal boxes. */
+body.night .panel .about-text{ color:#9c8f6d; }
+
+/* Export/import buttons (تصدير/استيراد علامات التذكير) use the shared
+   .modal-btn.ghost style, whose default border/text color
+   (var(--ink-soft)) is unreadable once the settings panel goes dark.
+   Same modal-box-vs-panel scoping reasoning as .about-text above: favModal
+   and gotoModal's ghost Cancel buttons live inside an always-light
+   modal-box and must keep their current (already-readable) colors. */
+body.night .panel .modal-btn.ghost{ color:#9c8f6d; border-color:#5b4a26; }
+
+/* "إعادة ضبط تقدّم القراءة" / "حذف جميع علامات التذكير": always inside
+   .panel (never inside a modal-box), so no scoping needed here — just
+   brighten the warning red enough to read against the dark panel bg. */
+body.night .reset-btn{ color:#D2857E; border-color:#D2857E; }
 
 /* ---------- Night mode ---------- */
 body.night{ background: #0b0f0d; }
 body.night #app{ background: radial-gradient(ellipse at 50% -10%, #1b2b26 0%, #10201b 45%, #0a1512 100%); }
 body.night .page-frame{ background:#1a1712; border-color:#6b5426; }
 body.night .ayah-flow{ color:#EAE0C4; }
-body.night .surah-cartouche, body.night .surah-cartouche b{ color:#D8B662; }
+body.night .surah-cartouche, body.night .surah-cartouche b, body.night .surah-cartouche span{ color:#D8B662; }
 body.night .ayah-num{ color:#D8B662; }
 body.night .ruku-mark{ color:#D8B662; border-color:#8a6c30; }
 .ruku-end.incomplete .ruku-mark{
@@ -738,15 +908,15 @@ body.night .status-row-value{ color:#9c8f6d; }
 .fav-btn{
   position:absolute; top:10px; left:10px; z-index:3;
   width:34px; height:34px; border-radius:50%;
-  border:1px solid rgba(169,121,59,.4);
+  border:1px solid rgba(22,73,58,.4);
   background: rgba(246,239,221,.7);
-  color: var(--gold);
+  color: var(--emerald);
   display:flex; align-items:center; justify-content:center;
 }
 .fav-btn svg{ width:17px; height:17px; fill:none; stroke:currentColor; stroke-width:1.6; }
-.fav-btn.active{ color:#fff; background: var(--gold); border-color: var(--gold); }
+.fav-btn.active{ color:#fff; background: var(--emerald); border-color: var(--emerald); }
 .fav-btn.active svg{ fill:currentColor; }
-body.night .fav-btn{ background: rgba(22,19,16,.7); }
+body.night .fav-btn{ background: rgba(22,19,16,.7); color:#D8B662; border-color:#5b4a26; }
 
 /* ---------- Bookmark button (علامة القراءة) ---------- */
 .bookmark-btn{
@@ -763,6 +933,51 @@ body.night .fav-btn{ background: rgba(22,19,16,.7); }
 body.night .bookmark-btn{ background: rgba(22,19,16,.7); color:#D8B662; border-color:#5b4a26; }
 body.night .bookmark-btn.active{ background:#D8B662; border-color:#D8B662; color:#161310; }
 
+/* ---------- Listen button (استماع لتلاوة الركوع) ---------- */
+.listen-btn{
+  position:absolute; top:60px; left:10px; z-index:3;
+  width:34px; height:34px; border-radius:50%;
+  border:1px solid rgba(22,73,58,.4);
+  background: rgba(246,239,221,.7);
+  color: var(--emerald);
+  display:flex; align-items:center; justify-content:center;
+}
+.listen-btn svg{ width:17px; height:17px; fill:currentColor; }
+.listen-btn.active{ color:#fff; background: var(--emerald); border-color: var(--emerald); }
+.listen-btn svg.hidden{ display:none; }
+.listen-spin{ fill:none !important; stroke:currentColor; animation: listen-spin-rotate .8s linear infinite; }
+@keyframes listen-spin-rotate{ to{ transform: rotate(360deg); } }
+body.night .listen-btn{ background: rgba(22,19,16,.7); color:#D8B662; border-color:#5b4a26; }
+body.night .listen-btn.active{ background:#D8B662; border-color:#D8B662; color:#161310; }
+
+/* ---------- Tafsir button (تفسير الركوع — المختصر) ----------
+   Mirrors .listen-btn's position (same top offset) but on the opposite,
+   physical-right side of the page-frame — directly below .bookmark-btn,
+   the same way .listen-btn sits directly below .fav-btn on the left, so
+   the four overlay icons form a symmetric 2x2 grid. */
+.tafsir-btn{
+  position:absolute; top:60px; right:10px; z-index:3;
+  width:34px; height:34px; border-radius:50%;
+  border:1px solid rgba(22,73,58,.4);
+  background: rgba(246,239,221,.7);
+  color: var(--emerald);
+  display:flex; align-items:center; justify-content:center;
+}
+.tafsir-btn svg{ width:17px; height:17px; fill:none; stroke:currentColor; stroke-width:1.6; }
+.tafsir-btn.active{ color:#fff; background: var(--emerald); border-color: var(--emerald); }
+body.night .tafsir-btn{ background: rgba(22,19,16,.7); color:#D8B662; border-color:#5b4a26; }
+
+/* Currently-recited ayah highlight — CSS only, never touches the underlying
+   Quranic text in data.js. Applied to the whole-ayah wrapper (.ayah-block)
+   rather than per-word, and reuses the same emerald tint as the search
+   "jump to hit" flash so both highlights read as one consistent accent. */
+.ayah-block.ayah-playing{
+  background: rgba(11,92,74,0.12);
+  border-radius: 4px;
+  transition: background .15s ease;
+}
+body.night .ayah-block.ayah-playing{ background: rgba(216,182,98,0.16); }
+
 /* ---------- topbar-left group ---------- */
 .topbar-left{ display:flex; align-items:center; gap:8px; }
 
@@ -770,7 +985,7 @@ body.night .bookmark-btn.active{ background:#D8B662; border-color:#D8B662; color
 .search-input{
   width:100%; box-sizing:border-box;
   border: 1px solid var(--paper-edge);
-  background:#fff;
+  background: var(--paper);
   border-radius:10px;
   padding: 12px 14px;
   font-family: var(--font-ui);
@@ -778,9 +993,17 @@ body.night .bookmark-btn.active{ background:#D8B662; border-color:#D8B662; color
   color: var(--ink);
   margin-bottom: 14px;
   outline: none;
+  /* Without this, some Android WebViews render the native OS text-field
+     chrome (a light background baked in by the platform) UNDER our CSS
+     background, and it can show through/win regardless of night mode --
+     confirmed on-device as "search box stays white in night mode" even
+     though body.night .search-input below sets a dark background. */
+  -webkit-appearance: none;
+  appearance: none;
 }
 .search-input:focus{ border-color: var(--gold); }
 body.night .search-input{ background:#211c15; color:#EAE0C4; border-color:#332c20; }
+body.night .search-input::placeholder{ color:#6b6152; }
 
 /* ---------- Modal ---------- */
 .modal-overlay{
@@ -844,8 +1067,218 @@ body.night .search-input{ background:#211c15; color:#EAE0C4; border-color:#332c2
 .fav-item .fav-info{ flex:1; cursor:pointer; }
 .fav-item .fav-title{ font-family: var(--font-ui); font-weight:700; color: var(--emerald); font-size:14px; }
 .fav-item .fav-sub{ font-family: var(--font-quran); font-size:15px; color: var(--ink); margin-top:2px; }
-.fav-item .fav-remove{ color:#b5493f; padding:6px; }
+.fav-item .fav-remove{
+  color:#b5493f; padding:6px;
+  /* Plain <button> elements get no global reset in this app (only
+     user-select is reset above), so without this explicit
+     background/border, .fav-remove fell back to the browser's native
+     button chrome -- a light gray/white pill -- which stayed exactly
+     that regardless of night mode, since night mode only overrides our
+     own CSS, not native UA styling. Confirmed on-device as "white
+     background, dark red icon, doesn't match night mode". */
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
 .empty-state{ text-align:center; color: var(--ink-soft); font-size:13px; padding: 30px 10px; }
+body.night .fav-item{ border-color:#2a2418; }
+body.night .fav-item .fav-title{ color:#D8B662; }
+body.night .fav-item .fav-sub{ color:#9c8f6d; }
+body.night .fav-item .fav-remove{ color:#D2857E; }
+body.night .empty-state{ color:#9c8f6d; }
+
+/* ---------- Reader guide tabs (دليل القارئ) ---------- */
+.guide-tabs{
+  display:flex;
+  gap:8px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--paper-edge);
+  background: var(--paper);
+}
+.guide-tab-btn{
+  flex:1;
+  padding: 10px 8px;
+  border-radius: 20px;
+  border: 1px solid var(--gold);
+  background: transparent;
+  color: var(--ink-soft);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 600;
+}
+.guide-tab-btn.active{ background: var(--emerald); border-color: var(--emerald); color:#fff; }
+.guide-tab-panel.hidden{ display:none; }
+body.night .guide-tabs{ background:#161310; border-color:#332c20; }
+body.night .guide-tab-btn{ color:#9c8f6d; border-color:#5b4a26; }
+body.night .guide-tab-btn.active{ background:#D8B662; border-color:#D8B662; color:#161310; }
+
+/* دعاء ختم القرآن: this is ordinary devotional prose, not Quranic verse
+   text, so it deliberately does NOT use var(--font-quran) — that webfont
+   (UthmanicHafs/PDMS Saleem) is built for the Qur'an's specific Uthmani
+   word-shapes and stacked marks, and applying it to plain diacritized
+   Arabic prose was producing stray floating marks and broken/disconnected
+   letter joins. A generic Arabic Naskh stack shapes ordinary tashkeel
+   text correctly. */
+.khatm-dua-text{
+  font-family: 'Amiri', 'Traditional Arabic', serif;
+  font-size: 24px;
+  line-height: 2.3;
+  color: var(--ink);
+  text-align: justify;
+  text-align-last: right;
+}
+.khatm-dua-text p{
+  margin: 0;
+  padding: 14px 0;
+  border-bottom: 1px solid rgba(169,121,59,.25);
+}
+.khatm-dua-text p:last-child{ border-bottom: none; padding-bottom: 0; }
+.khatm-dua-text p:first-child{ padding-top: 0; }
+body.night .khatm-dua-text p{ border-bottom-color: rgba(216,182,98,.2); }
+body.night .khatm-dua-text{ color:#EAE0C4; }
+
+/* ---------- Waqf marks guide (علامات الوقف والابتداء) ---------- */
+.waqf-guide-list{ display:flex; flex-direction:column; }
+.waqf-guide-item{
+  display:flex;
+  align-items:flex-start;
+  gap:14px;
+  padding: 16px 4px;
+  border-bottom: 1px solid var(--paper-edge);
+}
+.waqf-guide-symbol{
+  flex-shrink:0;
+  width:42px; height:42px;
+  border-radius:50%;
+  border: 1.5px solid var(--gold);
+  color: var(--emerald);
+  display:flex; align-items:center; justify-content:center;
+  font-family: var(--font-quran);
+  font-size:17px;
+  line-height:1;
+}
+.waqf-guide-text b{
+  display:block;
+  font-family: var(--font-ui);
+  font-size:14.5px;
+  font-weight:700;
+  color: var(--emerald);
+  margin-bottom:4px;
+}
+.waqf-guide-text p{
+  margin:0;
+  font-family: var(--font-ui);
+  font-size:13px;
+  line-height:1.7;
+  color: var(--ink-soft);
+}
+.waqf-guide-footnote{
+  margin: 18px 2px 6px;
+  font-family: var(--font-ui);
+  font-size:12px;
+  line-height:1.8;
+  color: var(--ink-soft);
+  opacity:.9;
+  border-top: 1px dashed rgba(169,121,59,.4);
+  padding-top:14px;
+}
+body.night .waqf-guide-item{ border-color:#2a2418; }
+body.night .waqf-guide-symbol{ border-color:#8a6c30; color:#D8B662; }
+body.night .waqf-guide-text b{ color:#D8B662; }
+body.night .waqf-guide-text p{ color:#9c8f6d; }
+body.night .waqf-guide-footnote{ color:#9c8f6d; border-color: rgba(216,182,98,.3); }
+
+/* ---------- Tafsir panel (تفسير الركوع — المختصر) ---------- */
+.tafsir-head-sub{
+  font-size:11px;
+  font-weight:400;
+  color: var(--ink-soft);
+  margin-right:4px;
+}
+body.night .tafsir-head-sub{ color:#9c8f6d; }
+.tafsir-item{ padding: 14px 2px; }
+.tafsir-ayah-head{
+  font-family: var(--font-ui);
+  font-size:13.8px;
+  font-weight:700;
+  color: var(--gold);
+  margin-bottom:8px;
+}
+body.night .tafsir-ayah-head{ color:#D8B662; }
+.tafsir-text{
+  margin:0;
+  font-family: var(--font-ui);
+  font-size:17.5px;
+  line-height:1.95;
+  color: var(--ink);
+  text-align:justify;
+}
+body.night .tafsir-text{ color:#EAE0C4; }
+.tafsir-text-pending{ opacity:.45; }
+.tafsir-error-text{
+  margin:0;
+  font-family: var(--font-ui);
+  font-size:13px;
+  color:#b5493f;
+}
+/* Same faint, inset gold rule used to group settings rows — reused here
+   to separate each ayah's tafsir from the next. */
+.tafsir-divider{
+  border: none;
+  border-top: 1px solid rgba(169,121,59,.42);
+  margin: 6px 6px 14px;
+}
+body.night .tafsir-divider{ border-top-color: rgba(216,182,98,.42); }
+.tafsir-loading{
+  text-align:center;
+  padding: 40px 16px;
+  font-family: var(--font-ui);
+  font-size:13.5px;
+  color: var(--ink-soft);
+  line-height:1.8;
+}
+.tafsir-spin{
+  display:inline-block;
+  width:16px; height:16px;
+  border: 2px solid rgba(169,121,59,.35);
+  border-top-color: var(--gold);
+  border-radius:50%;
+  vertical-align:middle;
+  margin-left:8px;
+  animation: listen-spin-rotate .8s linear infinite;
+}
+body.night .tafsir-loading{ color:#9c8f6d; }
+
+/* Prev/next ruku buttons at the end of the tafsir list — same emerald/gold
+   vocabulary as .reset-btn / .modal-btn.ghost elsewhere in the panel UI. */
+.tafsir-nav{
+  display:flex;
+  gap:10px;
+  margin-top: 22px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(169,121,59,.42);
+}
+body.night .tafsir-nav{ border-top-color: rgba(216,182,98,.42); }
+.tafsir-nav-btn{
+  flex:1;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  padding: 12px 10px;
+  border-radius:12px;
+  border: 1px solid var(--gold);
+  background: transparent;
+  color: var(--emerald);
+  font-family: var(--font-ui);
+  font-size:13px;
+  font-weight:700;
+}
+.tafsir-nav-btn svg{ width:16px; height:16px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; flex-shrink:0; }
+.tafsir-nav-btn:active{ background: var(--paper-edge); }
+body.night .tafsir-nav-btn{ color:#D8B662; border-color:#8a6c30; }
+body.night .tafsir-nav-btn:active{ background: rgba(216,182,98,.1); }
+
 @media (min-width:640px){
   .page-frame{ max-width:640px; margin:0 auto; }
   .ayah-flow{ font-size: calc(var(--ayah-size) + 2px); }

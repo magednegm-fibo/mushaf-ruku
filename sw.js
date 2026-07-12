@@ -1,6 +1,6 @@
 // Bump this version on every release so old, previously-cached HTML/JS/data
 // files are guaranteed to be replaced instead of silently kept forever.
-const CACHE = 'juzamma-v22';
+const CACHE = 'juzamma-v50';
 
 // Assets whose CONTENT rarely/never changes once shipped: safe to serve
 // cache-first for speed and offline use.
@@ -9,7 +9,12 @@ const STATIC_ASSETS = [
   './icons/icon-512.png',
   './icons/apple-touch-icon.png',
   './fonts/UthmanicHafs.woff2',
-  './fonts/PDMS-Saleem-QuranFont.woff2'
+  './fonts/PDMS-Saleem-QuranFont.woff2',
+  './fonts/cairo-arabic-400-normal.woff2',
+  './fonts/cairo-arabic-500-normal.woff2',
+  './fonts/cairo-arabic-600-normal.woff2',
+  './fonts/cairo-arabic-700-normal.woff2',
+  './fonts/amiri-quran-arabic-400-normal.woff2'
 ];
 
 // Assets that change whenever the app is updated: must always be fetched
@@ -18,9 +23,26 @@ const DYNAMIC_ASSETS = [
   './',
   './index.html',
   './style.css',
-  './app.js',
+  './surah-meta.js',
+  './surah-names-vocalized.js',
   './juz-info.js',
   './data.js',
+  './constants.js',
+  './storage-manager.js',
+  './searchManager.js',
+  './audioManager.js',
+  './readerManager.js',
+  './ui.js',
+  './dialogs.js',
+  './reader-favorites.js',
+  './reader-bookmark.js',
+  './reader-reminders.js',
+  './reader-guide.js',
+  './reader-tafsir.js',
+  './home.js',
+  './settings.js',
+  './navigation.js',
+  './app.js',
   './manifest.json'
 ];
 
@@ -28,9 +50,23 @@ self.addEventListener('install', (e) => {
   e.waitUntil(
     caches.open(CACHE)
       .then((cache) => cache.addAll(STATIC_ASSETS.concat(DYNAMIC_ASSETS)))
-      .catch(()=>{})
+      .then(() => {
+        // Only replace the currently-active (working) service worker once
+        // every file has actually been cached successfully. cache.addAll()
+        // is all-or-nothing — if the device is offline right when an
+        // update check happens, it rejects and NOTHING gets cached under
+        // the new version. Calling skipWaiting() unconditionally (the
+        // previous bug here) would still activate that empty new cache,
+        // and activate() below deletes every *other* cache — wiping out
+        // the old, fully-populated one that was keeping the app usable
+        // offline. Skipping skipWaiting() on failure instead leaves the
+        // old service worker (and its complete cache) fully in control;
+        // the update simply retries the next time the app is opened with
+        // a connection.
+        self.skipWaiting();
+      })
+      .catch(() => { /* offline or a fetch failed — stay on the current, working version */ })
   );
-  self.skipWaiting();
 });
 
 self.addEventListener('activate', (e) => {
