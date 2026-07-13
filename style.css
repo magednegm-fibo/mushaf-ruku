@@ -716,7 +716,7 @@ body.night .reciter-select{
   background:#fff; border-radius:50%; transition:.2s;
 }
 .switch input:checked + .slider{ background: var(--emerald); }
-.switch input:checked + .slider::before{ transform: translateX(-20px); }
+.switch input:checked + .slider::before{ transform: translateX(20px); }
 .about-text{
   margin-top:18px; font-size:13px; line-height:1.9; color: var(--ink-soft);
   user-select: none;
@@ -1121,7 +1121,7 @@ body.night .guide-tab-btn.active{ background:#D8B662; border-color:#D8B662; colo
    text correctly. */
 .khatm-dua-text{
   font-family: 'Amiri', 'Traditional Arabic', serif;
-  font-size: 24px;
+  font-size: 20px;
   line-height: 2.3;
   color: var(--ink);
   text-align: justify;
@@ -1137,6 +1137,96 @@ body.night .guide-tab-btn.active{ background:#D8B662; border-color:#D8B662; colo
 body.night .khatm-dua-text p{ border-bottom-color: rgba(216,182,98,.2); }
 body.night .khatm-dua-text{ color:#EAE0C4; }
 
+/* ---------- Tajweed rules guide (أحكام التجويد) ---------- */
+/* Reuses .waqf-guide-list/.waqf-guide-item/.waqf-guide-symbol/.waqf-guide-text
+   from the waqf-marks guide below — same list layout, just grouped under
+   section headers, so no new item-level CSS is needed. */
+.tajweed-guide-intro{
+  display: block;
+  width: 100%;
+  margin: 4px 2px 14px;
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  line-height: 1.7;
+  color: var(--ink-soft);
+  text-align: right;
+}
+.tajweed-guide-section{
+  font-family: var(--font-ui);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--gold);
+  margin: 20px 2px 4px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(169,121,59,.35);
+}
+.tajweed-guide-section:first-of-type{ margin-top: 0; }
+body.night .tajweed-guide-section{ color:#D8B662; border-color: rgba(216,182,98,.3); }
+.tajweed-guide-note{
+  margin: 4px 2px 12px;
+}
+/* CONFIRMED BUG (do not reintroduce): unicode-bidi:embed on this rule
+   previously caused multi-line RTL paragraphs to render with a
+   centered look in this Android WebView (first line flush right,
+   subsequent lines drifting toward the middle) — verified by isolating
+   font vs. bidi-property as separate variables; the font (Cairo) was
+   not the cause, unicode-bidi:embed was. html[dir=rtl] plus text-align
+   here is sufficient; do not add direction/unicode-bidi overrides on
+   this rule without re-testing on-device.
+   Justify is safe to use now that the above bug is fixed — the two
+   paragraphs under "التعريف بالطريق" are both multi-line, so this
+   reads as fully justified (right AND left flush) per direct user
+   request, with text-align-last keeping the final short line
+   right-aligned rather than stretched. If a future one-line-only note
+   under this class ever looks stretched, split it into its own
+   exception class rather than reverting this rule globally. */
+.tajweed-guide-note p{
+  display: block;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  line-height: 1.8;
+  color: var(--ink-soft);
+  margin: 0 0 8px;
+  text-align: justify;
+  text-align-last: right;
+}
+.tajweed-guide-note p:last-child{ margin-bottom: 0; }
+.tajweed-guide-note p b{ color: var(--ink); }
+body.night .tajweed-guide-note p{ color:#9c8f6d; }
+body.night .tajweed-guide-note p b{ color:#EAE0C4; }
+/* The circle numbers in the قصر المنفصل tab reuse .waqf-guide-symbol's
+   circle, but plain digits rendered in var(--font-quran) (UthmanicHafs/
+   PDMS Saleem) came out blank — those fonts are built for Quranic glyph
+   shaping and don't reliably map standalone Arabic-Indic digit
+   codepoints. The waqf-marks tab's own symbols (م ط ج ...) are real
+   Quranic glyphs and must keep font-quran, so this is a separate
+   modifier class applied only to the numbered items, not a change to
+   the shared base. */
+.waqf-guide-symbol.tajweed-guide-number{
+  min-width: 32px;
+  height: 32px;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--emerald);
+}
+body.night .waqf-guide-symbol.tajweed-guide-number{ color:#D8B662; }
+
+/* Slightly larger body text specifically for the قصر المنفصل tab's rule
+   explanations (shared .waqf-guide-text/.tajweed-guide-note classes are
+   scoped to #tajweedRulesTab here so the علامات الوقف tab, which reuses
+   the same classes, is unaffected). */
+#tajweedRulesTab .waqf-guide-text p,
+#tajweedRulesTab .tajweed-guide-note p{
+  font-size: 14px;
+}
+#tajweedRulesTab .tajweed-guide-intro{
+  font-size: 13.5px;
+}
+#tajweedRulesTab .waqf-guide-footnote{
+  font-size: 13px;
+}
+
 /* ---------- Waqf marks guide (علامات الوقف والابتداء) ---------- */
 .waqf-guide-list{ display:flex; flex-direction:column; }
 .waqf-guide-item{
@@ -1148,8 +1238,9 @@ body.night .khatm-dua-text{ color:#EAE0C4; }
 }
 .waqf-guide-symbol{
   flex-shrink:0;
-  width:42px; height:42px;
-  border-radius:50%;
+  min-width:42px; height:42px;
+  padding: 0 6px;
+  border-radius:21px;
   border: 1.5px solid var(--gold);
   color: var(--emerald);
   display:flex; align-items:center; justify-content:center;
@@ -1171,6 +1262,8 @@ body.night .khatm-dua-text{ color:#EAE0C4; }
   font-size:13px;
   line-height:1.7;
   color: var(--ink-soft);
+  text-align: justify;
+  text-align-last: right;
 }
 .waqf-guide-footnote{
   margin: 18px 2px 6px;
@@ -1181,6 +1274,8 @@ body.night .khatm-dua-text{ color:#EAE0C4; }
   opacity:.9;
   border-top: 1px dashed rgba(169,121,59,.4);
   padding-top:14px;
+  text-align: justify;
+  text-align-last: right;
 }
 body.night .waqf-guide-item{ border-color:#2a2418; }
 body.night .waqf-guide-symbol{ border-color:#8a6c30; color:#D8B662; }

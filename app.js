@@ -77,8 +77,10 @@
     waqfGuidePanel: document.getElementById('waqfGuidePanel'),
     btnCloseWaqfGuide: document.getElementById('btnCloseWaqfGuide'),
     tabWaqfMarks: document.getElementById('tabWaqfMarks'),
+    tabTajweedRules: document.getElementById('tabTajweedRules'),
     tabKhatmDua: document.getElementById('tabKhatmDua'),
     waqfMarksTab: document.getElementById('waqfMarksTab'),
+    tajweedRulesTab: document.getElementById('tajweedRulesTab'),
     khatmDuaTab: document.getElementById('khatmDuaTab'),
 
     btnTafsir: document.getElementById('btnTafsir'),
