@@ -1,6 +1,6 @@
 // Bump this version on every release so old, previously-cached HTML/JS/data
 // files are guaranteed to be replaced instead of silently kept forever.
-const CACHE = 'juzamma-v75';
+const CACHE = 'juzamma-v76';
 
 // Assets whose CONTENT rarely/never changes once shipped: safe to serve
 // cache-first for speed and offline use.
