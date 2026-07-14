@@ -49,13 +49,59 @@
   // time instead of exiting the app immediately. See the back-button
   // section below for how that stack of layers is unwound.
   // -----------------------------------------------------------------
+  // -----------------------------------------------------------------
+  // Keep an open .modal-overlay (favModal, gotoModal, ...) positioned
+  // above the on-screen keyboard.
+  //
+  // .modal-overlay is `position:fixed; inset:0` with its .modal-box
+  // centered inside via flexbox — centered, that is, against the *layout*
+  // viewport, which most mobile browsers do NOT shrink when the keyboard
+  // opens (only the *visual* viewport shrinks). gotoModal/favModal both
+  // auto-focus a text input the instant they open, so in practice the
+  // keyboard is up for their entire visible lifetime — "centered in the
+  // full-height layout viewport" then sits noticeably lower than the
+  // actually-visible area above the keyboard, hiding the input/Go button
+  // behind it. Syncing the overlay's own top+height to
+  // window.visualViewport keeps it (and the flex-centered box inside it)
+  // confined to the space that's actually visible.
+  // -----------------------------------------------------------------
+  function syncModalToViewport(){
+    if(!window.visualViewport) return;
+    var vv = window.visualViewport;
+    var openOverlays = document.querySelectorAll('.modal-overlay:not(.hidden)');
+    for(var i=0;i<openOverlays.length;i++){
+      openOverlays[i].style.top = vv.offsetTop + 'px';
+      openOverlays[i].style.height = vv.height + 'px';
+    }
+  }
+  if(window.visualViewport){
+    window.visualViewport.addEventListener('resize', syncModalToViewport);
+    window.visualViewport.addEventListener('scroll', syncModalToViewport);
+  }
+
   function openPanel(p){
     p.classList.remove('hidden');
     history.pushState({tag:'panel'}, '');
+    if(p.classList.contains('modal-overlay')){
+      // Sync immediately (covers the case the keyboard is already up from
+      // a previous field) and once more shortly after — the keyboard's
+      // own open animation/resize typically lands a beat after focus,
+      // which happens on a setTimeout in the modal's own open function
+      // (openFavModal/openGotoModal in dialogs.js).
+      syncModalToViewport();
+      setTimeout(syncModalToViewport, 250);
+    }
   }
   function closePanel(p){
     if(p.classList.contains('hidden')) return; // already closed — nothing to pop
     p.classList.add('hidden');
+    // Drop the inline top/height override once closed, so the next open
+    // (or a plain CSS-driven layout) isn't stuck with a stale viewport
+    // snapshot from this time.
+    if(p.classList.contains('modal-overlay')){
+      p.style.top = '';
+      p.style.height = '';
+    }
     if(history.state && history.state.tag === 'panel'){
       history.back();
     }

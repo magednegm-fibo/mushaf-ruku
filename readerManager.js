@@ -426,14 +426,24 @@ var KNOWN_SPLIT_WORD_FRAGMENTS = ["اٰ تُوۡهُمۡ", "اٰ تَيۡتُم�
     window.scrollTo(0, 0);
     document.documentElement.scrollTop = 0;
     document.body.scrollTop = 0;
-    // Re-apply on the next frame too: if the Quranic webfont is still
-    // swapping in (font-display:swap) it can reflow the page a moment after
-    // this line runs, and some browsers' scroll-anchoring will then nudge
-    // the scroll position away from 0 to "compensate". This guarantees we
-    // still land at the top after that settles.
+    // Re-apply once layout has actually settled — one frame for layout,
+    // one for paint — the same double-rAF pattern already used in
+    // openAyah() below for search-result jumps. A single rAF (the
+    // previous fix here) measures/sets scroll before the new page's
+    // content has actually laid out on-device, so it silently does
+    // nothing and the reader is left wherever the *previous* page had
+    // scrolled to — exactly the "opens the new ruku but stays at the
+    // bottom of the page" symptom. This also naturally covers the
+    // Android keyboard-close resize when navigation is triggered from
+    // "الذهاب إلى ركوع رقم" (whose input may still hold focus), since it
+    // re-applies after that settles too, not on a hardcoded delay.
     requestAnimationFrame(function(){
-      els.pageScroll.scrollTop = 0;
-      window.scrollTo(0, 0);
+      requestAnimationFrame(function(){
+        els.pageScroll.scrollTop = 0;
+        window.scrollTo(0, 0);
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
+      });
     });
     if(onAfterRender) onAfterRender();
   }

@@ -250,6 +250,21 @@
   // behaviour takes over on the next press.
   // -----------------------------------------------------------------
   UI.setOnModalForceClosed(function(el){ Dialogs.clearPending(el); });
+  // Every panel/modal open (UI.openPanel) and close (history.back(), e.g.
+  // from Dialogs.submitGotoModal after "الذهاب إلى ركوع رقم") pushes/pops
+  // a real history entry. By default the browser itself remembers the
+  // page's scroll position at each entry and SILENTLY restores it on
+  // popstate ("scroll anchoring for back/forward nav") — this fires
+  // asynchronously as part of the same popstate that our own back-button
+  // handling relies on, which means it can land *after* ReaderManager's
+  // own scrollTop-reset code (even the double-rAF one) and snap the
+  // reader back to wherever it was scrolled to before the modal opened.
+  // That's the actual cause of "الذهاب إلى ركوع رقم يفتح الركوع الجديد
+  // بس يفضل في نفس مكان السكرول القديم" — not any restore-scroll code of
+  // ours (there isn't any), but the browser's own default behavior working
+  // against it. Turning it off hands scroll position entirely to our own
+  // JS, which is what every goToPage()/renderPage() reset already assumes.
+  if('scrollRestoration' in history) history.scrollRestoration = 'manual';
   history.replaceState({tag:'home'}, '');
   window.addEventListener('popstate', function(e){
     if(UI.closeTopmostOverlay()) return;

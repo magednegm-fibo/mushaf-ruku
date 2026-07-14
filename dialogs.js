@@ -66,6 +66,17 @@
     }
     var cb = gotoOnGo;
     gotoOnGo = null;
+    // Explicitly drop focus (and dismiss the on-screen keyboard) BEFORE
+    // navigating, not after. gotoInput is auto-focused when this modal
+    // opens (see openGotoModal), so on Android the keyboard is usually
+    // still open at the moment "اذهب" is tapped. If we navigate first and
+    // let the keyboard close afterwards, the keyboard-close viewport
+    // resize lands after ReaderManager has already reset the new page's
+    // scroll to the top, and the resize then nudges it back down again —
+    // matches the reported symptom (new ruku opens but isn't scrolled to
+    // its beginning). Blurring first means that resize happens before
+    // goToPage()/renderPage() run their own scroll reset.
+    if(els.gotoInput) els.gotoInput.blur();
     UI.closePanel(els.gotoModal);
     cb(n);
   }
