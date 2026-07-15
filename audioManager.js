@@ -591,6 +591,13 @@
     //                   auto-scrolling automatically as it goes, same
     //                   mechanism as the play buttons in فهرس السور/الأجزاء
     function startLongPressPlayback(surah, ayah){
+      // Per user request: the "بدء التلاوة من الآية" long-press should only
+      // kick in while nothing is currently playing/loading. If audio is
+      // already active, ignore the long-press instead of interrupting it.
+      if(listenState.playing || listenState.loading){
+        showToast('أوقف التلاوة لتشغيل آية أخرى');
+        return;
+      }
       var p = PAGES[state.page];
       if(!p) return;
       var idx = -1;
