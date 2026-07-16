@@ -11,7 +11,27 @@
   'use strict';
 
   var PAGES = window.JUZ_PAGES || window.JUZ_AMMA_PAGES || [];
-  SearchManager.init(PAGES);
+
+  // Every module below is wired with its own init(deps) call, one after
+  // another, in a single linear sequence. Without this wrapper, one
+  // module throwing (e.g. a stale deploy/cache serving an old index.html
+  // that's missing a newly-added <script> tag, so some global the module
+  // depends on is undefined) doesn't just break that module — it aborts
+  // the *entire* rest of this function, silently, including things that
+  // have nothing to do with the failure: Settings.applyAll(), the
+  // home-screen stats/about text/version number, and even the service
+  // worker's update-check that would otherwise fetch the corrected files
+  // and fix itself. safeInit() turns that into a contained, logged
+  // failure of just the one module instead.
+  function safeInit(name, fn){
+    try{
+      fn();
+    }catch(err){
+      console.error('تعذّرت تهيئة "' + name + '" — تم تجاوزها لمنع توقف باقي التطبيق. الخطأ:', err);
+    }
+  }
+
+  safeInit('SearchManager', function(){ SearchManager.init(PAGES); });
   var JUZ_INFO = window.JUZ_INFO || {name: 'جزء عمّ', shortName: 'جزء عمّ', rukuCount: PAGES.length, ayahCount: 0};
 
   var state = loadState();
@@ -166,80 +186,98 @@
   // are safe to reference before the other module's init() has actually
   // run, since they aren't *called* until a later user interaction.
   // -----------------------------------------------------------------
-  UI.init({els: els});
+  safeInit('UI', function(){ UI.init({els: els}); });
 
-  Dialogs.init({els: els, UI: UI});
+  safeInit('Dialogs', function(){ Dialogs.init({els: els, UI: UI}); });
 
-  Home.init({
-    els: els, state: state, PAGES: PAGES, JUZ_INFO: JUZ_INFO, UI: UI,
-    AudioManager: AudioManager, ReaderManager: ReaderManager,
-    ReaderBookmark: ReaderBookmark
+  safeInit('Home', function(){
+    Home.init({
+      els: els, state: state, PAGES: PAGES, JUZ_INFO: JUZ_INFO, UI: UI,
+      AudioManager: AudioManager, ReaderManager: ReaderManager,
+      ReaderBookmark: ReaderBookmark
+    });
   });
 
-  ReaderFavorites.init({
-    els: els, state: state, PAGES: PAGES, UI: UI, Dialogs: Dialogs,
-    openReaderAt: Home.openReaderAt
+  safeInit('ReaderFavorites', function(){
+    ReaderFavorites.init({
+      els: els, state: state, PAGES: PAGES, UI: UI, Dialogs: Dialogs,
+      openReaderAt: Home.openReaderAt
+    });
   });
 
-  ReaderBookmark.init({
-    els: els, state: state, PAGES: PAGES, UI: UI,
-    openReaderAt: Home.openReaderAt
+  safeInit('ReaderBookmark', function(){
+    ReaderBookmark.init({
+      els: els, state: state, PAGES: PAGES, UI: UI,
+      openReaderAt: Home.openReaderAt
+    });
   });
 
-  ReaderReminders.init({
-    els: els, state: state, UI: UI, AudioManager: AudioManager,
-    currentWaqfVisibilityKey: function(){ return Settings.currentWaqfVisibilityKey(); }
+  safeInit('ReaderReminders', function(){
+    ReaderReminders.init({
+      els: els, state: state, UI: UI, AudioManager: AudioManager,
+      currentWaqfVisibilityKey: function(){ return Settings.currentWaqfVisibilityKey(); }
+    });
   });
 
-  ReaderGuide.init({els: els, UI: UI});
+  safeInit('ReaderGuide', function(){ ReaderGuide.init({els: els, UI: UI}); });
 
-  ReaderTafsir.init({els: els, state: state, PAGES: PAGES, UI: UI, ReaderManager: ReaderManager});
-
-  Settings.init({
-    els: els, state: state, UI: UI, PAGES: PAGES,
-    AudioManager: AudioManager, ReaderManager: ReaderManager,
-    ReaderBookmark: ReaderBookmark, ReaderReminders: ReaderReminders,
-    Home: Home, saveState: saveState
+  safeInit('ReaderTafsir', function(){
+    ReaderTafsir.init({els: els, state: state, PAGES: PAGES, UI: UI, ReaderManager: ReaderManager});
   });
 
-  Navigation.init({
-    els: els, state: state, PAGES: PAGES, JUZ_INFO: JUZ_INFO, UI: UI,
-    Dialogs: Dialogs, Home: Home, Settings: Settings,
-    AudioManager: AudioManager, ReaderManager: ReaderManager,
-    saveState: saveState
+  safeInit('Settings', function(){
+    Settings.init({
+      els: els, state: state, UI: UI, PAGES: PAGES,
+      AudioManager: AudioManager, ReaderManager: ReaderManager,
+      ReaderBookmark: ReaderBookmark, ReaderReminders: ReaderReminders,
+      Home: Home, saveState: saveState
+    });
   });
 
-  ReaderManager.init({
-    PAGES: PAGES,
-    JUZ_INFO: JUZ_INFO,
-    state: state,
-    els: els,
-    toArabicDigits: UI.toArabicDigits,
-    REMINDER_COLORS: ReaderReminders.REMINDER_COLORS,
-    getWaqfMarks: function(){ return ReaderReminders.getWaqfMarks(); },
-    showReader: Home.showReader,
-    onBeforePageChange: function(opts){
-      if(!opts || !opts.keepAudio) AudioManager.stopListening();
-    },
-    onPageChanged: function(i){
-      Home.markPageVisited(i);
-    },
-    onAfterRender: function(){
-      ReaderFavorites.updateFavButton();
-      ReaderBookmark.updateBookmarkButton();
-      Home.updateProgressUI();
-      saveState();
-      ReaderTafsir.prefetchCurrentRuku();
-    }
+  safeInit('Navigation', function(){
+    Navigation.init({
+      els: els, state: state, PAGES: PAGES, JUZ_INFO: JUZ_INFO, UI: UI,
+      Dialogs: Dialogs, Home: Home, Settings: Settings,
+      AudioManager: AudioManager, ReaderManager: ReaderManager,
+      saveState: saveState
+    });
   });
 
-  AudioManager.init({
-    PAGES: PAGES,
-    state: state,
-    els: els,
-    goTo: ReaderManager.goToPage,
-    showToast: UI.showToast,
-    saveState: saveState
+  safeInit('ReaderManager', function(){
+    ReaderManager.init({
+      PAGES: PAGES,
+      JUZ_INFO: JUZ_INFO,
+      state: state,
+      els: els,
+      toArabicDigits: UI.toArabicDigits,
+      REMINDER_COLORS: ReaderReminders.REMINDER_COLORS,
+      getWaqfMarks: function(){ return ReaderReminders.getWaqfMarks(); },
+      showReader: Home.showReader,
+      onBeforePageChange: function(opts){
+        if(!opts || !opts.keepAudio) AudioManager.stopListening();
+      },
+      onPageChanged: function(i){
+        Home.markPageVisited(i);
+      },
+      onAfterRender: function(){
+        ReaderFavorites.updateFavButton();
+        ReaderBookmark.updateBookmarkButton();
+        Home.updateProgressUI();
+        saveState();
+        ReaderTafsir.prefetchCurrentRuku();
+      }
+    });
+  });
+
+  safeInit('AudioManager', function(){
+    AudioManager.init({
+      PAGES: PAGES,
+      state: state,
+      els: els,
+      goTo: ReaderManager.goToPage,
+      showToast: UI.showToast,
+      saveState: saveState
+    });
   });
 
   // -----------------------------------------------------------------
@@ -276,13 +314,19 @@
   // -----------------------------------------------------------------
   // Home-screen header/about text
   // -----------------------------------------------------------------
-  els.eyebrowText && (els.eyebrowText.textContent = JUZ_INFO.shortName);
-  document.title = JUZ_INFO.fullMushaf ? JUZ_INFO.name : (JUZ_INFO.name + ' — بالركوعات');
-  if (els.rukuCount) els.rukuCount.textContent = UI.toArabicDigits(PAGES.length) + ' ركوعًا';
-  if (els.ayahCount) els.ayahCount.textContent = UI.toArabicDigits(JUZ_INFO.ayahCount) + ' آية';
-  if (els.aboutText) els.aboutText.textContent = JUZ_INFO.fullMushaf
-    ? 'كل صفحة في هذا التطبيق تمثّل ركوعًا واحدًا كاملًا كما تحدّده علامات الركوع (ع) في المصحف الشريف، من الفاتحة إلى الناس (٥٥٦ ركوعًا). بداية كل جزء من الأجزاء الثلاثين مُشار إليها داخل النص. النص من مصحف حفص عن عاصم برواية Tanzil / QPC.'
-    : 'كل صفحة في هذا التطبيق تمثّل ركوعًا واحدًا كاملًا كما تحدّده علامات الركوع (ع) في المصحف الشريف، ضمن ' + JUZ_INFO.name + '. النص من مصحف حفص عن عاصم برواية Tanzil / QPC.';
+  safeInit('Home-screen header/about text', function(){
+    els.eyebrowText && (els.eyebrowText.textContent = JUZ_INFO.shortName);
+    document.title = JUZ_INFO.fullMushaf ? JUZ_INFO.name : (JUZ_INFO.name + ' — بالركوعات');
+    if (els.rukuCount) els.rukuCount.textContent = UI.toArabicDigits(PAGES.length) + ' ركوعًا';
+    if (els.ayahCount) els.ayahCount.textContent = UI.toArabicDigits(JUZ_INFO.ayahCount) + ' آية';
+    if (els.aboutText) els.aboutText.textContent = JUZ_INFO.fullMushaf
+      ? 'كل صفحة في هذا التطبيق تمثّل ركوعًا واحدًا كاملًا كما تحدّده علامات الركوع (ع) في المصحف الشريف، من الفاتحة إلى الناس (٥٥٦ ركوعًا). بداية كل جزء من الأجزاء الثلاثين مُشار إليها داخل النص. النص من مصحف حفص عن عاصم برواية Tanzil / QPC.'
+      : 'كل صفحة في هذا التطبيق تمثّل ركوعًا واحدًا كاملًا كما تحدّده علامات الركوع (ع) في المصحف الشريف، ضمن ' + JUZ_INFO.name + '. النص من مصحف حفص عن عاصم برواية Tanzil / QPC.';
+  });
+  // Set on its own, separately from the rest of the about text above, so
+  // that even if toArabicDigits or something else in that block ever
+  // throws, the version number — the one thing support requests always
+  // need first — still gets shown.
   if (els.appVersionText) els.appVersionText.textContent = 'الإصدار ' + (window.APP_VERSION || '?');
 
   // manifest.json is plain JSON and can't read version.js, so its
@@ -298,9 +342,9 @@
   // -----------------------------------------------------------------
   // Startup
   // -----------------------------------------------------------------
-  Settings.applyAll();
-  Home.updateProgressUI();
-  Home.updateBookmarkCard();
+  safeInit('Settings.applyAll', function(){ Settings.applyAll(); });
+  safeInit('Home.updateProgressUI', function(){ Home.updateProgressUI(); });
+  safeInit('Home.updateBookmarkCard', function(){ Home.updateBookmarkCard(); });
 
   if('serviceWorker' in navigator){
     // Registering alone isn't enough for an *already-open* app to pick up
