@@ -34,49 +34,18 @@
   // advances forward (toward the next tab in TAB_ORDER), left goes
   // back. Swiping past the first/last tab does nothing (no wraparound,
   // no toast — this is a lightweight tab switcher, not page navigation).
+  // Uses the shared Gestures.swipe helper (gestures.js).
   function wireSwipe(){
     if(!els.waqfGuidePanel) return;
-    var startX = null, startY = null;
-    var horizontal = false; // becomes true once a drag is confirmed
-                             // horizontal — see onMove below
-
-    // Same reasoning as reader-tafsir.js's wireSwipe: without this, an
-    // unhandled horizontal drag can escape to whatever's behind this
-    // fixed panel once confirmed horizontal, preventDefault stops that.
-    function onMove(e){
-      if(startX === null || e.touches.length !== 1) return;
-      var t = e.touches[0];
-      var dx = t.clientX - startX;
-      var dy = t.clientY - startY;
-      if(!horizontal){
-        if(Math.abs(dx) < 10) return; // too small yet to tell intent
-        if(Math.abs(dx) <= Math.abs(dy) * 1.5) return; // reads as a vertical scroll — leave it alone
-        horizontal = true;
+    Gestures.swipe({
+      root: els.waqfGuidePanel,
+      onSwipe: function(dx){
+        var idx = TAB_ORDER.indexOf(currentTab);
+        var nextIdx = dx > 0 ? idx + 1 : idx - 1;
+        if(nextIdx < 0 || nextIdx >= TAB_ORDER.length) return;
+        switchGuideTab(TAB_ORDER[nextIdx]);
       }
-      e.preventDefault();
-    }
-
-    els.waqfGuidePanel.addEventListener('touchstart', function(e){
-      if(e.touches.length !== 1){ startX = null; return; }
-      var t = e.touches[0];
-      startX = t.clientX; startY = t.clientY;
-      horizontal = false;
-      els.waqfGuidePanel.addEventListener('touchmove', onMove, {passive:false});
-    }, {passive:true});
-
-    els.waqfGuidePanel.addEventListener('touchend', function(e){
-      els.waqfGuidePanel.removeEventListener('touchmove', onMove, {passive:false});
-      if(startX === null) return;
-      var t = e.changedTouches[0];
-      var dx = t.clientX - startX;
-      var dy = t.clientY - startY;
-      startX = null; startY = null;
-      if(Math.abs(dx) <= 60 || Math.abs(dx) <= Math.abs(dy) * 1.5) return;
-      var idx = TAB_ORDER.indexOf(currentTab);
-      var nextIdx = dx > 0 ? idx + 1 : idx - 1;
-      if(nextIdx < 0 || nextIdx >= TAB_ORDER.length) return;
-      switchGuideTab(TAB_ORDER[nextIdx]);
-    }, {passive:true});
+    });
   }
 
   function init(deps){

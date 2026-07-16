@@ -152,9 +152,7 @@
     // finger to the right (dx > 0) advances forward (like turning a page
     // in an Arabic book), dragging left goes back. This must stay in
     // sync with ReaderManager's ArrowLeft/ArrowRight handling.
-    var startX = null, startY = null;
-    var frame = els.pageFrame;
-
+    //
     // Two-finger pinch zoom: reuses the exact same per-script-mode font
     // size (via Settings.currentFontSizeKey) used by the "+"/"−" buttons
     // in الإعدادات, so pinching and those buttons always agree, each
@@ -163,69 +161,29 @@
     // from الإعدادات (state.pinchZoomEnabled) for readers who trigger it
     // by accident while turning pages with two fingers.
     var FONT_MIN = 18, FONT_MAX = 44;
-    var pinching = false;
-    var pinchStartDist = null;
-    var pinchStartFontSize = null;
 
-    function touchDistance(t1, t2){
-      var dx = t1.clientX - t2.clientX;
-      var dy = t1.clientY - t2.clientY;
-      return Math.sqrt(dx * dx + dy * dy);
-    }
-
-    function onPinchMove(e){
-      if(!pinching || e.touches.length !== 2) return;
-      e.preventDefault(); // stop the browser from also trying its own zoom
-      var dist = touchDistance(e.touches[0], e.touches[1]);
-      var ratio = dist / pinchStartDist;
-      var key = Settings.currentFontSizeKey();
-      var newSize = Math.max(FONT_MIN, Math.min(FONT_MAX, Math.round(pinchStartFontSize * ratio)));
-      if(newSize !== state[key]){
-        state[key] = newSize;
-        Settings.applyFontSize();
-      }
-    }
-
-    function endPinch(){
-      pinching = false;
-      pinchStartDist = null;
-      frame.removeEventListener('touchmove', onPinchMove, {passive:false});
-      saveState();
-      UI.showToast('حجم الخط: ' + UI.toArabicDigits(state[Settings.currentFontSizeKey()]));
-    }
-
-    frame.addEventListener('touchstart', function(e){
-      if(e.touches.length === 2 && state.pinchZoomEnabled !== false){
-        pinching = true;
-        startX = null; startY = null; // a pinch is never a one-finger swipe
-        pinchStartDist = touchDistance(e.touches[0], e.touches[1]);
-        pinchStartFontSize = state[Settings.currentFontSizeKey()];
-        // Only registered for the brief duration of an actual pinch, so
-        // ordinary one-finger scrolling never has a non-passive touchmove
-        // listener in its way (that alone is enough to make Chrome/Android
-        // hand scrolling off to the main thread and feel noticeably heavier).
-        frame.addEventListener('touchmove', onPinchMove, {passive:false});
-      } else if(e.touches.length === 1 && !pinching){
-        var t = e.touches[0];
-        startX = t.clientX; startY = t.clientY;
-      }
-    }, {passive:true});
-
-    frame.addEventListener('touchend', function(e){
-      if(pinching){
-        if(e.touches.length < 2) endPinch();
-        return; // releasing a pinch is never a page-turn swipe
-      }
-      if(startX === null) return;
-      var t = e.changedTouches[0];
-      var dx = t.clientX - startX;
-      var dy = t.clientY - startY;
-      if(Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5){
+    Gestures.swipeAndPinch({
+      root: els.pageFrame,
+      isPinchEnabled: function(){ return state.pinchZoomEnabled !== false; },
+      getPinchValue: function(){ return state[Settings.currentFontSizeKey()]; },
+      pinchMin: FONT_MIN,
+      pinchMax: FONT_MAX,
+      onPinchChange: function(newSize){
+        var key = Settings.currentFontSizeKey();
+        if(newSize !== state[key]){
+          state[key] = newSize;
+          Settings.applyFontSize();
+        }
+      },
+      onPinchEnd: function(){
+        saveState();
+        UI.showToast('حجم الخط: ' + UI.toArabicDigits(state[Settings.currentFontSizeKey()]));
+      },
+      onSwipe: function(dx){
         if(dx > 0) ReaderManager.goToRelativePage(1);
         else ReaderManager.goToRelativePage(-1);
       }
-      startX = null; startY = null;
-    }, {passive:true});
+    });
   }
 
   function init(deps){

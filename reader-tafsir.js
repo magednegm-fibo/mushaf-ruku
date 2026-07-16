@@ -254,52 +254,19 @@
   // Swipe left/right inside the tafsir panel moves to the next/previous
   // ruku's tafsir — same RTL convention used for turning pages in the
   // reader itself (see wireSwipeAndPinch in navigation.js): dragging the
-  // finger right (dx > 0) advances forward, left goes back.
+  // finger right (dx > 0) advances forward, left goes back. Uses the
+  // shared Gestures.swipe helper (gestures.js), which also handles
+  // preventDefault-ing a confirmed horizontal drag so it can't leak to
+  // whatever's behind this fixed panel, and cleans up correctly on
+  // touchcancel.
   function wireSwipe(){
     if(!els.tafsirPanel || !ReaderManager) return;
-    var startX = null, startY = null;
-    var horizontal = false; // becomes true once a drag is confirmed
-                             // horizontal — see onMove below
-
-    // Left unhandled (no preventDefault), the browser's own touch
-    // handling for a horizontal drag has nowhere valid to go — panel-body
-    // only scrolls vertically — so on some devices it was escaping to
-    // whatever's behind the fixed panel, producing exactly the
-    // background-scroll glitch this fixes: the moment a drag is
-    // confirmed horizontal (dx clearly dominant over dy), preventDefault
-    // is called on every subsequent touchmove of that same gesture so
-    // nothing behind the panel can react to it at all.
-    function onMove(e){
-      if(startX === null || e.touches.length !== 1) return;
-      var t = e.touches[0];
-      var dx = t.clientX - startX;
-      var dy = t.clientY - startY;
-      if(!horizontal){
-        if(Math.abs(dx) < 10) return; // too small yet to tell intent
-        if(Math.abs(dx) <= Math.abs(dy) * 1.5) return; // reads as a vertical scroll — leave it alone
-        horizontal = true;
+    Gestures.swipe({
+      root: els.tafsirPanel,
+      onSwipe: function(dx){
+        navigateRuku(dx > 0 ? 1 : -1);
       }
-      e.preventDefault();
-    }
-
-    els.tafsirPanel.addEventListener('touchstart', function(e){
-      if(e.touches.length !== 1){ startX = null; return; }
-      var t = e.touches[0];
-      startX = t.clientX; startY = t.clientY;
-      horizontal = false;
-      els.tafsirPanel.addEventListener('touchmove', onMove, {passive:false});
-    }, {passive:true});
-
-    els.tafsirPanel.addEventListener('touchend', function(e){
-      els.tafsirPanel.removeEventListener('touchmove', onMove, {passive:false});
-      if(startX === null) return;
-      var t = e.changedTouches[0];
-      var dx = t.clientX - startX;
-      var dy = t.clientY - startY;
-      startX = null; startY = null;
-      if(Math.abs(dx) <= 60 || Math.abs(dx) <= Math.abs(dy) * 1.5) return;
-      navigateRuku(dx > 0 ? 1 : -1);
-    }, {passive:true});
+    });
   }
 
   // Prev/next buttons at the end of the tafsir list (below the last

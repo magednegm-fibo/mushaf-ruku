@@ -1,6 +1,10 @@
-// Bump this version on every release so old, previously-cached HTML/JS/data
-// files are guaranteed to be replaced instead of silently kept forever.
-const CACHE = 'juzamma-v82';
+// Cache name is derived from the app's single version number (version.js)
+// so it's impossible for the Service Worker to drift out of sync with the
+// version shown in Settings/About. Bump the version in version.js on every
+// release — old, previously-cached HTML/JS/data files are then guaranteed
+// to be replaced instead of silently kept forever.
+importScripts('./version.js');
+const CACHE = 'juzamma-v' + self.APP_VERSION;
 
 // Assets whose CONTENT rarely/never changes once shipped: safe to serve
 // cache-first for speed and offline use.
@@ -27,8 +31,10 @@ const DYNAMIC_ASSETS = [
   './surah-names-vocalized.js',
   './juz-info.js',
   './data.js',
+  './version.js',
   './constants.js',
   './storage-manager.js',
+  './gestures.js',
   './searchManager.js',
   './audioManager.js',
   './readerManager.js',
@@ -122,7 +128,14 @@ self.addEventListener('fetch', (e) => {
         return fetch(e.request).then((res) => {
           if (res && res.status === 200) {
             const resClone = res.clone();
-            caches.open(CACHE).then((cache) => cache.put(e.request, resClone));
+            // e.waitUntil() (not a bare, un-awaited .then()) — respondWith's
+            // own promise only keeps the worker alive until `res` is
+            // returned below; the cache write is a separate promise chain
+            // that the browser is otherwise free to cut short the instant
+            // it terminates this worker instance right after, silently
+            // dropping the write. waitUntil() explicitly extends the
+            // event's lifetime until this write has actually finished too.
+            e.waitUntil(caches.open(CACHE).then((cache) => cache.put(e.request, resClone)));
           }
           return res;
         });
@@ -140,7 +153,12 @@ self.addEventListener('fetch', (e) => {
       .then((res) => {
         if (res && res.status === 200) {
           const resClone = res.clone();
-          caches.open(CACHE).then((cache) => cache.put(e.request, resClone));
+          // Same e.waitUntil() reasoning as the cache-first branch above —
+          // without it this write races the worker's own shutdown and can
+          // be silently dropped, which here would mean an update fetched
+          // successfully over the network never actually lands in the
+          // offline cache.
+          e.waitUntil(caches.open(CACHE).then((cache) => cache.put(e.request, resClone)));
         }
         return res;
       })

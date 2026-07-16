@@ -147,7 +147,8 @@
     eyebrowText: document.getElementById('eyebrowText'),
     rukuCount: document.getElementById('rukuCount'),
     ayahCount: document.getElementById('ayahCount'),
-    aboutText: document.getElementById('aboutText')
+    aboutText: document.getElementById('aboutText'),
+    appVersionText: document.getElementById('appVersionText')
   };
 
   function loadState(){
@@ -282,6 +283,17 @@
   if (els.aboutText) els.aboutText.textContent = JUZ_INFO.fullMushaf
     ? 'كل صفحة في هذا التطبيق تمثّل ركوعًا واحدًا كاملًا كما تحدّده علامات الركوع (ع) في المصحف الشريف، من الفاتحة إلى الناس (٥٥٦ ركوعًا). بداية كل جزء من الأجزاء الثلاثين مُشار إليها داخل النص. النص من مصحف حفص عن عاصم برواية Tanzil / QPC.'
     : 'كل صفحة في هذا التطبيق تمثّل ركوعًا واحدًا كاملًا كما تحدّده علامات الركوع (ع) في المصحف الشريف، ضمن ' + JUZ_INFO.name + '. النص من مصحف حفص عن عاصم برواية Tanzil / QPC.';
+  if (els.appVersionText) els.appVersionText.textContent = 'الإصدار ' + (window.APP_VERSION || '?');
+
+  // manifest.json is plain JSON and can't read version.js, so its
+  // "version" field has to be kept in sync by hand. This just flags it
+  // loudly in devtools if someone bumps one and forgets the other —
+  // it's not shown to the user, only developers debugging a report.
+  fetch('./manifest.json').then(function(r){ return r.json(); }).then(function(m){
+    if (m && m.version && window.APP_VERSION && m.version !== window.APP_VERSION) {
+      console.warn('نسخة manifest.json (' + m.version + ') لا تطابق version.js (' + window.APP_VERSION + ') — يجب تحديثهما معًا عند كل إصدار.');
+    }
+  }).catch(function(){ /* offline first load — not worth surfacing */ });
 
   // -----------------------------------------------------------------
   // Startup

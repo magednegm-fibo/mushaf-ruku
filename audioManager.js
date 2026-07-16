@@ -592,11 +592,6 @@
   // as the ruku playback, just in 'single' mode so it stops after one ayah
   // instead of chaining into the next.
   function setupAyahNumberLongPress(){
-    var LONG_PRESS_MS = 550;
-    var MOVE_TOLERANCE = 10;
-    var timer = null;
-    var startPos = null;
-    var cancelled = false;
     var root = els.ayahFlow;
     if(!root) return;
 
@@ -643,52 +638,23 @@
       }
     }
 
-    function onStart(x, y, target){
-      var numEl = target.closest ? target.closest('.ayah-num') : null;
-      if(!numEl) return;
-      cancelled = false;
-      startPos = {x: x, y: y};
-      scrollSyncPausedByTouch = true;
-      clearTimeout(timer);
-      timer = setTimeout(function(){
-        if(cancelled) return;
+    Gestures.longPress({
+      root: root,
+      resolveTarget: function(target){
+        return target.closest ? target.closest('.ayah-num') : null;
+      },
+      onPressStart: function(){
+        scrollSyncPausedByTouch = true;
+      },
+      onPressEnd: function(){
+        scrollSyncPausedByTouch = false;
+      },
+      onFire: function(numEl){
         var surah = parseInt(numEl.getAttribute('data-surah'), 10);
         var ayah = parseInt(numEl.getAttribute('data-ayah'), 10);
         if(!isNaN(surah) && !isNaN(ayah)) startLongPressPlayback(surah, ayah);
-      }, LONG_PRESS_MS);
-    }
-    function onMove(x, y){
-      if(!startPos) return;
-      if(Math.abs(x - startPos.x) > MOVE_TOLERANCE || Math.abs(y - startPos.y) > MOVE_TOLERANCE){
-        cancelled = true;
-        clearTimeout(timer);
-        scrollSyncPausedByTouch = false;
       }
-    }
-    function onEnd(){
-      clearTimeout(timer);
-      startPos = null;
-      scrollSyncPausedByTouch = false;
-    }
-
-    root.addEventListener('touchstart', function(e){
-      if(e.touches.length > 1){
-        cancelled = true;
-        clearTimeout(timer);
-        startPos = null;
-        return;
-      }
-      var t = e.touches[0];
-      onStart(t.clientX, t.clientY, e.target);
-    }, {passive:true});
-    root.addEventListener('touchmove', function(e){
-      var t = e.touches[0];
-      onMove(t.clientX, t.clientY);
-    }, {passive:true});
-    root.addEventListener('touchend', onEnd, {passive:true});
-    root.addEventListener('mousedown', function(e){ onStart(e.clientX, e.clientY, e.target); });
-    root.addEventListener('mousemove', function(e){ onMove(e.clientX, e.clientY); });
-    root.addEventListener('mouseup', onEnd);
+    });
   }
 
   // Reciter choice (الاستماع): stored per-user like fontStyle, independent

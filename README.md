@@ -25,6 +25,10 @@
 
 **الإصدار:** 0.9.1 Beta
 
+رقم الإصدار مصدره الوحيد ملف [`version.js`](./version.js) — يُقرأ من هناك في الإعدادات/About داخل التطبيق، ويُشتق منه اسم كاش الـ Service Worker (`sw.js` عبر `importScripts`) حتى لا يختلف الرقم بين هذا الملف والتطبيق نفسه كما كان يحدث سابقًا. حقل `version` في `manifest.json` غير قابل للقراءة تلقائيًا من JS (ملف JSON ساكن) لذا يجب تحديثه يدويًا مع كل تغيير في `version.js`؛ `app.js` يتحقق من التطابق عند التشغيل ويطبع تحذيرًا في console عند أي اختلاف.
+
+عند إصدار نسخة جديدة: حدّث الرقم في `version.js` وفي حقل `version` بملف `manifest.json` معًا (وحدّث هذا الملف إن رغبت).
+
 **الحالة:**
 - ✅ يعمل
 - 🚧 قيد التطوير
@@ -34,6 +38,9 @@
 ## سجل التغييرات (Changelog)
 
 يتّبع هذا المشروع ترقيمًا مبسّطًا (Semantic-ish): `major.minor.patch`. لم يكن هناك سجل تغييرات موثّق قبل هذا القسم، فالإصلاحات الأقدم مذكورة هنا بإيجاز تحت "قبل بدء هذا السجل" بلا أرقام إصدار دقيقة؛ بداية من 0.9.1 كل تغيير له رقم إصدار وتاريخ.
+
+### 0.9.1 — 2026-07-16
+- إضافة `version.js` كمصدر وحيد لرقم الإصدار: يظهر الآن في شاشة الإعدادات/About داخل التطبيق، ويُشتق منه اسم كاش الـ Service Worker (`CACHE = 'juzamma-v' + APP_VERSION`) بدل عدّاد يدوي منفصل (`juzamma-v82`) كان بلا علاقة برقم الإصدار في README. حقل `version` أُضيف أيضًا إلى `manifest.json` مع تحقّق تلقائي (console warning) عند تشغيل التطبيق إن اختلف عن `version.js`.
 
 ### 0.9.1 — 2026-07-10
 - إنشاء طبقة تخزين مركزية `StorageManager` (في `storage-manager.js`): كل الوصول إلى `localStorage` أصبح حصريًا من خلالها (`loadSettings`/`saveSettings`، `loadLastRead`/`saveLastRead`، `loadFavorites`/`saveFavorites`، `loadBookmarks`/`saveBookmark`، `loadReminder`/`saveReminder`) — لم يعد `app.js` يستدعي `localStorage` مباشرة إطلاقًا.

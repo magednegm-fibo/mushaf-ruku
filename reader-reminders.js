@@ -143,11 +143,6 @@
   }
 
   function wireReminderMarkMenus(){
-    var LONG_PRESS_MS = 550;
-    var MOVE_TOLERANCE = 10; // px — small jitter shouldn't cancel the long-press
-    var timer = null;
-    var startPos = null;
-    var cancelled = false;
     var root = els.ayahFlow;
     var pendingKey = null; // word targeted by whichever popup is open
     var lastPos = {x: 0, y: 0};
@@ -182,70 +177,30 @@
       positionMenu(els.waqfDeleteMenu, x, y);
     }
 
-    function onStart(x, y, target){
-      if(state[currentWaqfVisibilityKey()] === false) return; // العلامات معطّلة من الإعدادات لهذا الرسم
-      var wordEl = target.closest ? target.closest('.quran-word') : null;
-      if(!wordEl) return;
-      cancelled = false;
-      startPos = {x: x, y: y};
-      AudioManager.pauseScrollSync();
-      clearTimeout(timer);
-      timer = setTimeout(function(){
-        if(cancelled) return;
+    Gestures.longPress({
+      root: root,
+      resolveTarget: function(target){
+        if(state[currentWaqfVisibilityKey()] === false) return null; // العلامات معطّلة من الإعدادات لهذا الرسم
+        return target.closest ? target.closest('.quran-word') : null;
+      },
+      onPressStart: function(){
+        AudioManager.pauseScrollSync();
+      },
+      onPressEnd: function(){
+        AudioManager.resumeScrollSync();
+      },
+      onFire: function(wordEl, x, y){
         // Decide add vs. delete at fire time (not at press-start), so it
         // always reflects this exact word's current state, no matter
         // whether the finger landed on the dot or elsewhere on the word.
         var key = wordEl.getAttribute('data-key');
         if(waqfMarks[key]) openDeleteMenu(wordEl, x, y);
         else openColorMenu(wordEl, x, y);
-      }, LONG_PRESS_MS);
-    }
-    function onMove(x, y){
-      if(!startPos) return;
-      if(Math.abs(x - startPos.x) > MOVE_TOLERANCE || Math.abs(y - startPos.y) > MOVE_TOLERANCE){
-        cancelled = true;
-        clearTimeout(timer);
-        AudioManager.resumeScrollSync();
-      }
-    }
-    function onEnd(){
-      clearTimeout(timer);
-      startPos = null;
-      AudioManager.resumeScrollSync();
-    }
-
-    root.addEventListener('touchstart', function(e){
-      if(e.touches.length > 1){
-        // A second finger just landed — this is the start of a pinch-zoom
-        // gesture, not a long-press on a word. Cancel any pending
-        // long-press right away; without this, a careful/slow pinch could
-        // hold the first finger still long enough to fire the long-press
-        // and pop the reminder-mark colour picker mid-pinch.
-        cancelled = true;
-        clearTimeout(timer);
-        startPos = null;
-        return;
-      }
-      var t = e.touches[0];
-      onStart(t.clientX, t.clientY, e.target);
-    }, {passive:true});
-    root.addEventListener('touchmove', function(e){
-      var t = e.touches[0];
-      onMove(t.clientX, t.clientY);
-    }, {passive:true});
-    root.addEventListener('touchend', function(e){
-      onEnd(e.target);
-    }, {passive:true});
-    // Some Android WebViews fall back to a native long-press context menu
-    // even with user-select:none; make sure it never appears here. (This is
-    // a 'contextmenu' listener, not 'touchmove', so it has no effect on
-    // scroll performance.)
-    root.addEventListener('contextmenu', function(e){ e.preventDefault(); });
-
-    // Mouse equivalents, for testing on desktop browsers.
-    root.addEventListener('mousedown', function(e){ onStart(e.clientX, e.clientY, e.target); });
-    root.addEventListener('mousemove', function(e){ onMove(e.clientX, e.clientY); });
-    root.addEventListener('mouseup', function(e){ onEnd(e.target); });
+      },
+      // Some Android WebViews fall back to a native long-press context menu
+      // even with user-select:none; make sure it never appears here.
+      suppressContextMenu: true
+    });
 
     els.waqfColorMenu.querySelectorAll('.waqf-color-btn').forEach(function(btn){
       btn.addEventListener('click', function(){
