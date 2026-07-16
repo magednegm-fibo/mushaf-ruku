@@ -1088,6 +1088,18 @@ body.night .fav-item .fav-remove{ color:#D2857E; }
 body.night .empty-state{ color:#9c8f6d; }
 
 /* ---------- Reader guide tabs (دليل القارئ) ---------- */
+/* The guide's explanatory text (waqf marks, قصر المنفصل rulings, khatm
+   dua) is reference content, not something meant to be selected or
+   copied — a long-press here should do nothing, same as the button/
+   list-row treatment above. user-select:none on the panel itself
+   cascades to every descendant (the property inherits unless a child
+   overrides it, and none here do), so this single rule covers all
+   three tabs without needing to tag each text class individually. */
+#waqfGuidePanel{
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
 .guide-tabs{
   display:flex;
   gap:8px;
@@ -1247,6 +1259,14 @@ body.night .waqf-guide-symbol.tajweed-guide-number{ color:#D8B662; }
   font-family: var(--font-quran);
   font-size:17px;
   line-height:1;
+}
+/* "م" (الوقف اللازم) is a single bare letter, so at the shared 17px it
+   reads visibly smaller than the other badges, which are mostly
+   multi-letter labels (لا, ج, صلي, قلي...) that fill the circle more.
+   Bumped just this one symbol up rather than the shared class, so the
+   rest of the badges keep their current size. */
+.waqf-symbol-meem{
+  font-size:24px;
 }
 .waqf-guide-text b{
   display:block;
