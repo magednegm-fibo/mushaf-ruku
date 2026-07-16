@@ -305,7 +305,14 @@
 // "ذٰ لِكَ" and "ذٰ لِكُ" (dhalikum-family) spellings confirmed in the
 // dataset -- these recur at ~200+ occurrences each across the text, since
 // joinKnownSplitWords replaces every match, not just the first.
-var KNOWN_SPLIT_WORD_FRAGMENTS = ["اٰ تُوۡهُمۡ", "اٰ تَيۡتُمُوۡهُنَّ", "اٰ تُوا", "اٰ تُوۡهُنَّ", "اٰ لَۤاءَ", "اٰ تُہُمَا", "ذٰ لِكَ", "ذٰ لِكُ"];
+// أَلَّا ("alla", fatha-alef + lam-shadda-fatha-alef) is likewise split
+// by a genuine U+0020 in textIndopak ("اَ" + "لَّا") -- reported at 3:170
+// (خَلۡفِهِمۡ اَ / لَّا خَوۡفٌ, the "اَ" stranding itself at the end of one
+// line and "لَّا" starting the next). Every confirmed occurrence of this
+// exact split in the dataset: 2:229, 3:170, 5:8. Not to be confused with
+// إِلَّا ("illa", hamza-kasra) or any other lam-alef sequence -- only this
+// exact fatha-alef + lam-shadda-fatha-alef sequence is affected.
+var KNOWN_SPLIT_WORD_FRAGMENTS = ["اٰ تُوۡهُمۡ", "اٰ تَيۡتُمُوۡهُنَّ", "اٰ تُوا", "اٰ تُوۡهُنَّ", "اٰ لَۤاءَ", "اٰ تُہُمَا", "ذٰ لِكَ", "ذٰ لِكُ", "اَ لَّا"];
   var KNOWN_SPLIT_PLACEHOLDER = '\u2061';
   function joinKnownSplitWords(s){
     KNOWN_SPLIT_WORD_FRAGMENTS.forEach(function(frag){
@@ -314,11 +321,26 @@ var KNOWN_SPLIT_WORD_FRAGMENTS = ["اٰ تُوۡهُمۡ", "اٰ تَيۡتُم�
     return s;
   }
 
+  // Splits ayah text into exactly the same word tokens that end up as
+  // individual .quran-word spans in the rendered DOM below — this is the
+  // ONE place in the app that decides what counts as a "word" for
+  // indexing purposes (the numeric suffix in each span's data-key).
+  // SearchManager.findMatchWordRange() calls this too (see searchManager.js),
+  // instead of tokenizing independently, so a search result's computed
+  // word-range can never drift out of sync with the real DOM word index
+  // again — they used to disagree silently on ayaat whose Indopak text
+  // encodes a waqf mark as its own space-delimited token (e.g. 2:137),
+  // since only this function's MIDWORD_SPACE_REGEX step folds it back
+  // into the previous word.
+  function tokenizeAyahWords(rawText){
+    var src = joinKnownSplitWords(rawText);
+    src = src.replace(MIDWORD_SPACE_REGEX, MIDWORD_SPACE_PLACEHOLDER);
+    return src.split(/\s+/).filter(Boolean);
+  }
+
   function renderAyahWords(a){
     var src = (state.fontStyle !== 'uthmani' && a.textIndopak) ? a.textIndopak : a.text;
-    src = joinKnownSplitWords(src);
-    src = src.replace(MIDWORD_SPACE_REGEX, MIDWORD_SPACE_PLACEHOLDER);
-    var words = src.split(/\s+/).filter(Boolean).map(function(w){
+    var words = tokenizeAyahWords(src).map(function(w){
       return w.split(MIDWORD_SPACE_PLACEHOLDER).join(' ').split(KNOWN_SPLIT_PLACEHOLDER).join('\u00A0');
     });
     return words.map(function(w, idx){
@@ -422,29 +444,6 @@ var KNOWN_SPLIT_WORD_FRAGMENTS = ["اٰ تُوۡهُمۡ", "اٰ تَيۡتُم�
 
     updateNavButtons();
 
-    els.pageScroll.scrollTop = 0;
-    window.scrollTo(0, 0);
-    document.documentElement.scrollTop = 0;
-    document.body.scrollTop = 0;
-    // Re-apply once layout has actually settled — one frame for layout,
-    // one for paint — the same double-rAF pattern already used in
-    // openAyah() below for search-result jumps. A single rAF (the
-    // previous fix here) measures/sets scroll before the new page's
-    // content has actually laid out on-device, so it silently does
-    // nothing and the reader is left wherever the *previous* page had
-    // scrolled to — exactly the "opens the new ruku but stays at the
-    // bottom of the page" symptom. This also naturally covers the
-    // Android keyboard-close resize when navigation is triggered from
-    // "الذهاب إلى ركوع رقم" (whose input may still hold focus), since it
-    // re-applies after that settles too, not on a hardcoded delay.
-    requestAnimationFrame(function(){
-      requestAnimationFrame(function(){
-        els.pageScroll.scrollTop = 0;
-        window.scrollTo(0, 0);
-        document.documentElement.scrollTop = 0;
-        document.body.scrollTop = 0;
-      });
-    });
     if(onAfterRender) onAfterRender();
   }
 
@@ -471,6 +470,61 @@ var KNOWN_SPLIT_WORD_FRAGMENTS = ["اٰ تُوۡهُمۡ", "اٰ تَيۡتُم�
   // -----------------------------------------------------------------
   // Change page
   // -----------------------------------------------------------------
+  // Scrolls back to the top of the reader — real navigation only. Kept
+  // separate from renderPage() (called only from goToPage() below)
+  // because renderPage() is also called directly, for same-page,
+  // in-place refreshes where the reader's current scroll position must
+  // be left alone (switching الرسم/script style, importing reminder
+  // marks — see settings.js). Those callers now preserve scroll
+  // automatically, with no flag or parameter needed anywhere, simply by
+  // never calling goToPage().
+  //
+  // onSettled(), if given, fires once this function's OWN reset has
+  // actually finished being (re-)applied — not a fixed frame count a
+  // caller has to guess and keep in sync with this function's internals.
+  // goToPage() below forwards opts.onSettled here so a caller like
+  // audioManager.js's auto page-turn (which needs to scroll to a
+  // specific ayah only after this reset is done, or the reset
+  // overwrites it) can wait for that exact moment instead of assuming
+  // how many rAFs this function happens to use — keeping the two files
+  // decoupled from each other's internal timing.
+  //
+  // navToken guards against a *stale* onSettled: if a second goToPage()
+  // starts (a manual swipe landing at the same moment as an audio-driven
+  // auto page-turn, or two auto page-turns in quick succession for very
+  // short ayaat) before the first one's rAFs have fired, both reset
+  // chains still run, but only the callback whose token still matches
+  // the current one actually fires — the same guard pattern as
+  // audioManager.js's own playToken, applied here to navigation instead
+  // of playback. Without it, an older call's onSettled could still fire
+  // after a newer page's, highlighting/scrolling to the wrong ayah.
+  var navToken = 0;
+  function resetScrollToTop(onSettled, myNavToken){
+    els.pageScroll.scrollTop = 0;
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    // Re-apply once layout has actually settled — one frame for layout,
+    // one for paint — the same double-rAF pattern already used in
+    // openAyah() below for search-result jumps. A single rAF (the
+    // previous fix here) measures/sets scroll before the new page's
+    // content has actually laid out on-device, so it silently does
+    // nothing and the reader is left wherever the *previous* page had
+    // scrolled to — exactly the "opens the new ruku but stays at the
+    // bottom of the page" symptom. This also naturally covers the
+    // Android keyboard-close resize when navigation is triggered from
+    // "الذهاب إلى ركوع رقم" (whose input may still hold focus), since it
+    // re-applies after that settles too, not on a hardcoded delay.
+    requestAnimationFrame(function(){
+      requestAnimationFrame(function(){
+        els.pageScroll.scrollTop = 0;
+        window.scrollTo(0, 0);
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
+        if(onSettled && myNavToken === navToken) onSettled();
+      });
+    });
+  }
   function goToPage(i, opts){
     if(i < 0 || i >= PAGES.length) return;
     if(onBeforePageChange) onBeforePageChange(opts);
@@ -480,8 +534,11 @@ var KNOWN_SPLIT_WORD_FRAGMENTS = ["اٰ تُوۡهُمۡ", "اٰ تَيۡتُم�
     // switching الرسم on the same page and must not credit that page as
     // "read" in the newly-selected script.
     if(onPageChanged) onPageChanged(i);
+    var myNavToken = ++navToken;
     renderPage();
+    resetScrollToTop(opts && opts.onSettled, myNavToken);
   }
+
 
   // Sequential (±1) navigation only — prev/next buttons, arrow keys, and
   // swipe (called from Navigation.js) — shared here so the "إظهار
@@ -570,6 +627,7 @@ var KNOWN_SPLIT_WORD_FRAGMENTS = ["اٰ تُوۡهُمۡ", "اٰ تَيۡتُم�
     goToPage: goToPage,
     goToRelativePage: goToRelativePage,
     updateNavButtons: updateNavButtons,
-    openAyah: openAyah
+    openAyah: openAyah,
+    tokenizeAyahWords: tokenizeAyahWords
   };
 })();

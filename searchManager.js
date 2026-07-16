@@ -120,15 +120,25 @@
   }
 
   // Locates which word(s) of the ayah actually contain the search match
-  // (as opposed to just the ayah's first word), using the exact same
-  // whitespace-splitting renderAyahWords (in app.js) uses, so the returned
-  // indices line up with the real data-key word spans in the DOM. Returns
-  // {start, end} word indices (inclusive), or null if it can't be found
-  // (shouldn't normally happen since the ayah only got here by matching).
+  // (as opposed to just the ayah's first word). Tokenizes via
+  // ReaderManager.tokenizeAyahWords() — the SAME function readerManager.js
+  // itself uses to decide what counts as a "word" when it builds the
+  // .quran-word spans (see renderAyahWords in readerManager.js) — instead
+  // of splitting independently here, so the returned indices always line
+  // up with the real data-key word spans in the DOM, even on ayaat whose
+  // Indopak text encodes a waqf mark as its own space-delimited token
+  // (e.g. 2:137) where a naive whitespace split disagrees with the DOM's
+  // actual word count. Falls back to a plain whitespace split only if
+  // ReaderManager hasn't loaded for some reason, so this never hard-fails.
+  // Returns {start, end} word indices (inclusive), or null if it can't be
+  // found (shouldn't normally happen since the ayah only got here by
+  // matching).
   function findMatchWordRange(fullText, query){
     var normQuery = normalizeArabic(query);
     if(!normQuery) return null;
-    var words = fullText.split(/\s+/).filter(Boolean);
+    var words = (window.ReaderManager && window.ReaderManager.tokenizeAyahWords)
+      ? window.ReaderManager.tokenizeAyahWords(fullText)
+      : fullText.split(/\s+/).filter(Boolean);
     var offsets = [];
     var acc = '';
     words.forEach(function(w, i){

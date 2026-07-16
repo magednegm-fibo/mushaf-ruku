@@ -148,8 +148,23 @@ self.addEventListener('fetch', (e) => {
   // deployed version so app updates (bug fixes, new features) show up
   // immediately instead of being masked by a stale cached copy. Falls back
   // to cache only when the network is unavailable (offline support).
+  //
+  // NETWORK_TIMEOUT_MS races the fetch against a plain timer so a
+  // *stalled* connection (weak signal, cell-tower handoff, captive
+  // portal — a request that never actually errors, just never resolves)
+  // falls back to the cached copy after a bounded wait instead of leaving
+  // the app looking frozen indefinitely. A real network error already
+  // falls back immediately via .catch() below; this only bounds the
+  // "still waiting" case. The network attempt itself is not cancelled —
+  // it's left to finish in the background so a same-URL cache.put() from
+  // a slow-but-eventually-successful response still lands — this only
+  // changes what gets shown to the page right now.
+  const NETWORK_TIMEOUT_MS = 4000;
+  function timeoutPromise(ms){
+    return new Promise((_, reject) => setTimeout(() => reject(new Error('sw-network-timeout')), ms));
+  }
   e.respondWith(
-    fetch(e.request)
+    Promise.race([fetch(e.request), timeoutPromise(NETWORK_TIMEOUT_MS)])
       .then((res) => {
         if (res && res.status === 200) {
           const resClone = res.clone();

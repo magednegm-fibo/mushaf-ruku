@@ -544,11 +544,26 @@
     listenState.repeatsPlayed = 0;
     // Turn the page automatically as the recitation crosses into the next
     // ruku — but via {keepAudio:true}, so goTo doesn't stop the very
-    // playback that's driving it.
-    if(state.page !== item.pageIdx) goTo(item.pageIdx, {keepAudio:true});
+    // playback that's driving it. goToPage() resets scroll to the top of
+    // the new page as part of real navigation, and re-applies that reset
+    // once its own render has actually settled (see resetScrollToTop() in
+    // readerManager.js) — highlighting/scrolling to this ayah right away
+    // would race that re-applied reset and get silently overwritten by
+    // it, which for a long ayah also makes the time-synced auto-scroll
+    // below mistake our own overwritten scroll for the reader manually
+    // scrolling away and give up syncing entirely. Passing onSettled asks
+    // goToPage() to call us back at the exact moment its reset is
+    // actually done, whatever that takes on its end — this file never
+    // assumes or hardcodes how many frames that is.
+    if(state.page !== item.pageIdx){
+      goTo(item.pageIdx, {keepAudio:true, onSettled: function(){
+        highlightAyah(item.surah, item.ayah);
+      }});
+    } else {
+      highlightAyah(item.surah, item.ayah);
+    }
     updateListenButton();
     requestAudioWakeLock();
-    highlightAyah(item.surah, item.ayah);
     updateMediaSessionMetadata(surahNameFor(item.pageIdx, item.ayahIdx, item.surah), item.ayah);
     setMediaSessionPlaybackState('playing');
     player.src = ayahAudioUrl(item.surah, item.ayah);

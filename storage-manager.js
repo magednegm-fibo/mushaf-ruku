@@ -60,7 +60,7 @@
   // itself anymore.
   function loadSettings(){
     var DEFAULTS = {
-      page:0, fontSizeUthmani:28, fontSizeIndopak:28, night:false,
+      page:0, fontSizeUthmani:28, fontSizeIndopak:32, night:false,
       furthestUthmani:0, furthestIndopak:0,
       lastPageUthmani:0, lastPageIndopak:0, lastPageShared:0,
       fontStyle:'uthmani', showWaqfMarksUthmani:true, showWaqfMarksIndopak:true,

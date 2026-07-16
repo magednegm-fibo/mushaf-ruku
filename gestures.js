@@ -244,9 +244,19 @@
     }
 
     frame.addEventListener('touchstart', function(e){
+      // Any time a second finger lands, this can no longer be a one-finger
+      // swipe -- reset the anchor unconditionally, not only inside the
+      // pinch-enabled branch below. Without this, when pinch-zoom is
+      // turned off (isPinchEnabled() false) a lingering second finger left
+      // `startX/startY` set from the first finger's touchstart, and the
+      // eventual touchend computed dx/dy against `e.changedTouches[0]`
+      // (whichever finger happened to lift) mixed coordinates from two
+      // different fingers -- occasionally clearing the swipe threshold by
+      // accident and turning the page when the reader never intended to
+      // swipe at all.
+      if(e.touches.length !== 1){ startX = null; startY = null; }
       if(e.touches.length === 2 && (!options.isPinchEnabled || options.isPinchEnabled())){
         pinching = true;
-        startX = null; startY = null; // a pinch is never a one-finger swipe
         pinchStartDist = touchDistance(e.touches[0], e.touches[1]);
         pinchStartValue = options.getPinchValue ? options.getPinchValue() : 0;
         // Only registered for the brief duration of an actual pinch, so
@@ -286,6 +296,26 @@
       startX = null; startY = null;
     }, {passive:true});
   }
+
+  // ===================================================================
+  // Native text-selection guard -- .ayah-flow already sets CSS
+  // user-select:none, which stops the *visible* selection highlight, but
+  // some Android WebViews (Google app installed) still run their own
+  // selection-initiation step on a long-press regardless of that CSS,
+  // purely to feed the system "Smart Text Selection" / dictionary
+  // look-up bottom sheet. That sheet is not the same UI as the
+  // right-click/long-press `contextmenu` event (already blocked via
+  // suppressContextMenu above) -- it fires off `selectstart`, so CSS and
+  // contextmenu-prevention alone don't stop it. Blocking `selectstart`
+  // itself is the standard cross-browser way to stop selection at its
+  // source. Scoped to .ayah-flow only, so it never touches text
+  // selection anywhere else in the app (tafsir panel, دليل القارئ, etc.)
+  // where normal copy/selection should keep working.
+  document.addEventListener('selectstart', function(e){
+    if(e.target && e.target.closest && e.target.closest('.ayah-flow')){
+      e.preventDefault();
+    }
+  });
 
   window.Gestures = {
     longPress: longPress,
