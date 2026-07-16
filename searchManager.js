@@ -66,6 +66,50 @@
       .replace(/ة/g, 'ه')
       .replace(/ؤ/g, 'و')
       .replace(/ئ/g, 'ي')
+      // ک (U+06A9 KEHEH) is the QUL Indopak dataset's own typographic variant
+      // of ك (U+0643 KAF) — used inconsistently within individual words
+      // (e.g. فَسَيَكۡفِيۡکَهُمُ at 2:137, وَاشۡکُرُوۡا at 2:152; 149
+      // occurrences total in data.js). Without this mapping it fell through
+      // to the "drop non-letter symbols" line below and was silently
+      // deleted instead of normalized, corrupting the word by one letter
+      // and breaking every substring match that needed it — this is the
+      // shared root cause behind both regression cases, not two separate
+      // per-word bugs.
+      .replace(/ک/g, 'ك')
+      // Same class of bug, different Perso-Arabic typesetting variants used
+      // by this dataset — each verified in context (grep across data.js)
+      // to consistently stand in for one single standard letter, with no
+      // ambiguity, before being added here:
+      .replace(/ی/g, 'ي')  // FARSI YEH (U+06CC) — e.g. عَلَیْکُمْ
+      .replace(/ڪ/g, 'ك')  // SWASH KAF (U+06AA) — e.g. الۡڪِتٰبُ, ڪَفَرُوۡا
+      .replace(/ہ/g, 'ه')  // HEH GOAL (U+06C1) — e.g. اَخَاہُ, بِّہِمۡ
+      .replace(/ھ/g, 'ه')  // HEH DOACHASHMEE (U+06BE) — e.g. اَحۡيَاھُمۡ
+      .replace(/ے/g, 'ي')  // YEH BARREE (U+06D2) — e.g. عَسَے for عَسَى
+      .replace(/ﺎ/g, 'ا')  // ARABIC LETTER ALEF FINAL FORM (U+FE8E) — a pure
+                            // OpenType presentation-form glyph, unlike the
+                            // Perso-Arabic variants above; by Unicode design
+                            // a presentation form is always the same letter
+                            // as its base form, never ambiguous. One stray
+                            // occurrence in data.js (4:4), likely a
+                            // copy/paste artifact from the source dataset.
+      // NOT mapped: ٴ (U+0674 ARABIC LETTER HIGH HAMZA) — tried this first,
+      // caught by testing before shipping it. It looks like a clear hamza
+      // substitute at a glance, but this dataset uses it in two genuinely
+      // different roles: a real standalone hamza that should be preserved
+      // (دِفۡ ٴٌ = دِفۡءٞ) AND a seated hamza standing in for a hamza-on-alef
+      // that the existing إأآٱ rule normalizes away to plain ا instead of
+      // keeping (لَاَمۡلَــٴَــنَّ = لَأَمۡلَأَنَّ) or for a hamza-on-yeh
+      // that the existing ئ rule normalizes to ي, not ء (شَاطِیٴِ =
+      // الشَّاطِئِ). One regex can't route to three different targets by
+      // context, so — same as dotless beh — this stays unmapped rather than
+      // silently producing a wrong match in two out of three of its uses.
+      // NOT mapped: ٮ (U+066E DOTLESS BEH, 1029 occurrences) — checked in
+      // context and it is genuinely ambiguous in this dataset, sometimes a
+      // hamza-seat (اُولٰٓٮِٕكَ = أُولَـٰٓئِكَ) and sometimes a plain
+      // alef-maksura/yeh substitute (فَسَوّٰٮهُنَّ = فَسَوَّىٰهُنَّ) with
+      // no single reliable target — does not meet the "clear letter-form
+      // equivalent" bar the other mappings above do, so it's left dropped
+      // rather than guessed at.
       .replace(/[^\u0621-\u064A\s]/g, '')  // drop non-letter symbols (۩ ۞ ۚ ۖ ...)
       .replace(/\s+/g, ' ')
       .trim();
