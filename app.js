@@ -317,7 +317,16 @@
     }
 
     window.addEventListener('load', function(){
-      navigator.serviceWorker.register('sw.js').then(function(reg){
+      // updateViaCache:'none' — makes the *browser's own HTTP cache* never
+      // apply to fetches of sw.js (the default lets it apply in some
+      // cases). This is separate from, and more reliable than, the
+      // Cloudflare-only Cache-Control rule in _headers: that only protects
+      // the deployed production site, so any environment served without
+      // it (e.g. a plain local dev server with no cache headers at all)
+      // could otherwise have the browser's update check served a stale,
+      // HTTP-cached copy of sw.js indefinitely, with no update ever
+      // detected no matter how many times CACHE inside it gets bumped.
+      navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then(function(reg){
         if(!reg) return;
         // Proactively re-check for a newer sw.js right away and again
         // whenever the app comes back to the foreground, rather than

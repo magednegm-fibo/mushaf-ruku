@@ -17,9 +17,30 @@
       return raw ? JSON.parse(raw) : fallback;
     }catch(e){ return fallback; }
   }
+
+  // Every write goes through here, so this is the one place that needs to
+  // tell the user when a save silently failed (quota exceeded, Safari ITP,
+  // private browsing, etc.) — callers all over the app (saveState() on
+  // every page turn, saveFavorites(), saveBookmarkToStorage(), saveReminder())
+  // just call StorageManager.save*() without checking a return value, so a
+  // toast fired from inside writeJSON() is the only way the user actually
+  // finds out a save didn't stick. Throttled so a broken/full storage
+  // doesn't spam a toast on every single autosave (e.g. each page turn) —
+  // one notice per NOTIFY_THROTTLE_MS window is enough to alert the user
+  // without being annoying.
+  var NOTIFY_THROTTLE_MS = 15000;
+  var lastFailureNotifyTs = 0;
+  function notifyWriteFailure(){
+    var now = Date.now();
+    if(now - lastFailureNotifyTs < NOTIFY_THROTTLE_MS) return;
+    lastFailureNotifyTs = now;
+    if(window.UI && typeof window.UI.showToast === 'function'){
+      window.UI.showToast('تعذّر حفظ التغييرات، قد تكون مساحة التخزين ممتلئة أو المتصفح يعمل في وضع التصفح الخاص');
+    }
+  }
   function writeJSON(key, value){
     try{ localStorage.setItem(key, JSON.stringify(value)); return true; }
-    catch(e){ return false; } // private browsing / quota exceeded, etc.
+    catch(e){ notifyWriteFailure(); return false; } // private browsing / quota exceeded, etc.
   }
 
   // ---------------------------------------------------------------------

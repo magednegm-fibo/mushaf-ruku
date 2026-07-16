@@ -46,15 +46,6 @@
 
   function cacheKey(surah, ayah){ return surah + ':' + ayah; }
 
-  // The tafsir text comes from a third-party API — escape it before
-  // inserting via innerHTML so nothing in the response can execute as
-  // markup/script, even though the source has returned plain text so far.
-  function escapeHtml(s){
-    return String(s || '').replace(/[&<>"']/g, function(c){
-      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
-    });
-  }
-
   function fetchOne(surah, ayah){
     var key = cacheKey(surah, ayah);
     if(cache[key] !== undefined) return Promise.resolve(cache[key]);
@@ -84,7 +75,7 @@
     isOffline = false;
     var html = ayahs.map(function(a, i){
       var head = '<div class="tafsir-ayah-head">' +
-          (a.surahName ? 'سورة ' + escapeHtml(a.surahName) + ' — ' : '') +
+          (a.surahName ? 'سورة ' + UI.escapeHtml(a.surahName) + ' — ' : '') +
           'الآية ' + UI.toArabicDigits(a.ayah) +
         '</div>';
       var divider = i > 0 ? '<hr class="tafsir-divider">' : '';

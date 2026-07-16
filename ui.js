@@ -28,6 +28,17 @@
     return String(s).replace(/[٠-٩]/g, function(d){ return ARABIC_DIGITS.indexOf(d); });
   }
 
+  // Escapes any string before it's inserted via innerHTML, so it's always
+  // rendered as plain text and never as markup — whether the string came
+  // from a third-party response (tafsir text) or from the user themself
+  // (a favorite's custom label). Shared here instead of duplicated per
+  // module, per feature file that needs it.
+  function escapeHtml(s){
+    return String(s || '').replace(/[&<>"']/g, function(c){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+
   // -----------------------------------------------------------------
   // Toast
   // -----------------------------------------------------------------
@@ -80,6 +91,7 @@
   }
 
   function openPanel(p){
+    if(!p.classList.contains('hidden')) return; // already open — don't double-push history
     p.classList.remove('hidden');
     history.pushState({tag:'panel'}, '');
     if(p.classList.contains('modal-overlay')){
@@ -151,6 +163,7 @@
     init: init,
     toArabicDigits: toArabicDigits,
     fromArabicDigits: fromArabicDigits,
+    escapeHtml: escapeHtml,
     showToast: showToast,
     openPanel: openPanel,
     closePanel: closePanel,

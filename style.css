@@ -1267,6 +1267,13 @@ body.night .waqf-guide-symbol.tajweed-guide-number{ color:#D8B662; }
    rest of the badges keep their current size. */
 .waqf-symbol-meem{
   font-size:24px;
+  /* Pinned to the Naskh Ta'liq (Indopak) glyph shape on purpose: this
+     badge documents the mark itself, not Quranic text on the page, so
+     it must not follow var(--font-quran) as the user changes رسم
+     المصحف in الإعدادات. Without this override the mark's shape
+     silently swaps to UthmanicHafs' rendering whenever Uthmani script
+     is selected. */
+  font-family: 'PDMS Saleem QuranFont', 'Amiri Quran', 'Noto Naskh Arabic', serif;
 }
 .waqf-guide-text b{
   display:block;

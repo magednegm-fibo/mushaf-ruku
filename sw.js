@@ -71,9 +71,25 @@ self.addEventListener('install', (e) => {
 
 self.addEventListener('activate', (e) => {
   e.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k)))
-    )
+    Promise.all([
+      caches.keys().then((keys) =>
+        Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k)))
+      ),
+      // One-time cleanup: earlier versions had no same-origin check in the
+      // fetch handler, so recitation audio and tafsir JSON from other
+      // origins may have already been written into CACHE during past
+      // sessions. Evict any such leaked entries now so upgrading actually
+      // reclaims that storage instead of just stopping it from growing further.
+      caches.open(CACHE).then((cache) =>
+        cache.keys().then((requests) =>
+          Promise.all(
+            requests
+              .filter((req) => new URL(req.url).origin !== self.location.origin)
+              .map((req) => cache.delete(req))
+          )
+        )
+      )
+    ])
   );
   self.clients.claim();
 });
@@ -85,6 +101,18 @@ function isStaticAsset(url){
 self.addEventListener('fetch', (e) => {
   if (e.request.method !== 'GET') return;
   const url = e.request.url;
+
+  // Only this app's own origin goes through the caching logic below.
+  // Cross-origin requests — recitation audio from everyayah.com
+  // (audioManager.js) and tafsir JSON from raw.githubusercontent.com
+  // (reader-tafsir.js) — are left completely untouched (no e.respondWith),
+  // so the browser handles them as a normal, un-intercepted fetch and
+  // nothing gets added to this app's Cache Storage. Without this check
+  // every ayah played or tafsir opened was silently being written into
+  // CACHE via the network-first path below, contradicting audioManager's
+  // own "Audio is never bundled or cached" comment and growing Cache
+  // Storage without bound over a session.
+  if (new URL(url).origin !== self.location.origin) return;
 
   if (isStaticAsset(url)) {
     // Cache-first for fonts/icons: they never change between releases.

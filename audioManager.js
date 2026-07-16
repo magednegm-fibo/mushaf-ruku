@@ -84,6 +84,16 @@
   }
   var listenState = { playing:false, loading:false, page:null, ayahIndex:0, mode:'ruku', playlist:null, playlistIndex:0, repeatsPlayed:0 };
 
+  // Guards playAyahAt()/playSurahPlaylistAt()'s play().catch() against a
+  // stale rejection racing a newer playback attempt (or a deliberate
+  // stop) — same pattern as reader-tafsir.js's requestToken. Bumped
+  // every time stopListening() runs and every time a new play attempt
+  // starts; a catch handler only acts if its own token is still current,
+  // so an aborted *older* play() promise can never stop/toast-error a
+  // *newer* one that's already playing successfully, and can never fire
+  // a false "no connection" toast after the user simply pressed stop.
+  var playToken = 0;
+
   function pad3(n){
     n = String(n);
     while(n.length < 3) n = '0' + n;
@@ -397,6 +407,9 @@
   }
 
   function stopListening(){
+    // Invalidate any play() promise still in flight from an earlier
+    // playAyahAt()/playSurahPlaylistAt() call — see playToken above.
+    ++playToken;
     // Only touch the audio element if one was actually ever created —
     // calling getAudioPlayer() here would force-create it on every
     // stopListening() call (e.g. on every page turn, via applyFontStyle),
@@ -444,9 +457,11 @@
     updateMediaSessionMetadata(a.surahName, a.ayah);
     setMediaSessionPlaybackState('playing');
     player.src = ayahAudioUrl(a.surah, a.ayah);
+    var myToken = ++playToken;
     var playPromise = player.play();
     if(playPromise && playPromise.catch){
       playPromise.catch(function(){
+        if(myToken !== playToken) return; // a newer play() (or a stop) already took over
         stopListening();
         showToast('تعذر تشغيل الصوت \u2014 تحقق من الاتصال بالإنترنت');
       });
@@ -537,9 +552,11 @@
     updateMediaSessionMetadata(surahNameFor(item.pageIdx, item.ayahIdx, item.surah), item.ayah);
     setMediaSessionPlaybackState('playing');
     player.src = ayahAudioUrl(item.surah, item.ayah);
+    var myToken = ++playToken;
     var playPromise = player.play();
     if(playPromise && playPromise.catch){
       playPromise.catch(function(){
+        if(myToken !== playToken) return; // a newer play() (or a stop) already took over
         stopListening();
         showToast('تعذر تشغيل الصوت \u2014 تحقق من الاتصال بالإنترنت');
       });
