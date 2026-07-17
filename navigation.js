@@ -87,26 +87,70 @@
     }).join('');
     container.innerHTML = html;
   }
-  function renderAyahResults(list, container, query){
-    if(!list.length) return;
-    var heading = '<div class="setting-row static" style="margin-top:8px;"><span>آيات مطابقة</span></div>';
-    var html = list.map(function(e){
-      var src = state.fontStyle !== 'uthmani' ? e.textIndopak : e.text;
-      var range = SearchManager.findMatchWordRange(src, query) || {start: 0, end: 0};
-      return '<div class="index-item ayah-result-item" data-page="' + e.page + '" data-surah="' + e.surah + '" data-ayah="' + e.ayah + '" data-w-start="' + range.start + '" data-w-end="' + range.end + '">' +
-        '<div class="index-item-inner">' +
-          '<div style="flex:1;">' +
-            '<div class="name">' + e.surahName + ' \u2022 آية ' + UI.toArabicDigits(e.ayah) + '</div>' +
-            '<div class="surah-info" style="direction:rtl; white-space:normal; line-height:1.6;">' + SearchManager.ayahSnippet(src, query) + '</div>' +
+  // Renders the search-results state of the search panel: full ayah text
+  // (not a snippet) with the matched word range highlighted via
+  // ReaderManager.renderAyahTextWithHighlight, plus surah/ayah/ruku meta
+  // and a divider between rows. Deliberately NOT reusing renderSurahList/
+  // .index-item — those rows are for the "browse by surah name" index,
+  // this is a distinct "full ayah with a highlighted hit" row, wired to
+  // its own click handler (see handleSearchResultClick) rather than the
+  // shared handleIndexContainerClick.
+  function renderSearchResults(list, query, exact){
+    if(!list.length){
+      els.searchResults.innerHTML = '';
+      return;
+    }
+    var html = list.map(function(e, i){
+      // Prefer the reader's currently-active script; if that script's raw
+      // text doesn't actually yield a resolvable word position for this
+      // query (a normalization gap between the Uthmani and Indopak
+      // datasets — see the "كافر" root case in normalizeArabic — known or
+      // not yet discovered), fall back to rendering THIS ONE row in the
+      // other script instead of guessing {start:0,end:0}. A correctly
+      // highlighted ayah in the "other" script beats a wrong or missing
+      // highlight in the "right" one.
+      var primarySrc = state.fontStyle !== 'uthmani' ? e.textIndopak : e.text;
+      var altSrc = state.fontStyle !== 'uthmani' ? e.text : e.textIndopak;
+      var src = primarySrc;
+      var range = SearchManager.findMatchWordRange(primarySrc, query, exact);
+      if(!range && altSrc !== primarySrc){
+        range = SearchManager.findMatchWordRange(altSrc, query, exact);
+        if(range) src = altSrc;
+      }
+      if(!range) range = {start: 0, end: 0};
+      var page = PAGES[e.page];
+      var rukuLabel = page ? (JUZ_INFO.fullMushaf ? page.ruku : page.rukuInJuz) : null;
+      var metaParts = [e.surahName, 'الآية ' + UI.toArabicDigits(e.ayah)];
+      if(rukuLabel != null) metaParts.push('الركوع ' + UI.toArabicDigits(rukuLabel));
+      return (i > 0 ? '<hr class="search-result-divider">' : '') +
+        '<div class="search-result-item" data-page="' + e.page + '" data-surah="' + e.surah + '" data-ayah="' + e.ayah + '" data-w-start="' + range.start + '" data-w-end="' + range.end + '">' +
+          '<div class="search-result-meta">' +
+            '<span class="search-result-num">' + UI.toArabicDigits(i + 1) + '</span>' +
+            '<span>' + metaParts.join(' \u2022 ') + '</span>' +
           '</div>' +
-        '</div>' +
-      '</div>';
+          '<div class="search-result-text">' + window.ReaderManager.renderAyahTextWithHighlight(src, range) + '</div>' +
+        '</div>';
     }).join('');
-    container.insertAdjacentHTML('beforeend', heading + html);
+    els.searchResults.innerHTML = html;
   }
-  // Delegated once per container (els.surahList and els.searchResults)
-  // instead of re-attaching a listener to every row on every render (this
-  // runs on every keystroke while searching) — see wiring in init().
+  function handleSearchResultClick(e){
+    var item = e.target.closest('.search-result-item');
+    if(!item || !els.searchResults.contains(item)) return;
+    ReaderManager.openAyah(
+      parseInt(item.getAttribute('data-page'), 10),
+      parseInt(item.getAttribute('data-surah'), 10),
+      parseInt(item.getAttribute('data-ayah'), 10),
+      parseInt(item.getAttribute('data-w-start'), 10),
+      parseInt(item.getAttribute('data-w-end'), 10)
+    );
+    UI.closePanel(els.searchPanel);
+  }
+  // Delegated once on els.surahList instead of re-attaching a listener to
+  // every row on every render (this runs on every keystroke while
+  // browsing/filtering the surah index) — see wiring in init(). Search
+  // results have their own dedicated handler (handleSearchResultClick)
+  // since their rows are a different shape (full ayah + highlight, not
+  // an .index-item).
   function handleIndexContainerClick(e){
     var container = this;
     var playBtn = e.target.closest('.index-play-btn');
@@ -120,27 +164,13 @@
       if(isNaN(surahNum) || isNaN(pageIdx)) return;
       Home.openReaderAt(pageIdx);
       UI.closePanel(els.surahPanel);
-      UI.closePanel(els.searchPanel);
       AudioManager.playSurah(surahNum);
-      return;
-    }
-    var ayahItem = e.target.closest('.ayah-result-item');
-    if(ayahItem && container.contains(ayahItem)){
-      ReaderManager.openAyah(
-        parseInt(ayahItem.getAttribute('data-page'), 10),
-        parseInt(ayahItem.getAttribute('data-surah'), 10),
-        parseInt(ayahItem.getAttribute('data-ayah'), 10),
-        parseInt(ayahItem.getAttribute('data-w-start'), 10),
-        parseInt(ayahItem.getAttribute('data-w-end'), 10)
-      );
-      UI.closePanel(els.searchPanel);
       return;
     }
     var surahItem = e.target.closest('.index-item');
     if(surahItem && container.contains(surahItem)){
       Home.openReaderAt(parseInt(surahItem.getAttribute('data-page'), 10));
       UI.closePanel(els.surahPanel);
-      UI.closePanel(els.searchPanel);
     }
   }
 
@@ -299,28 +329,145 @@
     }
 
     // ---- البحث ----
-    els.tileSearch.addEventListener('click', function(){
+    // One panel, one visible layout — the input/بحث row never hides;
+    // results render below it in place. Opening the panel (tileSearch)
+    // always resets first, so a session never carries over from a
+    // previous search. The panel's own close button (and the Android
+    // hardware back button, via UI.registerOverlayPanels) always closes
+    // the whole panel back to whatever's underneath (the home screen,
+    // since tileSearch only lives there) regardless of whether results
+    // are showing — never "back into the results".
+    //
+    // Single button, two modes: "بحث" runs the search; once a search has
+    // run — found results or not — the SAME button switches to "مسح"
+    // (the input itself gets locked read-only at that point) — pressing
+    // it is the only way to search again, so a result the user is
+    // mid-review of never gets silently replaced by an accidental
+    // re-search. Mode is derived from searchInput.readOnly rather than
+    // tracked separately, so the two can never drift out of sync.
+    function updateSearchButtonMode(){
+      var locked = els.searchInput.readOnly;
+      els.btnRunSearch.innerHTML = locked
+        ? '<svg class="search-run-icon" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6l-12 12"/></svg><span class="search-run-label">مسح</span>'
+        : '<svg class="search-run-icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg><span class="search-run-label">بحث</span>';
+      els.btnRunSearch.classList.toggle('is-clear-mode', locked);
+    }
+    function resetSearchToInput(){
       els.searchInput.value = '';
-      renderSurahList(SearchManager.getSurahOrder(), els.searchResults);
+      els.searchInput.readOnly = false;
+      els.exactSearchToggle.checked = false;
+      els.exactSearchToggle.disabled = false;
+      els.searchValidationMsg.classList.add('hidden');
+      els.searchResultsCount.classList.add('hidden');
+      els.searchSurahResults.innerHTML = '';
+      els.searchSurahSection.classList.add('hidden');
+      els.searchResults.innerHTML = '';
+      els.searchAyahSection.classList.add('hidden');
+      updateSearchButtonMode();
+    }
+    // البحث الموحّد: مربع بحث واحد يبحث في اسم السورة ونص الآية معًا —
+    // SearchManager.searchUnified() ترجّع المصدرين مع بعض؛ سور مطابقة أولًا
+    // (بنفس بطاقة فهرس السور عبر renderSurahList، بدون تصميم جديد) ثم آيات
+    // مطابقة (بنفس شكل نتائج البحث النصي القديم). كل قسم يظهر/يختفي حسب
+    // وجود نتائج فيه فعليًا.
+    function runSearch(){
+      var q = els.searchInput.value.trim();
+      if(q.length < 2){
+        els.searchValidationMsg.classList.remove('hidden');
+        els.searchInput.focus();
+        return;
+      }
+      els.searchValidationMsg.classList.add('hidden');
+      var exact = els.exactSearchToggle.checked;
+      var result = SearchManager.searchUnified(q, exact);
+      var surahs = result.surahs, ayahs = result.ayahs;
+      var totalCount = surahs.length + ayahs.length;
+      els.searchResultsCount.classList.remove('hidden');
+      els.searchResultsCount.textContent = totalCount
+        ? ('تم العثور على ' + UI.toArabicDigits(totalCount) + ' نتيجة')
+        : 'لا توجد نتائج';
+
+      if(surahs.length){
+        renderSurahList(surahs, els.searchSurahResults);
+        els.searchSurahSection.classList.remove('hidden');
+      } else {
+        els.searchSurahResults.innerHTML = '';
+        els.searchSurahSection.classList.add('hidden');
+      }
+
+      if(ayahs.length){
+        renderSearchResults(ayahs, q, exact);
+        els.searchAyahSection.classList.remove('hidden');
+      } else {
+        els.searchResults.innerHTML = '';
+        els.searchAyahSection.classList.add('hidden');
+      }
+
+      els.searchInput.readOnly = true;
+      updateSearchButtonMode();
+    }
+    // Surah-name matches within the search panel navigate straight to the
+    // surah (or, via the play icon, start continuous recitation) exactly
+    // like فهرس السور — reuses handleIndexContainerClick's own logic
+    // shape but closes els.searchPanel (not els.surahPanel) since these
+    // rows live inside the search panel.
+    function handleSearchSurahClick(e){
+      var playBtn = e.target.closest('.index-play-btn');
+      if(playBtn && els.searchSurahResults.contains(playBtn)){
+        var surahNum = parseInt(playBtn.getAttribute('data-surah'), 10);
+        var pageIdx = parseInt(playBtn.getAttribute('data-page'), 10);
+        if(isNaN(surahNum) || isNaN(pageIdx)) return;
+        Home.openReaderAt(pageIdx);
+        UI.closePanel(els.searchPanel);
+        AudioManager.playSurah(surahNum);
+        return;
+      }
+      var item = e.target.closest('.index-item');
+      if(!item || !els.searchSurahResults.contains(item)) return;
+      Home.openReaderAt(parseInt(item.getAttribute('data-page'), 10));
+      UI.closePanel(els.searchPanel);
+    }
+    els.tileSearch.addEventListener('click', function(){
+      resetSearchToInput();
       UI.openPanel(els.searchPanel);
       setTimeout(function(){ els.searchInput.focus(); }, 200);
     });
     els.btnCloseSearch.addEventListener('click', function(){ UI.closePanel(els.searchPanel); });
-    els.searchResults.addEventListener('click', handleIndexContainerClick);
-    els.searchInput.addEventListener('input', function(){
-      var q = els.searchInput.value.trim();
-      if(!q){ renderSurahList(SearchManager.getSurahOrder(), els.searchResults); return; }
-      var filtered = SearchManager.searchSurahs(q);
-      // Ayah text search only kicks in from 2 characters so a single
-      // letter doesn't return a huge, meaningless result set.
-      var ayahMatches = q.length >= 2 ? SearchManager.searchAyahs(q) : [];
-      if(!filtered.length && !ayahMatches.length){
-        els.searchResults.innerHTML = '<div class="empty-state">لا توجد نتائج</div>';
-        return;
+    els.btnRunSearch.addEventListener('click', function(){
+      if(els.searchInput.readOnly){
+        resetSearchToInput();
+        els.searchInput.focus();
+      } else {
+        runSearch();
       }
-      if(filtered.length) renderSurahList(filtered, els.searchResults);
-      else els.searchResults.innerHTML = '';
-      if(ayahMatches.length) renderAyahResults(ayahMatches, els.searchResults, q);
+    });
+    els.searchInput.addEventListener('keydown', function(e){
+      if(e.key === 'Enter'){ e.preventDefault(); runSearch(); }
+    });
+    // Live-hide the validation message the moment the person types enough
+    // — it shouldn't linger once the condition it's warning about is
+    // already satisfied, per direct request.
+    els.searchInput.addEventListener('input', function(){
+      if(els.searchInput.value.trim().length >= 2){
+        els.searchValidationMsg.classList.add('hidden');
+      }
+    });
+    els.searchResults.addEventListener('click', handleSearchResultClick);
+    els.searchSurahResults.addEventListener('click', handleSearchSurahClick);
+    // Tapping the switch (or its label) moves browser focus to the
+    // checkbox itself — standard behavior, but it was dismissing the
+    // on-screen keyboard out from under the person mid-typing. Before a
+    // search has run, hand focus straight back to the input so typing
+    // continues uninterrupted. Once results are showing (input locked),
+    // the person is flipping مطابقة to redo the SAME query differently —
+    // re-run it immediately using the still-present (just disabled)
+    // input value, instead of forcing مسح + retyping.
+    els.exactSearchToggle.addEventListener('change', function(){
+      if(els.searchInput.readOnly){
+        runSearch();
+      } else {
+        els.searchInput.focus();
+      }
     });
 
     // ---- الذهاب إلى ركوع رقم ----

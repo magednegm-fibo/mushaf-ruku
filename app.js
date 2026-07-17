@@ -86,7 +86,14 @@
     juzOnlyToggle: document.getElementById('juzOnlyToggle'),
 
     searchPanel: document.getElementById('searchPanel'),
+    searchValidationMsg: document.getElementById('searchValidationMsg'),
+    exactSearchToggle: document.getElementById('exactSearchToggle'),
     searchInput: document.getElementById('searchInput'),
+    btnRunSearch: document.getElementById('btnRunSearch'),
+    searchResultsCount: document.getElementById('searchResultsCount'),
+    searchSurahSection: document.getElementById('searchSurahSection'),
+    searchSurahResults: document.getElementById('searchSurahResults'),
+    searchAyahSection: document.getElementById('searchAyahSection'),
     searchResults: document.getElementById('searchResults'),
     btnCloseSearch: document.getElementById('btnCloseSearch'),
 

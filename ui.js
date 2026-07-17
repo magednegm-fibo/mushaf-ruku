@@ -43,9 +43,16 @@
   // Toast
   // -----------------------------------------------------------------
   var toastTimer = null;
+  function positionToastAboveKeyboard(){
+    if(!els.toast || !window.visualViewport) return;
+    var vv = window.visualViewport;
+    var keyboardHeight = window.innerHeight - (vv.height + vv.offsetTop);
+    els.toast.style.bottom = (24 + Math.max(0, keyboardHeight)) + 'px';
+  }
   function showToast(msg){
     if(!els.toast) return;
     els.toast.textContent = msg;
+    positionToastAboveKeyboard();
     els.toast.classList.add('show');
     clearTimeout(toastTimer);
     toastTimer = setTimeout(function(){ els.toast.classList.remove('show'); }, 1800);

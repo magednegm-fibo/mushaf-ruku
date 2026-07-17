@@ -43,10 +43,53 @@
     ensureSurahIndexBuilt();
     return surahJumpMap[surahNum];
   }
-  function searchSurahs(query){
+  // Matches on the normalized surah name (same normalizeArabic() pipeline
+  // used everywhere else in this file) rather than the raw string, so a
+  // plain-typed query like "النساء" still matches even if the underlying
+  // surahName ever carries diacritics/letter-variants. No separate
+  // normalization logic here — reuses normalizeArabic().
+  //
+  // `exact` (defaults to false, so existing callers that never pass it
+  // keep the old substring behavior) makes this honor the SAME
+  // word-boundary contract as exact-mode ayah search — see
+  // findBoundedIndex() below, reused here rather than reimplemented.
+  // Fixes a real correctness bug: with "مطابقة تامة" (exact match)
+  // switched on, searching "الكافر" was still surfacing surah 109
+  // "الكافرون" as a surah-name match, because searchSurahs() never
+  // received the exact flag at all and always did plain substring/
+  // prefix matching — "الكافر" is a literal prefix of "الكافرون", so it
+  // "matched" even though they're different words, silently
+  // contradicting what ayah search already enforced in exact mode. See
+  // tests/search-regression.js Section F.
+  function searchSurahs(query, exact){
     var list = getSurahOrder();
-    if(!query) return list;
-    return list.filter(function(s){ return s.name.indexOf(query) !== -1; });
+    var q = normalizeArabic(query);
+    if(!q) return list;
+    return list.filter(function(s){
+      var normName = normalizeArabic(s.name);
+      return exact ? (findBoundedIndex(normName, q) !== -1) : (normName.indexOf(q) !== -1);
+    });
+  }
+
+  // -----------------------------------------------------------------
+  // Unified search (البحث الموحّد): a single query box searches BOTH
+  // surah names and ayah text, surah matches first. This is purely an
+  // additional combination of the two existing, independent search
+  // sources above (searchSurahs / searchAyahs) — it does not introduce
+  // any new normalization or matching logic of its own, per the
+  // project's "one normalization pipeline" design. UI layers (see
+  // navigation.js) render `.surahs` as surah-index cards and `.ayahs`
+  // exactly like a plain searchAyahs() result list. `exact` applies
+  // identically to both sources (see searchSurahs's own doc comment for
+  // why this matters) — one "مطابقة تامة" switch, one consistent
+  // meaning across the whole unified result, not just the ayah half.
+  // -----------------------------------------------------------------
+  function searchUnified(query, exact){
+    var q = normalizeArabic(query);
+    return {
+      surahs: q ? searchSurahs(query, exact) : [],
+      ayahs: searchAyahs(query, exact)
+    };
   }
 
   // -----------------------------------------------------------------
@@ -57,9 +100,37 @@
   // text "ٱلرَّحۡمَٰنِ" regardless of which diacritics/marks sit on the
   // letters.
   // -----------------------------------------------------------------
-  function normalizeArabic(s){
-    return (s || '')
-      .replace(/[\u064B-\u065F\u0610-\u061A\u06D6-\u06ED\u0670\u08F0-\u08FF\u06DF\u06E0-\u06E4\u06E7\u06E8\u06EA-\u06ED]/g, '')
+  // Core diacritic-stripping + letter-variant-folding pipeline shared by
+  // both normalization modes below. daggerAlifTo controls the one
+  // genuinely ambiguous step: what a dagger alif (\u0670) becomes.
+  //   '' (stripped)  -- the ayah's literal rasm: no letter there at all.
+  //   'ا' (inserted) -- the letter the pronunciation implies, which is
+  //                    how a person would normally type the word.
+  // Every OTHER step here (harakat, tatweel, hamza-seat/ta marbuta/alef
+  // maksura folding, Perso-Arabic letter variants) is unambiguous and
+  // shared by both modes.
+  // -----------------------------------------------------------------
+  // Type-safe string coercion. `s || ''` (used everywhere below before
+  // this fix) only guards against FALSY inputs (null/undefined/''/0) —
+  // any truthy non-string (a number, boolean, plain object, array...)
+  // sails straight through and crashes the very next `.replace()` call
+  // with "X.replace is not a function". In normal use every query
+  // originates from a DOM <input>.value (always a string already), so
+  // this never fires from the UI — but SearchManager's functions are a
+  // public API (used directly by tests, and potentially by future
+  // callers such as a deep-link handler), and a search box should never
+  // throw on bad input, only ever return "no results". See
+  // tests/search-regression.js Section E for the regression cases this
+  // guards.
+  // -----------------------------------------------------------------
+  function toSearchString(s){
+    return (typeof s === 'string') ? s : (s == null ? '' : String(s));
+  }
+
+  function normalizeArabicCore(s, daggerAlifTo){
+    return toSearchString(s)
+      .replace(/\u0670/g, daggerAlifTo)
+      .replace(/[\u064B-\u065F\u0610-\u061A\u06D6-\u06ED\u08F0-\u08FF\u06DF\u06E0-\u06E4\u06E7\u06E8\u06EA-\u06ED]/g, '')
       .replace(/[\u0640]/g, '')            // tatweel
       .replace(/[إأآٱ]/g, 'ا')
       .replace(/ى/g, 'ي')
@@ -114,11 +185,65 @@
       .replace(/\s+/g, ' ')
       .trim();
   }
+  // "مطابقة تامة" (exact match) mode: the TRUE rasm as written, dagger
+  // alif treated as no letter — this is what makes exact mode able to
+  // isolate a specific spelling variant (e.g. "سبحان" written outright
+  // only at 17:93, vs the dagger-alif spelling everywhere else).
+  function normalizeArabic(s){
+    return normalizeArabicCore(s, '');
+  }
+  // Normal/tolerant search's second interpretation: dagger alif treated
+  // as the letter its pronunciation implies. A data-driven sweep of the
+  // whole dataset (comparing every word that appears BOTH ways somewhere
+  // in the Quran) found 578+ distinct words affected -- far too many to
+  // hand-list -- so rather than building or maintaining any such table,
+  // searchAyahs()/findMatchWordRange() below just try BOTH
+  // interpretations for every word, every time, and accept either one
+  // that matches. This can never lose a result to an unlisted exception,
+  // since nothing is listed -- every word is covered by construction.
+  function normalizeArabicAlifInserted(s){
+    return normalizeArabicCore(s, 'ا');
+  }
+  // Third interpretation: a handful of famous words (الصلاة، الزكاة،
+  // الحياة...) are written in classical Quranic rasm with a waw standing
+  // in for the alif itself -- "الصلوٰة" rather than "الصلاٰة" -- and this
+  // is IDENTICAL in both mushaf scripts (confirmed: Uthmani and Indopak
+  // both write و immediately followed by dagger alif here), so comparing
+  // the two scripts against each other can never surface it — both
+  // agree with each other and disagree with how the word is normally
+  // typed. Collapsing that و+dagger-alif pair to a plain ا before the
+  // usual pipeline runs fixes it.
+  //
+  // SCOPED to only fire when the dagger alif is immediately followed by
+  // ة (ta marbuta) — verified by an index-based (not visual/copy-paste —
+  // RTL combining-mark rendering is unreliable for that, learned the
+  // hard way earlier in this project) scan of every true و+dagger-alif
+  // adjacency in the dataset: 175 occurrences are this ة-suffixed
+  // pattern (صلاة/زكاة/حياة/غداة/مشكاة family) and collapsing them is
+  // correct. The other 327 are NOT safe to collapse — و there is a real
+  // letter that must stay: followed by ت it's the السماوات plural
+  // pattern (سَمَاوَات genuinely needs the و), followed by ى it's a
+  // alif-maqsura-ending root where و is a true root letter (التقوى،
+  // الهوى، النجوى — normal spelling keeps the و, "تقوى" not "تقاى"),
+  // followed by ه it's the same (مأواهم، هواه). An earlier unscoped
+  // version of this function collapsed ALL of them, silently corrupting
+  // those 327 words into forms nobody would ever type — masked because
+  // those specific words still happened to resolve via the OTHER two
+  // interpretations, but a real false-positive risk regardless. See
+  // tests/search-regression.js Section A4 for the regression cases that
+  // pin this down.
+  function normalizeArabicWawAlifCollapsed(s){
+    return normalizeArabicCore(toSearchString(s).replace(/و\u0670(?=ة)/g, 'ا'), 'ا');
+  }
 
   // -----------------------------------------------------------------
   // Ayah index: flat, search-friendly list of every ayah in the mushaf
   // (both script variants, pre-normalized), built once on first search
   // — not at startup — and kept in memory for the rest of the session.
+  // normStrict/normIndopakStrict: dagger alif = no letter (true rasm) —
+  // used for مطابقة تامة. normIns/normIndopakIns and normWaw/
+  // normIndopakWaw are tolerant search's other two interpretations (see
+  // searchAyahs below).
   // -----------------------------------------------------------------
   var ayahIndex = [];
   var ayahIndexBuilt = false;
@@ -127,25 +252,54 @@
     ayahIndexBuilt = true;
     PAGES.forEach(function(p, i){
       p.ayahs.forEach(function(a){
+        var indopak = a.textIndopak || a.text;
         ayahIndex.push({
           surah: a.surah, surahName: a.surahName, ayah: a.ayah, page: i,
-          text: a.text, textIndopak: a.textIndopak || a.text,
-          norm: normalizeArabic(a.text),
-          normIndopak: normalizeArabic(a.textIndopak || a.text)
+          text: a.text, textIndopak: indopak,
+          normStrict: normalizeArabic(a.text),
+          normIndopakStrict: normalizeArabic(indopak),
+          normIns: normalizeArabicAlifInserted(a.text),
+          normIndopakIns: normalizeArabicAlifInserted(indopak),
+          normWaw: normalizeArabicWawAlifCollapsed(a.text),
+          normIndopakWaw: normalizeArabicWawAlifCollapsed(indopak)
         });
       });
     });
   }
 
+  // For "مطابقة تامة" (exact match) mode: query must occur at word
+  // boundaries in the normalized text — space or string start/end on
+  // both sides — not just anywhere inside a longer word. E.g. exact
+  // "له" won't match inside "الله" or "لهم". Returns the index of the
+  // first bounded match, or -1. Shared by searchAyahs and
+  // findMatchWordRange so both modes agree on exactly which occurrence
+  // counts as "the" match.
+  function findBoundedIndex(text, query){
+    var idx = text.indexOf(query);
+    while(idx !== -1){
+      var beforeOk = idx === 0 || text.charAt(idx - 1) === ' ';
+      var afterPos = idx + query.length;
+      var afterOk = afterPos === text.length || text.charAt(afterPos) === ' ';
+      if(beforeOk && afterOk) return idx;
+      idx = text.indexOf(query, idx + 1);
+    }
+    return -1;
+  }
+
   var AYAH_SEARCH_LIMIT = 80; // keep the result list scrollable, not a full concordance
-  function searchAyahs(query){
+  function searchAyahs(query, exact){
     ensureAyahIndexBuilt();
     var q = normalizeArabic(query);
     if(!q) return [];
     var out = [];
     for(var i = 0; i < ayahIndex.length && out.length < AYAH_SEARCH_LIMIT; i++){
       var e = ayahIndex[i];
-      if(e.norm.indexOf(q) !== -1 || e.normIndopak.indexOf(q) !== -1) out.push(e);
+      var hit = exact
+        ? (findBoundedIndex(e.normStrict, q) !== -1 || findBoundedIndex(e.normIndopakStrict, q) !== -1)
+        : (e.normStrict.indexOf(q) !== -1 || e.normIndopakStrict.indexOf(q) !== -1
+           || e.normIns.indexOf(q) !== -1 || e.normIndopakIns.indexOf(q) !== -1
+           || e.normWaw.indexOf(q) !== -1 || e.normIndopakWaw.indexOf(q) !== -1);
+      if(hit) out.push(e);
     }
     return out;
   }
@@ -176,32 +330,41 @@
   // ReaderManager hasn't loaded for some reason, so this never hard-fails.
   // Returns {start, end} word indices (inclusive), or null if it can't be
   // found (shouldn't normally happen since the ayah only got here by
-  // matching).
-  function findMatchWordRange(fullText, query){
+  // matching). Tries the strict (true-rasm) interpretation first, then —
+  // for tolerant mode only — the other two, mirroring exactly how
+  // searchAyahs() above decided this ayah was a hit in the first place.
+  function findMatchWordRange(fullText, query, exact){
     var normQuery = normalizeArabic(query);
     if(!normQuery) return null;
     var words = (window.ReaderManager && window.ReaderManager.tokenizeAyahWords)
       ? window.ReaderManager.tokenizeAyahWords(fullText)
       : fullText.split(/\s+/).filter(Boolean);
-    var offsets = [];
-    var acc = '';
-    words.forEach(function(w, i){
-      if(acc.length) acc += ' ';
-      var start = acc.length;
-      acc += normalizeArabic(w);
-      offsets.push({start: start, end: acc.length, idx: i});
-    });
-    var pos = acc.indexOf(normQuery);
-    if(pos === -1) return null;
-    var endPos = pos + normQuery.length;
-    var startIdx = null, endIdx = null;
-    offsets.forEach(function(o){
-      if(startIdx === null && o.start <= pos && pos < o.end) startIdx = o.idx;
-      if(o.start < endPos && endPos <= o.end) endIdx = o.idx;
-    });
-    if(startIdx === null) startIdx = 0;
-    if(endIdx === null || endIdx < startIdx) endIdx = startIdx;
-    return {start: startIdx, end: endIdx};
+    function tryInterpretation(normalizer){
+      var offsets = [];
+      var acc = '';
+      words.forEach(function(w, i){
+        if(acc.length) acc += ' ';
+        var start = acc.length;
+        acc += normalizer(w);
+        offsets.push({start: start, end: acc.length, idx: i});
+      });
+      var pos = exact ? findBoundedIndex(acc, normQuery) : acc.indexOf(normQuery);
+      if(pos === -1) return null;
+      var endPos = pos + normQuery.length;
+      var startIdx = null, endIdx = null;
+      offsets.forEach(function(o){
+        if(startIdx === null && o.start <= pos && pos < o.end) startIdx = o.idx;
+        if(o.start < endPos && endPos <= o.end) endIdx = o.idx;
+      });
+      if(startIdx === null) startIdx = 0;
+      if(endIdx === null || endIdx < startIdx) endIdx = startIdx;
+      return {start: startIdx, end: endIdx};
+    }
+    var range = tryInterpretation(normalizeArabic);
+    if(!range && !exact){
+      range = tryInterpretation(normalizeArabicAlifInserted) || tryInterpretation(normalizeArabicWawAlifCollapsed);
+    }
+    return range || null;
   }
 
   window.SearchManager = {
@@ -211,7 +374,9 @@
     getSurahStartPage: getSurahStartPage,
     searchSurahs: searchSurahs,
     searchAyahs: searchAyahs,
+    searchUnified: searchUnified,
     ayahSnippet: ayahSnippet,
-    findMatchWordRange: findMatchWordRange
+    findMatchWordRange: findMatchWordRange,
+    AYAH_SEARCH_LIMIT: AYAH_SEARCH_LIMIT
   };
 })();

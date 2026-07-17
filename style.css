@@ -178,8 +178,8 @@ body{
   color: var(--emerald);
   font-size:15px;
   line-height: 1.9;
-  margin: 4px auto 10px;
-  padding: 8px 22px;
+  margin: 0 auto 6px;
+  padding: 4px 22px 6px;
   position:relative;
   width:max-content;
   max-width: 92%;
@@ -195,14 +195,28 @@ body{
   color: var(--gold);
   margin: 0 10px;
 }
+/* Only present on a surah-opening page (see renderPage() in
+   readerManager.js) — its extra line was previously pushing the first
+   ayah row noticeably lower than on pages with no basmala, making the
+   first line's vertical position inconsistent page to page. Tightened
+   margin-top here (was 6px) plus the cartouche's own reduced top/bottom
+   spacing above keep the surah-name+basmala block as compact as
+   possible so the first ayah line lands closer to the same height
+   whether or not this line is present. */
 .surah-cartouche b{
   display:block;
   font-weight:normal;
   font-family: var(--font-quran);
   font-size:23px;
   color: var(--emerald);
-  margin-top:6px;
+  margin-top:2px;
 }
+/* Naskh/Indopak script reads slightly smaller than Uthmani Hafs at the
+   same px value, so the surah name here needs a small bump to match —
+   same reasoning as .ayah-flow's indopak-font bump above, just a much
+   smaller nudge since this is a short single-line title, not a full
+   page of running text. */
+body.indopak-font .surah-cartouche b{ font-size:25px; }
 
 .ayah-flow{
   font-family: var(--font-quran);
@@ -717,6 +731,7 @@ body.night .reciter-select{
 }
 .switch input:checked + .slider{ background: var(--emerald); }
 .switch input:checked + .slider::before{ transform: translateX(20px); }
+.switch input:disabled + .slider{ opacity:.5; }
 .about-text{
   margin-top:18px; font-size:13px; line-height:1.9; color: var(--ink-soft);
   user-select: none;
@@ -1002,7 +1017,236 @@ body.night .ayah-block.ayah-playing{ background: rgba(216,182,98,0.16); }
   appearance: none;
 }
 .search-input:focus{ border-color: var(--gold); }
+/* Android WebView is Chromium-based, so once the person types a value
+   the browser's own Autofill/saved-search-history mechanism can kick in
+   and paint a light blue/lavender background UNDER our CSS background —
+   confirmed on-device, and it doesn't clear back to the cream paper
+   color even after focus moves away. autocomplete="off" on the <input>
+   (see index.html) discourages the browser from treating this field as
+   autofillable in the first place, but Chromium still applies its own
+   internal autofill highlight in some cases regardless of that
+   attribute, and that highlight is a UA style that ignores a plain
+   background-color override. The standard fix: force it via an inset
+   box-shadow the size of the field (background-color has no effect on
+   :-webkit-autofill, but box-shadow paints on top of it), plus a very
+   long background-color transition delay so Chromium's own yellow/blue
+   fill-in animation never gets a chance to visibly flash before ours
+   overrides it. */
+.search-input:-webkit-autofill,
+.search-input:-webkit-autofill:hover,
+.search-input:-webkit-autofill:focus,
+.search-input:-webkit-autofill:active{
+  -webkit-text-fill-color: var(--ink);
+  -webkit-box-shadow: 0 0 0 1000px var(--paper) inset;
+  box-shadow: 0 0 0 1000px var(--paper) inset;
+  transition: background-color 5000s ease-in-out 0s;
+}
+.search-input[readonly]:-webkit-autofill,
+.search-input[readonly]:-webkit-autofill:hover,
+.search-input[readonly]:-webkit-autofill:focus{
+  -webkit-text-fill-color: var(--ink-soft);
+  -webkit-box-shadow: 0 0 0 1000px var(--paper) inset;
+  box-shadow: 0 0 0 1000px var(--paper) inset;
+}
+body.night .search-input:-webkit-autofill,
+body.night .search-input:-webkit-autofill:hover,
+body.night .search-input:-webkit-autofill:focus,
+body.night .search-input:-webkit-autofill:active{
+  -webkit-text-fill-color: #EAE0C4;
+  -webkit-box-shadow: 0 0 0 1000px #211c15 inset;
+  box-shadow: 0 0 0 1000px #211c15 inset;
+}
+/* Locked after a search runs (see runSearch() in navigation.js), via the
+   readonly attribute rather than disabled — disabling a native <input>
+   on Android WebView can re-trigger the platform's own "disabled field"
+   paint (a washed grey/blue tint) UNDERNEATH our CSS, overriding it
+   regardless of !important; confirmed on-device as the cause of the
+   locked field looking broken/blank. readonly blocks typing the same
+   way without that native-theming risk. Border is set explicitly (not
+   left to match the background) so the locked field still reads as a
+   deliberate, bordered box — same outline weight as the مسح button next
+   to it — instead of blending invisibly into the page. */
+.search-input[readonly]{
+  opacity:1;
+  background: var(--paper);
+  color: var(--ink-soft);
+  border-color: var(--ink-soft);
+}
 body.night .search-input{ background:#211c15; color:#EAE0C4; border-color:#332c20; }
+body.night .search-input[readonly]{
+  background:#211c15;
+  color:#9c8f6d;
+  border-color:#5b4a26;
+}
+
+/* ---------- Search bar: input on its own line, بحث + مطابقة تامة together below ---------- */
+.search-bar{ display:flex; flex-direction:column; gap:8px; margin-bottom:14px; }
+.search-bar .search-input{ margin-bottom:0; }
+.search-controls-row{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
+.search-run-btn{
+  flex:none;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  padding: 9px 28px;
+  border-radius:10px;
+  font-family: var(--font-ui);
+  font-weight:700;
+  font-size:14px;
+  border:none;
+  background: var(--emerald);
+  color:#fff;
+}
+.search-run-icon{
+  width:16px; height:16px;
+  fill:none;
+  stroke:currentColor;
+  stroke-width:2;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+  flex-shrink:0;
+}
+.search-run-btn:active{ background: var(--emerald-deep); }
+body.night .search-run-btn{ background:#D8B662; color:#161310; }
+.search-validation-msg{
+  font-family: var(--font-ui);
+  font-size:13px;
+  font-weight:600;
+  color: var(--gold);
+  margin: -4px 0 0;
+}
+body.night .search-validation-msg{ color:#D8B662; }
+.search-exact-group{ display:flex; align-items:center; gap:8px; }
+.search-exact-label{
+  font-family: var(--font-ui);
+  font-size:13px;
+  font-weight:600;
+  color: var(--ink-soft);
+  white-space:nowrap;
+  flex-shrink:0;
+}
+body.night .search-exact-label{ color:#9c8f6d; }
+/* Same button, switched to "مسح" mode once results are showing — ghost/
+   outline style instead of the solid emerald "بحث" fill, so it visually
+   reads as a different action even though it's literally the same
+   element (see updateSearchButtonMode() in navigation.js). */
+.search-run-btn.is-clear-mode{
+  background: transparent;
+  border: 1px solid var(--ink-soft);
+  color: var(--ink-soft);
+}
+.search-run-btn.is-clear-mode:active{ background: var(--paper-edge); }
+body.night .search-run-btn.is-clear-mode{ border-color:#5b4a26; color:#9c8f6d; background:transparent; }
+body.night .search-run-btn.is-clear-mode:active{ background:#211c15; }
+
+.search-results-count{
+  font-family: var(--font-ui);
+  font-size:14px;
+  font-weight:600;
+  color: var(--ink-soft);
+  border-top: 1px dashed var(--paper-edge);
+  padding-top:14px;
+  margin: 0 0 14px;
+}
+body.night .search-results-count{ color:#9c8f6d; border-color:#332c20; }
+
+/* ---------- Unified search section label (آيات مطابقة) ----------
+   Surah matches render as bare surah cards directly under
+   #searchSurahResults (no label — per direct user request, the card
+   itself is self-explanatory). "آيات مطابقة" is kept as a label since it
+   visually separates the surah card(s) above from the verse-result list
+   below; shown only when #searchAyahSection actually has rows (see
+   navigation.js .hidden toggling). */
+.search-section-header{
+  font-family: var(--font-ui);
+  font-size:16px;
+  font-weight:500;
+  color: var(--ink);
+  margin: 4px 2px 8px;
+}
+body.night .search-section-header{ color:#EAE0C4; }
+/* Extra breathing room above "آيات مطابقة" only when it's actually
+   preceded by a visible surah-results section — a plain adjacent-sibling
+   selector would still match (and add stray spacing) even when
+   #searchSurahSection is hidden, since CSS adjacency ignores visibility.
+   No border here anymore: the surah-card rows above already carry their
+   own bottom divider (.index-item's border-bottom, same var(--paper-edge)
+   treatment as .search-result-divider between individual ayat), so a
+   second heavier divider right on top of that was redundant — per direct
+   user feedback. */
+#searchSurahSection:not(.hidden) + #searchAyahSection .search-section-header{
+  margin-top: 20px;
+  padding-top: 0;
+}
+/* Bare surah-card results (no header above them anymore) still need a
+   touch of top spacing off .search-results-count so they don't sit flush
+   against its bottom border. */
+#searchSurahResults{ margin-top: 6px; }
+
+/* ---------- Full-ayah search result rows ---------- */
+.search-result-item{ padding: 14px 2px; }
+.search-result-meta{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  font-family: var(--font-ui);
+  font-size:14px;
+  font-weight:600;
+  color: var(--ink-soft);
+  margin-bottom:8px;
+}
+body.night .search-result-meta{ color:#9c8f6d; }
+.search-result-num{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  flex-shrink:0;
+  width:22px; height:22px;
+  border-radius:50%;
+  border:1.5px solid var(--gold);
+  color: var(--emerald);
+  font-size:11px;
+  font-weight:700;
+}
+body.night .search-result-num{ color:#D8B662; border-color:#8a6c30; }
+.search-result-text{
+  font-family: var(--font-quran);
+  font-size:28px; /* مصحف النسخ (Indopak) */
+  line-height:2.15;
+  color: var(--ink);
+  direction: rtl;
+  text-align: right;
+}
+body.uthmani-font .search-result-text{ font-size:24px; } /* مصحف المدينة (Uthmani) */
+body.night .search-result-text{ color:#EAE0C4; }
+/* Reuses .quran-word (same class the reader itself uses) so waqf-sign
+   glyphs etc. render identically here. Same background tint as the
+   in-mushaf search-hit-flash above (rgba(11,92,74,.18) / rgba(216,182,98,.25)
+   in night mode) — kept steady here instead of animated, since a results
+   list row needs a persistent marker, not a one-off flash — so the two
+   surfaces read as the same "this is your match" affordance, per direct
+   user request. Text color stays the ayah's normal ink color, unchanged. */
+.search-result-text .quran-word.search-hit{
+  background: rgba(11,92,74,.18);
+  border-radius: 4px;
+}
+body.night .search-result-text .quran-word.search-hit{
+  background: rgba(216,182,98,.25);
+}
+/* Solid, subtle line — same var(--paper-edge) row-divider treatment
+   already used elsewhere in the app (.index-item, .fav-item), per direct
+   user reference screenshot. The earlier dashed/scaled attempts (first
+   dashed gold, then a scaleY(.5) gradient) were all reaching for a
+   "lighter than the section divider" effect that turned out to just be
+   this: a plain solid 1px line in the same pale paper-edge tone used for
+   ordinary list rows across the app — not a bespoke treatment. */
+.search-result-divider{
+  border: none;
+  border-top: 1px solid var(--paper-edge);
+  margin: 4px 0 0;
+}
+body.night .search-result-divider{ border-top-color: #332c20; }
 body.night .search-input::placeholder{ color:#6b6152; }
 
 /* ---------- Modal ---------- */

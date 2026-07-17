@@ -191,14 +191,37 @@
   <!-- ============ SEARCH PANEL ============ -->
   <div id="searchPanel" class="panel hidden">
     <div class="panel-head">
-      <h2>البحث</h2>
+      <h2>البحث في القرآن</h2>
       <button class="icon-btn" id="btnCloseSearch" aria-label="إغلاق">
         <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6l-12 12"/></svg>
       </button>
     </div>
     <div class="panel-body">
-      <input type="text" id="searchInput" class="search-input" placeholder="ابحث عن اسم سورة أو نص آية...">
-      <div id="searchResults"></div>
+      <div id="searchInputRow" class="search-bar">
+        <input type="text" id="searchInput" class="search-input" placeholder="ابحث عن اسم سورة أو نص آية" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+        <div class="search-controls-row">
+          <button class="search-run-btn" id="btnRunSearch">
+            <svg class="search-run-icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+            <span class="search-run-label">بحث</span>
+          </button>
+          <div class="search-exact-group">
+            <span class="search-exact-label">مطابقة تامة</span>
+            <label class="switch">
+              <input type="checkbox" id="exactSearchToggle">
+              <span class="slider"></span>
+            </label>
+          </div>
+        </div>
+        <div id="searchValidationMsg" class="search-validation-msg hidden">⚠ اكتب حرفين على الأقل للبحث</div>
+      </div>
+      <div id="searchResultsCount" class="search-results-count hidden"></div>
+      <div id="searchSurahSection" class="hidden">
+        <div id="searchSurahResults"></div>
+      </div>
+      <div id="searchAyahSection" class="hidden">
+        <div class="search-section-header">آيات مطابقة</div>
+        <div id="searchResults"></div>
+      </div>
     </div>
   </div>
 
@@ -316,8 +339,15 @@
         <div class="waqf-guide-item">
           <div class="waqf-guide-symbol">ق</div>
           <div class="waqf-guide-text">
-            <b>وقف لبيان المعنى</b>
+            <b>قيل عليه وقف</b>
             <p>موضع وقف قال به بعض العلماء، ولم يأخذ به أكثرهم. وتوضع هذه العلامة أيضًا لإبراز معنى الابتداء بالجملة التي بعدها.</p>
+          </div>
+        </div>
+        <div class="waqf-guide-item">
+          <div class="waqf-guide-symbol">وقفة</div>
+          <div class="waqf-guide-text">
+            <b>الوقفة</b>
+            <p>سكتة طويلة، وهي أقرب إلى الوقف منها إلى الوصل، ولا ينقطع فيها النفس.</p>
           </div>
         </div>
         <div class="waqf-guide-item">
