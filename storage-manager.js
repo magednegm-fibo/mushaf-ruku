@@ -65,9 +65,32 @@
       lastPageUthmani:0, lastPageIndopak:0, lastPageShared:0,
       fontStyle:'uthmani', showWaqfMarksUthmani:true, showWaqfMarksIndopak:true,
       pinchZoomEnabled:true, keepScreenAwake:false, reciter:'abdulbasit',
-      autoScrollEnabled:true, longPressScope:'ayah', recitationRepeatCount:1
+      autoScrollEnabled:true, recitationRepeatCount:1,
+      displayScope:'all', recitationScope:'ruku'
     };
     var result = Object.assign({}, DEFAULTS, readJSON(KEYS.STORAGE_KEY, {}));
+
+    // Migration: "نطاق العرض" replaces the old single juzOnlyMode toggle
+    // (كان في صفحة فهرس الأجزاء) with a 4-option scope — carry an old
+    // "on" value over as the equivalent 'juz' scope so upgrading doesn't
+    // silently reset a reader's chosen restriction back to 'all'.
+    if(result.juzOnlyMode !== undefined){
+      if(result.displayScope === 'all' && result.juzOnlyMode){
+        result.displayScope = 'juz';
+      }
+      delete result.juzOnlyMode;
+    }
+
+    // Migration: "نطاق التلاوة" used to offer 'ruku'/'surah'/'juz' directly;
+    // it now only offers 'ruku'/'displayScope' (the latter following
+    // whatever "نطاق العرض" is set to). Carry an old 'surah'/'juz' choice
+    // over as 'displayScope' + force displayScope to match, so an existing
+    // reader's "زر التلاوة يكمل للسورة/الجزء" behavior doesn't silently
+    // change on upgrade.
+    if(result.recitationScope === 'surah' || result.recitationScope === 'juz'){
+      result.displayScope = result.recitationScope;
+      result.recitationScope = 'displayScope';
+    }
 
     // Migration: older saved states had a single shared `fontSize` field.
     // Carry that value over into the size for whichever script mode was

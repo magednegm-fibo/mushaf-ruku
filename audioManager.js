@@ -47,6 +47,15 @@
       });
       audioPlayer.addEventListener('ended', function(){
         if(!listenState.playing) return;
+        // البسملة clips (see insertBismillahBeforeSurahs) are a one-off
+        // intro, not a recited ayah — "تكرار تلاوة الآية" must never repeat
+        // them 2-3x along with the real ayah that follows. Skip the whole
+        // repeat block for them and go straight to advancing the playlist.
+        var currentItem = (listenState.playlist && listenState.playlist[listenState.playlistIndex]) || null;
+        if(currentItem && currentItem.bismillah){
+          playSurahPlaylistAt(listenState.playlist, listenState.playlistIndex + 1, listenState.mode);
+          return;
+        }
         // "تكرار تلاوة الآية" (الإعدادات): replay the ayah that just
         // finished, in place, until it has played the configured number of
         // times — before doing anything else (advancing, turning pages, or
@@ -68,7 +77,11 @@
           stopListening();
           return;
         }
-        if(listenState.mode === 'surah' || listenState.mode === 'juz'){
+        // Playlist-driven modes (نطاق التلاوة = "نطاق العرض", whatever the
+        // current نطاق العرض value resolves to) keep chaining through
+        // listenState.playlist; anything else (ruku/single) falls through
+        // to the simple same-page-ayah-array advance below.
+        if(PLAYLIST_RECITATION_MODES.indexOf(listenState.mode) !== -1){
           playSurahPlaylistAt(listenState.playlist, listenState.playlistIndex + 1, listenState.mode);
           return;
         }
@@ -83,6 +96,12 @@
     return audioPlayer;
   }
   var listenState = { playing:false, loading:false, page:null, ayahIndex:0, mode:'ruku', playlist:null, playlistIndex:0, repeatsPlayed:0 };
+  // Modes that mean "keep advancing through listenState.playlist" in the
+  // 'ended' handler above, instead of the simple same-page ayah-array
+  // advance. 'surah'/'juz' predate نطاق العرض (still used by the
+  // فهرس السور "تشغيل السورة/الجزء كاملة" buttons); 'manzil'/'all' back
+  // the new "نطاق العرض" نطاق التلاوة option in toggleListen() below.
+  var PLAYLIST_RECITATION_MODES = ['surah', 'juz', 'manzil', 'all'];
 
   // Guards playAyahAt()/playSurahPlaylistAt()'s play().catch() against a
   // stale rejection racing a newer playback attempt (or a deliberate
@@ -101,6 +120,38 @@
   }
   function ayahAudioUrl(surah, ayah){
     return 'https://everyayah.com/data/' + currentReciterFolder() + '/' + pad3(surah) + pad3(ayah) + '.mp3';
+  }
+  // البسملة بين السورتين في التلاوة المتصلة: EveryAyah's per-ayah files
+  // for every surah *other than* الفاتحة (سورة 1) start directly with the
+  // surah's own text — no بسملة baked in, confirmed by direct listening
+  // in-app. الفاتحة's own ayah 1 file IS the بسملة itself (اتفاق العلماء
+  // أنها آية من آياتها), so it doubles as a reusable بسملة clip for every
+  // other surah instead of needing a separate audio source. Never used
+  // before التوبة (سورة 9) — لا تُقرأ البسملة بين الأنفال والتوبة.
+  function bismillahAudioUrl(){
+    return 'https://everyayah.com/data/' + currentReciterFolder() + '/001001.mp3';
+  }
+  // Walks a playlist (already built by one of the build*Playlist helpers
+  // below) and inserts a بسملة marker item right before the first ayah of
+  // every surah it contains, except سورة 1 (الفاتحة \u2014 its own ayah 1
+  // IS the بسملة) and سورة 9 (التوبة \u2014 never preceded by a بسملة).
+  // The marker shares its {pageIdx, ayahIdx, surah, ayah} with the real
+  // ayah 1 item right after it (so slicePlaylistFrom, which matches on
+  // exactly those fields, lands on the بسملة marker whenever playback
+  // starts exactly at a surah's first ayah, and skips straight past it
+  // when starting anywhere else mid-surah) plus `bismillah:true` so
+  // playSurahPlaylistAt knows to substitute bismillahAudioUrl() for the
+  // normal ayahAudioUrl() lookup.
+  function insertBismillahBeforeSurahs(list){
+    var out = [];
+    for(var i = 0; i < list.length; i++){
+      var item = list[i];
+      if(item.ayah === 1 && item.surah !== 1 && item.surah !== 9){
+        out.push({pageIdx: item.pageIdx, ayahIdx: item.ayahIdx, surah: item.surah, ayah: item.ayah, bismillah: true});
+      }
+      out.push(item);
+    }
+    return out;
   }
   // ---------------------------------------------------------------------
   // Auto screen wake lock during playback: independent of the
@@ -491,7 +542,7 @@
       // the next surah instead.
       if(!foundAny && list.length > 0) break;
     }
-    return list;
+    return insertBismillahBeforeSurahs(list);
   }
 
   // Same idea as buildSurahPlaylist, but grouped by juz instead of surah:
@@ -509,7 +560,44 @@
         list.push({pageIdx: pi, ayahIdx: ai, surah: a.surah, ayah: a.ayah});
       }
     }
-    return list;
+    return insertBismillahBeforeSurahs(list);
+  }
+
+  // Same idea as buildJuzPlaylist, but for a manzil (surah-number range
+  // from getManzilRange, shared with readerManager.js's نطاق العرض
+  // filtering) instead of a single juz number.
+  function buildManzilPlaylist(surahNum){
+    var range = window.getManzilRange(surahNum);
+    var list = [];
+    for(var pi = 0; pi < PAGES.length; pi++){
+      var p = PAGES[pi];
+      var pSurah = p.ayahs[0].surah;
+      if(pSurah < range.start || pSurah > range.end) continue;
+      for(var ai = 0; ai < p.ayahs.length; ai++){
+        var a = p.ayahs[ai];
+        list.push({pageIdx: pi, ayahIdx: ai, surah: a.surah, ayah: a.ayah});
+      }
+    }
+    return insertBismillahBeforeSurahs(list);
+  }
+
+  // "جميع الركوعات" نطاق العرض: the whole mushaf as one playlist, start
+  // to finish. Only ever sliced from the current ruku onward (see
+  // toggleListen below), never played from ayah 1 — building the full
+  // 6,236-ayah list is still cheap (one linear pass over PAGES, same cost
+  // class as buildJuzPlaylist) and keeps this in line with the other
+  // build*Playlist helpers instead of special-casing "all" everywhere
+  // downstream (slicePlaylistFrom, playSurahPlaylistAt chaining, etc.).
+  function buildAllPlaylist(){
+    var list = [];
+    for(var pi = 0; pi < PAGES.length; pi++){
+      var p = PAGES[pi];
+      for(var ai = 0; ai < p.ayahs.length; ai++){
+        var a = p.ayahs[ai];
+        list.push({pageIdx: pi, ayahIdx: ai, surah: a.surah, ayah: a.ayah});
+      }
+    }
+    return insertBismillahBeforeSurahs(list);
   }
 
   // Cuts a full surah/juz playlist down to start at a specific ayah — used
@@ -564,9 +652,13 @@
     }
     updateListenButton();
     requestAudioWakeLock();
-    updateMediaSessionMetadata(surahNameFor(item.pageIdx, item.ayahIdx, item.surah), item.ayah);
+    if(item.bismillah){
+      updateMediaSessionMetadata(surahNameFor(item.pageIdx, item.ayahIdx, item.surah) + ' — البسملة', null);
+    } else {
+      updateMediaSessionMetadata(surahNameFor(item.pageIdx, item.ayahIdx, item.surah), item.ayah);
+    }
     setMediaSessionPlaybackState('playing');
-    player.src = ayahAudioUrl(item.surah, item.ayah);
+    player.src = item.bismillah ? bismillahAudioUrl() : ayahAudioUrl(item.surah, item.ayah);
     var myToken = ++playToken;
     var playPromise = player.play();
     if(playPromise && playPromise.catch){
@@ -592,35 +684,59 @@
     playSurahPlaylistAt(playlist, 0, 'juz');
   }
 
+  // "نطاق التلاوة" (الإعدادات): زر الاستماع في الصفحة (toggleListen)
+  // بيبدأ دايمًا من أول آية في الركوع الحالي — ده ثابت زي ما كان — لكن
+  // في وضع "نطاق العرض" بيكمل بعد الركوع لحد نهاية أيًّا كان نطاق العرض
+  // الحالي (جميع الركوعات/المنزل/الجزء/السورة) بدل ما يقف عند آخر آية في
+  // الركوع. بيستخدم نفس آلية الفهرس (تشغيل سورة/جزء/منزل/كل المصحف) لكن
+  // بيقصّها (slicePlaylistFrom) عشان تبدأ من نفس الركوع الحالي.
   function toggleListen(){
     if(listenState.playing && listenState.page === state.page){
       stopListening();
-    } else {
-      stopListening();
-      playAyahAt(state.page, 0, 'ruku');
+      return;
     }
+    stopListening();
+    var scope = state.recitationScope || 'ruku';
+    var p = PAGES[state.page];
+    if(scope !== 'displayScope' || !p){
+      playAyahAt(state.page, 0, 'ruku');
+      return;
+    }
+    var effectiveScope = state.displayScope || 'all';
+    var fullList;
+    if(effectiveScope === 'surah'){
+      fullList = buildSurahPlaylist(p.ayahs[0].surah);
+    } else if(effectiveScope === 'juz'){
+      fullList = buildJuzPlaylist(p.juz);
+    } else if(effectiveScope === 'manzil'){
+      fullList = buildManzilPlaylist(p.ayahs[0].surah);
+    } else {
+      fullList = buildAllPlaylist();
+    }
+    var sliced = slicePlaylistFrom(fullList, state.page, 0);
+    if(!sliced.length){
+      playAyahAt(state.page, 0, 'ruku');
+      return;
+    }
+    playSurahPlaylistAt(sliced, 0, effectiveScope);
   }
 
   // Long-press on an ayah's number marker (the star-shaped ٱ marker at the
   // end of each ayah) plays just that single ayah, independent of the
   // "listen to the whole ruku" button. Reuses the same audio player/state
   // as the ruku playback, just in 'single' mode so it stops after one ayah
-  // instead of chaining into the next.
+  // instead of chaining into the next. Used to have a "بدء التلاوة من
+  // الآية" setting (ayah/ruku/surah/juz) controlling how far it continued
+  // — removed per user request; long-press now always plays just the one
+  // ayah, full stop.
   function setupAyahNumberLongPress(){
     var root = els.ayahFlow;
     if(!root) return;
 
-    // Where recitation started by long-pressing an ayah number should
-    // stop, per "بدء التلاوة من الآية (ضغط مطول)" in الإعدادات:
-    //   'ayah' — just this one ayah (the original behavior)
-    //   'ruku' — the rest of the ruku currently on screen (no page turn)
-    //   'surah'/'juz' — the rest of the surah/juz, turning pages and
-    //                   auto-scrolling automatically as it goes, same
-    //                   mechanism as the play buttons in فهرس السور/الأجزاء
     function startLongPressPlayback(surah, ayah){
-      // Per user request: the "بدء التلاوة من الآية" long-press should only
-      // kick in while nothing is currently playing/loading. If audio is
-      // already active, ignore the long-press instead of interrupting it.
+      // Per user request: the long-press-to-play should only kick in
+      // while nothing is currently playing/loading. If audio is already
+      // active, ignore the long-press instead of interrupting it.
       if(listenState.playing || listenState.loading){
         showToast('أوقف التلاوة لتشغيل آية أخرى');
         return;
@@ -633,24 +749,8 @@
       }
       if(idx === -1) return;
       stopListening();
-      var scope = state.longPressScope || 'ayah';
-      if(scope === 'ruku'){
-        playAyahAt(state.page, idx, 'ruku');
-        showToast('جارٍ التلاوة حتى نهاية الركوع');
-      } else if(scope === 'surah'){
-        var surahList = slicePlaylistFrom(buildSurahPlaylist(surah), state.page, idx);
-        if(!surahList.length) return;
-        playSurahPlaylistAt(surahList, 0, 'surah');
-        showToast('جارٍ التلاوة حتى نهاية السورة');
-      } else if(scope === 'juz'){
-        var juzList = slicePlaylistFrom(buildJuzPlaylist(p.juz), state.page, idx);
-        if(!juzList.length) return;
-        playSurahPlaylistAt(juzList, 0, 'juz');
-        showToast('جارٍ التلاوة حتى نهاية الجزء');
-      } else {
-        playAyahAt(state.page, idx, 'single');
-        showToast('جارٍ تشغيل هذه الآية');
-      }
+      playAyahAt(state.page, idx, 'single');
+      showToast('جارٍ تشغيل هذه الآية');
     }
 
     Gestures.longPress({
@@ -690,21 +790,23 @@
     applyReciterChoice();
   }
 
-  // "بدء التلاوة من الآية (ضغط مطول)" (الإعدادات): stored independently of
-  // the reciter and script mode, same pattern as setupReciterSelect above.
-  var LONG_PRESS_SCOPES = ['ayah', 'ruku', 'surah', 'juz'];
-  function applyLongPressScopeChoice(){
-    if(els.longPressScopeSelect) els.longPressScopeSelect.value = LONG_PRESS_SCOPES.indexOf(state.longPressScope) !== -1 ? state.longPressScope : 'ayah';
+  // "نطاق التلاوة": يتحكم في نطاق زر الاستماع بالصفحة (toggleListen)
+  // فقط — لا علاقة له بالضغط المطول على رقم الآية (اللي بقى بيشغّل نفس
+  // الآية بس دايمًا، شوف setupAyahNumberLongPress فوق).
+  var RECITATION_SCOPES = ['ruku', 'displayScope'];
+  function applyRecitationScopeChoice(){
+    if(!els.recitationScopeSelect) return;
+    els.recitationScopeSelect.value = RECITATION_SCOPES.indexOf(state.recitationScope) !== -1 ? state.recitationScope : 'ruku';
   }
-  function setupLongPressScopeSelect(){
-    if(!els.longPressScopeSelect) return;
-    els.longPressScopeSelect.addEventListener('change', function(){
-      var val = els.longPressScopeSelect.value;
-      if(LONG_PRESS_SCOPES.indexOf(val) === -1) val = 'ayah';
-      state.longPressScope = val;
+  function setupRecitationScopeSelect(){
+    if(!els.recitationScopeSelect) return;
+    els.recitationScopeSelect.addEventListener('change', function(){
+      var val = els.recitationScopeSelect.value;
+      if(RECITATION_SCOPES.indexOf(val) === -1) val = 'ruku';
+      state.recitationScope = val;
       saveState();
     });
-    applyLongPressScopeChoice();
+    applyRecitationScopeChoice();
   }
 
   function setupAutoScrollToggle(){
@@ -753,7 +855,7 @@
     setupAyahNumberLongPress();
     setupReciterSelect();
     setupAutoScrollToggle();
-    setupLongPressScopeSelect();
+    setupRecitationScopeSelect();
     setupRecitationRepeatSelect();
     setupMediaSessionHandlers();
   }

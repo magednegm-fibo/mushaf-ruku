@@ -162,7 +162,7 @@
   <!-- ============ SURAH INDEX PANEL ============ -->
   <div id="surahPanel" class="panel hidden">
     <div class="panel-head">
-      <h2>فهرس السور</h2>
+      <h2>فهرس السور والمنازل</h2>
       <button class="icon-btn" id="btnCloseSurah" aria-label="إغلاق">
         <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6l-12 12"/></svg>
       </button>
@@ -177,13 +177,6 @@
       <button class="icon-btn" id="btnCloseJuz" aria-label="إغلاق">
         <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6l-12 12"/></svg>
       </button>
-    </div>
-    <div class="setting-row" id="juzOnlyRow">
-      <span>إظهار ركوعات الجزء الحالي فقط</span>
-      <label class="switch">
-        <input type="checkbox" id="juzOnlyToggle">
-        <span class="slider"></span>
-      </label>
     </div>
     <div class="panel-body" id="juzList"></div>
   </div>
@@ -715,17 +708,32 @@
           <option value="3">٣ مرات</option>
         </select>
       </div>
+      <p class="about-text" id="longPressScopeHint" style="margin-top:2px;">
+        🕒 اضغط مطولًا على رقم الآية لتلاوتها.
+      </p>
+
+      <hr class="settings-divider">
       <div class="setting-row">
-        <span>بدء التلاوة من الآية</span>
-        <select class="reciter-select" id="longPressScopeSelect">
-          <option value="ayah">الآية فقط</option>
-          <option value="ruku">حتى الركوع</option>
-          <option value="surah">حتى السورة</option>
-          <option value="juz">حتى الجزء</option>
+        <span>نطاق العرض</span>
+        <select class="reciter-select" id="displayScopeSelect">
+          <option value="all">جميع الركوعات</option>
+          <option value="manzil">ركوعات المنزل الحالي</option>
+          <option value="juz">ركوعات الجزء الحالي</option>
+          <option value="surah">ركوعات السورة الحالية</option>
         </select>
       </div>
-      <p class="about-text" id="longPressScopeHint" style="margin-top:2px;">
-        🕒 اضغط مطولًا على رقم الآية لبدء التلاوة منها.
+      <p class="about-text" id="displayScopeHint" style="margin-top:2px;">
+        يتم تحديد المنزل والجزء والسورة وفقًا للصفحة الحالية.
+      </p>
+      <div class="setting-row">
+        <span>نطاق التلاوة</span>
+        <select class="reciter-select" id="recitationScopeSelect">
+          <option value="ruku">الركوع</option>
+          <option value="displayScope">نطاق العرض</option>
+        </select>
+      </div>
+      <p class="about-text" id="recitationScopeHint" style="margin-top:2px;">
+        الركوع: يشغّل الركوع الحالي فقط. نطاق العرض: يشغّل من الركوع الحالي حتى نهاية نطاق العرض المحدد أعلاه (جميع الركوعات / المنزل / الجزء / السورة).
       </p>
       <hr class="settings-divider">
       <div class="setting-row static">

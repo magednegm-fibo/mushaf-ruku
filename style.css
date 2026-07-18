@@ -321,6 +321,38 @@ body.uthmani-font .waqf-sign{
   display: inline-block;
   transform: translateY(-0.35em);
 }
+/* See WAQF_SAKTA_LIFT_HTML in readerManager.js -- same collision class as
+   .waqf-sila-lift above (this font has no mkmk lookup between the sakta
+   glyph and a co-occurring waqf-mutlaq/waqf-lazim mark, so both fall back
+   to the same raw position and overlap). -0.35em mirrors the sila-lift
+   estimate as a starting point; confirm on-device at 18:1/36:52 and
+   adjust independently if the sakta needs a different offset than sila. */
+.waqf-sakta-lift{
+  display: inline-block;
+  transform: translateY(-0.35em);
+}
+/* See WAQF_MARK_LOWER_HTML in readerManager.js -- companion fix to
+   .waqf-sakta-lift above. Pushes the waqf-mutlaq/waqf-lazim mark down a
+   touch so it clears the lifted sakta above it instead of the two
+   glyphs' ink overlapping. 0.15em was confirmed on-device as still not
+   enough gap (18:1/36:52); bumped to 0.3em -- if still touching, keep
+   nudging up from here, and consider raising the sakta lift beyond
+   -0.35em too rather than only pushing this mark down further. */
+.waqf-mark-lower{
+  display: inline-block;
+  transform: translateY(0.3em);
+}
+/* See WAQF_MARK_LOWER_MUTLAQ_HTML in readerManager.js -- 18:1 only.
+   Confirmed on-device the waqf-mutlaq mark still collided with the alif
+   of عِوَجًا horizontally even after the vertical .waqf-mark-lower fix;
+   nudges it right as well. 0.12em rightward is a STARTING ESTIMATE
+   ONLY -- open 18:1 on a real device and adjust independently from
+   36:52 (which uses the untouched .waqf-mark-lower class and was
+   already confirmed correct). */
+.waqf-mark-lower-mutlaq{
+  display: inline-block;
+  transform: translate(0.12em, 0.3em);
+}
 
 /* Fix for the ن (noon) / ruku-end-mark (U+E022) collision -- see
    WAQF_RUKU_MARK_NOON_LIFT_HTML in readerManager.js. Confirmed on-device
@@ -571,6 +603,14 @@ body.night .ayah-num span{ background:#1a1712; }
 }
 .panel-head h2{
   margin:0; font-family: var(--font-ui); font-size:18px; color: var(--emerald);
+  /* Long-press on a panel title is decorative and has nothing worth
+     selecting -- same Smart Text Selection/dictionary-sheet bug as
+     .ayah-flow, guarded here in CSS and in gestures.js's selectstart
+     listener (belt-and-suspenders, since selectstart alone doesn't stop
+     every WebView's highlight flash). */
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 .panel-head .icon-btn{ color: var(--emerald); border-color: rgba(22,73,58,.25); }
 .panel-head-actions{ display:flex; align-items:center; gap:8px; }
@@ -618,7 +658,7 @@ body.night .index-item.current .num{ background:#D8B662; color:#161310; border-c
   line-height: 1;
 }
 .index-item .meta{
-  font-size: 11px;
+  font-size: 12.5px;
   color: var(--ink-soft);
 }
 .index-item .surah-info{
@@ -640,18 +680,43 @@ body.night .index-item.current .num{ background:#D8B662; color:#161310; border-c
 .index-item-inner{ display:flex; align-items:center; gap: 8px; width:100%; }
 .index-item-inner > div:last-child{ flex: 1; }
 
-/* ---------- Play-whole-surah button (inside the surah index list) ---------- */
-.index-play-btn{
-  width:32px; height:32px; border-radius:50%; flex-shrink:0;
-  margin-inline-start:auto;
-  border:1px solid var(--gold);
-  background:transparent; color: var(--emerald);
-  display:flex; align-items:center; justify-content:center;
+/* عنوان كل منزل من منازل القرآن السبعة، في فهرس السور — عنصر مستقل قبل
+   أول سورة في المنزل (مش بطاقة تحيط بسور المنزل). الألوان والشكل زي
+   الصورة المرجعية اللي بعتها: خلفية بيج فاتحة، عنوان غامق بارز، وسطر
+   وصف رمادي تحته. مستخدمة نفس رموز ألوان التطبيق (paper-edge/ink/ink-soft)
+   بدل قيم جديدة، لأنها أصلًا قريبة من درجات الصورة. */
+.manzil-header{
+  text-align: center;
+  margin: 12px 0 6px;
+  padding: 14px 16px 12px;
+  background: #F8F2E2;
+  border-radius: 14px;
+  /* عنوان زخرفي مش نص للنسخ — بيوقف الـ blue selection handles، لكن
+     ده مايكفيش لوحده ضد شريط Google Dictionary في بعض أجهزة أندرويد؛
+     الحل الكامل (منع selectstart) في gestures.js. */
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
-.index-play-btn svg{ width:15px; height:15px; fill:currentColor; margin-right:-2px; }
-.index-play-btn:active{ background: var(--emerald); border-color: var(--emerald); color:#fff; }
-body.night .index-play-btn{ color:#D8B662; border-color:#5b4a26; }
-body.night .index-play-btn:active{ background:#D8B662; border-color:#D8B662; color:#161310; }
+/* أول "المنزل الأول" في القائمة ملاصق مباشرة لأعلى panel-body، فمسافة
+   الـ12px الافتراضية بتبان زيادة فوقه مباشرة تحت رأس اللوحة. */
+#surahList > .manzil-header:first-child{ margin-top: 0; }
+.manzil-title{
+  font-family: var(--font-ui);
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--ink);
+  letter-spacing: .5px;
+}
+.manzil-sub{
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  color: var(--ink-soft);
+  margin-top: 5px;
+}
+body.night .manzil-header{ background:#211c15; }
+body.night .manzil-title{ color:#EAE0C4; }
+body.night .manzil-sub{ color:#9c8f6d; }
 
 /* Brief highlight flash on the ayah a search result jumps to, so it's
    easy to spot among several ayaat on the same ruku page. Uses the same

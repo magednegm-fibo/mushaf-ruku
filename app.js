@@ -35,6 +35,15 @@
   var JUZ_INFO = window.JUZ_INFO || {name: 'جزء عمّ', shortName: 'جزء عمّ', rukuCount: PAGES.length, ayahCount: 0};
 
   var state = loadState();
+  // دفاعي: goToPage() في readerManager.js بيرفض أي index خارج نطاق
+  // PAGES بصمت (return مبكر، من غير أي fallback)، فلو state.page
+  // المحفوظة في localStorage طلعت خارج النطاق (تخزين تالف، أو تغيير
+  // مستقبلي في تقسيم الركوعات يقلل PAGES.length) هيفضل القارئ على شاشة
+  // فاضية تمامًا من غير أي رسالة خطأ ومن غير تعافي تلقائي. الـclamp هنا
+  // بيضمن إن state.page دايمًا داخل النطاق الصحيح قبل أي استخدام ليها.
+  if(PAGES.length){
+    state.page = Math.max(0, Math.min(state.page || 0, PAGES.length - 1));
+  }
 
   var els = {
     pageScroll: document.getElementById('pageScroll'),
@@ -67,6 +76,7 @@
     stripFill: document.getElementById('stripFill'),
     settingsProgress: document.getElementById('settingsProgress'),
     btnResetProgress: document.getElementById('btnResetProgress'),
+    displayScopeSelect: document.getElementById('displayScopeSelect'),
 
     tileSurah: document.getElementById('tileSurah'),
     tileJuz: document.getElementById('tileJuz'),
@@ -82,8 +92,6 @@
     juzPanel: document.getElementById('juzPanel'),
     juzList: document.getElementById('juzList'),
     btnCloseJuz: document.getElementById('btnCloseJuz'),
-    juzOnlyRow: document.getElementById('juzOnlyRow'),
-    juzOnlyToggle: document.getElementById('juzOnlyToggle'),
 
     searchPanel: document.getElementById('searchPanel'),
     searchValidationMsg: document.getElementById('searchValidationMsg'),
@@ -124,7 +132,7 @@
     listenIconLoading: document.getElementById('listenIconLoading'),
     reciterSelect: document.getElementById('reciterSelect'),
     autoScrollToggle: document.getElementById('autoScrollToggle'),
-    longPressScopeSelect: document.getElementById('longPressScopeSelect'),
+    recitationScopeSelect: document.getElementById('recitationScopeSelect'),
     recitationRepeatSelect: document.getElementById('recitationRepeatSelect'),
     favModal: document.getElementById('favModal'),
     favNameInput: document.getElementById('favNameInput'),

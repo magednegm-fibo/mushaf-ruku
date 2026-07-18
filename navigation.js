@@ -18,19 +18,34 @@
   function buildIndex(){
     var html = '';
     var lastJuz = null;
-    // "إظهار ركوعات الجزء الحالي فقط": when on, restrict the list to the
-    // juz the currently-open ruku belongs to instead of all 556. Juz-amma
-    // builds (!JUZ_INFO.fullMushaf) only ever contain one juz anyway, so
-    // the toggle is a no-op there (and hidden — see init()).
-    var onlyJuz = (JUZ_INFO.fullMushaf && state.juzOnlyMode && PAGES[state.page]) ? PAGES[state.page].juz : null;
+    // "نطاق العرض" (الإعدادات): يقيّد الفهرس إما لسورة/جزء/منزل الركوع
+    // الحالي بدل كل الـ٥٥٦ ركوع. جزء/منزل غير ذات معنى في مصاحف Juz-Amma
+    // (!JUZ_INFO.fullMushaf — جزء واحد بس أصلًا، والاختيار 'juz' معطّل
+    // ومُتحوَّل لـ'all' في init())، لكن نطاق السورة يفضل شغّال زي ما هو.
+    var scope = state.displayScope || 'all';
+    var curPage = PAGES[state.page];
+    var onlySurah = null, onlyJuz = null, manzilRange = null;
+    if(curPage && scope === 'surah'){
+      onlySurah = curPage.ayahs[0].surah;
+    } else if(curPage && scope === 'juz' && JUZ_INFO.fullMushaf){
+      onlyJuz = curPage.juz;
+    } else if(curPage && scope === 'manzil'){
+      manzilRange = window.getManzilRange(curPage.ayahs[0].surah);
+    }
+    // رأس الجزء (الجزء N) بيبان بس في النطاق الكامل — في أي نطاق مُقيَّد
+    // القائمة أصلًا صغيرة ومحصورة، فرأس الجزء مايضيفش حاجة.
+    var showJuzHeaders = JUZ_INFO.fullMushaf && scope === 'all';
     PAGES.forEach(function(p, i){
+      if(onlySurah !== null && p.ayahs[0].surah !== onlySurah) return;
       if(onlyJuz !== null && p.juz !== onlyJuz) return;
+      if(manzilRange !== null){
+        var s = p.ayahs[0].surah;
+        if(s < manzilRange.start || s > manzilRange.end) return;
+      }
       var firstName = p.ayahs[0].surahName;
       var firstAyah = p.ayahs[0].ayah;
-      if(JUZ_INFO.fullMushaf && p.juz !== lastJuz){
-        if(onlyJuz === null){
-          html += '<div class="juz-header">الجزء ' + UI.toArabicDigits(p.juz) + '</div>';
-        }
+      if(showJuzHeaders && p.juz !== lastJuz){
+        html += '<div class="juz-header">الجزء ' + UI.toArabicDigits(p.juz) + '</div>';
         lastJuz = p.juz;
       }
       var rukuLabelNum = JUZ_INFO.fullMushaf ? p.ruku : p.rukuInJuz;
@@ -60,7 +75,55 @@
   // ===================================================================
   // Surah index / juz index / search — shared row renderer
   // ===================================================================
-  function renderSurahList(list, container){
+  // عدد أركان كل سورة: كل عنصر في PAGES يمثّل ركوعًا واحدًا كاملًا (شوف
+  // README)، والركوع "بيتبع" السورة اللي بيبدأ فيها (p.ayahs[0].surah) —
+  // مطابق لنفس الحقل المستخدم في بقية الفهرس، فمفيش تعريف تاني لنفس
+  // الفكرة. محسوبة مرة واحدة بس أول ما تُطلب فعليًا (مش عند التحميل).
+  var rukuCountBySurah = null;
+  function getRukuCountBySurah(){
+    if(rukuCountBySurah) return rukuCountBySurah;
+    rukuCountBySurah = {};
+    PAGES.forEach(function(p){
+      var s = p.ayahs[0].surah;
+      rukuCountBySurah[s] = (rukuCountBySurah[s] || 0) + 1;
+    });
+    return rukuCountBySurah;
+  }
+  // صياغة عربية صحيحة لعدد الأركان حسب قواعد العدد والمعدود:
+  // ١ ركوع واحد، ٢ ركوعان، ٣-١٠ ركوعات (جمع مجرور)، ١١+ ركوعًا (مفرد
+  // منصوب/تمييز).
+  function rukuCountLabel(n){
+    if(n === 1) return 'ركوع واحد';
+    if(n === 2) return 'ركوعان';
+    if(n >= 3 && n <= 10) return UI.toArabicDigits(n) + ' ركوعات';
+    return UI.toArabicDigits(n) + ' ركوعًا';
+  }
+  // منازل القرآن السبعة (تقسيم "فاتحون" التقليدي لختم القرآن في سبعة
+  // أيام). كل مفتاح هو رقم سورة بداية المنزل؛ النهاية معروفة سلفًا لكل
+  // منزل (آخر سورة قبل بداية المنزل التالي)، فمُدرجة هنا كنص جاهز بدل
+  // حسابها ديناميكيًا. العنوان بالزخرفة القرآنية ﴾ ﴿ وتشكيل كسر الزاي في
+  // "المَنزِلُ" مطابقةً لما اتفقنا عليه سابقًا لكلمة "منازل".
+  var MANZIL_INFO = {
+    1:  {title: '﴿ المَنزِلُ الأَوَّل ﴾',   subtitle: 'يبدأ من سورة الفاتحة إلى سورة النساء'},
+    5:  {title: '﴿ المَنزِلُ الثَّانِي ﴾',  subtitle: 'يبدأ من سورة المائدة إلى سورة التوبة'},
+    10: {title: '﴿ المَنزِلُ الثَّالِث ﴾',  subtitle: 'يبدأ من سورة يونس إلى سورة النحل'},
+    17: {title: '﴿ المَنزِلُ الرَّابِع ﴾',  subtitle: 'يبدأ من سورة الإسراء إلى سورة الفرقان'},
+    26: {title: '﴿ المَنزِلُ الخَامِس ﴾',   subtitle: 'يبدأ من سورة الشعراء إلى سورة يس'},
+    37: {title: '﴿ المَنزِلُ السَّادِس ﴾',  subtitle: 'يبدأ من سورة الصافات إلى سورة الحجرات'},
+    50: {title: '﴿ المَنزِلُ السَّابِع ﴾',  subtitle: 'يبدأ من سورة ق إلى سورة الناس'}
+  };
+  // `showManzil` is only passed true for the full، unfiltered فهرس السور
+  // list (see tileSurah handler) — filtered subsets rendered through this
+  // same function (search results) never show manzil headers, since a
+  // filtered list can skip right over a boundary surah and the header
+  // would look orphaned/out of place.
+  //
+  // Just a standalone header block before the boundary surah's row — NOT
+  // wrapping that manzil's surahs in their own card/border. Only the
+  // header's own text + colors follow the reference screenshot; the
+  // surah rows below it stay the plain .index-item rows exactly as
+  // everywhere else in this list.
+  function renderSurahList(list, container, showManzil){
     if(!list.length){
       container.innerHTML = '<div class="empty-state">لا توجد نتائج</div>';
       return;
@@ -69,19 +132,28 @@
       var meta = window.SURAH_META && window.SURAH_META[s.surah] ? window.SURAH_META[s.surah] : {};
       var surahInfo = '';
       if(meta.type && meta.ayahs){
+        var rukuCount = getRukuCountBySurah()[s.surah];
         surahInfo = meta.type + ' \u2022 ' + UI.toArabicDigits(meta.ayahs) + ' آية';
+        if(rukuCount){
+          surahInfo += ' \u2022 ' + rukuCountLabel(rukuCount);
+        }
       }
       var displayName = (window.SURAH_NAMES_VOCALIZED && window.SURAH_NAMES_VOCALIZED[s.surah]) || s.name;
-      return '<div class="index-item" data-page="'+s.page+'">' +
+      var manzilHtml = '';
+      if(showManzil && MANZIL_INFO[s.surah]){
+        var info = MANZIL_INFO[s.surah];
+        manzilHtml = '<div class="manzil-header">' +
+          '<div class="manzil-title">' + info.title + '</div>' +
+          '<div class="manzil-sub">' + info.subtitle + '</div>' +
+        '</div>';
+      }
+      return manzilHtml + '<div class="index-item" data-page="'+s.page+'">' +
         '<div class="index-item-inner">' +
           '<span class="num">' + UI.toArabicDigits(s.surah) + '</span>' +
           '<div style="flex:1">' +
             '<div class="name">' + displayName + '</div>' +
             (surahInfo ? '<div class="surah-info">' + surahInfo + '</div>' : '') +
           '</div>' +
-          '<button class="index-play-btn" data-surah="'+s.surah+'" data-page="'+s.page+'" aria-label="استماع لكامل السورة" title="استماع لكامل السورة">' +
-            '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>' +
-          '</button>' +
         '</div>' +
       '</div>';
     }).join('');
@@ -153,20 +225,6 @@
   // an .index-item).
   function handleIndexContainerClick(e){
     var container = this;
-    var playBtn = e.target.closest('.index-play-btn');
-    if(playBtn && container.contains(playBtn)){
-      // Listening to the whole surah is a distinct action from opening it
-      // — tapping the row itself just navigates (no audio); tapping this
-      // play icon opens the surah AND starts continuous recitation that
-      // turns pages automatically as it moves ruku to ruku through it.
-      var surahNum = parseInt(playBtn.getAttribute('data-surah'), 10);
-      var pageIdx = parseInt(playBtn.getAttribute('data-page'), 10);
-      if(isNaN(surahNum) || isNaN(pageIdx)) return;
-      Home.openReaderAt(pageIdx);
-      UI.closePanel(els.surahPanel);
-      AudioManager.playSurah(surahNum);
-      return;
-    }
     var surahItem = e.target.closest('.index-item');
     if(surahItem && container.contains(surahItem)){
       Home.openReaderAt(parseInt(surahItem.getAttribute('data-page'), 10));
@@ -240,11 +298,11 @@
       // Lazy: building all ٥٥٦ rows costs real work (string concatenation
       // + innerHTML parsing) that most sessions never need, since not
       // every reader opens the ruku index. Build it once, the first time
-      // it's actually opened, and reuse it after that — except in
-      // juz-only mode, where the (much cheaper, ~20-row) filtered list is
-      // always rebuilt fresh so it reflects whichever juz is current, and
-      // is never cached.
-      if(JUZ_INFO.fullMushaf && state.juzOnlyMode){
+      // it's actually opened, and reuse it after that — except when
+      // نطاق العرض is restricted to surah/juz/manzil, where the (much
+      // cheaper, small) filtered list depends on wherever the reader
+      // currently is, so it's always rebuilt fresh and never cached.
+      if(state.displayScope && state.displayScope !== 'all'){
         buildIndex();
       } else if(!indexBuilt){
         buildIndex();
@@ -259,7 +317,7 @@
     // ---- فهرس السور ----
     els.surahList.addEventListener('click', handleIndexContainerClick);
     els.tileSurah.addEventListener('click', function(){
-      renderSurahList(SearchManager.getSurahOrder(), els.surahList);
+      renderSurahList(SearchManager.getSurahOrder(), els.surahList, true);
       UI.openPanel(els.surahPanel);
     });
     els.btnCloseSurah.addEventListener('click', function(){ UI.closePanel(els.surahPanel); });
@@ -274,15 +332,25 @@
           order.push({juz: p.juz, page: i, name: p.ayahs[0].surahName});
         }
       });
+      // نطاق كل جزء: من ركوع/سورة أول صفحة فيه، لحد ركوع/سورة آخر صفحة
+      // قبل بداية الجزء اللي بعده مباشرة (أو آخر صفحة في المصحف كله لو
+      // ده آخر جزء). p.ruku هو نفس رقم الركوع العالمي المعروض في الفهرس
+      // الرئيسي (الفهرس)، فمفيش رقمين مختلفين للركوع في التطبيق.
+      order.forEach(function(j, k){
+        var endPageIdx = (k < order.length - 1) ? (order[k+1].page - 1) : (PAGES.length - 1);
+        var startP = PAGES[j.page];
+        var endP = PAGES[endPageIdx];
+        j.startRuku = startP.ruku;
+        j.endRuku = endP.ruku;
+        j.endName = endP.ayahs[0].surahName;
+      });
       var html = order.map(function(j){
         return '<div class="index-item" data-page="'+j.page+'">' +
           '<div class="index-item-inner">' +
             '<span class="num">' + UI.toArabicDigits(j.juz) + '</span>' +
             '<div style="flex:1"><div class="name">الجزء ' + UI.toArabicDigits(j.juz) + '</div>' +
-            '<div class="meta">يبدأ من سورة ' + j.name + '</div></div>' +
-            '<button class="index-play-btn" data-juz="'+j.juz+'" data-page="'+j.page+'" aria-label="استماع لهذا الجزء" title="استماع لهذا الجزء">' +
-              '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>' +
-            '</button>' +
+            '<div class="meta">يبدأ من الركوع ' + UI.toArabicDigits(j.startRuku) + ' سورة ' + j.name +
+              ' حتى الركوع ' + UI.toArabicDigits(j.endRuku) + ' سورة ' + j.endName + '</div></div>' +
           '</div>' +
         '</div>';
       }).join('');
@@ -290,20 +358,6 @@
       UI.openPanel(els.juzPanel);
     });
     els.juzList.addEventListener('click', function(e){
-      var playBtn = e.target.closest('.index-play-btn');
-      if(playBtn && els.juzList.contains(playBtn)){
-        // Same distinction as فهرس السور: tapping the row just navigates,
-        // tapping this play icon opens the juz's first ruku AND starts
-        // continuous recitation that auto-turns pages ruku by ruku until
-        // the whole juz has been recited.
-        var juzNum = parseInt(playBtn.getAttribute('data-juz'), 10);
-        var pageIdx = parseInt(playBtn.getAttribute('data-page'), 10);
-        if(isNaN(juzNum) || isNaN(pageIdx)) return;
-        Home.openReaderAt(pageIdx);
-        UI.closePanel(els.juzPanel);
-        AudioManager.playJuz(juzNum);
-        return;
-      }
       var el = e.target.closest('.index-item');
       if(!el || !els.juzList.contains(el)) return;
       Home.openReaderAt(parseInt(el.getAttribute('data-page'), 10));
@@ -311,20 +365,29 @@
     });
     els.btnCloseJuz.addEventListener('click', function(){ UI.closePanel(els.juzPanel); });
 
-    // ---- إظهار ركوعات الجزء الحالي فقط ----
-    if(els.juzOnlyToggle){
-      els.juzOnlyToggle.checked = !!state.juzOnlyMode;
-      els.juzOnlyToggle.addEventListener('change', function(){
-        state.juzOnlyMode = els.juzOnlyToggle.checked;
+    // ---- نطاق العرض (فهرس الركوع + قيود التنقّل بالسحب) ----
+    // يحلّ محل toggle "إظهار ركوعات الجزء الحالي فقط" القديم اللي كان في
+    // صفحة فهرس الأجزاء — بقى اختيار واحد من 4 نطاقات هنا في الإعدادات
+    // بدل مفتاح ثنائي في مكان تاني، وحطينا 'juz' كقيمة مكافئة له بمنطق
+    // الترقية في storage-manager.js (juzOnlyMode -> displayScope:'juz').
+    if(els.displayScopeSelect){
+      els.displayScopeSelect.value = state.displayScope || 'all';
+      els.displayScopeSelect.addEventListener('change', function(){
+        state.displayScope = els.displayScopeSelect.value;
         saveState();
-        // The filtered/unfiltered ركوع index is rebuilt fresh next time
-        // it's opened (see btnIndex handler above) — nothing to refresh
-        // here. The prev/next buttons, though, need their disabled state
-        // updated immediately, since the juz boundary they should now
-        // respect (or stop respecting) doesn't change until the next
-        // renderPage() otherwise.
+        // الفهرس (ركوعات) بيتبني من جديد أول ما يتفتح (شوف مُعالج
+        // btnIndex فوق) — مفيش داعي نرسمه تاني هنا. لكن زرار السابق/
+        // التالي محتاجين يتحدّثوا فورًا، عشان حدود النطاق (سورة/جزء/
+        // منزل) اللي المفروض يحترموها بتتغيّر دلوقتي مش لما يحصل
+        // renderPage() تاني.
         ReaderManager.updateNavButtons();
-        UI.showToast(state.juzOnlyMode ? 'هيتم عرض ركوعات هذا الجزء فقط' : 'هيتم عرض كل الركوعات');
+        var labels = {
+          all: 'هيتم عرض جميع صفحات الركوع',
+          surah: 'هيتم عرض ركوعات السورة الحالية فقط',
+          juz: 'هيتم عرض ركوعات الجزء الحالي فقط',
+          manzil: 'هيتم عرض ركوعات المَنزِل الحالي فقط'
+        };
+        UI.showToast(labels[state.displayScope] || labels.all);
       });
     }
 
@@ -407,21 +470,10 @@
       updateSearchButtonMode();
     }
     // Surah-name matches within the search panel navigate straight to the
-    // surah (or, via the play icon, start continuous recitation) exactly
-    // like فهرس السور — reuses handleIndexContainerClick's own logic
-    // shape but closes els.searchPanel (not els.surahPanel) since these
-    // rows live inside the search panel.
+    // surah — exactly like فهرس السور (reuses handleIndexContainerClick's
+    // own logic shape) but closes els.searchPanel (not els.surahPanel)
+    // since these rows live inside the search panel.
     function handleSearchSurahClick(e){
-      var playBtn = e.target.closest('.index-play-btn');
-      if(playBtn && els.searchSurahResults.contains(playBtn)){
-        var surahNum = parseInt(playBtn.getAttribute('data-surah'), 10);
-        var pageIdx = parseInt(playBtn.getAttribute('data-page'), 10);
-        if(isNaN(surahNum) || isNaN(pageIdx)) return;
-        Home.openReaderAt(pageIdx);
-        UI.closePanel(els.searchPanel);
-        AudioManager.playSurah(surahNum);
-        return;
-      }
       var item = e.target.closest('.index-item');
       if(!item || !els.searchSurahResults.contains(item)) return;
       Home.openReaderAt(parseInt(item.getAttribute('data-page'), 10));
@@ -486,8 +538,14 @@
     if(!JUZ_INFO.fullMushaf && els.tileJuz){
       els.tileJuz.classList.add('hidden');
     }
-    if(!JUZ_INFO.fullMushaf && els.juzOnlyRow){
-      els.juzOnlyRow.classList.add('hidden');
+    if(!JUZ_INFO.fullMushaf && els.displayScopeSelect){
+      var juzOption = els.displayScopeSelect.querySelector('option[value="juz"]');
+      if(juzOption) juzOption.disabled = true;
+      if(state.displayScope === 'juz'){
+        state.displayScope = 'all';
+        els.displayScopeSelect.value = 'all';
+        saveState();
+      }
     }
   }
 

@@ -308,11 +308,19 @@
   // suppressContextMenu above) -- it fires off `selectstart`, so CSS and
   // contextmenu-prevention alone don't stop it. Blocking `selectstart`
   // itself is the standard cross-browser way to stop selection at its
-  // source. Scoped to .ayah-flow only, so it never touches text
-  // selection anywhere else in the app (tafsir panel, دليل القارئ, etc.)
-  // where normal copy/selection should keep working.
+  // source. Scoped to .ayah-flow and .manzil-header only (the latter is
+  // the decorative "المنزل..." title/subtitle in فهرس السور — confirmed
+  // triggering the same selection bar + dictionary sheet on long-press),
+  // so it never touches text selection anywhere else in the app (تفسير
+  // panel, دليل القارئ, surah/ayah names, etc.) where normal copy/
+  // selection should keep working.
+  // NOTE: extended to `.panel-head h2` -- confirmed same Smart Text
+  // Selection/dictionary-sheet bug on the فهرس السور والمنازل panel title,
+  // and every panel heading is equally static decorative text with
+  // nothing useful to select, so all panel titles are covered together
+  // instead of patching them one at a time as each gets reported.
   document.addEventListener('selectstart', function(e){
-    if(e.target && e.target.closest && e.target.closest('.ayah-flow')){
+    if(e.target && e.target.closest && e.target.closest('.ayah-flow, .manzil-header, .panel-head h2')){
       e.preventDefault();
     }
   });

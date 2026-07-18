@@ -18,7 +18,14 @@ const STATIC_ASSETS = [
   './fonts/cairo-arabic-500-normal.woff2',
   './fonts/cairo-arabic-600-normal.woff2',
   './fonts/cairo-arabic-700-normal.woff2',
-  './fonts/amiri-quran-arabic-400-normal.woff2'
+  './fonts/amiri-quran-arabic-400-normal.woff2',
+  // data.js (النص القرآني الكامل، ~3.3MB) لا يتغيّر أبدًا إلا مع إصدار
+  // جديد كامل للتطبيق (نفس ضمان الخطوط بالظبط) — ونظام التحديث هنا أصلًا
+  // مبني على تغيير اسم CACHE نفسه (من version.js) + مسح كل الكاش القديم
+  // في activate، مش على استراتيجية fetch لكل ملف على حدة. فمفيش داعي
+  // نستنى fetch شبكة لملف بالحجم ده (يضيف تأخير حقيقي، لحد 4 ثوانٍ عند
+  // ضعف الشبكة) طالما أي تحديث فعلي هيتكشف من تغيّر CACHE beforehand.
+  './data.js'
 ];
 
 // Assets that change whenever the app is updated: must always be fetched
@@ -30,7 +37,6 @@ const DYNAMIC_ASSETS = [
   './surah-meta.js',
   './surah-names-vocalized.js',
   './juz-info.js',
-  './data.js',
   './version.js',
   './constants.js',
   './storage-manager.js',
