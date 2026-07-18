@@ -97,6 +97,142 @@ function findAyah(surah, ayah){
 // per-ayah bug is reported and fixed — this is the permanent record.
 // =====================================================================
 
+// A0. Ruku-end waqf mark data bug — 4:33 (ركوع 66) is the last ayah of
+// its ركوع. Its textIndopak wrongly ended with the "لا" (no-stop,
+// U+06D9) Sajawandi mark — the ONLY one of all 556 ruku-ending ayaat
+// in data.js to do so (454 of the other 555 end with the font's own
+// ruku-end waqf mark, U+E022). Confirmed against a printed مصحف النسخ
+// (تعليق) reference photo, which shows ع at this exact position, not
+// لا. Fixed by replacing the trailing U+06D9 with U+E022 in data.js.
+check('A0: 4:33 (ruku-end) textIndopak does NOT end with لا (U+06D9)', function(){
+  var a = findAyah(4, 33);
+  if(!a) return '4:33 not found';
+  var ip = (a.textIndopak || '').replace(/[\u200b\u200f\s]+$/, '');
+  var lastCp = ip.codePointAt(ip.length - 1);
+  return lastCp !== 0x06D9 || ('4:33 textIndopak still ends with لا (U+06D9): ' + ip.slice(-10));
+});
+
+check('A0: 4:33 (ruku-end) textIndopak ends with the ruku-end waqf mark (U+E022)', function(){
+  var a = findAyah(4, 33);
+  if(!a) return '4:33 not found';
+  var ip = (a.textIndopak || '').replace(/[\u200b\u200f\s]+$/, '');
+  var lastCp = ip.codePointAt(ip.length - 1);
+  return lastCp === 0xE022 || ('expected U+E022 at end of 4:33 textIndopak, got: 0x' + lastCp.toString(16));
+});
+
+// A0b. Same class of bug — 6:20 (ركوع 103) is also a ruku-end ayah and
+// its textIndopak was missing the ruku-end waqf mark entirely (ended
+// with a plain fatha, no mark at all). Confirmed against a printed
+// مصحف النسخ (تعليق) reference photo, which shows ع at this position.
+// Fixed by appending U+E022 after the final letter in data.js.
+check('A0b: 6:20 (ruku-end) textIndopak ends with the ruku-end waqf mark (U+E022)', function(){
+  var a = findAyah(6, 20);
+  if(!a) return '6:20 not found';
+  var ip = (a.textIndopak || '').replace(/[\u200b\u200f\s]+$/, '');
+  var lastCp = ip.codePointAt(ip.length - 1);
+  return lastCp === 0xE022 || ('expected U+E022 at end of 6:20 textIndopak, got: 0x' + lastCp.toString(16));
+});
+
+// A0c. Structural ruku-boundary bug — 26:69 was wrongly included as the
+// LAST ayah of ركوع 319 (53-69). It must be the FIRST ayah of ركوع 320
+// instead (i.e. ركوع 319 = 53-68, ركوع 320 = 69-104). Confirmed against
+// a printed مصحف النسخ (تعليق) reference photo. Fixed by moving the
+// 26:69 ayah object from the ركوع-319 page's ayahs array to the front
+// of the ركوع-320 page's ayahs array in data.js. Total ruku count (556)
+// must stay unchanged — this is a boundary shift, not an insertion.
+check('A0c: ruku 319 ends at 26:68 (not 26:69)', function(){
+  var p = JUZ_PAGES.filter(function(pg){ return pg.ruku === 319; })[0];
+  if(!p) return 'ruku 319 not found';
+  var last = p.ayahs[p.ayahs.length - 1];
+  return (last.surah === 26 && last.ayah === 68) || ('ruku 319 last ayah is ' + last.surah + ':' + last.ayah);
+});
+
+check('A0c: ruku 320 starts at 26:69 (not 26:70)', function(){
+  var p = JUZ_PAGES.filter(function(pg){ return pg.ruku === 320; })[0];
+  if(!p) return 'ruku 320 not found';
+  var first = p.ayahs[0];
+  return (first.surah === 26 && first.ayah === 69) || ('ruku 320 first ayah is ' + first.surah + ':' + first.ayah);
+});
+
+check('A0c: total ruku count is still 556 after the boundary shift', function(){
+  return JUZ_PAGES.length === 556 || ('JUZ_PAGES.length is ' + JUZ_PAGES.length);
+});
+
+// A0d. Same class of bug as A0b — 33:40 (ركوع 365) is also a ruku-end
+// ayah and its textIndopak was missing the ruku-end waqf mark entirely
+// (ended with a plain letter, no mark at all). Confirmed against a
+// printed مصحف النسخ (تعليق) reference photo, which shows ع at this
+// position. Fixed by appending U+E022 after the final letter in data.js.
+check('A0d: 33:40 (ruku-end) textIndopak ends with the ruku-end waqf mark (U+E022)', function(){
+  var a = findAyah(33, 40);
+  if(!a) return '33:40 not found';
+  var ip = (a.textIndopak || '').replace(/[\u200b\u200f\s]+$/, '');
+  var lastCp = ip.codePointAt(ip.length - 1);
+  return lastCp === 0xE022 || ('expected U+E022 at end of 33:40 textIndopak, got: 0x' + lastCp.toString(16));
+});
+
+// A0e. Rendering bug (not a data bug) -- the ruku-end mark (U+E022) does
+// not appear at all when it directly follows a bare ن (noon) with no
+// harakah in between, confirmed on-device at 59:17 (textIndopak already
+// had the correct U+E022 character; it just didn't render). Every other
+// letter tested (33:40's bare ا, 4:33, 6:20's نَ) rendered fine natively.
+// Fixed in readerManager.js/style.css by wrapping the mark in
+// .waqf-ruku-mark-noon-lift only for this exact ن+U+E022 sequence.
+check('A0e: 59:17 ruku-end mark gets the noon-collision lift wrapper', function(){
+  var a = findAyah(59, 17);
+  if(!a) return '59:17 not found';
+  var html = ReaderManager.renderAyahTextWithHighlight(a.textIndopak, null);
+  return html.indexOf('waqf-ruku-mark-noon-lift') !== -1 || 'lift wrapper class not found in rendered HTML';
+});
+
+check('A0e: the noon-collision lift wrapper does NOT fire for unrelated ruku ends (33:40, 6:20, 4:33)', function(){
+  var unaffected = [[33,40],[6,20],[4,33]];
+  for(var i = 0; i < unaffected.length; i++){
+    var a = findAyah(unaffected[i][0], unaffected[i][1]);
+    if(!a) return unaffected[i].join(':') + ' not found';
+    var html = ReaderManager.renderAyahTextWithHighlight(a.textIndopak, null);
+    if(html.indexOf('waqf-ruku-mark-noon-lift') !== -1){
+      return 'lift wrapper incorrectly fired for ' + unaffected[i].join(':');
+    }
+  }
+  return true;
+});
+
+// A0f. Same class of bug as A0b/A0d -- 95:8 (ركوع 537, last ayah of
+// سورة التين) is also a ruku-end ayah and its textIndopak was missing
+// the ruku-end waqf mark entirely (ended with a plain fatha, no mark at
+// all). Confirmed against a printed مصحف النسخ (تعليق) reference photo,
+// which shows ع at this position. Fixed by appending U+E022 after the
+// final letter in data.js. The base letter here is نَ (noon + fatha),
+// not a bare noon, so the A0e noon-collision lift must NOT fire for it.
+check('A0f: 95:8 (ruku-end) textIndopak ends with the ruku-end waqf mark (U+E022)', function(){
+  var a = findAyah(95, 8);
+  if(!a) return '95:8 not found';
+  var ip = (a.textIndopak || '').replace(/[\u200b\u200f\s]+$/, '');
+  var lastCp = ip.codePointAt(ip.length - 1);
+  return lastCp === 0xE022 || ('expected U+E022 at end of 95:8 textIndopak, got: 0x' + lastCp.toString(16));
+});
+
+check('A0f: 95:8 does NOT get the noon-collision lift wrapper (fatha, not bare noon, before the mark)', function(){
+  var a = findAyah(95, 8);
+  if(!a) return '95:8 not found';
+  var html = ReaderManager.renderAyahTextWithHighlight(a.textIndopak, null);
+  return html.indexOf('waqf-ruku-mark-noon-lift') === -1 || 'lift wrapper incorrectly fired for 95:8';
+});
+
+// A0e. Same class of bug — 59:17 (ركوع 480) is also a ruku-end ayah and
+// its textIndopak was missing the ruku-end waqf mark entirely (ended
+// with a plain letter, no mark at all). Confirmed against a printed
+// مصحف النسخ (تعليق) reference photo, which shows ع at this position.
+// Fixed by appending U+E022 after the final letter in data.js.
+check('A0e: 59:17 (ruku-end) textIndopak ends with the ruku-end waqf mark (U+E022)', function(){
+  var a = findAyah(59, 17);
+  if(!a) return '59:17 not found';
+  var ip = (a.textIndopak || '').replace(/[\u200b\u200f\s]+$/, '');
+  var lastCp = ip.codePointAt(ip.length - 1);
+  return lastCp === 0xE022 || ('expected U+E022 at end of 59:17 textIndopak, got: 0x' + lastCp.toString(16));
+});
+
 // A1. Perso-Arabic letter-variant folding (7 mappings) — cross-script:
 // query must resolve to a word position in BOTH text and textIndopak,
 // and — for the 6 "cross-script" cases — to the SAME word index in

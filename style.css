@@ -322,6 +322,21 @@ body.uthmani-font .waqf-sign{
   transform: translateY(-0.35em);
 }
 
+/* Fix for the ن (noon) / ruku-end-mark (U+E022) collision -- see
+   WAQF_RUKU_MARK_NOON_LIFT_HTML in readerManager.js. Confirmed on-device
+   that the ruku-end mark does not appear at all when it directly follows
+   a bare noon (59:17), unlike after every other letter tested. Lifting
+   just the mark clear of the noon's bowl restores visibility.
+   -0.3em is a STARTING ESTIMATE ONLY, not yet confirmed against the live
+   rendered page -- open 59:17 in the app, check this value against the
+   real glyph, and nudge it in devtools until the mark clears the noon
+   cleanly with a small visible gap; update the number here once
+   confirmed. */
+.waqf-ruku-mark-noon-lift{
+  display: inline-block;
+  transform: translateY(-0.3em);
+}
+
 /* Each Qur'an word is wrapped so a personal reminder star can be anchored
    directly above it without shifting surrounding text. */
 .quran-word{

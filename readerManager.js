@@ -178,6 +178,18 @@
   // different position and are unaffected, so this fix touches only the
   // sila mark, and only when jeem is also present in the run.
   var WAQF_SILA_LIFT_HTML = '<span class="waqf-sila-lift" aria-hidden="true">\u06D6</span>';
+  // Ruku-end mark (U+E022, this font's PUA glyph for "ع") collides with
+  // the bowl of a preceding bare ن (noon, no harakah between them) --
+  // confirmed on-device at 59:17, where the mark did not appear at all,
+  // while the exact same mark rendered correctly after every other
+  // letter tested (e.g. 33:40's bare ا, 4:33, 6:20). Only a bare-ن case
+  // is affected; a harakah between them (as in 6:20's نَ) already keeps
+  // them visually clear, so this only rewrites the narrow ن+U+E022
+  // sequence. -0.3em is a STARTING ESTIMATE ONLY, not yet confirmed
+  // against the live rendered page -- open an affected ruku end on a
+  // real device and nudge the value in devtools until the mark clears
+  // the noon's bowl with a small visible gap, then update the number.
+  var WAQF_RUKU_MARK_NOON_LIFT_HTML = '<span class="waqf-ruku-mark-noon-lift" aria-hidden="true">\uE022</span>';
   function wrapWaqfSigns(text){
     var out = '', buffer = '';
     for(var i=0; i<text.length; i++){
@@ -197,6 +209,18 @@
         // this exact run, so every other mark combination is untouched.
         if(runCps.indexOf(0x06DA) !== -1 && runCps.indexOf(0x06D6) !== -1){
           run = run.replace('\u06D6', WAQF_SILA_LIFT_HTML);
+        }
+        // Ruku-end mark colliding with a bare ن right before it (see
+        // comment above WAQF_RUKU_MARK_NOON_LIFT_HTML): only when the
+        // mark run is the ruku-end mark alone and the base letter
+        // immediately before it (last char of the cleaned buffer, i.e.
+        // after stripping the zero-width format chars handled below) is
+        // exactly ن with nothing else (no harakah) in between.
+        if(runCps.length === 1 && runCps[0] === 0xE022){
+          var cleanedForNoonCheck = buffer.replace(/[\u200B-\u200F]/g, '');
+          if(cleanedForNoonCheck.length && cleanedForNoonCheck.charCodeAt(cleanedForNoonCheck.length - 1) === 0x0646){
+            run = WAQF_RUKU_MARK_NOON_LIFT_HTML;
+          }
         }
         // The source text (textIndopak, from the QUL dataset) frequently
         // inserts a zero-width format character (U+200B–U+200F — most
