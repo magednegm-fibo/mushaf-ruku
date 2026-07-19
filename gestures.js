@@ -319,8 +319,13 @@
   // and every panel heading is equally static decorative text with
   // nothing useful to select, so all panel titles are covered together
   // instead of patching them one at a time as each gets reported.
+  // NOTE: extended to #mushafSourceText -- same Smart Text Selection/
+  // dictionary-sheet bug confirmed on the "مصدر النصوص القرآنية" line in
+  // الإعدادات (عن التطبيق). Scoped to this one id only, not the general
+  // .about-text class, so other about-text paragraphs elsewhere in the
+  // app keep normal copy/selection.
   document.addEventListener('selectstart', function(e){
-    if(e.target && e.target.closest && e.target.closest('.ayah-flow, .manzil-header, .panel-head h2')){
+    if(e.target && e.target.closest && e.target.closest('.ayah-flow, .manzil-header, .panel-head h2, #mushafSourceText')){
       e.preventDefault();
     }
   });

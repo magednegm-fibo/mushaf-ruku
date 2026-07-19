@@ -335,14 +335,14 @@
     if (els.rukuCount) els.rukuCount.textContent = UI.toArabicDigits(PAGES.length) + ' ركوعًا';
     if (els.ayahCount) els.ayahCount.textContent = UI.toArabicDigits(JUZ_INFO.ayahCount) + ' آية';
     if (els.aboutText) els.aboutText.textContent = JUZ_INFO.fullMushaf
-      ? 'كل صفحة في هذا التطبيق تمثّل ركوعًا واحدًا كاملًا كما تحدّده علامات الركوع (ع) في المصحف الشريف، من الفاتحة إلى الناس (٥٥٦ ركوعًا). بداية كل جزء من الأجزاء الثلاثين مُشار إليها داخل النص. النص من مصحف حفص عن عاصم برواية Tanzil / QPC.'
-      : 'كل صفحة في هذا التطبيق تمثّل ركوعًا واحدًا كاملًا كما تحدّده علامات الركوع (ع) في المصحف الشريف، ضمن ' + JUZ_INFO.name + '. النص من مصحف حفص عن عاصم برواية Tanzil / QPC.';
+      ? 'يعتمد مصحف الركوع على علامات الركوع (ع)، وهي علامات تُقسِّم السور القرآنية إلى مقاطع متكاملة في المعنى، بحيث يمثِّل كل ركوع وحدة موضوعية مستقلة، مما يُيسِّر القراءة والتدبر، ويُعين على الوقوف عند تمام المعنى.'
+      : 'يعتمد ' + JUZ_INFO.name + ' على علامات الركوع (ع)، وهي علامات تُقسِّم السور القرآنية إلى مقاطع متكاملة في المعنى، بحيث يمثِّل كل ركوع وحدة موضوعية مستقلة، مما يُيسِّر القراءة والتدبر، ويُعين على الوقوف عند تمام المعنى.';
   });
   // Set on its own, separately from the rest of the about text above, so
   // that even if toArabicDigits or something else in that block ever
   // throws, the version number — the one thing support requests always
   // need first — still gets shown.
-  if (els.appVersionText) els.appVersionText.textContent = 'الإصدار ' + (window.APP_VERSION || '?');
+  if (els.appVersionText) els.appVersionText.textContent = window.APP_VERSION || '?';
 
   // manifest.json is plain JSON and can't read version.js, so its
   // "version" field has to be kept in sync by hand. This just flags it

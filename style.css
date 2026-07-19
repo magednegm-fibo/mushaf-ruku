@@ -195,6 +195,7 @@ body{
   color: var(--gold);
   margin: 0 10px;
 }
+body.night .surah-cartouche .cartouche-sep{ color:#9A9A9E; }
 /* Only present on a surah-opening page (see renderPage() in
    readerManager.js) — its extra line was previously pushing the first
    ayah row noticeably lower than on pages with no basmala, making the
@@ -418,8 +419,10 @@ body.hide-waqf-marks .waqf-mark{ display:none !important; }
   white-space: nowrap;
 }
 .waqf-menu-item:active{ background: var(--paper-edge); }
-body.night .waqf-menu{ background:#1a1712; border-color:#8a6c30; }
-body.night .waqf-menu-item{ color:#EAE0C4; }
+body.night .waqf-menu{ background:#1c1c1e; border-color:rgba(255,255,255,.14); }
+body.night .waqf-menu-item{ color:#F2F2F2; }
+body.night .waqf-menu-item:active{ background: rgba(255,255,255,.08); }
+body.night .waqf-color-btn:active{ background: rgba(255,255,255,.08); }
 
 .waqf-color-menu{
   display:flex;
@@ -481,7 +484,7 @@ body.night .waqf-menu-item{ color:#EAE0C4; }
   font-weight:800;
   letter-spacing: -0.4px;
 }
-body.night .ayah-num span{ background:#1a1712; }
+body.night .ayah-num span{ background:#1c1c1e; }
 .ayah-num.three-digit{ width: clamp(33px, 1.65em, 58px); height: clamp(33px, 1.65em, 58px); }
 .ayah-num.three-digit span{ font-size: clamp(11px, 0.48em, 18px); letter-spacing:-0.6px; padding:0 2px; }
 
@@ -546,6 +549,7 @@ body.night .ayah-num span{ background:#1a1712; }
   font-size: 12px;
   color: var(--ink-soft);
 }
+body.night .ruku-label{ color:#9A9A9E; }
 
 /* ---------- Page nav ---------- */
 .page-nav{
@@ -628,7 +632,7 @@ body.night .ayah-num span{ background:#1a1712; }
   border-bottom: 1px solid var(--gold);
   z-index: 2;
 }
-body.night .index-juz-header{ background:#161310; color:#D8B662; border-color:#8a6c30; }
+body.night .index-juz-header{ background:#242426; color:#F2F2F2; border-color:rgba(255,255,255,.14); }
 
 .index-item{
   display:flex;
@@ -644,11 +648,11 @@ body.night .index-juz-header{ background:#161310; color:#D8B662; border-color:#8
   border-right: 3px solid var(--emerald);
 }
 body.night .index-item.current{
-  background: rgba(216,182,98,.1);
-  border-right-color: #D8B662;
+  background: rgba(76,175,80,.16);
+  border-right-color: #4CAF50;
 }
 .index-item.current .num{ background: var(--emerald); color:#fff; border-color: var(--emerald); }
-body.night .index-item.current .num{ background:#D8B662; color:#161310; border-color:#D8B662; }
+body.night .index-item.current .num{ background:#4CAF50; color:#0E1F10; border-color:#4CAF50; }
 .index-item .name{
   font-family: 'Uthmanic Hafs', var(--font-quran);
   font-size: 22px;
@@ -714,9 +718,9 @@ body.night .index-item.current .num{ background:#D8B662; color:#161310; border-c
   color: var(--ink-soft);
   margin-top: 5px;
 }
-body.night .manzil-header{ background:#211c15; }
-body.night .manzil-title{ color:#EAE0C4; }
-body.night .manzil-sub{ color:#9c8f6d; }
+body.night .manzil-header{ background:#1c1c1e; }
+body.night .manzil-title{ color:#F2F2F2; }
+body.night .manzil-sub{ color:#9A9A9E; }
 
 /* Brief highlight flash on the ayah a search result jumps to, so it's
    easy to spot among several ayaat on the same ruku page. Uses the same
@@ -730,7 +734,7 @@ body.night .quran-word.search-hit-flash{
 }
 @keyframes search-hit-flash-night{
   0%, 100%{ background: transparent; }
-  30%{ background: rgba(216,182,98,0.25); }
+  30%{ background: rgba(76,175,80,0.25); }
 }
 .quran-word.search-hit-flash{
   animation: search-hit-flash 2s ease-out;
@@ -755,7 +759,18 @@ body.night .quran-word.search-hit-flash{
   border-top: 1px solid rgba(169,121,59,.42);
   margin: 18px 10px;
 }
-body.night .settings-divider{ border-top-color: rgba(216,182,98,.42); }
+body.night .settings-divider{ border-top-color: rgba(255,255,255,.14); }
+/* Thinner, lower-contrast variant used around #appVersionText — same
+   hairline treatment as .settings-divider but at reduced opacity and
+   tighter margin, so it reads as a subtle separator between the app-info
+   heading, the version line, and the ruku/ayah counts, rather than a
+   full section break. */
+.settings-divider-thin{
+  border: none;
+  border-top: 1px solid rgba(169,121,59,.2);
+  margin: 8px 10px;
+}
+body.night .settings-divider-thin{ border-top-color: rgba(255,255,255,.08); }
 .setting-row.static b{ color: var(--emerald); }
 #juzOnlyRow{
   padding-right: 16px;
@@ -763,7 +778,7 @@ body.night .settings-divider{ border-top-color: rgba(216,182,98,.42); }
   background: var(--paper);
   border-color: var(--paper-edge);
 }
-body.night #juzOnlyRow{ background:#161310; border-color:#332c20; }
+body.night #juzOnlyRow{ background:#242426; border-color:rgba(255,255,255,.14); }
 
 .stepper{ display:flex; align-items:center; gap:14px; }
 .stepper button{
@@ -773,7 +788,7 @@ body.night #juzOnlyRow{ background:#161310; border-color:#332c20; }
   font-size:18px; line-height:1;
   display:flex; align-items:center; justify-content:center;
 }
-body.night .stepper button{ color:#D8B662; border-color:#5b4a26; }
+body.night .stepper button{ color:#F2F2F2; border-color:rgba(255,255,255,.14); }
 .font-choice{ display:flex; gap:8px; }
 .font-choice-btn{
   padding:7px 12px; border-radius:20px;
@@ -782,8 +797,8 @@ body.night .stepper button{ color:#D8B662; border-color:#5b4a26; }
   font-family: var(--font-ui); font-size:12.5px; font-weight:600;
 }
 .font-choice-btn.active{ background: var(--emerald); border-color: var(--emerald); color:#fff; }
-body.night .font-choice-btn{ color:#9c8f6d; border-color:#5b4a26; }
-body.night .font-choice-btn.active{ background:#D8B662; border-color:#D8B662; color:#161310; }
+body.night .font-choice-btn{ color:#9A9A9E; border-color:rgba(255,255,255,.14); }
+body.night .font-choice-btn.active{ background:#2c2c2e; border-color:rgba(255,255,255,.22); color:#F2F2F2; }
 
 /* ---------- Reciter combo box (اختيار القارئ) ---------- */
 .reciter-select{
@@ -796,8 +811,8 @@ body.night .font-choice-btn.active{ background:#D8B662; border-color:#D8B662; co
   -webkit-appearance:none; appearance:none;
 }
 body.night .reciter-select{
-  color:#D8B662; border-color:#5b4a26;
-  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%23D8B662" stroke-width="1.8"><path d="M6 9l6 6 6-6"/></svg>');
+  color:#F2F2F2; border-color:rgba(255,255,255,.14);
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%23F2F2F2" stroke-width="1.8"><path d="M6 9l6 6 6-6"/></svg>');
 }
 .reciter-select option{ color:#000; }
 .switch{ position:relative; width:46px; height:26px; display:inline-block; }
@@ -812,6 +827,8 @@ body.night .reciter-select{
 .switch input:checked + .slider{ background: var(--emerald); }
 .switch input:checked + .slider::before{ transform: translateX(20px); }
 .switch input:disabled + .slider{ opacity:.5; }
+body.night .slider{ background:#3a3a3c; }
+body.night .switch input:checked + .slider{ background:#4CAF50; }
 .about-text{
   margin-top:18px; font-size:13px; line-height:1.9; color: var(--ink-soft);
   user-select: none;
@@ -825,7 +842,7 @@ body.night .reciter-select{
    really does go dark and the default var(--ink-soft) brown becomes
    unreadable. An unscoped override would instead hurt contrast inside
    the still-light modal boxes. */
-body.night .panel .about-text{ color:#9c8f6d; }
+body.night .panel .about-text{ color:#9A9A9E; }
 
 /* Export/import buttons (تصدير/استيراد علامات التذكير) use the shared
    .modal-btn.ghost style, whose default border/text color
@@ -833,7 +850,7 @@ body.night .panel .about-text{ color:#9c8f6d; }
    Same modal-box-vs-panel scoping reasoning as .about-text above: favModal
    and gotoModal's ghost Cancel buttons live inside an always-light
    modal-box and must keep their current (already-readable) colors. */
-body.night .panel .modal-btn.ghost{ color:#9c8f6d; border-color:#5b4a26; }
+body.night .panel .modal-btn.ghost{ color:#9A9A9E; border-color:rgba(255,255,255,.14); }
 
 /* "إعادة ضبط تقدّم القراءة" / "حذف جميع علامات التذكير": always inside
    .panel (never inside a modal-box), so no scoping needed here — just
@@ -841,13 +858,13 @@ body.night .panel .modal-btn.ghost{ color:#9c8f6d; border-color:#5b4a26; }
 body.night .reset-btn{ color:#D2857E; border-color:#D2857E; }
 
 /* ---------- Night mode ---------- */
-body.night{ background: #0b0f0d; }
-body.night #app{ background: radial-gradient(ellipse at 50% -10%, #1b2b26 0%, #10201b 45%, #0a1512 100%); }
-body.night .page-frame{ background:#1a1712; border-color:#6b5426; }
-body.night .ayah-flow{ color:#EAE0C4; }
-body.night .surah-cartouche, body.night .surah-cartouche b, body.night .surah-cartouche span{ color:#D8B662; }
-body.night .ayah-num{ color:#D8B662; }
-body.night .ruku-mark{ color:#D8B662; border-color:#8a6c30; }
+body.night{ background: #000000; }
+body.night #app{ background: #000000; }
+body.night .page-frame{ background:#1c1c1e; border-color:rgba(255,255,255,.14); }
+body.night .ayah-flow{ color:#F2F2F2; }
+body.night .surah-cartouche, body.night .surah-cartouche b, body.night .surah-cartouche span{ color:#F2F2F2; }
+body.night .ayah-num{ color:#F2F2F2; }
+body.night .ruku-mark{ color:#F2F2F2; border-color:rgba(255,255,255,.14); }
 .ruku-end.incomplete .ruku-mark{
   font-size: 20px;
   color: var(--ink-soft);
@@ -856,17 +873,18 @@ body.night .ruku-mark{ color:#D8B662; border-color:#8a6c30; }
 .ruku-end.incomplete .ruku-mark span{
   transform: none;
 }
-body.night .ruku-end.incomplete .ruku-mark{ color:#9c8f6d; }
-body.night .panel{ background:#161310; }
-body.night .panel-head{ background:#161310; border-color:#332c20; }
-body.night .panel-head h2{ color:#D8B662; }
-body.night .panel-head .icon-btn{ color:#D8B662; border-color:#5b4a26; }
-body.night .index-item{ border-color:#2a2418; }
-body.night .index-item .name{ color:#EAE0C4; }
-body.night .index-item .meta{ color:#9c8f6d; }
-body.night .index-item .num{ color:#D8B662; border-color:#8a6c30; }
-body.night .setting-row{ color:#EAE0C4; border-color:#2a2418; }
-body.night .setting-row.static b{ color:#D8B662; }
+body.night .ruku-end.incomplete .ruku-mark{ color:#9A9A9E; }
+body.night .panel{ background:#242426; }
+body.night .panel-head{ background:#242426; border-color:rgba(255,255,255,.14); }
+body.night .panel-head h2{ color:#F2F2F2; }
+body.night .panel-head .icon-btn{ color:#F2F2F2; border-color:rgba(255,255,255,.14); }
+body.night .index-item{ border-color:rgba(255,255,255,.14); }
+body.night .index-item .name{ color:#F2F2F2; }
+body.night .index-item .meta{ color:#9A9A9E; }
+body.night .index-item .surah-info{ color:#9A9A9E; }
+body.night .index-item .num{ color:#F2F2F2; border-color:rgba(255,255,255,.14); }
+body.night .setting-row{ color:#F2F2F2; border-color:rgba(255,255,255,.14); }
+body.night .setting-row.static b{ color:#F2F2F2; }
 .juz-marker{
   display:block;
   text-align:center;
@@ -880,7 +898,7 @@ body.night .setting-row.static b{ color:#D8B662; }
   margin: 18px 0;
   padding: 5px 0;
 }
-body.night .juz-marker{ color:#D8B662; background: rgba(216,182,98,.06); border-color: rgba(216,182,98,.3); }
+body.night .juz-marker{ color:#9A9A9E; background: rgba(255,255,255,.04); border-color: rgba(255,255,255,.1); }
 
 .juz-header{
   position: sticky;
@@ -894,7 +912,7 @@ body.night .juz-marker{ color:#D8B662; background: rgba(216,182,98,.06); border-
   border-bottom: 1px solid var(--gold);
   z-index: 2;
 }
-body.night .juz-header{ background:#161310; color:#D8B662; border-color:#8a6c30; }
+body.night .juz-header{ background:#242426; color:#F2F2F2; border-color:rgba(255,255,255,.14); }
 
 /* ---------- Home screen ---------- */
 .hidden{ display:none !important; }
@@ -967,12 +985,14 @@ body.night .juz-header{ background:#161310; color:#D8B662; border-color:#8a6c30;
   height:100%; width:0%; background: linear-gradient(90deg, var(--gold), var(--emerald-light));
   border-radius:6px; transition: width .3s ease;
 }
-body.night .home-status-card{ background:#1a1712; border-color:#8a6c30; }
-body.night .status-row-bookmark{ border-color:#332c20; }
-body.night .status-row-icon{ stroke:#D8B662; }
-body.night .status-row-continue .status-row-icon{ fill:#D8B662; }
-body.night .status-row-label{ color:#D8B662; }
-body.night .status-row-value{ color:#9c8f6d; }
+body.night .progress-bar{ background:#2c2c2e; }
+body.night .progress-bar-fill{ background:#4CAF50; }
+body.night .home-status-card{ background:#1c1c1e; border-color:rgba(255,255,255,.14); }
+body.night .status-row-bookmark{ border-color:rgba(255,255,255,.14); }
+body.night .status-row-icon{ stroke:#4CAF50; }
+body.night .status-row-continue .status-row-icon{ fill:#4CAF50; }
+body.night .status-row-label{ color:#F2F2F2; }
+body.night .status-row-value{ color:#9A9A9E; }
 
 .home-grid{
   display:grid; grid-template-columns: 1fr 1fr; gap:12px;
@@ -989,6 +1009,27 @@ body.night .status-row-value{ color:#9c8f6d; }
 .home-tile svg{ width:24px; height:24px; fill:none; stroke:currentColor; stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round; }
 .home-tile:active{ background: rgba(255,255,255,.12); }
 .home-tile.wide{ grid-column: span 2; flex-direction:row; justify-content:center; }
+body.night .home-brand{ color:#F2F2F2; }
+body.night .home-brand h1{ color:#F2F2F2; }
+body.night .home-brand p{ color:#9A9A9E; }
+body.night .home-tile{
+  background:#1c1c1e;
+  border-color: rgba(255,255,255,.14);
+  color:#F2F2F2;
+}
+body.night .home-tile svg{ stroke:#4CAF50; }
+body.night .subtitle{ color:#9A9A9E; }
+body.night .icon-btn{
+  border-color: rgba(255,255,255,.16);
+  background: rgba(255,255,255,.06);
+  color:#F2F2F2;
+}
+body.night .nav-btn{
+  border-color: rgba(255,255,255,.18);
+  background: rgba(255,255,255,.06);
+  color:#F2F2F2;
+}
+body.night .page-indicator{ color:#F2F2F2; border-bottom-color: rgba(255,255,255,.25); }
 
 /* ---------- Reader progress strip ---------- */
 .read-progress-strip{
@@ -998,6 +1039,7 @@ body.night .status-row-value{ color:#9c8f6d; }
   height:100%; width:0%; background: var(--gold);
   transition: width .3s ease;
 }
+body.night .read-progress-strip-fill{ background:#4CAF50; }
 
 /* ---------- Favorite button ---------- */
 .fav-btn{
@@ -1011,7 +1053,7 @@ body.night .status-row-value{ color:#9c8f6d; }
 .fav-btn svg{ width:17px; height:17px; fill:none; stroke:currentColor; stroke-width:1.6; }
 .fav-btn.active{ color:#fff; background: var(--emerald); border-color: var(--emerald); }
 .fav-btn.active svg{ fill:currentColor; }
-body.night .fav-btn{ background: rgba(22,19,16,.7); color:#D8B662; border-color:#5b4a26; }
+body.night .fav-btn{ background: rgba(28,28,30,.75); color:#F2F2F2; border-color:rgba(255,255,255,.14); }
 
 /* ---------- Bookmark button (علامة القراءة) ---------- */
 .bookmark-btn{
@@ -1025,8 +1067,8 @@ body.night .fav-btn{ background: rgba(22,19,16,.7); color:#D8B662; border-color:
 .bookmark-btn svg{ width:17px; height:17px; fill:none; stroke:currentColor; stroke-width:1.6; }
 .bookmark-btn.active{ color:#fff; background: var(--emerald); border-color: var(--emerald); }
 .bookmark-btn.active svg{ fill:currentColor; }
-body.night .bookmark-btn{ background: rgba(22,19,16,.7); color:#D8B662; border-color:#5b4a26; }
-body.night .bookmark-btn.active{ background:#D8B662; border-color:#D8B662; color:#161310; }
+body.night .bookmark-btn{ background: rgba(28,28,30,.75); color:#F2F2F2; border-color:rgba(255,255,255,.14); }
+body.night .bookmark-btn.active{ background:#4CAF50; border-color:#4CAF50; color:#0E1F10; }
 
 /* ---------- Listen button (استماع لتلاوة الركوع) ---------- */
 .listen-btn{
@@ -1042,8 +1084,8 @@ body.night .bookmark-btn.active{ background:#D8B662; border-color:#D8B662; color
 .listen-btn svg.hidden{ display:none; }
 .listen-spin{ fill:none !important; stroke:currentColor; animation: listen-spin-rotate .8s linear infinite; }
 @keyframes listen-spin-rotate{ to{ transform: rotate(360deg); } }
-body.night .listen-btn{ background: rgba(22,19,16,.7); color:#D8B662; border-color:#5b4a26; }
-body.night .listen-btn.active{ background:#D8B662; border-color:#D8B662; color:#161310; }
+body.night .listen-btn{ background: rgba(28,28,30,.75); color:#F2F2F2; border-color:rgba(255,255,255,.14); }
+body.night .listen-btn.active{ background:#4CAF50; border-color:#4CAF50; color:#0E1F10; }
 
 /* ---------- Tafsir button (تفسير الركوع — المختصر) ----------
    Mirrors .listen-btn's position (same top offset) but on the opposite,
@@ -1060,7 +1102,7 @@ body.night .listen-btn.active{ background:#D8B662; border-color:#D8B662; color:#
 }
 .tafsir-btn svg{ width:17px; height:17px; fill:none; stroke:currentColor; stroke-width:1.6; }
 .tafsir-btn.active{ color:#fff; background: var(--emerald); border-color: var(--emerald); }
-body.night .tafsir-btn{ background: rgba(22,19,16,.7); color:#D8B662; border-color:#5b4a26; }
+body.night .tafsir-btn{ background: rgba(28,28,30,.75); color:#F2F2F2; border-color:rgba(255,255,255,.14); }
 
 /* Currently-recited ayah highlight — CSS only, never touches the underlying
    Quranic text in data.js. Applied to the whole-ayah wrapper (.ayah-block)
@@ -1071,7 +1113,7 @@ body.night .tafsir-btn{ background: rgba(22,19,16,.7); color:#D8B662; border-col
   border-radius: 4px;
   transition: background .15s ease;
 }
-body.night .ayah-block.ayah-playing{ background: rgba(216,182,98,0.16); }
+body.night .ayah-block.ayah-playing{ background: rgba(76,175,80,0.16); }
 
 /* ---------- topbar-left group ---------- */
 .topbar-left{ display:flex; align-items:center; gap:8px; }
@@ -1132,9 +1174,9 @@ body.night .search-input:-webkit-autofill,
 body.night .search-input:-webkit-autofill:hover,
 body.night .search-input:-webkit-autofill:focus,
 body.night .search-input:-webkit-autofill:active{
-  -webkit-text-fill-color: #EAE0C4;
-  -webkit-box-shadow: 0 0 0 1000px #211c15 inset;
-  box-shadow: 0 0 0 1000px #211c15 inset;
+  -webkit-text-fill-color: #F2F2F2;
+  -webkit-box-shadow: 0 0 0 1000px #1c1c1e inset;
+  box-shadow: 0 0 0 1000px #1c1c1e inset;
 }
 /* Locked after a search runs (see runSearch() in navigation.js), via the
    readonly attribute rather than disabled — disabling a native <input>
@@ -1152,11 +1194,11 @@ body.night .search-input:-webkit-autofill:active{
   color: var(--ink-soft);
   border-color: var(--ink-soft);
 }
-body.night .search-input{ background:#211c15; color:#EAE0C4; border-color:#332c20; }
+body.night .search-input{ background:#1c1c1e; color:#F2F2F2; border-color:rgba(255,255,255,.14); }
 body.night .search-input[readonly]{
-  background:#211c15;
-  color:#9c8f6d;
-  border-color:#5b4a26;
+  background:#1c1c1e;
+  color:#9A9A9E;
+  border-color:rgba(255,255,255,.14);
 }
 
 /* ---------- Search bar: input on its own line, بحث + مطابقة تامة together below ---------- */
@@ -1188,7 +1230,7 @@ body.night .search-input[readonly]{
   flex-shrink:0;
 }
 .search-run-btn:active{ background: var(--emerald-deep); }
-body.night .search-run-btn{ background:#D8B662; color:#161310; }
+body.night .search-run-btn{ background:#4CAF50; color:#0E1F10; }
 .search-validation-msg{
   font-family: var(--font-ui);
   font-size:13px;
@@ -1196,7 +1238,7 @@ body.night .search-run-btn{ background:#D8B662; color:#161310; }
   color: var(--gold);
   margin: -4px 0 0;
 }
-body.night .search-validation-msg{ color:#D8B662; }
+body.night .search-validation-msg{ color:#4CAF50; }
 .search-exact-group{ display:flex; align-items:center; gap:8px; }
 .search-exact-label{
   font-family: var(--font-ui);
@@ -1206,7 +1248,7 @@ body.night .search-validation-msg{ color:#D8B662; }
   white-space:nowrap;
   flex-shrink:0;
 }
-body.night .search-exact-label{ color:#9c8f6d; }
+body.night .search-exact-label{ color:#9A9A9E; }
 /* Same button, switched to "مسح" mode once results are showing — ghost/
    outline style instead of the solid emerald "بحث" fill, so it visually
    reads as a different action even though it's literally the same
@@ -1217,8 +1259,8 @@ body.night .search-exact-label{ color:#9c8f6d; }
   color: var(--ink-soft);
 }
 .search-run-btn.is-clear-mode:active{ background: var(--paper-edge); }
-body.night .search-run-btn.is-clear-mode{ border-color:#5b4a26; color:#9c8f6d; background:transparent; }
-body.night .search-run-btn.is-clear-mode:active{ background:#211c15; }
+body.night .search-run-btn.is-clear-mode{ border-color:rgba(255,255,255,.14); color:#9A9A9E; background:transparent; }
+body.night .search-run-btn.is-clear-mode:active{ background:#1c1c1e; }
 
 .search-results-count{
   font-family: var(--font-ui);
@@ -1229,7 +1271,7 @@ body.night .search-run-btn.is-clear-mode:active{ background:#211c15; }
   padding-top:14px;
   margin: 0 0 14px;
 }
-body.night .search-results-count{ color:#9c8f6d; border-color:#332c20; }
+body.night .search-results-count{ color:#9A9A9E; border-color:rgba(255,255,255,.14); }
 
 /* ---------- Unified search section label (آيات مطابقة) ----------
    Surah matches render as bare surah cards directly under
@@ -1245,7 +1287,7 @@ body.night .search-results-count{ color:#9c8f6d; border-color:#332c20; }
   color: var(--ink);
   margin: 4px 2px 8px;
 }
-body.night .search-section-header{ color:#EAE0C4; }
+body.night .search-section-header{ color:#F2F2F2; }
 /* Extra breathing room above "آيات مطابقة" only when it's actually
    preceded by a visible surah-results section — a plain adjacent-sibling
    selector would still match (and add stray spacing) even when
@@ -1276,7 +1318,7 @@ body.night .search-section-header{ color:#EAE0C4; }
   color: var(--ink-soft);
   margin-bottom:8px;
 }
-body.night .search-result-meta{ color:#9c8f6d; }
+body.night .search-result-meta{ color:#9A9A9E; }
 .search-result-num{
   display:inline-flex;
   align-items:center;
@@ -1289,7 +1331,7 @@ body.night .search-result-meta{ color:#9c8f6d; }
   font-size:11px;
   font-weight:700;
 }
-body.night .search-result-num{ color:#D8B662; border-color:#8a6c30; }
+body.night .search-result-num{ color:#F2F2F2; border-color:rgba(255,255,255,.14); }
 .search-result-text{
   font-family: var(--font-quran);
   font-size:28px; /* مصحف النسخ (Indopak) */
@@ -1299,10 +1341,10 @@ body.night .search-result-num{ color:#D8B662; border-color:#8a6c30; }
   text-align: right;
 }
 body.uthmani-font .search-result-text{ font-size:24px; } /* مصحف المدينة (Uthmani) */
-body.night .search-result-text{ color:#EAE0C4; }
+body.night .search-result-text{ color:#F2F2F2; }
 /* Reuses .quran-word (same class the reader itself uses) so waqf-sign
    glyphs etc. render identically here. Same background tint as the
-   in-mushaf search-hit-flash above (rgba(11,92,74,.18) / rgba(216,182,98,.25)
+   in-mushaf search-hit-flash above (rgba(11,92,74,.18) / rgba(76,175,80,.25)
    in night mode) — kept steady here instead of animated, since a results
    list row needs a persistent marker, not a one-off flash — so the two
    surfaces read as the same "this is your match" affordance, per direct
@@ -1312,7 +1354,7 @@ body.night .search-result-text{ color:#EAE0C4; }
   border-radius: 4px;
 }
 body.night .search-result-text .quran-word.search-hit{
-  background: rgba(216,182,98,.25);
+  background: rgba(76,175,80,.25);
 }
 /* Solid, subtle line — same var(--paper-edge) row-divider treatment
    already used elsewhere in the app (.index-item, .fav-item), per direct
@@ -1326,8 +1368,8 @@ body.night .search-result-text .quran-word.search-hit{
   border-top: 1px solid var(--paper-edge);
   margin: 4px 0 0;
 }
-body.night .search-result-divider{ border-top-color: #332c20; }
-body.night .search-input::placeholder{ color:#6b6152; }
+body.night .search-result-divider{ border-top-color: rgba(255,255,255,.14); }
+body.night .search-input::placeholder{ color:rgba(255,255,255,.32); }
 
 /* ---------- Modal ---------- */
 .modal-overlay{
@@ -1405,11 +1447,11 @@ body.night .search-input::placeholder{ color:#6b6152; }
   cursor: pointer;
 }
 .empty-state{ text-align:center; color: var(--ink-soft); font-size:13px; padding: 30px 10px; }
-body.night .fav-item{ border-color:#2a2418; }
-body.night .fav-item .fav-title{ color:#D8B662; }
-body.night .fav-item .fav-sub{ color:#9c8f6d; }
+body.night .fav-item{ border-color:rgba(255,255,255,.14); }
+body.night .fav-item .fav-title{ color:#F2F2F2; }
+body.night .fav-item .fav-sub{ color:#9A9A9E; }
 body.night .fav-item .fav-remove{ color:#D2857E; }
-body.night .empty-state{ color:#9c8f6d; }
+body.night .empty-state{ color:#9A9A9E; }
 
 /* ---------- Reader guide tabs (دليل القارئ) ---------- */
 /* The guide's explanatory text (waqf marks, قصر المنفصل rulings, khatm
@@ -1444,9 +1486,9 @@ body.night .empty-state{ color:#9c8f6d; }
 }
 .guide-tab-btn.active{ background: var(--emerald); border-color: var(--emerald); color:#fff; }
 .guide-tab-panel.hidden{ display:none; }
-body.night .guide-tabs{ background:#161310; border-color:#332c20; }
-body.night .guide-tab-btn{ color:#9c8f6d; border-color:#5b4a26; }
-body.night .guide-tab-btn.active{ background:#D8B662; border-color:#D8B662; color:#161310; }
+body.night .guide-tabs{ background:#242426; border-color:rgba(255,255,255,.14); }
+body.night .guide-tab-btn{ color:#9A9A9E; border-color:rgba(255,255,255,.14); }
+body.night .guide-tab-btn.active{ background:#2c2c2e; border-color:rgba(255,255,255,.22); color:#F2F2F2; }
 
 /* دعاء ختم القرآن: this is ordinary devotional prose, not Quranic verse
    text, so it deliberately does NOT use var(--font-quran) — that webfont
@@ -1470,8 +1512,8 @@ body.night .guide-tab-btn.active{ background:#D8B662; border-color:#D8B662; colo
 }
 .khatm-dua-text p:last-child{ border-bottom: none; padding-bottom: 0; }
 .khatm-dua-text p:first-child{ padding-top: 0; }
-body.night .khatm-dua-text p{ border-bottom-color: rgba(216,182,98,.2); }
-body.night .khatm-dua-text{ color:#EAE0C4; }
+body.night .khatm-dua-text p{ border-bottom-color: rgba(255,255,255,.12); }
+body.night .khatm-dua-text{ color:#F2F2F2; }
 
 /* ---------- Tajweed rules guide (أحكام التجويد) ---------- */
 /* Reuses .waqf-guide-list/.waqf-guide-item/.waqf-guide-symbol/.waqf-guide-text
@@ -1497,7 +1539,9 @@ body.night .khatm-dua-text{ color:#EAE0C4; }
   border-bottom: 1px solid rgba(169,121,59,.35);
 }
 .tajweed-guide-section:first-of-type{ margin-top: 0; }
-body.night .tajweed-guide-section{ color:#D8B662; border-color: rgba(216,182,98,.3); }
+.settings-app-info-title{ border-bottom: none; padding-bottom: 0; margin-bottom: 0; }
+body.night .tajweed-guide-intro{ color:#9A9A9E; }
+body.night .tajweed-guide-section{ color:#F2F2F2; border-color: rgba(255,255,255,.14); }
 .tajweed-guide-note{
   margin: 4px 2px 12px;
 }
@@ -1528,8 +1572,8 @@ body.night .tajweed-guide-section{ color:#D8B662; border-color: rgba(216,182,98,
 }
 .tajweed-guide-note p:last-child{ margin-bottom: 0; }
 .tajweed-guide-note p b{ color: var(--ink); }
-body.night .tajweed-guide-note p{ color:#9c8f6d; }
-body.night .tajweed-guide-note p b{ color:#EAE0C4; }
+body.night .tajweed-guide-note p{ color:#9A9A9E; }
+body.night .tajweed-guide-note p b{ color:#F2F2F2; }
 /* The circle numbers in the قصر المنفصل tab reuse .waqf-guide-symbol's
    circle, but plain digits rendered in var(--font-quran) (UthmanicHafs/
    PDMS Saleem) came out blank — those fonts are built for Quranic glyph
@@ -1546,7 +1590,7 @@ body.night .tajweed-guide-note p b{ color:#EAE0C4; }
   font-weight: 800;
   color: var(--emerald);
 }
-body.night .waqf-guide-symbol.tajweed-guide-number{ color:#D8B662; }
+body.night .waqf-guide-symbol.tajweed-guide-number{ color:#F2F2F2; }
 
 /* Slightly larger body text specifically for the قصر المنفصل tab's rule
    explanations (shared .waqf-guide-text/.tajweed-guide-note classes are
@@ -1628,11 +1672,11 @@ body.night .waqf-guide-symbol.tajweed-guide-number{ color:#D8B662; }
   text-align: justify;
   text-align-last: right;
 }
-body.night .waqf-guide-item{ border-color:#2a2418; }
-body.night .waqf-guide-symbol{ border-color:#8a6c30; color:#D8B662; }
-body.night .waqf-guide-text b{ color:#D8B662; }
-body.night .waqf-guide-text p{ color:#9c8f6d; }
-body.night .waqf-guide-footnote{ color:#9c8f6d; border-color: rgba(216,182,98,.3); }
+body.night .waqf-guide-item{ border-color:rgba(255,255,255,.14); }
+body.night .waqf-guide-symbol{ border-color:rgba(255,255,255,.14); color:#F2F2F2; }
+body.night .waqf-guide-text b{ color:#F2F2F2; }
+body.night .waqf-guide-text p{ color:#9A9A9E; }
+body.night .waqf-guide-footnote{ color:#9A9A9E; border-color: rgba(255,255,255,.14); }
 
 /* ---------- Tafsir panel (تفسير الركوع — المختصر) ---------- */
 .tafsir-head-sub{
@@ -1641,7 +1685,7 @@ body.night .waqf-guide-footnote{ color:#9c8f6d; border-color: rgba(216,182,98,.3
   color: var(--ink-soft);
   margin-right:4px;
 }
-body.night .tafsir-head-sub{ color:#9c8f6d; }
+body.night .tafsir-head-sub{ color:#9A9A9E; }
 .tafsir-item{ padding: 14px 2px; }
 .tafsir-ayah-head{
   font-family: var(--font-ui);
@@ -1650,7 +1694,7 @@ body.night .tafsir-head-sub{ color:#9c8f6d; }
   color: var(--gold);
   margin-bottom:8px;
 }
-body.night .tafsir-ayah-head{ color:#D8B662; }
+body.night .tafsir-ayah-head{ color:#F2F2F2; }
 .tafsir-text{
   margin:0;
   font-family: var(--font-ui);
@@ -1659,7 +1703,7 @@ body.night .tafsir-ayah-head{ color:#D8B662; }
   color: var(--ink);
   text-align:justify;
 }
-body.night .tafsir-text{ color:#EAE0C4; }
+body.night .tafsir-text{ color:#F2F2F2; }
 .tafsir-text-pending{ opacity:.45; }
 .tafsir-error-text{
   margin:0;
@@ -1674,7 +1718,7 @@ body.night .tafsir-text{ color:#EAE0C4; }
   border-top: 1px solid rgba(169,121,59,.42);
   margin: 6px 6px 14px;
 }
-body.night .tafsir-divider{ border-top-color: rgba(216,182,98,.42); }
+body.night .tafsir-divider{ border-top-color: rgba(255,255,255,.14); }
 .tafsir-loading{
   text-align:center;
   padding: 40px 16px;
@@ -1693,7 +1737,8 @@ body.night .tafsir-divider{ border-top-color: rgba(216,182,98,.42); }
   margin-left:8px;
   animation: listen-spin-rotate .8s linear infinite;
 }
-body.night .tafsir-loading{ color:#9c8f6d; }
+body.night .tafsir-spin{ border-color: rgba(255,255,255,.16); border-top-color:#4CAF50; }
+body.night .tafsir-loading{ color:#9A9A9E; }
 
 /* Prev/next ruku buttons at the end of the tafsir list — same emerald/gold
    vocabulary as .reset-btn / .modal-btn.ghost elsewhere in the panel UI. */
@@ -1704,7 +1749,7 @@ body.night .tafsir-loading{ color:#9c8f6d; }
   padding-top: 16px;
   border-top: 1px solid rgba(169,121,59,.42);
 }
-body.night .tafsir-nav{ border-top-color: rgba(216,182,98,.42); }
+body.night .tafsir-nav{ border-top-color: rgba(255,255,255,.14); }
 .tafsir-nav-btn{
   flex:1;
   display:flex;
@@ -1722,8 +1767,8 @@ body.night .tafsir-nav{ border-top-color: rgba(216,182,98,.42); }
 }
 .tafsir-nav-btn svg{ width:16px; height:16px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; flex-shrink:0; }
 .tafsir-nav-btn:active{ background: var(--paper-edge); }
-body.night .tafsir-nav-btn{ color:#D8B662; border-color:#8a6c30; }
-body.night .tafsir-nav-btn:active{ background: rgba(216,182,98,.1); }
+body.night .tafsir-nav-btn{ color:#F2F2F2; border-color:rgba(255,255,255,.14); }
+body.night .tafsir-nav-btn:active{ background: rgba(76,175,80,.16); }
 
 @media (min-width:640px){
   .page-frame{ max-width:640px; margin:0 auto; }
