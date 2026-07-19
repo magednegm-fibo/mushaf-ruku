@@ -836,21 +836,19 @@ body.night .switch input:checked + .slider{ background:#4CAF50; }
   -webkit-touch-callout: none;
 }
 /* .about-text also appears inside .modal-box confirm dialogs (e.g.
-   clearRemindersModal), whose background stays the light "paper" color
-   even in night mode (no body.night .modal-box override exists) — so this
-   is scoped to .panel only (index/settings/etc.), where the background
-   really does go dark and the default var(--ink-soft) brown becomes
-   unreadable. An unscoped override would instead hurt contrast inside
-   the still-light modal boxes. */
+   clearRemindersModal); body.night .modal-box now darkens that background
+   too (see night-mode modal-box block below), so this panel-scoped rule
+   and the modal-box-scoped rule below together cover both contexts. */
 body.night .panel .about-text{ color:#9A9A9E; }
+body.night .modal-box .about-text{ color:#9A9A9E; }
 
 /* Export/import buttons (تصدير/استيراد علامات التذكير) use the shared
    .modal-btn.ghost style, whose default border/text color
-   (var(--ink-soft)) is unreadable once the settings panel goes dark.
-   Same modal-box-vs-panel scoping reasoning as .about-text above: favModal
-   and gotoModal's ghost Cancel buttons live inside an always-light
-   modal-box and must keep their current (already-readable) colors. */
+   (var(--ink-soft)) is unreadable once the settings panel goes dark. */
 body.night .panel .modal-btn.ghost{ color:#9A9A9E; border-color:rgba(255,255,255,.14); }
+/* Same fix for ghost Cancel buttons inside modal-box dialogs (favModal,
+   gotoModal) now that modal-box itself goes dark in night mode too. */
+body.night .modal-box .modal-btn.ghost{ color:#9A9A9E; border-color:rgba(255,255,255,.14); }
 
 /* "إعادة ضبط تقدّم القراءة" / "حذف جميع علامات التذكير": always inside
    .panel (never inside a modal-box), so no scoping needed here — just
@@ -1383,12 +1381,21 @@ body.night .search-input::placeholder{ color:rgba(255,255,255,.32); }
   box-shadow: var(--shadow);
 }
 .modal-box h3{ margin:0 0 12px; font-family: var(--font-ui); color: var(--emerald); font-size:16px; }
+body.night .modal-box{ background:#161310; border: 1px solid #332c20; }
+body.night .modal-box h3{ color:#EAE0C4; }
 .modal-actions{ display:flex; gap:10px; }
 .modal-btn{
   flex:1; padding:10px; border-radius:10px; font-family: var(--font-ui); font-weight:600; font-size:14px; border:none;
+  display:flex; align-items:center; justify-content:center; text-align:center;
 }
 .modal-btn.primary{ background: var(--emerald); color:#fff; }
 .modal-btn.ghost{ background: transparent; border:1px solid var(--ink-soft); color: var(--ink-soft); }
+.modal-btn.modal-btn-cancel{ background:#7EB8A7; }
+.modal-btn.modal-btn-danger{ background:#CB5D52; }
+/* Night mode: same muted warm palette used elsewhere (reset-btn, waqf-menu
+   borders, etc.) instead of the brighter day-mode teal/red. */
+body.night .modal-btn.modal-btn-cancel{ background: var(--emerald-light); }
+body.night .modal-btn.modal-btn-danger{ background:#A6453D; }
 
 .reset-btn{
   width:100%; margin: 6px 0 18px;
