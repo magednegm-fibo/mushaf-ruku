@@ -3,7 +3,7 @@
   "short_name": "مصحف الركوع",
   "description": "المصحف الشريف كاملًا، مقسّمًا صفحات حسب علامات الركوع",
   "id": "/",
-  "version": "0.9.127",
+  "version": "0.9.128",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

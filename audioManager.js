@@ -25,12 +25,14 @@
   var RECITER_FOLDERS = {
     abdulbasit: 'Abdul_Basit_Murattal_64kbps',
     jibreel: 'Muhammad_Jibreel_64kbps',
-    hudhaify: 'Hudhaify_64kbps'
+    hudhaify: 'Hudhaify_64kbps',
+    banna: 'mahmoud_ali_al_banna_32kbps'
   };
   var RECITER_NAMES = {
     abdulbasit: 'عبدالباسط عبدالصمد',
     jibreel: 'محمد جبريل',
-    hudhaify: 'علي الحذيفي'
+    hudhaify: 'علي الحذيفي',
+    banna: 'محمود علي البنا'
   };
   function currentReciterFolder(){
     return RECITER_FOLDERS[state.reciter] || RECITER_FOLDERS.abdulbasit;
