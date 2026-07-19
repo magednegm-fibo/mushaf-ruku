@@ -24,7 +24,13 @@
   // ---------------------------------------------------------------------
   var RECITER_FOLDERS = {
     abdulbasit: 'Abdul_Basit_Murattal_64kbps',
-    jibreel: 'Muhammad_Jibreel_64kbps'
+    jibreel: 'Muhammad_Jibreel_64kbps',
+    hudhaify: 'Hudhaify_64kbps'
+  };
+  var RECITER_NAMES = {
+    abdulbasit: 'عبدالباسط عبدالصمد',
+    jibreel: 'محمد جبريل',
+    hudhaify: 'علي الحذيفي'
   };
   function currentReciterFolder(){
     return RECITER_FOLDERS[state.reciter] || RECITER_FOLDERS.abdulbasit;
@@ -221,7 +227,7 @@
     return typeof navigator !== 'undefined' && 'mediaSession' in navigator && typeof MediaMetadata !== 'undefined';
   }
   function currentReciterName(){
-    return (state.reciter === 'jibreel') ? 'محمد جبريل' : 'عبدالباسط عبدالصمد';
+    return RECITER_NAMES[state.reciter] || RECITER_NAMES.abdulbasit;
   }
   function updateMediaSessionMetadata(surahName, ayah){
     if(!mediaSessionSupported()) return;
@@ -775,17 +781,17 @@
   // Reciter choice (الاستماع): stored per-user like fontStyle, independent
   // of which script (uthmani/indopak) is currently displayed.
   function applyReciterChoice(){
-    if(els.reciterSelect) els.reciterSelect.value = (state.reciter === 'jibreel') ? 'jibreel' : 'abdulbasit';
+    if(els.reciterSelect) els.reciterSelect.value = RECITER_FOLDERS[state.reciter] ? state.reciter : 'abdulbasit';
   }
   function setupReciterSelect(){
     if(!els.reciterSelect) return;
     els.reciterSelect.addEventListener('change', function(){
-      var val = (els.reciterSelect.value === 'jibreel') ? 'jibreel' : 'abdulbasit';
+      var val = RECITER_FOLDERS[els.reciterSelect.value] ? els.reciterSelect.value : 'abdulbasit';
       if(state.reciter === val) return;
       stopListening();
       state.reciter = val;
       saveState();
-      showToast('القارئ: ' + (val === 'jibreel' ? 'محمد جبريل' : 'عبدالباسط عبدالصمد'));
+      showToast('القارئ: ' + currentReciterName());
     });
     applyReciterChoice();
   }
