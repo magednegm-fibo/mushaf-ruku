@@ -169,20 +169,34 @@ self.addEventListener('fetch', (e) => {
   function timeoutPromise(ms){
     return new Promise((_, reject) => setTimeout(() => reject(new Error('sw-network-timeout')), ms));
   }
+  // The network fetch is kept as its OWN promise chain, separate from the
+  // race below — this is what actually delivers on the comment above
+  // ("the network attempt itself is not cancelled — it's left to finish
+  // in the background so a same-URL cache.put() from a slow-but-
+  // eventually-successful response still lands"). The previous version
+  // only ever attached cache.put() inside Promise.race(...).then(...);
+  // Promise.race() only calls .then() with the WINNING promise's result,
+  // so whenever the timeout won (any request slower than 4s on a flaky
+  // connection), the network fetch's eventual successful response was
+  // simply discarded once it did arrive — never cached, and never shown
+  // to the page either. That silently defeated the offline cache refresh
+  // this branch exists for, specifically for the slow-connection case it
+  // was written to handle. See tests/sw-regression.js for the regression
+  // case this guards.
+  const networkFetch = fetch(e.request).then((res) => {
+    if (res && res.status === 200) {
+      const resClone = res.clone();
+      // Same e.waitUntil() reasoning as the cache-first branch above —
+      // without it this write races the worker's own shutdown and can
+      // be silently dropped, which here would mean an update fetched
+      // successfully over the network never actually lands in the
+      // offline cache.
+      e.waitUntil(caches.open(CACHE).then((cache) => cache.put(e.request, resClone)));
+    }
+    return res;
+  });
   e.respondWith(
-    Promise.race([fetch(e.request), timeoutPromise(NETWORK_TIMEOUT_MS)])
-      .then((res) => {
-        if (res && res.status === 200) {
-          const resClone = res.clone();
-          // Same e.waitUntil() reasoning as the cache-first branch above —
-          // without it this write races the worker's own shutdown and can
-          // be silently dropped, which here would mean an update fetched
-          // successfully over the network never actually lands in the
-          // offline cache.
-          e.waitUntil(caches.open(CACHE).then((cache) => cache.put(e.request, resClone)));
-        }
-        return res;
-      })
+    Promise.race([networkFetch, timeoutPromise(NETWORK_TIMEOUT_MS)])
       .catch(() => caches.match(e.request))
   );
 });

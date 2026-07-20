@@ -110,11 +110,13 @@
         }
         playAyahAt(listenState.page, listenState.ayahIndex + 1, 'ruku');
       });
-      audioPlayer.addEventListener('error', function(){
-        if(!listenState.playing && !listenState.loading) return;
-        stopListening();
-        showToast('تعذر تحميل الصوت \u2014 تحقق من الاتصال بالإنترنت');
-      });
+      // NOTE: no 'error' listener here — see attachErrorGuard() below,
+      // attached fresh per playback attempt instead of once here. A
+      // single listener shared across every attempt (the previous
+      // implementation) can't tell a genuine failure of the CURRENT
+      // attempt apart from a stale, queued 'error' event for an OLDER
+      // attempt whose src was already overwritten and superseded — see
+      // attachErrorGuard()'s own comment for the full explanation.
     }
     return audioPlayer;
   }
@@ -135,6 +137,46 @@
   // *newer* one that's already playing successfully, and can never fire
   // a false "no connection" toast after the user simply pressed stop.
   var playToken = 0;
+
+  // Attaches a ONE-SHOT 'error' listener scoped to exactly one playback
+  // attempt (myToken, captured at the moment that attempt set player.src
+  // — the same value passed to that attempt's play().catch() a few lines
+  // below it in playAyahAt()/playSurahPlaylistAt()).
+  //
+  // Real defect this fixes: every playAyahAt()/playSurahPlaylistAt() call
+  // reassigns the SAME shared <audio> element's .src whenever it starts a
+  // new attempt (including the automatic 'ended'-handler advance to the
+  // next ayah, and every "listen" button re-press). Reassigning .src
+  // aborts whatever load was previously in progress, and some browsers/
+  // Android WebViews queue an async 'error' event for that aborted load
+  // instead of dropping it silently. The previous implementation attached
+  // exactly one 'error' listener, ONCE, when the element was first
+  // created — so that stale, queued event for an old, already-superseded
+  // attempt was indistinguishable from a genuine failure of whichever
+  // attempt happened to be current by the time it fired. Its only guard
+  // (`!listenState.playing && !listenState.loading`) is always false
+  // whenever a NEWER attempt is legitimately in progress, so the stale
+  // event would call stopListening() and show a false "تعذر تحميل الصوت"
+  // (no-connection) toast, killing perfectly good, currently-loading (or
+  // already-playing) audio out from under the reader.
+  //
+  // Scoping the listener to one attempt's own token — the exact pattern
+  // already used for play().catch() here, and for reader-tafsir.js's own
+  // requestToken — fixes this: an event only acts if nothing newer has
+  // started since (myToken === playToken), so a stale event from a
+  // superseded attempt is always ignored, while a genuine error for
+  // whichever attempt is actually current still surfaces normally. See
+  // tests/audio-regression.js for the regression case this guards.
+  function attachErrorGuard(player, myToken){
+    function onError(){
+      player.removeEventListener('error', onError);
+      if(myToken !== playToken) return; // stale — a newer attempt already superseded this one
+      if(!listenState.playing && !listenState.loading) return;
+      stopListening();
+      showToast('تعذر تحميل الصوت \u2014 تحقق من الاتصال بالإنترنت');
+    }
+    player.addEventListener('error', onError);
+  }
 
   function pad3(n){
     n = String(n);
@@ -533,6 +575,7 @@
     player.src = ayahAudioUrl(a.surah, a.ayah);
     applyPlaybackRate(player);
     var myToken = ++playToken;
+    attachErrorGuard(player, myToken);
     var playPromise = player.play();
     if(playPromise && playPromise.catch){
       playPromise.catch(function(){
@@ -685,6 +728,7 @@
     player.src = item.bismillah ? bismillahAudioUrl() : ayahAudioUrl(item.surah, item.ayah);
     applyPlaybackRate(player);
     var myToken = ++playToken;
+    attachErrorGuard(player, myToken);
     var playPromise = player.play();
     if(playPromise && playPromise.catch){
       playPromise.catch(function(){
