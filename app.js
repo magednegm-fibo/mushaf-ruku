@@ -134,6 +134,7 @@
     autoScrollToggle: document.getElementById('autoScrollToggle'),
     recitationScopeSelect: document.getElementById('recitationScopeSelect'),
     recitationRepeatSelect: document.getElementById('recitationRepeatSelect'),
+    playbackSpeedSelect: document.getElementById('playbackSpeedSelect'),
     favModal: document.getElementById('favModal'),
     favNameInput: document.getElementById('favNameInput'),
     favModalCancel: document.getElementById('favModalCancel'),

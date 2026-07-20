@@ -643,6 +643,11 @@ body.night .index-juz-header{ background:#242426; color:#F2F2F2; border-color:rg
   cursor:pointer;
 }
 .index-item:active{ background: var(--paper-edge); }
+/* اللمسة الفاتحة (paper-edge) عند الضغط على عنصر في الفهرس مش مناسبة
+   لخلفية الوضع الليلي الغامقة — بنفس درجة الأخضر الشفاف المستخدمة أصلًا
+   في index-item.current بالوضع الليلي، بس بشفافية أقل عشان تبقى لمسة
+   عابرة مش تحديد دائم. */
+body.night .index-item:active{ background: rgba(76,175,80,.12); }
 .index-item.current{
   background: rgba(22,73,58,.08);
   border-right: 3px solid var(--emerald);
@@ -719,7 +724,11 @@ body.night .index-item.current .num{ background:#4CAF50; color:#0E1F10; border-c
   margin-top: 5px;
 }
 body.night .manzil-header{ background:#1c1c1e; }
-body.night .manzil-title{ color:#F2F2F2; }
+/* أسماء المنازل بس (العنوان)، بنفس الأخضر المستخدم في الصفحة الرئيسية
+   بالوضع الليلي (progress-bar-fill / home-tile svg / إلخ) — السطر
+   الوصفي تحته (manzil-sub) فاضل رمادي زي ما هو، لأن الطلب اقتصر على
+   الأسماء فقط. */
+body.night .manzil-title{ color:#4CAF50; }
 body.night .manzil-sub{ color:#9A9A9E; }
 
 /* Brief highlight flash on the ayah a search result jumps to, so it's
@@ -880,7 +889,7 @@ body.night .index-item{ border-color:rgba(255,255,255,.14); }
 body.night .index-item .name{ color:#F2F2F2; }
 body.night .index-item .meta{ color:#9A9A9E; }
 body.night .index-item .surah-info{ color:#9A9A9E; }
-body.night .index-item .num{ color:#F2F2F2; border-color:rgba(255,255,255,.14); }
+body.night .index-item .num{ color:#F2F2F2; border-color:#2C6E57; }
 body.night .setting-row{ color:#F2F2F2; border-color:rgba(255,255,255,.14); }
 body.night .setting-row.static b{ color:#F2F2F2; }
 .juz-marker{
@@ -1052,6 +1061,15 @@ body.night .read-progress-strip-fill{ background:#4CAF50; }
 .fav-btn.active{ color:#fff; background: var(--emerald); border-color: var(--emerald); }
 .fav-btn.active svg{ fill:currentColor; }
 body.night .fav-btn{ background: rgba(28,28,30,.75); color:#F2F2F2; border-color:rgba(255,255,255,.14); }
+/* "body.night .fav-btn" above has higher CSS specificity (extra element
+   selector) than ".fav-btn.active" (two classes vs. one element + two
+   classes), so in night mode it was silently winning and overriding the
+   active/favorited star back to the near-white color — the star never
+   visibly turned green when marked as a favorite. This selector matches
+   both class conditions plus the body element, giving it strictly higher
+   specificity than either rule above so it reliably wins when a page is
+   favorited while night mode is on. */
+body.night .fav-btn.active{ color:#fff; background: var(--emerald-light); border-color: var(--emerald-light); }
 
 /* ---------- Bookmark button (علامة القراءة) ---------- */
 .bookmark-btn{
@@ -1680,7 +1698,7 @@ body.night .waqf-guide-symbol.tajweed-guide-number{ color:#F2F2F2; }
   text-align-last: right;
 }
 body.night .waqf-guide-item{ border-color:rgba(255,255,255,.14); }
-body.night .waqf-guide-symbol{ border-color:rgba(255,255,255,.14); color:#F2F2F2; }
+body.night .waqf-guide-symbol{ border-color:#2C6E57; color:#F2F2F2; }
 body.night .waqf-guide-text b{ color:#F2F2F2; }
 body.night .waqf-guide-text p{ color:#9A9A9E; }
 body.night .waqf-guide-footnote{ color:#9A9A9E; border-color: rgba(255,255,255,.14); }

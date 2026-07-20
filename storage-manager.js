@@ -65,7 +65,7 @@
       lastPageUthmani:0, lastPageIndopak:0, lastPageShared:0,
       fontStyle:'uthmani', showWaqfMarksUthmani:true, showWaqfMarksIndopak:true,
       pinchZoomEnabled:true, keepScreenAwake:false, reciter:'abdulbasit',
-      autoScrollEnabled:true, recitationRepeatCount:1,
+      autoScrollEnabled:true, recitationRepeatCount:1, playbackRate:1,
       displayScope:'all', recitationScope:'ruku'
     };
     var result = Object.assign({}, DEFAULTS, readJSON(KEYS.STORAGE_KEY, {}));

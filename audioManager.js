@@ -23,14 +23,22 @@
   // offline caching.
   // ---------------------------------------------------------------------
   var RECITER_FOLDERS = {
+    // Husary_64kbps is the Murattal set (not Husary_Mujawwad_64kbps, which
+    // is a different — Mujawwad — style by the same reciter).
+    husary: 'Husary_64kbps',
+    // No 64kbps Murattal set exists for Minshawi on EveryAyah (only
+    // Murattal 128kbps and the separate Mujawwad style) — 128kbps used
+    // here as the only Murattal option available, unlike the other
+    // reciters above which have a 64kbps Murattal set.
+    minshawi: 'Minshawy_Murattal_128kbps',
     abdulbasit: 'Abdul_Basit_Murattal_64kbps',
-    jibreel: 'Muhammad_Jibreel_64kbps',
-    hudhaify: 'Hudhaify_64kbps'
+    jibreel: 'Muhammad_Jibreel_64kbps'
   };
   var RECITER_NAMES = {
+    husary: 'محمود خليل الحصري',
+    minshawi: 'محمد صديق المنشاوي',
     abdulbasit: 'عبدالباسط عبدالصمد',
-    jibreel: 'محمد جبريل',
-    hudhaify: 'علي الحذيفي'
+    jibreel: 'محمد جبريل'
   };
   function currentReciterFolder(){
     return RECITER_FOLDERS[state.reciter] || RECITER_FOLDERS.abdulbasit;
@@ -42,10 +50,19 @@
   // all, so there's no reason to pay for it at startup.
   var audioPlayer = null;
   var audioPlayerCreated = false;
+  // سرعة تشغيل التلاوة (الإعدادات): applied to the Audio element itself via
+  // the native `playbackRate` property (pitch-corrected by the browser),
+  // not by re-fetching different audio files — so it works uniformly for
+  // every reciter/quality combination with zero extra network cost.
+  function applyPlaybackRate(player){
+    if(!player) return;
+    try{ player.playbackRate = state.playbackRate || 1; }catch(e){}
+  }
   function getAudioPlayer(){
     if(audioPlayerCreated) return audioPlayer;
     audioPlayerCreated = true;
     audioPlayer = (typeof Audio !== 'undefined') ? new Audio() : null;
+    applyPlaybackRate(audioPlayer);
     if(audioPlayer){
       audioPlayer.addEventListener('playing', function(){
         listenState.loading = false;
@@ -514,6 +531,7 @@
     updateMediaSessionMetadata(a.surahName, a.ayah);
     setMediaSessionPlaybackState('playing');
     player.src = ayahAudioUrl(a.surah, a.ayah);
+    applyPlaybackRate(player);
     var myToken = ++playToken;
     var playPromise = player.play();
     if(playPromise && playPromise.catch){
@@ -665,6 +683,7 @@
     }
     setMediaSessionPlaybackState('playing');
     player.src = item.bismillah ? bismillahAudioUrl() : ayahAudioUrl(item.surah, item.ayah);
+    applyPlaybackRate(player);
     var myToken = ++playToken;
     var playPromise = player.play();
     if(playPromise && playPromise.catch){
@@ -781,7 +800,14 @@
   // Reciter choice (الاستماع): stored per-user like fontStyle, independent
   // of which script (uthmani/indopak) is currently displayed.
   function applyReciterChoice(){
-    if(els.reciterSelect) els.reciterSelect.value = RECITER_FOLDERS[state.reciter] ? state.reciter : 'abdulbasit';
+    if(!RECITER_FOLDERS[state.reciter]){
+      // Reciter no longer offered (e.g. حُذف من التطبيق) — fall back to the
+      // default and persist the correction so it doesn't linger silently
+      // in storage.
+      state.reciter = 'abdulbasit';
+      saveState();
+    }
+    if(els.reciterSelect) els.reciterSelect.value = state.reciter;
   }
   function setupReciterSelect(){
     if(!els.reciterSelect) return;
@@ -849,6 +875,31 @@
     applyRecitationRepeatChoice();
   }
 
+  // "سرعة تشغيل التلاوة" (الإعدادات): playback speed via the native
+  // Audio.playbackRate property — 0.75× أبطأ، 1× طبيعية (الافتراضي)،
+  // 1.25× أسرع. Applied at getAudioPlayer() creation time and again on
+  // every src change (see applyPlaybackRate above), so it stays in effect
+  // across every playback path (ruku/single/surah/juz) without needing to
+  // touch the 'ended'/repeat logic. Same storage/UI pattern as
+  // setupRecitationRepeatSelect above.
+  var PLAYBACK_SPEEDS = ['0.75', '1', '1.25'];
+  function applyPlaybackSpeedChoice(){
+    if(!els.playbackSpeedSelect) return;
+    var val = String(state.playbackRate || 1);
+    els.playbackSpeedSelect.value = PLAYBACK_SPEEDS.indexOf(val) !== -1 ? val : '1';
+  }
+  function setupPlaybackSpeedSelect(){
+    if(!els.playbackSpeedSelect) return;
+    els.playbackSpeedSelect.addEventListener('change', function(){
+      var val = els.playbackSpeedSelect.value;
+      if(PLAYBACK_SPEEDS.indexOf(val) === -1) val = '1';
+      state.playbackRate = parseFloat(val);
+      saveState();
+      if(audioPlayerCreated) applyPlaybackRate(audioPlayer);
+    });
+    applyPlaybackSpeedChoice();
+  }
+
   function init(deps){
     PAGES = deps.PAGES;
     state = deps.state;
@@ -863,6 +914,7 @@
     setupAutoScrollToggle();
     setupRecitationScopeSelect();
     setupRecitationRepeatSelect();
+    setupPlaybackSpeedSelect();
     setupMediaSessionHandlers();
   }
 
