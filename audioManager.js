@@ -70,6 +70,18 @@
       });
       audioPlayer.addEventListener('ended', function(){
         if(!listenState.playing) return;
+        // البسملة أول السورة لمسار "الاستماع للركوع"/"تشغيل آية واحدة"
+        // (playAyahAt — انظر بسملةBismillahThenAyah وplayAyahAt تحت):
+        // اللي انتهى للتو كان البسملة نفسها، مش الآية — كمّل بتشغيل
+        // الآية الحقيقية دلوقتي، من غير المرور بمنطق "تكرار تلاوة
+        // الآية" تحت (البسملة بتتشغل مرة واحدة بس، بالظبط زي معالجة
+        // بسملة الـplaylist اللي تحت مباشرة).
+        if(listenState.bismillahFor){
+          var bTarget = listenState.bismillahFor;
+          listenState.bismillahFor = null;
+          playAyahAt(bTarget.pageIdx, bTarget.ayahIdx, bTarget.mode, {afterBismillah: true});
+          return;
+        }
         // البسملة clips (see insertBismillahBeforeSurahs) are a one-off
         // intro, not a recited ayah — "تكرار تلاوة الآية" must never repeat
         // them 2-3x along with the real ayah that follows. Skip the whole
@@ -120,7 +132,7 @@
     }
     return audioPlayer;
   }
-  var listenState = { playing:false, loading:false, page:null, ayahIndex:0, mode:'ruku', playlist:null, playlistIndex:0, repeatsPlayed:0 };
+  var listenState = { playing:false, loading:false, page:null, ayahIndex:0, mode:'ruku', playlist:null, playlistIndex:0, repeatsPlayed:0, bismillahFor:null };
   // Modes that mean "keep advancing through listenState.playlist" in the
   // 'ended' handler above, instead of the simple same-page ayah-array
   // advance. 'surah'/'juz' predate نطاق العرض (still used by the
@@ -542,17 +554,75 @@
     listenState.playing = false;
     listenState.loading = false;
     listenState.repeatsPlayed = 0;
+    listenState.bismillahFor = null;
     clearAyahHighlight();
     updateListenButton();
     setMediaSessionPlaybackState('none');
     releaseAudioWakeLock();
   }
 
-  function playAyahAt(pageIdx, ayahIdx, mode){
+  // البسملة أول السورة لمسار الركوع/الآية المفردة (زر "استماع" الافتراضي
+  // — نطاق التلاوة = "الركوع"، وهو الإعداد الافتراضي، انظر
+  // storage-manager.js DEFAULTS.recitationScope — وكذلك الضغط المطول
+  // لتشغيل آية واحدة). الفهرس/نطاق العرض (buildSurahPlaylist وأخواتها)
+  // كان عنده بالفعل insertBismillahBeforeSurahs لنفس الغرض، لكن هذا
+  // المسار (playAyahAt، اللي بيشتغل برقم آية مباشر مش playlist) كان
+  // بيتخطاه تمامًا — فالزر الافتراضي للاستماع كان بيبدأ في أول آية من
+  // السورة من غير بسملة على الإطلاق كل ما يكون أول الركوع هو أول
+  // السورة. نفس استثناءات insertBismillahBeforeSurahs بالظبط: مفيش
+  // بسملة قبل الفاتحة (آيتها الأولى هي نفسها البسملة) ولا قبل التوبة.
+  function playBismillahThenAyah(pageIdx, ayahIdx, mode){
+    var p = PAGES[pageIdx];
+    var a = p.ayahs[ayahIdx];
+    var player = getAudioPlayer();
+    if(!player){
+      showToast('التشغيل الصوتي غير مدعوم في هذا المتصفح');
+      return;
+    }
+    listenState.page = pageIdx;
+    listenState.ayahIndex = ayahIdx;
+    listenState.mode = mode || 'ruku';
+    listenState.playing = true;
+    listenState.loading = true;
+    listenState.repeatsPlayed = 0;
+    // يُستهلك مرة واحدة في معالج 'ended' فوق: يقول له إن الكليب اللي
+    // انتهى للتو كان بسملة هذه الآية بالتحديد، مش الآية نفسها.
+    listenState.bismillahFor = {pageIdx: pageIdx, ayahIdx: ayahIdx, mode: listenState.mode};
+    updateListenButton();
+    requestAudioWakeLock();
+    highlightAyah(a.surah, a.ayah);
+    updateMediaSessionMetadata(surahNameFor(pageIdx, ayahIdx, a.surah) + ' — البسملة', null);
+    setMediaSessionPlaybackState('playing');
+    player.src = bismillahAudioUrl();
+    applyPlaybackRate(player);
+    var myToken = ++playToken;
+    attachErrorGuard(player, myToken);
+    var playPromise = player.play();
+    if(playPromise && playPromise.catch){
+      playPromise.catch(function(){
+        if(myToken !== playToken) return;
+        stopListening();
+        showToast('تعذر تشغيل الصوت \u2014 تحقق من الاتصال بالإنترنت');
+      });
+    }
+  }
+
+  function playAyahAt(pageIdx, ayahIdx, mode, opts){
     var p = PAGES[pageIdx];
     if(!p || !p.ayahs[ayahIdx]){
       // Reached the end of the ruku's ayahs — playback is done.
       stopListening();
+      return;
+    }
+    var a = p.ayahs[ayahIdx];
+    var effectiveMode = mode || 'ruku';
+    // البسملة بس لمسار "الاستماع للركوع" (أول الركوع أو لما التشغيل
+    // يوصل لبداية سورة جديدة أثناء الركوع نفسه) — مش للضغط المطول على
+    // آية واحدة (mode:'single'). الضغط المطول قصده تسميع/مراجعة الآية
+    // المحددة بالتحديد وبس، فمفيش داعي يقدّملها بسملة، حتى لو كانت هي
+    // نفسها أول آية في سورة. مطابقة لطلب مباشر من المستخدم.
+    if(!(opts && opts.afterBismillah) && effectiveMode !== 'single' && a.ayah === 1 && a.surah !== 1 && a.surah !== 9){
+      playBismillahThenAyah(pageIdx, ayahIdx, effectiveMode);
       return;
     }
     var player = getAudioPlayer();
@@ -560,7 +630,6 @@
       showToast('التشغيل الصوتي غير مدعوم في هذا المتصفح');
       return;
     }
-    var a = p.ayahs[ayahIdx];
     listenState.page = pageIdx;
     listenState.ayahIndex = ayahIdx;
     listenState.mode = mode || 'ruku';
