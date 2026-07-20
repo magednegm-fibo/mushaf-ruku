@@ -67,6 +67,10 @@
       audioPlayer.addEventListener('playing', function(){
         listenState.loading = false;
         updateListenButton();
+        // الآية الحالية بدأت التشغيل فعليًا بنجاح — الشرط الوحيد لبدء
+        // تحميل الآية التالية في الخلفية (شوف تعليق prefetchAyahAudio
+        // فوق لتفاصيل القواعد).
+        prefetchAyahAudio(peekNextAudioUrl());
       });
       audioPlayer.addEventListener('ended', function(){
         if(!listenState.playing) return;
@@ -149,6 +153,92 @@
   // *newer* one that's already playing successfully, and can never fire
   // a false "no connection" toast after the user simply pressed stop.
   var playToken = 0;
+
+  // ---------------------------------------------------------------------
+  // خلفية تحميل الآية التالية (Prefetch): بمجرد التأكد أن الآية الحالية
+  // بدأت التشغيل فعليًا (حدث 'playing'، مش مجرد استدعاء play())، نبدأ
+  // تنزيل ملف الآية التالية في الخلفية بأولوية منخفضة — عشان لما الآية
+  // الحالية تخلص تكون التالية جاهزة غالبًا، من غير ما نزاحم تحميل/تشغيل
+  // الآية الحالية نفسها.
+  //
+  // القواعد:
+  //  - يبدأ فقط بعد نجاح تشغيل الآية الحالية (شوف مستمع 'playing' تحت).
+  //  - آية واحدة قدام بالظبط — أي طلب تحميل جديد يلغي أي تحميل سابق لسه
+  //    شغال (cancelPrefetch)، إلا لو كان بالظبط لنفس الرابط المطلوب.
+  //  - لو المستخدم قفز لآية تانية، أي تحميل جارٍ لهدف مختلف يتلغى فورًا
+  //    (شوف beginPlaybackPrefetchHandoff، بتتنادى من كل مسارات التشغيل
+  //    الثلاثة قبل تعيين player.src).
+  //  - لو الآية التالية سبق تحميلها بنجاح في نفس الجلسة، مفيش إعادة
+  //    تحميل (prefetchedUrls).
+  var prefetchController = null;   // AbortController لأي تحميل جارٍ حاليًا
+  var prefetchInFlightUrl = null;  // الرابط اللي بيتحمّل دلوقتي، لو فيه
+  var prefetchedUrls = {};         // كاش بسيط في الذاكرة: الروابط اللي خلصت تحميل بنجاح هذه الجلسة
+
+  function cancelPrefetch(){
+    if(prefetchController){
+      try{ prefetchController.abort(); }catch(e){}
+    }
+    prefetchController = null;
+    prefetchInFlightUrl = null;
+  }
+
+  function prefetchAyahAudio(url){
+    if(!url || typeof fetch !== 'function') return;
+    if(prefetchedUrls[url]) return;        // اتحمّلت قبل كده هذه الجلسة
+    if(prefetchInFlightUrl === url) return; // نفس التحميل شغال بالفعل
+    if(prefetchInFlightUrl && prefetchInFlightUrl !== url) cancelPrefetch(); // آية واحدة قدام بس
+    var controller = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+    prefetchController = controller;
+    prefetchInFlightUrl = url;
+    var opts = {priority: 'low'}; // تلميح أولوية منخفضة (Chromium)؛ متجاهَل بأمان في المتصفحات الأخرى
+    if(controller) opts.signal = controller.signal;
+    fetch(url, opts).then(function(res){
+      if(prefetchInFlightUrl !== url) return; // اتلغى أو استُبدل قبل ما يخلص
+      prefetchInFlightUrl = null;
+      prefetchController = null;
+      if(res && res.ok) prefetchedUrls[url] = true;
+    }).catch(function(){
+      // فشل التحميل المسبق (إلغاء، أو مفيش نت) مش خطأ ظاهر للمستخدم —
+      // التشغيل الفعلي للآية هيحاول التحميل العادي من جديد في وقته.
+      if(prefetchInFlightUrl === url){
+        prefetchInFlightUrl = null;
+        prefetchController = null;
+      }
+    });
+  }
+
+  // بيتنادى من كل مسار تشغيل (playBismillahThenAyah/playAyahAt/
+  // playSurahPlaylistAt) قبل تعيين player.src مباشرة، بالرابط اللي هيتشغل
+  // دلوقتي. لو فيه تحميل مسبق جارٍ لرابط مختلف (يعني المستخدم قفز لآية
+  // غير اللي كنا مستنيينها) يتلغى فورًا. لو كان بالظبط نفس الرابط
+  // المطلوب تشغيله دلوقتي (يعني التسلسل الطبيعي وصل للآية اللي كنا
+  // بنحملها مسبقًا) يُترك يكمل عادي.
+  function beginPlaybackPrefetchHandoff(nextSrcUrl){
+    if(prefetchInFlightUrl && prefetchInFlightUrl !== nextSrcUrl) cancelPrefetch();
+  }
+
+  // بيحسب رابط \"الآية التالية\" اللي هتتشغل بعد اللي شغالة دلوقتي بالظبط،
+  // من غير أي تأثير جانبي — بمطابقة نفس منطق مستمع 'ended' فوق (بسملة →
+  // الآية الحقيقية، عناصر الـplaylist المتتالية، أو التقدم لعنصر الصفحة
+  // التالي في وضع الركوع). بيرجع null لو مفيش آية تالية (نهاية الركوع/
+  // الـplaylist) أو في وضع 'single' (مفيش تتابع أصلاً).
+  function peekNextAudioUrl(){
+    if(listenState.bismillahFor){
+      var bt = listenState.bismillahFor;
+      var bp = PAGES[bt.pageIdx];
+      var ba = bp && bp.ayahs[bt.ayahIdx];
+      return ba ? ayahAudioUrl(ba.surah, ba.ayah) : null;
+    }
+    if(listenState.mode === 'single') return null;
+    if(PLAYLIST_RECITATION_MODES.indexOf(listenState.mode) !== -1 && listenState.playlist){
+      var nextItem = listenState.playlist[listenState.playlistIndex + 1];
+      if(!nextItem) return null;
+      return nextItem.bismillah ? bismillahAudioUrl() : ayahAudioUrl(nextItem.surah, nextItem.ayah);
+    }
+    var p = PAGES[listenState.page];
+    var nextA = p && p.ayahs[listenState.ayahIndex + 1];
+    return nextA ? ayahAudioUrl(nextA.surah, nextA.ayah) : null;
+  }
 
   // Attaches a ONE-SHOT 'error' listener scoped to exactly one playback
   // attempt (myToken, captured at the moment that attempt set player.src
@@ -538,6 +628,8 @@
     // Invalidate any play() promise still in flight from an earlier
     // playAyahAt()/playSurahPlaylistAt() call — see playToken above.
     ++playToken;
+    // مفيش حاجة هتتشغل بعد كده — يلغي أي تحميل مسبق للآية التالية لسه شغال.
+    cancelPrefetch();
     // Only touch the audio element if one was actually ever created —
     // calling getAudioPlayer() here would force-create it on every
     // stopListening() call (e.g. on every page turn, via applyFontStyle),
@@ -593,6 +685,7 @@
     highlightAyah(a.surah, a.ayah);
     updateMediaSessionMetadata(surahNameFor(pageIdx, ayahIdx, a.surah) + ' — البسملة', null);
     setMediaSessionPlaybackState('playing');
+    beginPlaybackPrefetchHandoff(bismillahAudioUrl());
     player.src = bismillahAudioUrl();
     applyPlaybackRate(player);
     var myToken = ++playToken;
@@ -641,6 +734,7 @@
     highlightAyah(a.surah, a.ayah);
     updateMediaSessionMetadata(a.surahName, a.ayah);
     setMediaSessionPlaybackState('playing');
+    beginPlaybackPrefetchHandoff(ayahAudioUrl(a.surah, a.ayah));
     player.src = ayahAudioUrl(a.surah, a.ayah);
     applyPlaybackRate(player);
     var myToken = ++playToken;
@@ -794,7 +888,9 @@
       updateMediaSessionMetadata(surahNameFor(item.pageIdx, item.ayahIdx, item.surah), item.ayah);
     }
     setMediaSessionPlaybackState('playing');
-    player.src = item.bismillah ? bismillahAudioUrl() : ayahAudioUrl(item.surah, item.ayah);
+    var itemSrcUrl = item.bismillah ? bismillahAudioUrl() : ayahAudioUrl(item.surah, item.ayah);
+    beginPlaybackPrefetchHandoff(itemSrcUrl);
+    player.src = itemSrcUrl;
     applyPlaybackRate(player);
     var myToken = ++playToken;
     attachErrorGuard(player, myToken);
