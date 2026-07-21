@@ -382,7 +382,11 @@
 // exact split in the dataset: 2:229, 3:170, 5:8. Not to be confused with
 // إِلَّا ("illa", hamza-kasra) or any other lam-alef sequence -- only this
 // exact fatha-alef + lam-shadda-fatha-alef sequence is affected.
-var KNOWN_SPLIT_WORD_FRAGMENTS = ["اٰ تُوۡهُمۡ", "اٰ تَيۡتُمُوۡهُنَّ", "اٰ تُوا", "اٰ تُوۡهُنَّ", "اٰ لَۤاءَ", "اٰ تُہُمَا", "ذٰ لِكَ", "ذٰ لِكُ", "اَ لَّا", "اَ لَّذِيۡنَ"];
+// أَكَّالُونَ ("akkaloon") is likewise split by a genuine U+0020 in
+// textIndopak ("اَ" + "كّٰلُوۡنَ") -- reported at 5:42, where the "اَ"
+// rendered with a visible gap before "كّٰلُوۡنَ" in Naskh/Indopak mode.
+// Only confirmed occurrence of this exact split in the dataset: 5:42.
+var KNOWN_SPLIT_WORD_FRAGMENTS = ["اٰ تُوۡهُمۡ", "اٰ تَيۡتُمُوۡهُنَّ", "اٰ تُوا", "اٰ تُوۡهُنَّ", "اٰ لَۤاءَ", "اٰ تُہُمَا", "ذٰ لِكَ", "ذٰ لِكُ", "اَ لَّا", "اَ لَّذِيۡنَ", "اَ كّٰلُوۡنَ"];
   var KNOWN_SPLIT_PLACEHOLDER = '\u2061';
   function joinKnownSplitWords(s){
     KNOWN_SPLIT_WORD_FRAGMENTS.forEach(function(frag){

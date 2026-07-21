@@ -299,6 +299,30 @@ SPLIT_WORD_CASES.forEach(function(c){
   });
 });
 
+// A2b. Known split single-word fragments (real U+0020 space splitting a
+// SINGLE word into two tokens, as opposed to A2's two-word phrases) —
+// KNOWN_SPLIT_WORD_FRAGMENTS in readerManager.js. Reported: 5:42
+// "اَ كّٰلُوۡنَ" (اكالون) rendered with a visible gap after the alif in
+// Naskh/Indopak mode, since the un-joined "اَ" and "كّٰلُوۡنَ" become two
+// separate .quran-word spans.
+var SPLIT_SINGLE_WORD_CASES = [
+  { surah: 5, ayah: 42, query: 'اكالون', label: 'اَ كّٰلُوۡنَ split (5:42)' }
+];
+SPLIT_SINGLE_WORD_CASES.forEach(function(c){
+  var a = findAyah(c.surah, c.ayah);
+  check('A2b ' + c.label + ': ayah exists', function(){ return !!a; });
+  if(!a) return;
+  check('A2b ' + c.label + ': tokenizes as a single word (not split by mid-word space)', function(){
+    var words = ReaderManager.tokenizeAyahWords(a.textIndopak);
+    var hit = words.filter(function(w){ return w.replace(/[\u2060\u2061\u200B-\u200F]/g, '').indexOf('\u0627') === 0 && /كّٰلُو/.test(w); });
+    return hit.length === 1 || ('expected exactly one token containing the joined word, found ' + hit.length + ' (word list: ' + JSON.stringify(words) + ')');
+  });
+  check('A2b ' + c.label + ': resolves to a single-word match (normal-mode search)', function(){
+    var r = SearchManager.findMatchWordRange(a.textIndopak, c.query, false);
+    return (!!r && r.end === r.start) || ('range=' + JSON.stringify(r) + ' (expected a single-word span)');
+  });
+});
+
 // A3. Dagger-alif dual-normalization — the big one. Each case records
 // the expected normal-mode count, exact-mode count, and confirms every
 // normal-mode result resolves to a highlightable word in at least one
