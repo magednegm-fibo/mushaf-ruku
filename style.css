@@ -355,6 +355,24 @@ body.uthmani-font .waqf-sign{
   transform: translate(0.12em, 0.3em);
 }
 
+/* See NAKH_SHIN_JOIN_HTML in readerManager.js -- 5:52 only (نَخۡشٰٓى).
+   Reported on-device: the نَخۡ cluster sits too low relative to the
+   following شٰٓ, reading as visually dropped/disconnected instead of
+   flush -- confirmed as the only occurrence in the whole mushaf of a
+   sukun-marked consonant immediately before a shin carrying both a
+   dagger-alif and a madda together. Deliberately plain inline (NOT
+   inline-block, unlike the *-lift classes above) so this stays in the
+   same shaping run as the ش right after it and the cursive join isn't
+   forced apart by a hard box boundary -- see the long comment next to
+   NAKH_SHIN_JOIN_REGEX for why. -0.1em is a STARTING ESTIMATE ONLY, not
+   yet confirmed against the live rendered page -- open 5:42/5:52 on a
+   real device and nudge this value up/down until نَخۡ connects cleanly
+   with شٰٓ, no visible drop or gap, then update the number here. */
+.nakh-shin-lift{
+  position: relative;
+  top: -0.1em;
+}
+
 /* Fix for the ن (noon) / ruku-end-mark (U+E022) collision -- see
    WAQF_RUKU_MARK_NOON_LIFT_HTML in readerManager.js. Confirmed on-device
    that the ruku-end mark does not appear at all when it directly follows

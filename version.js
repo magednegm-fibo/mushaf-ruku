@@ -12,4 +12,4 @@
 // from here. manifest.json can't execute JS, so its "version" field must
 // still be updated by hand to match — app.js checks that at startup and
 // logs a console warning if it ever drifts out of sync.
-self.APP_VERSION = '0.9.145';
+self.APP_VERSION = '0.9.147';

@@ -92,8 +92,44 @@
   function cleanAyahText(text){
     return wrapWaqfSigns(text)
       .replace(IQLAB_MEEM_REGEX, IQLAB_MEEM_HTML)
-      .replace(TATWEEL_SEAT_REGEX, tatweelSeatHtml);
+      .replace(TATWEEL_SEAT_REGEX, tatweelSeatHtml)
+      .replace(NAKH_SHIN_JOIN_REGEX, NAKH_SHIN_JOIN_HTML);
   }
+
+  // Reported (device screenshots, Naskh/Indopak mode, two rounds): the
+  // خ in نَخۡشٰٓى (5:52) sits too low relative to the ش that follows it
+  // -- described directly by the user as "the kha is dropping down, not
+  // connecting with the sheen" -- so this is a vertical baseline/
+  // positioning mismatch, not a broken cursive join (a zero-width-joiner
+  // fix was tried first on that assumption and confirmed NOT to work,
+  // reverted here). A full-dataset sweep confirms 5:52 is the ONLY place
+  // in the whole mushaf where a sukun-marked consonant sits immediately
+  // before a shin carrying both a dagger-alif and a madda together
+  // (ۡ + شٰٓ) -- the same sukun+shin pair renders fine 213 other times
+  // (e.g. 2:150, 4:9, 5:3) and the same shin+dagger-alif+madda renders
+  // fine alone at 11:87 (نَشٰٓؤُا, confirmed correct on-device by the
+  // user) -- so this is an isolated font glyph-positioning bug unique to
+  // this one word, not a systemic pattern needing a general rule.
+  // Lifting the نَخۡ cluster (per the user's own on-device diagnosis)
+  // to bring its baseline back up to the ش that follows should close
+  // the visual gap. Deliberately NOT display:inline-block here (unlike
+  // the other *-lift classes in style.css) -- those only ever wrap a
+  // single combining MARK, which never participates in Arabic cursive
+  // joining, so isolating it in its own inline-block box is harmless.
+  // نَخۡ contains two BASE letters (ن and خ) that must keep shaping as
+  // part of the same cursive run as the ش right after them; an
+  // inline-block here would force a hard shaping boundary exactly where
+  // the join is already broken and risk making the disconnect worse or
+  // permanent instead of fixing it. Plain inline + position:relative
+  // keeps it in the same text run as its neighbour while still allowing
+  // a vertical offset. -0.1em is a STARTING ESTIMATE ONLY, not yet
+  // confirmed against the live rendered page -- open 5:42/5:52 on a
+  // real device after this build and nudge the value in style.css
+  // (.nakh-shin-lift) up/down until نَخۡ sits flush against شٰٓ with a
+  // proper cursive connection and no visible drop or gap, then report
+  // back with the confirmed number.
+  var NAKH_SHIN_JOIN_REGEX = /\u0646\u064E\u062E\u06E1(?=\u0634\u0670\u0653)/g;
+  var NAKH_SHIN_JOIN_HTML = '<span class="nakh-shin-lift">\u0646\u064E\u062E\u06E1</span>';
 
   // This Indo-Pak-style font annotates pauses (waqf) using more signs than
   // the six classical Sajawandi marks in Unicode's 06D6–06DB block. We
