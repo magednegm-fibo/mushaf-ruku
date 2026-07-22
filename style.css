@@ -707,6 +707,30 @@ body.night .index-item.current .num{ background:#4CAF50; color:#0E1F10; border-c
 .index-item-inner{ display:flex; align-items:center; gap: 8px; width:100%; }
 .index-item-inner > div:last-child{ flex: 1; }
 
+/* Small icon button on each فهرس السور row (added after the name/info
+   block, so in this RTL layout it lands at the visual end of the line —
+   per direct request) that opens "الانتقال إلى آية" for that surah.
+   Sized like the small inline-row action buttons elsewhere (.fav-remove)
+   rather than the 40px topbar .icon-btn, since this sits inside a list
+   row, not the header. stopPropagation is applied at the click-handler
+   level (see handleIndexContainerClick in navigation.js), not here, so
+   tapping it opens the ayah dialog instead of also navigating to the
+   surah's first page via the row's own click handler. */
+.index-item-goto-ayah{
+  width:30px; height:30px;
+  flex-shrink:0;
+  border-radius:50%;
+  border:1px solid rgba(22,73,58,.3);
+  background:transparent;
+  color: var(--emerald);
+  display:flex; align-items:center; justify-content:center;
+  padding:0;
+}
+.index-item-goto-ayah svg{ width:15px; height:15px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+.index-item-goto-ayah:active{ background: rgba(22,73,58,.1); }
+body.night .index-item-goto-ayah{ color:#D8B662; border-color: rgba(216,182,98,.3); }
+body.night .index-item-goto-ayah:active{ background: rgba(216,182,98,.1); }
+
 /* عنوان كل منزل من منازل القرآن السبعة، في فهرس السور — عنصر مستقل قبل
    أول سورة في المنزل (مش بطاقة تحيط بسور المنزل). الألوان والشكل زي
    الصورة المرجعية اللي بعتها: خلفية بيج فاتحة، عنوان غامق بارز، وسطر
@@ -1443,6 +1467,26 @@ body.night .modal-btn.modal-btn-danger{ background:#A6453D; }
 .modal-error{
   color:#b5493f; font-size:12.5px; margin:-6px 0 12px; min-height:1em;
 }
+
+/* Compact variant of the shared modal chrome, scoped to #ayahJumpModal
+   only (id selectors, not touching .modal-box/.modal-btn/.search-input
+   themselves) — reported as feeling oversized on a phone screen
+   relative to how little it holds. favModal/gotoModal/
+   clearRemindersModal deliberately keep their current sizing; this
+   isn't a site-wide modal redesign. */
+#ayahJumpModal .modal-box{ padding: 18px 18px 16px; }
+#ayahJumpModal h3{ margin-bottom: 6px; font-size: 15px; }
+#ayahJumpModal .ayah-jump-surah-row{
+  font-family: var(--font-ui);
+  font-size: 13.5px;
+  color: var(--ink-soft);
+  margin: 0 0 8px;
+}
+#ayahJumpModal .ayah-jump-surah-row b{ color: var(--emerald); font-weight:700; }
+body.night #ayahJumpModal .ayah-jump-surah-row b{ color:#D8B662; }
+#ayahJumpModal .search-input{ padding: 9px 12px; margin-bottom: 8px; }
+#ayahJumpModal .modal-error{ margin: -2px 0 8px; }
+#ayahJumpModal .modal-btn{ padding: 8px 10px; }
 
 /* ---------- Toast ---------- */
 .toast{

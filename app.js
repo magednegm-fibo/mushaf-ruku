@@ -152,6 +152,13 @@
     gotoModalGo: document.getElementById('gotoModalGo'),
     gotoError: document.getElementById('gotoError'),
 
+    ayahJumpModal: document.getElementById('ayahJumpModal'),
+    ayahJumpSurahName: document.getElementById('ayahJumpSurahName'),
+    ayahJumpInput: document.getElementById('ayahJumpInput'),
+    ayahJumpModalCancel: document.getElementById('ayahJumpModalCancel'),
+    ayahJumpModalGo: document.getElementById('ayahJumpModalGo'),
+    ayahJumpError: document.getElementById('ayahJumpError'),
+
     waqfMenu: document.getElementById('waqfMenu'),
     waqfMenuItem: document.getElementById('waqfMenuItem'),
     waqfMenuIcon: document.getElementById('waqfMenuIcon'),

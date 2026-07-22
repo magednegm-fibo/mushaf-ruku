@@ -123,7 +123,7 @@
   // header's own text + colors follow the reference screenshot; the
   // surah rows below it stay the plain .index-item rows exactly as
   // everywhere else in this list.
-  function renderSurahList(list, container, showManzil){
+  function renderSurahList(list, container, showManzil, showAyahJump){
     if(!list.length){
       container.innerHTML = '<div class="empty-state">لا توجد نتائج</div>';
       return;
@@ -147,6 +147,15 @@
           '<div class="manzil-sub">' + info.subtitle + '</div>' +
         '</div>';
       }
+      // "الانتقال إلى آية": a small icon at the end of the row (see CSS
+      // comment on .index-item-goto-ayah). data-surah carries the surah
+      // number for the click handler; the row's own data-page attribute
+      // is deliberately untouched by this button (handled separately).
+      var ayahJumpBtn = showAyahJump
+        ? '<button type="button" class="index-item-goto-ayah" data-surah="' + s.surah + '" aria-label="الانتقال إلى آية في ' + displayName + '" title="الانتقال إلى آية">' +
+            '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="2" fill="currentColor" stroke="none"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>' +
+          '</button>'
+        : '';
       return manzilHtml + '<div class="index-item" data-page="'+s.page+'">' +
         '<div class="index-item-inner">' +
           '<span class="num">' + UI.toArabicDigits(s.surah) + '</span>' +
@@ -154,6 +163,7 @@
             '<div class="name">' + displayName + '</div>' +
             (surahInfo ? '<div class="surah-info">' + surahInfo + '</div>' : '') +
           '</div>' +
+          ayahJumpBtn +
         '</div>' +
       '</div>';
     }).join('');
@@ -217,6 +227,26 @@
     );
     UI.closePanel(els.searchPanel);
   }
+  // Shared by both places فهرس السور rows can appear with the ayah-jump
+  // icon enabled (currently just the dedicated surahPanel list — see
+  // showAyahJump in renderSurahList/tileSurah below). Looks up the
+  // surah's real ayah count from SURAH_META for the dialog's validation
+  // bound, opens the dialog, and on confirm calls
+  // ReaderManager.openAyahByNumber then closes whichever panel the
+  // dialog was opened from (only on success, so a somehow-invalid
+  // surah/ayah combination — shouldn't happen given the validation
+  // above — doesn't leave the person stranded on a page that never
+  // changed).
+  function openAyahJumpForSurah(surahNum, panelToClose){
+    var meta = window.SURAH_META && window.SURAH_META[surahNum];
+    var maxAyah = meta && meta.ayahs ? parseInt(meta.ayahs, 10) : 0;
+    if(!maxAyah) return;
+    var displayName = (window.SURAH_NAMES_VOCALIZED && window.SURAH_NAMES_VOCALIZED[surahNum]) || '';
+    Dialogs.openAyahJumpModal(displayName, maxAyah, function(ayahNum){
+      var ok = ReaderManager.openAyahByNumber(surahNum, ayahNum);
+      if(ok && panelToClose) UI.closePanel(panelToClose);
+    });
+  }
   // Delegated once on els.surahList instead of re-attaching a listener to
   // every row on every render (this runs on every keystroke while
   // browsing/filtering the surah index) — see wiring in init(). Search
@@ -225,6 +255,11 @@
   // an .index-item).
   function handleIndexContainerClick(e){
     var container = this;
+    var gotoAyahBtn = e.target.closest('.index-item-goto-ayah');
+    if(gotoAyahBtn && container.contains(gotoAyahBtn)){
+      openAyahJumpForSurah(parseInt(gotoAyahBtn.getAttribute('data-surah'), 10), els.surahPanel);
+      return;
+    }
     var surahItem = e.target.closest('.index-item');
     if(surahItem && container.contains(surahItem)){
       Home.openReaderAt(parseInt(surahItem.getAttribute('data-page'), 10));
@@ -317,7 +352,7 @@
     // ---- فهرس السور ----
     els.surahList.addEventListener('click', handleIndexContainerClick);
     els.tileSurah.addEventListener('click', function(){
-      renderSurahList(SearchManager.getSurahOrder(), els.surahList, true);
+      renderSurahList(SearchManager.getSurahOrder(), els.surahList, true, true);
       UI.openPanel(els.surahPanel);
     });
     els.btnCloseSurah.addEventListener('click', function(){ UI.closePanel(els.surahPanel); });

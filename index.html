@@ -611,6 +611,20 @@
     </div>
   </div>
 
+  <!-- ============ GO TO AYAH MODAL (from فهرس السور rows) ============ -->
+  <div id="ayahJumpModal" class="modal-overlay hidden">
+    <div class="modal-box">
+      <h3>الانتقال إلى آية</h3>
+      <div class="ayah-jump-surah-row">السورة: <b id="ayahJumpSurahName"></b></div>
+      <input type="number" id="ayahJumpInput" class="search-input" placeholder="رقم الآية" inputmode="numeric">
+      <div class="modal-error" id="ayahJumpError"></div>
+      <div class="modal-actions">
+        <button id="ayahJumpModalCancel" class="modal-btn ghost">إلغاء</button>
+        <button id="ayahJumpModalGo" class="modal-btn primary">انتقال</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ============ CLEAR ALL REMINDER MARKS CONFIRM MODAL ============ -->
   <div id="clearRemindersModal" class="modal-overlay hidden">
     <div class="modal-box">

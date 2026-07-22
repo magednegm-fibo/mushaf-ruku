@@ -129,6 +129,74 @@
     cb();
   }
 
+  // -----------------------------------------------------------------
+  // "الانتقال إلى آية" modal — opened from a small icon on each فهرس
+  // السور row. Same one-shot-callback shape as the modals above, but its
+  // close/cancel logic follows clearRemindersModal's pattern (not
+  // gotoModal's plain UI.closePanel) because this one ALSO always opens
+  // ON TOP of an already-open panel (surahPanel) rather than directly
+  // over the reader/home screen — same "Cancel sends me to the home
+  // screen" bug shape described above, same fix: back out of just this
+  // modal via history.back() without hiding it first, so
+  // closeTopmostOverlay finds THIS modal (still marked open) instead of
+  // falling through to surahPanel underneath it.
+  // -----------------------------------------------------------------
+  var ayahJumpOnGo = null;
+  var ayahJumpMax = 0;
+  function openAyahJumpModal(surahName, maxAyah, onGo){
+    if(!els.ayahJumpModal) return;
+    ayahJumpOnGo = onGo;
+    ayahJumpMax = maxAyah;
+    els.ayahJumpError.textContent = '';
+    if(els.ayahJumpSurahName) els.ayahJumpSurahName.textContent = surahName;
+    els.ayahJumpInput.value = '';
+    UI.openPanel(els.ayahJumpModal);
+    setTimeout(function(){ els.ayahJumpInput.focus(); }, 150);
+  }
+  function backOutOfAyahJumpModal(){
+    if(els.ayahJumpModal.classList.contains('hidden')) return;
+    if(history.state && history.state.tag === 'panel'){
+      history.back(); // popstate -> UI.closeTopmostOverlay() hides just this modal
+    } else {
+      els.ayahJumpModal.classList.add('hidden');
+    }
+  }
+  function closeAyahJumpModal(){
+    ayahJumpOnGo = null;
+    backOutOfAyahJumpModal();
+  }
+  function submitAyahJumpModal(){
+    if(!ayahJumpOnGo) return;
+    var raw = UI.fromArabicDigits(els.ayahJumpInput.value.trim());
+    var n = parseInt(raw, 10);
+    if(!raw || isNaN(n) || n < 1 || n > ayahJumpMax){
+      els.ayahJumpError.textContent = 'رقم الآية يجب أن يكون بين ١ و' + UI.toArabicDigits(ayahJumpMax) + '.';
+      // Tapping "انتقال" does genuinely blur the input on-device (confirmed:
+      // without this call, the cursor is gone and the person has to tap
+      // the field again to keep typing) — the earlier "nothing blurs it"
+      // read of the code was wrong, or at least doesn't match real device
+      // behavior. Restore focus so retyping doesn't need an extra tap.
+      //
+      // focus() only — no .select(). The previous version of this fix
+      // called .select() right after focus(), and THAT (not focus()
+      // itself) was what triggered the number-pad IME to re-layout on
+      // some Android devices, which re-fires UI.js's visualViewport
+      // 'resize' listener and repositions the whole modal inline
+      // (syncModalToViewport) — the reported redraw/shiver. A plain
+      // focus() call, guarded so it's skipped if focus somehow never
+      // left the input, hasn't reproduced that.
+      if(els.ayahJumpInput && document.activeElement !== els.ayahJumpInput){
+        els.ayahJumpInput.focus();
+      }
+      return;
+    }
+    var cb = ayahJumpOnGo;
+    ayahJumpOnGo = null;
+    if(els.ayahJumpInput) els.ayahJumpInput.blur();
+    backOutOfAyahJumpModal();
+    cb(n);
+  }
+
   function init(deps){
     els = deps.els;
     UI = deps.UI;
@@ -148,11 +216,17 @@
     els.clearRemindersModalCancel && els.clearRemindersModalCancel.addEventListener('click', closeClearRemindersModal);
     els.clearRemindersModalConfirm && els.clearRemindersModalConfirm.addEventListener('click', confirmClearRemindersModal);
 
+    els.ayahJumpModalCancel && els.ayahJumpModalCancel.addEventListener('click', closeAyahJumpModal);
+    els.ayahJumpModalGo && els.ayahJumpModalGo.addEventListener('click', submitAyahJumpModal);
+    els.ayahJumpInput && els.ayahJumpInput.addEventListener('keydown', function(e){
+      if(e.key === 'Enter') submitAyahJumpModal();
+    });
+
     // Both modals participate in the shared hardware-back-button stack —
     // see UI.js. If the back button force-closes favModal mid-flow, the
     // pending callback must be cleared too so a later Save press can't
     // fire with a stale callback.
-    UI.registerOverlayModals([els.favModal, els.gotoModal, els.clearRemindersModal].filter(Boolean));
+    UI.registerOverlayModals([els.favModal, els.gotoModal, els.clearRemindersModal, els.ayahJumpModal].filter(Boolean));
   }
 
   window.Dialogs = {
@@ -160,6 +234,7 @@
     openFavModal: openFavModal,
     openGotoModal: openGotoModal,
     openClearRemindersModal: openClearRemindersModal,
+    openAyahJumpModal: openAyahJumpModal,
     // Called by UI.js's onModalForceClosed hook (wired in app.js) so a
     // back-press that closes favModal/gotoModal also clears the pending
     // one-shot callback, matching what an explicit Cancel press does.
@@ -167,6 +242,7 @@
       if(el === els.favModal) favOnSave = null;
       if(el === els.gotoModal) gotoOnGo = null;
       if(el === els.clearRemindersModal) clearRemindersOnConfirm = null;
+      if(el === els.ayahJumpModal) ayahJumpOnGo = null;
     }
   };
 })();

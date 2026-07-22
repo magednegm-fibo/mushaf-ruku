@@ -325,6 +325,66 @@ SPLIT_SINGLE_WORD_CASES.forEach(function(c){
   });
 });
 
+
+// A2c. Batch of additional confirmed alif/hamza mid-word splits, found via
+// a full data.js scan (tools/scan-alif-split.js) for the same shape as A2b:
+// an isolated ا (+ diacritics, optionally prefixed by و/ف) separated from
+// the rest of the word by a real U+0020, with the remainder starting in ل.
+// One representative ayah per unique fragment; KNOWN_SPLIT_WORD_FRAGMENTS
+// in readerManager.js covers every occurrence of each fragment string, not
+// just the reference ayah listed here.
+var SPLIT_SINGLE_WORD_CASES_B2 = [
+  { surah: 2, ayah: 174, query: "اليم", label: "اَ لِيۡمٌ split (2:174)", marker: /^اَلِيۡمٌ/ },
+  { surah: 3, ayah: 21, query: "اليم", label: "اَ لِيۡمٍ split (3:21)", marker: /^اَلِيۡمٍ/ },
+  { surah: 3, ayah: 103, query: "فالف", label: "فَاَ لَّفَ split (3:103)", marker: /^فَاَلَّفَ/ },
+  { surah: 4, ayah: 18, query: "اليما", label: "اَ لِيۡمًا split (4:18)", marker: /^اَلِيۡمًا/ },
+  { surah: 4, ayah: 94, query: "القي", label: "اَ لۡقٰٓى split (4:94)", marker: /^اَلۡقٰٓى/ },
+  { surah: 4, ayah: 171, query: "القها", label: "اَ لۡقٰٮهَاۤ split (4:171)", marker: /^اَلۡقٰٮهَاۤ/ },
+  { surah: 4, ayah: 173, query: "اليما", label: "اَ لِيۡمًا split (4:173)", marker: /^اَلِيۡمًا/ },
+  { surah: 5, ayah: 3, query: "اليوم", label: "اَ لۡيَوۡمَ split (5:3)", marker: /^اَلۡيَوۡمَ/ },
+  { surah: 6, ayah: 70, query: "اليم", label: "اَ لِيۡمٌۢ split (6:70)", marker: /^اَلِيۡمٌۢ/ },
+  { surah: 8, ayah: 65, query: "الفا", label: "اَ لۡفًا split (8:65)", marker: /^اَلۡفًا/ },
+  { surah: 9, ayah: 3, query: "اليم", label: "اَ لِيۡمٍۙ split (9:3)", marker: /^اَلِيۡمٍۙ/ },
+  { surah: 16, ayah: 75, query: "الحمد", label: "اَ لۡحَمۡدُ split (16:75)", marker: /^اَلۡحَمۡدُ/ },
+  { surah: 18, ayah: 48, query: "الن", label: "اَ لَّنۡ split (18:48)", marker: /^اَلَّنۡ/ },
+  { surah: 18, ayah: 75, query: "الم", label: "اَ لَمۡ split (18:75)", marker: /^اَلَمۡ/ },
+  { surah: 20, ayah: 69, query: "والق", label: "وَاَ لۡقِ split (20:69)", marker: /^وَاَلۡقِ/ },
+  { surah: 22, ayah: 25, query: "اليم", label: "اَ لِيۡمٍ split (22:25)", marker: /^اَلِيۡمٍ/ },
+  { surah: 22, ayah: 56, query: "الملك", label: "اَ لۡمُلۡكُ split (22:56)", marker: /^اَلۡمُلۡكُ/ },
+  { surah: 25, ayah: 37, query: "اليما", label: "اَ لِيۡمًا split (25:37)", marker: /^اَلِيۡمًا/ },
+  { surah: 26, ayah: 45, query: "فالقي", label: "فَاَ لۡقٰى split (26:45)", marker: /^فَاَلۡقٰى/ },
+  { surah: 28, ayah: 7, query: "فالقيه", label: "فَاَ لۡقِيۡهِ split (28:7)", marker: /^فَاَلۡقِيۡهِ/ },
+  { surah: 28, ayah: 31, query: "الق", label: "اَ لۡقِ split (28:31)", marker: /^اَلۡقِ/ },
+  { surah: 29, ayah: 14, query: "الف", label: "اَ لۡفَ split (29:14)", marker: /^اَلۡفَ/ },
+  { surah: 31, ayah: 10, query: "والقي", label: "وَاَ لۡقٰى split (31:10)", marker: /^وَاَلۡقٰى/ },
+  { surah: 33, ayah: 8, query: "اليما", label: "اَ لِيۡمًا split (33:8)", marker: /^اَلِيۡمًا/ },
+  { surah: 34, ayah: 27, query: "الحقتم", label: "اَ لۡحَـقۡتُمۡ split (34:27)", marker: /^اَلۡحَـقۡتُمۡ/ },
+  { surah: 35, ayah: 28, query: "الوانه", label: "اَ لۡوَانُهٗ split (35:28)", marker: /^اَلۡوَانُهٗ/ },
+  { surah: 39, ayah: 32, query: "اليس", label: "اَ لَيۡسَ split (39:32)", marker: /^اَلَيۡسَ/ },
+  { surah: 46, ayah: 24, query: "اليم", label: "اَ لِيۡمٌۙ split (46:24)", marker: /^اَلِيۡمٌۙ/ },
+  { surah: 50, ayah: 26, query: "فالقيه", label: "فَاَ لۡقِيٰهُ split (50:26)", marker: /^فَاَلۡقِيٰهُ/ }
+];
+SPLIT_SINGLE_WORD_CASES_B2.forEach(function(c){
+  var a = findAyah(c.surah, c.ayah);
+  check('A2c ' + c.label + ': ayah exists', function(){ return !!a; });
+  if(!a) return;
+  check('A2c ' + c.label + ': tokenizes as a single word (not split by mid-word space)', function(){
+    var words = ReaderManager.tokenizeAyahWords(a.textIndopak);
+    // At-least-one-match rather than exactly-one: a few ayaat (e.g. 5:3,
+    // 18:75, 28:31) legitimately contain the same short word twice in one
+    // ayah -- once already correct in the data, or a genuine standalone
+    // "اَ" (interrogative hamza, its own real word) elsewhere in the same
+    // ayah -- so an exact count would over-constrain those cases. What
+    // actually proves the fix is that the specific split fragment now
+    // joins into a single token somewhere in the ayah.
+    var hit = words.filter(function(w){ return c.marker.test(w.replace(/[\u2060\u2061\u200B-\u200F]/g, '')); });
+    return hit.length >= 1 || ('expected at least one token containing the joined word, found 0 (word list: ' + JSON.stringify(words) + ')');
+  });
+  check('A2c ' + c.label + ': resolves to a single-word match (normal-mode search)', function(){
+    var r = SearchManager.findMatchWordRange(a.textIndopak, c.query, false);
+    return (!!r && r.end === r.start) || ('range=' + JSON.stringify(r) + ' (expected a single-word span)');
+  });
+});
 // A3. Dagger-alif dual-normalization — the big one. Each case records
 // the expected normal-mode count, exact-mode count, and confirms every
 // normal-mode result resolves to a highlightable word in at least one
