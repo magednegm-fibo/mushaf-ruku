@@ -304,9 +304,11 @@ SPLIT_WORD_CASES.forEach(function(c){
 // KNOWN_SPLIT_WORD_FRAGMENTS in readerManager.js. Reported: 5:42
 // "اَ كّٰلُوۡنَ" (اكالون) rendered with a visible gap after the alif in
 // Naskh/Indopak mode, since the un-joined "اَ" and "كّٰلُوۡنَ" become two
-// separate .quran-word spans.
+// separate .quran-word spans. Also 5:64 "وَاَ لۡقَيۡنَا" (والقينا), same
+// class of bug: fatha-alef + space + lam-sukun.
 var SPLIT_SINGLE_WORD_CASES = [
-  { surah: 5, ayah: 42, query: 'اكالون', label: 'اَ كّٰلُوۡنَ split (5:42)' }
+  { surah: 5, ayah: 42, query: 'اكالون', label: 'اَ كّٰلُوۡنَ split (5:42)', marker: /^اَكّٰلُوۡنَ/ },
+  { surah: 5, ayah: 64, query: 'والقينا', label: 'وَاَ لۡقَيۡنَا split (5:64)', marker: /^وَاَلۡقَيۡنَا/ }
 ];
 SPLIT_SINGLE_WORD_CASES.forEach(function(c){
   var a = findAyah(c.surah, c.ayah);
@@ -314,7 +316,7 @@ SPLIT_SINGLE_WORD_CASES.forEach(function(c){
   if(!a) return;
   check('A2b ' + c.label + ': tokenizes as a single word (not split by mid-word space)', function(){
     var words = ReaderManager.tokenizeAyahWords(a.textIndopak);
-    var hit = words.filter(function(w){ return w.replace(/[\u2060\u2061\u200B-\u200F]/g, '').indexOf('\u0627') === 0 && /كّٰلُو/.test(w); });
+    var hit = words.filter(function(w){ return c.marker.test(w.replace(/[\u2060\u2061\u200B-\u200F]/g, '')); });
     return hit.length === 1 || ('expected exactly one token containing the joined word, found ' + hit.length + ' (word list: ' + JSON.stringify(words) + ')');
   });
   check('A2b ' + c.label + ': resolves to a single-word match (normal-mode search)', function(){

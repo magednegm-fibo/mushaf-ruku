@@ -422,7 +422,11 @@
 // textIndopak ("اَ" + "كّٰلُوۡنَ") -- reported at 5:42, where the "اَ"
 // rendered with a visible gap before "كّٰلُوۡنَ" in Naskh/Indopak mode.
 // Only confirmed occurrence of this exact split in the dataset: 5:42.
-var KNOWN_SPLIT_WORD_FRAGMENTS = ["اٰ تُوۡهُمۡ", "اٰ تَيۡتُمُوۡهُنَّ", "اٰ تُوا", "اٰ تُوۡهُنَّ", "اٰ لَۤاءَ", "اٰ تُہُمَا", "ذٰ لِكَ", "ذٰ لِكُ", "اَ لَّا", "اَ لَّذِيۡنَ", "اَ كّٰلُوۡنَ"];
+// وَأَلۡقَيۡنَا ("wa-alqaynaa") is likewise split by a genuine
+// U+0020 in textIndopak ("وَاَ" + "لۡقَيۡنَا") -- reported at 5:64,
+// where "وَاَ" rendered with a visible gap before "لۡقَيۡنَا" in
+// Naskh/Indopak mode. Only confirmed occurrence: 5:64.
+var KNOWN_SPLIT_WORD_FRAGMENTS = ["اٰ تُوۡهُمۡ", "اٰ تَيۡتُمُوۡهُنَّ", "اٰ تُوا", "اٰ تُوۡهُنَّ", "اٰ لَۤاءَ", "اٰ تُہُمَا", "ذٰ لِكَ", "ذٰ لِكُ", "اَ لَّا", "اَ لَّذِيۡنَ", "اَ كّٰلُوۡنَ", "وَاَ لۡقَيۡنَا"];
   var KNOWN_SPLIT_PLACEHOLDER = '\u2061';
   function joinKnownSplitWords(s){
     KNOWN_SPLIT_WORD_FRAGMENTS.forEach(function(frag){
