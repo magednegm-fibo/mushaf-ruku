@@ -15,15 +15,160 @@
   // Ruku index (الفهرس)
   // ===================================================================
   var indexBuilt = false;
-  function buildIndex(){
-    var html = '';
-    var lastJuz = null;
-    // "نطاق العرض" (الإعدادات): يقيّد الفهرس إما لسورة/جزء/منزل الركوع
-    // الحالي بدل كل الـ٥٥٦ ركوع. جزء/منزل غير ذات معنى في مصاحف Juz-Amma
-    // (!JUZ_INFO.fullMushaf — جزء واحد بس أصلًا، والاختيار 'juz' معطّل
-    // ومُتحوَّل لـ'all' في init())، لكن نطاق السورة يفضل شغّال زي ما هو.
+  // Pure row-computation for الفهرس, split out from buildIndex() so it's
+  // testable without a DOM (see tests/navigation-regression.js "N6").
+  // Returns an ordered array of row descriptors:
+  //   {type:'header', juz}
+  //   {type:'item', startIdx, endIdx, name, ayah, ruku}
+  // In the full-mushaf scope (نطاق العرض = الكل), رأس كل جزء يبان، وتحت كل
+  // جزء أول ركوع بس لكل سورة بيظهر كصف مستقل — أركان نفس السورة المتتالية
+  // داخل نفس الجزء (زي أركان البقرة الـ١٦ في الأجزاء ١-٣) بتتجمع في نفس
+  // صف الأول بدل تكرار اسم السورة ١٦ مرة. لسه كل ركوع قابل للوصول ولإبراز
+  // current: كل صف بيسجّل startIdx/endIdx (نطاق أركانه)، مش مجرد ركوع
+  // واحد، والدالة highlightAndScrollIndexToCurrent بتدوّر بالنطاق مش
+  // بمطابقة رقم واحد بالظبط.
+  // كلمات ترتيب الأرباع الثمانية (١-٨) — نفس أسلوب MANZIL_ORDINALS تحت،
+  // بس لمصفوفة أطول (كل جزء ٨ أرباع بدل ٧ منازل في المصحف كله).
+  var QUARTER_ORDINALS = ['الأول', 'الثاني', 'الثالث', 'الرابع', 'الخامس', 'السادس', 'السابع', 'الثامن'];
+  // نطاق العرض = "الجزء الحالي": بدل سرد كل ركوع في الجزء (اللي كان ممكن
+  // يكرر اسم السورة زي المشكلة اللي اتصلحت في نطاقي الكل والمنزل)، الجزء
+  // بطبيعته بينقسم لثمانية أرباع تقليدية (رُبع الحزب) — مش بالضرورة على
+  // حدود الركوعات، فكل ربع بيتحسب من نقطة بدايته الحقيقية (سورة:آية) في
+  // window.RUB_STARTS (rub-info.js)، مش من أول ركوع فيه. بيرجع صف واحد
+  // لكل ربع من الثمانية اللي جوه الجزء الحالي بس (الأرباع رقم
+  // (juz-1)*8+1 لغاية juz*8، بترتيب عالمي ثابت — كل جزء ٨ أرباع متتالية
+  // غير متداخلة، اتأكدنا من كده في rub-info.js).
+  function computeJuzQuarterRows(PAGES, juzNum){
+    if(!window.RUB_STARTS || !window.ReaderManager || typeof window.ReaderManager.findPageIndexForAyah !== 'function'){
+      return [];
+    }
+    var lastPageIdxOfJuz = -1;
+    for(var i = PAGES.length - 1; i >= 0; i--){
+      if(PAGES[i].juz === juzNum){ lastPageIdxOfJuz = i; break; }
+    }
+    if(lastPageIdxOfJuz === -1) return [];
+
+    var firstGlobalRub = (juzNum - 1) * 8; // 0-based index into RUB_STARTS
+    var starts = [];
+    for(var q = 0; q < 8; q++){
+      var pair = window.RUB_STARTS[firstGlobalRub + q];
+      if(!pair) continue;
+      var pageIdx = window.ReaderManager.findPageIndexForAyah(pair[0], pair[1]);
+      if(pageIdx === -1) continue;
+      starts.push({ordinal: q + 1, surah: pair[0], ayah: pair[1], startIdx: pageIdx});
+    }
+    return starts.map(function(s, idx){
+      var nextStartIdx = (idx + 1 < starts.length) ? starts[idx + 1].startIdx : null;
+      var endIdx = (nextStartIdx !== null) ? Math.max(s.startIdx, nextStartIdx - 1) : lastPageIdxOfJuz;
+      // اسم السورة بيتاخد من نفس الآية اللي الربع بيبدأ عندها بالظبط
+      // (s.surah/s.ayah) — مش من أول آية في الركوع (PAGES[s.startIdx]
+      // .ayahs[0])، لأن حدود الأرباع مش بالضرورة على حدود الركوعات: لو
+      // الربع بدأ في نص ركوع بيخص سورة تانية عن اللي بدأ بيها الركوع نفسه
+      // (نادر لكن ممكن)، لازم اسم السورة الصحيح ده هو اللي يتاخد.
+      var surahName = null;
+      var pageAyahs = PAGES[s.startIdx].ayahs;
+      for(var k = 0; k < pageAyahs.length; k++){
+        if(pageAyahs[k].surah === s.surah && pageAyahs[k].ayah === s.ayah){
+          surahName = pageAyahs[k].surahName;
+          break;
+        }
+      }
+      return {
+        type: 'quarter',
+        ordinal: s.ordinal,
+        startIdx: s.startIdx,
+        endIdx: endIdx,
+        surah: s.surah,
+        surahName: surahName,
+        ayah: s.ayah,
+        ruku: PAGES[s.startIdx].ruku
+      };
+    });
+  }
+  // ---------------------------------------------------------------------
+  // "الذهاب إلى منزل رقم" — عند نطاق العرض = المنزل، زر "الذهاب إلى ركوع
+  // رقم" (btnGoto) يتحول لأداة الذهاب إلى منزل رقم (١-٧) بدل رقم ركوع،
+  // نفس فكرة تحوّل عنوان الفهرس (indexPanelTitleFor فوق) حسب النطاق. أول
+  // ركوع في المنزل N هو أول ركوع في أول سورة منه (MANZIL_STARTS[N-1]),
+  // آية ١ — نفس منطق computeJuzQuarterRows اللي بيستخدم
+  // ReaderManager.findPageIndexForAyah لتحويل (سورة، آية) لرقم صفحة.
+  // Pure/DOM-free على قصد — قابلة للاختبار مباشرة (tests N-manzil-goto).
+  function findPageIndexForManzil(PAGES, manzilNum){
+    if(!window.MANZIL_STARTS || !window.ReaderManager || typeof window.ReaderManager.findPageIndexForAyah !== 'function'){
+      return -1;
+    }
+    var starts = window.MANZIL_STARTS;
+    if(!manzilNum || manzilNum < 1 || manzilNum > starts.length) return -1;
+    return window.ReaderManager.findPageIndexForAyah(starts[manzilNum - 1], 1);
+  }
+  // رقم المنزل الحالي (١-based) بناءً على سورة الصفحة الحالية — يُستخدم
+  // كقيمة افتراضية لما مربع الإدخال يفتح، بنفس منطق indexPanelTitleFor.
+  function currentManzilNumber(PAGES, state){
+    var curPage = PAGES[state.page];
+    if(!curPage || !window.MANZIL_STARTS || !window.getManzilRange) return 1;
+    var range = window.getManzilRange(curPage.ayahs[0].surah);
+    var idx = window.MANZIL_STARTS.indexOf(range.start);
+    return idx > -1 ? idx + 1 : 1;
+  }
+  // ---------------------------------------------------------------------
+  // "الذهاب إلى جزء رقم" — نفس فكرة findPageIndexForManzil فوق، بس لما
+  // نطاق العرض = الجزء: زر "الذهاب إلى ركوع رقم" (btnGoto) يتحول لأداة
+  // الذهاب إلى جزء رقم (١-٣٠). أول ركوع في الجزء N هو أول صفحة PAGES ليها
+  // p.juz === N (PAGES مرتبة بالفعل بترتيب المصحف)، فمفيش داعي لـ
+  // findPageIndexForAyah زي المنزل. Pure/DOM-free على قصد.
+  function findPageIndexForJuz(PAGES, juzNum){
+    if(!juzNum || juzNum < 1 || juzNum > 30) return -1;
+    for(var i = 0; i < PAGES.length; i++){
+      if(PAGES[i].juz === juzNum) return i;
+    }
+    return -1;
+  }
+  // رقم الجزء الحالي (١-based) بناءً على صفحة القارئ الحالية — قيمة
+  // افتراضية لمربع الإدخال، بنفس منطق currentManzilNumber فوق.
+  function currentJuzNumber(PAGES, state){
+    var curPage = PAGES[state.page];
+    return (curPage && curPage.juz) ? curPage.juz : 1;
+  }
+  // ---------------------------------------------------------------------
+  // "الانتقال إلى سورة" — عند نطاق العرض = السورة الحالية، زر "الذهاب إلى
+  // ركوع رقم" (btnGoto) يتحول لأداة الانتقال إلى سورة، بس مربع الإدخال
+  // هنا بيقبل رقم السورة (١-١١٤) *أو* اسمها، على عكس أدوات المنزل/الجزء
+  // فوق اللي بتقبل رقم بس — فمش ممكن نستخدم نفس مسار gotoModal الرقمي
+  // الافتراضي (submitGotoModal في dialogs.js)، فبنمرر opts.resolveInput
+  // مخصص بدل كده (شوف الشرح في dialogs.js).
+  // الاسم بيتقارن بعد normalizeArabic (نفس البايبلاين المستخدم في بحث
+  // السور — SearchManager.normalizeArabic) على *كامل* اسم السورة، مش
+  // مطابقة جزئية زي searchSurahs()، عشان مدخل زي "النساء" ميرجعش أكتر من
+  // نتيجة أو يتلخبط مع اسم تاني بيحتويه كجزء. Pure/DOM-free على قصد.
+  function resolveSurahGotoInput(rawInput){
+    if(!window.UI) return null;
+    var trimmed = (rawInput || '').trim();
+    if(!trimmed) return null;
+    var western = window.UI.fromArabicDigits(trimmed);
+    if(/^\d+$/.test(western)){
+      var n = parseInt(western, 10);
+      return (n >= 1 && n <= 114) ? n : null;
+    }
+    // Name match needs SearchManager (surah order + normalizeArabic) —
+    // only the name branch depends on it, so a numeric entry above still
+    // resolves fine even if SearchManager somehow isn't loaded.
+    if(!window.SearchManager) return null;
+    var norm = window.SearchManager.normalizeArabic(trimmed);
+    var order = window.SearchManager.getSurahOrder();
+    for(var i = 0; i < order.length; i++){
+      if(window.SearchManager.normalizeArabic(order[i].name) === norm) return order[i].surah;
+    }
+    return null;
+  }
+
+  function computeIndexRows(PAGES, JUZ_INFO, state){
     var scope = state.displayScope || 'all';
     var curPage = PAGES[state.page];
+    // نطاق "الجزء الحالي" له عرض مختلف تمامًا (٨ أرباع بحدودهم الحقيقية،
+    // مش قائمة ركوعات) — يتفرّع هنا قبل منطق الفلترة العادي بالأسفل.
+    if(scope === 'juz' && JUZ_INFO.fullMushaf && curPage){
+      return computeJuzQuarterRows(PAGES, curPage.juz);
+    }
     var onlySurah = null, onlyJuz = null, manzilRange = null;
     if(curPage && scope === 'surah'){
       onlySurah = curPage.ayahs[0].surah;
@@ -35,6 +180,18 @@
     // رأس الجزء (الجزء N) بيبان بس في النطاق الكامل — في أي نطاق مُقيَّد
     // القائمة أصلًا صغيرة ومحصورة، فرأس الجزء مايضيفش حاجة.
     var showJuzHeaders = JUZ_INFO.fullMushaf && scope === 'all';
+    // تجميع أركان نفس السورة المتتالية في صف واحد: مطلوب في النطاق الكامل
+    // (لكل جزء على حدة، عبر رأس الجزء) وكمان في نطاق المنزل — منزل واحد
+    // ممكن يحتوي على سورة طويلة زي البقرة (تبدأ من الفاتحة للنساء في
+    // المنزل الأول) بعشرات الأركان، فمن غير تجميع هيتكرر اسمها في كل صف.
+    // مفيش رؤوس جزء هنا فمفيش حاجة تصفّر lastSurahInJuz، فالتجميع بيمتد
+    // على طول قائمة المنزل كلها — وده صح لأن كل سورة في نطاق منزل واحد
+    // بتظهر مرة واحدة متصلة أصلًا (المنازل بتتقسم على حدود السور).
+    var collapseBySurah = showJuzHeaders || scope === 'manzil';
+    var rows = [];
+    var lastJuz = null;
+    var lastSurahInJuz = null;
+    var curItem = null;
     PAGES.forEach(function(p, i){
       if(onlySurah !== null && p.ayahs[0].surah !== onlySurah) return;
       if(onlyJuz !== null && p.juz !== onlyJuz) return;
@@ -42,22 +199,85 @@
         var s = p.ayahs[0].surah;
         if(s < manzilRange.start || s > manzilRange.end) return;
       }
-      var firstName = p.ayahs[0].surahName;
-      var firstAyah = p.ayahs[0].ayah;
+      var curSurah = p.ayahs[0].surah;
       if(showJuzHeaders && p.juz !== lastJuz){
-        html += '<div class="juz-header">الجزء ' + UI.toArabicDigits(p.juz) + '</div>';
+        rows.push({type: 'header', juz: p.juz});
         lastJuz = p.juz;
+        lastSurahInJuz = null;
+        curItem = null;
       }
-      var rukuLabelNum = JUZ_INFO.fullMushaf ? p.ruku : p.rukuInJuz;
-      html += '<div class="index-item" data-idx="'+i+'">' +
+      if(collapseBySurah && curItem && curSurah === lastSurahInJuz){
+        curItem.endIdx = i;
+        return;
+      }
+      lastSurahInJuz = curSurah;
+      curItem = {
+        type: 'item',
+        startIdx: i,
+        endIdx: i,
+        name: p.ayahs[0].surahName,
+        ayah: p.ayahs[0].ayah,
+        ruku: JUZ_INFO.fullMushaf ? p.ruku : p.rukuInJuz
+      };
+      rows.push(curItem);
+    });
+    return rows;
+  }
+  function buildIndex(){
+    var rows = computeIndexRows(PAGES, JUZ_INFO, state);
+    var html = rows.map(function(r){
+      if(r.type === 'header'){
+        return '<div class="juz-header">الجزء ' + UI.toArabicDigits(r.juz) + '</div>';
+      }
+      if(r.type === 'quarter'){
+        return '<div class="index-item" data-idx="' + r.startIdx + '" data-idx-end="' + r.endIdx + '">' +
+          '<div class="index-item-inner">' +
+            '<span class="num">' + UI.toArabicDigits(r.ordinal) + '</span>' +
+            '<div><div class="name">الربع ' + QUARTER_ORDINALS[r.ordinal - 1] + '</div>' +
+            '<div class="meta">يبدأ من ' + (r.surahName ? (r.surahName + ' ') : '') + UI.toArabicDigits(r.ayah) + ' \u2022 الركوع ' + UI.toArabicDigits(r.ruku) + '</div></div>' +
+          '</div>' +
+        '</div>';
+      }
+      return '<div class="index-item" data-idx="' + r.startIdx + '" data-idx-end="' + r.endIdx + '">' +
         '<div class="index-item-inner">' +
-          '<span class="num">' + UI.toArabicDigits(i+1) + '</span>' +
-          '<div><div class="name">' + firstName + '</div>' +
-          '<div class="meta">يبدأ من الآية ' + UI.toArabicDigits(firstAyah) + ' \u2022 الركوع ' + UI.toArabicDigits(rukuLabelNum) + '</div></div>' +
+          '<span class="num">' + UI.toArabicDigits(r.startIdx + 1) + '</span>' +
+          '<div><div class="name">' + r.name + '</div>' +
+          '<div class="meta">يبدأ من الآية ' + UI.toArabicDigits(r.ayah) + ' \u2022 الركوع ' + UI.toArabicDigits(r.ruku) + '</div></div>' +
         '</div>' +
       '</div>';
-    });
+    }).join('');
     els.indexList.innerHTML = html || '<div class="empty-state">لا توجد نتائج</div>';
+  }
+  // Lazy caching for الفهرس: building all ٥٥٦ rows costs real work
+  // (string concatenation + innerHTML parsing) that most sessions never
+  // need, since not every reader opens the ruku index. Build it once,
+  // the first time it's actually opened while نطاق العرض = الكل, and
+  // reuse it after that — except when نطاق العرض is restricted to
+  // surah/juz/manzil, where the (much cheaper, small) filtered list
+  // depends on wherever the reader currently is, so it's always rebuilt
+  // fresh and never cached.
+  //
+  // IMPORTANT: buildIndex() always overwrites the SAME shared
+  // els.indexList element regardless of scope. So a restricted-scope
+  // build (surah/juz/manzil) leaves els.indexList holding that filtered
+  // HTML — if indexBuilt were still true from an earlier 'all'-scope
+  // build, switching back to نطاق العرض الكل and reopening the index
+  // would wrongly skip rebuilding and show that stale filtered list
+  // (the exact bug this function fixes). So a restricted-scope build
+  // must invalidate the cache flag, forcing the next 'all'-scope open to
+  // rebuild the real full index at least once.
+  //
+  // Pure and DOM-free on purpose so it's directly regression-testable
+  // (see tests/navigation-regression.js "N8") without needing to mock
+  // els.indexList/innerHTML at all.
+  function decideIndexRebuild(displayScope, indexBuilt){
+    if(displayScope && displayScope !== 'all'){
+      return {rebuild: true, nextIndexBuilt: false};
+    }
+    if(!indexBuilt){
+      return {rebuild: true, nextIndexBuilt: true};
+    }
+    return {rebuild: false, nextIndexBuilt: indexBuilt};
   }
   // Highlights the ruku currently open and scrolls it into the middle of
   // the index list, so opening the index from deep inside the mushaf
@@ -65,7 +285,20 @@
   function highlightAndScrollIndexToCurrent(){
     var prev = els.indexList.querySelector('.index-item.current');
     if(prev) prev.classList.remove('current');
-    var current = els.indexList.querySelector('.index-item[data-idx="' + state.page + '"]');
+    // data-idx-end may cover more than one collapsed ruku (see
+    // computeIndexRows), so match by range containment rather than an
+    // exact data-idx equality check.
+    var items = els.indexList.querySelectorAll('.index-item');
+    var current = null;
+    for(var k = 0; k < items.length; k++){
+      var start = parseInt(items[k].getAttribute('data-idx'), 10);
+      var endAttr = items[k].getAttribute('data-idx-end');
+      var end = endAttr !== null ? parseInt(endAttr, 10) : start;
+      if(state.page >= start && state.page <= end){
+        current = items[k];
+        break;
+      }
+    }
     if(current){
       current.classList.add('current');
       current.scrollIntoView({block: 'center'});
@@ -309,6 +542,60 @@
     });
   }
 
+  // منازل القرآن السبعة، بالترتيب — نفس ترتيب window.MANZIL_STARTS
+  // (constants.js)، فمفيش تكرار لأرقام السور هنا؛ العنصر رقم N هنا يقابل
+  // المنزل رقم N+1 (١-based) في MANZIL_STARTS.
+  var MANZIL_ORDINALS = ['الأول', 'الثاني', 'الثالث', 'الرابع', 'الخامس', 'السادس', 'السابع'];
+  // عنوان لوحة الفهرس (الفهرس panel) يعكس نطاق العرض الحالي:
+  //  - "الكل"    → "فهرس المصحف"
+  //  - "منزل"    → "فهرس المنزل الأول" / "الثاني" / ... حسب المنزل اللي
+  //               الصفحة الحالية فيه (بيتحدد من رقم سورتها الأولى عبر
+  //               window.getManzilRange/MANZIL_STARTS، نفس المصدر
+  //               المستخدم في فلترة الفهرس نفسه).
+  //  - "جزء"     → "فهرس الجزء ١٦" / "١٧" / ... برقم الجزء نفسه (مش
+  //               ترتيب لفظي زي المنزل، لأن أرقام الأجزاء معروفة ومألوفة
+  //               بالفعل — نفس المنطق المستخدم في رأس الجزء في نطاق الكل).
+  //  - "سورة"    → "فهرس السورة ٥" / ... برقم السورة نفسه (مش اسمها —
+  //               نفس أسلوب رقم الجزء فوق، رقم واحد ثابت ومألوف بدل
+  //               حساب ترتيب لفظي زيه زي المنزل).
+  //  - غير كده     → "الفهرس" العنوان الافتراضي القديم، بدون تغيير.
+  // Pure/DOM-free على قصد — قابلة للاختبار مباشرة (tests N9) بدون DOM.
+  // digitsFn (اختياري): بيحوّل رقم الجزء لأرقام هندية عربية زي باقي
+  // نصوص الواجهة (UI.toArabicDigits) — لو متبعتش، بيرجع الرقم زي ما هو
+  // عشان الدالة تفضل قابلة للاختبار بدون تحميل ui.js.
+  function indexPanelTitleFor(scope, curSurah, curJuz, digitsFn){
+    var digits = typeof digitsFn === 'function' ? digitsFn : function(n){ return String(n); };
+    if(scope === 'manzil' && curSurah != null && window.MANZIL_STARTS && window.getManzilRange){
+      var range = window.getManzilRange(curSurah);
+      var ordinalIdx = window.MANZIL_STARTS.indexOf(range.start);
+      if(ordinalIdx > -1 && MANZIL_ORDINALS[ordinalIdx]){
+        return 'فهرس المنزل ' + MANZIL_ORDINALS[ordinalIdx];
+      }
+    }
+    if(scope === 'juz' && curJuz != null){
+      return 'فهرس الجزء ' + digits(curJuz);
+    }
+    if(scope === 'surah' && curSurah != null){
+      return 'فهرس السورة ' + digits(curSurah);
+    }
+    if(scope === 'all') return 'فهرس المصحف';
+    return 'الفهرس';
+  }
+  // نص/تلميح زر btnGoto (زر الانتقال أعلى الفهرس) — بيتغيّر لـ"الانتقال
+  // إلى سورة" في نطاق العرض = السورة الحالية بس (الفرع اللي بيقبل اسم
+  // مش رقم ركوع)، وبيفضل زي ما هو "الذهاب إلى ركوع رقم" في باقي
+  // النطاقات — عنوان الـdialog نفسه (مش الزر) هو اللي بيتغيّر لمنزل/جزء
+  // فوق في openGoto، والزر بيفضل بتاعه الافتراضي في الحالتين دول.
+  function gotoButtonLabelFor(scope){
+    return scope === 'surah' ? 'الانتقال إلى سورة' : 'الذهاب إلى ركوع رقم';
+  }
+  function updateGotoButtonLabel(){
+    if(!els.btnGoto) return;
+    var label = gotoButtonLabelFor(state.displayScope || 'all');
+    els.btnGoto.setAttribute('aria-label', label);
+    els.btnGoto.setAttribute('title', label);
+  }
+
   function init(deps){
     els = deps.els;
     state = deps.state;
@@ -330,19 +617,19 @@
       UI.closePanel(els.indexPanel);
     });
     els.btnIndex.addEventListener('click', function(){
-      // Lazy: building all ٥٥٦ rows costs real work (string concatenation
-      // + innerHTML parsing) that most sessions never need, since not
-      // every reader opens the ruku index. Build it once, the first time
-      // it's actually opened, and reuse it after that — except when
-      // نطاق العرض is restricted to surah/juz/manzil, where the (much
-      // cheaper, small) filtered list depends on wherever the reader
-      // currently is, so it's always rebuilt fresh and never cached.
-      if(state.displayScope && state.displayScope !== 'all'){
-        buildIndex();
-      } else if(!indexBuilt){
-        buildIndex();
-        indexBuilt = true;
+      var decision = decideIndexRebuild(state.displayScope, indexBuilt);
+      if(decision.rebuild) buildIndex();
+      indexBuilt = decision.nextIndexBuilt;
+      if(els.indexPanelTitle){
+        var curPage = PAGES[state.page];
+        els.indexPanelTitle.textContent = indexPanelTitleFor(
+          state.displayScope || 'all',
+          curPage ? curPage.ayahs[0].surah : null,
+          curPage ? curPage.juz : null,
+          UI.toArabicDigits
+        );
       }
+      updateGotoButtonLabel();
       UI.openPanel(els.indexPanel);
       // Wait a frame so the panel is laid out/visible before scrolling.
       requestAnimationFrame(function(){ highlightAndScrollIndexToCurrent(); });
@@ -407,6 +694,7 @@
     // الترقية في storage-manager.js (juzOnlyMode -> displayScope:'juz').
     if(els.displayScopeSelect){
       els.displayScopeSelect.value = state.displayScope || 'all';
+      updateGotoButtonLabel();
       els.displayScopeSelect.addEventListener('change', function(){
         state.displayScope = els.displayScopeSelect.value;
         saveState();
@@ -416,6 +704,7 @@
         // منزل) اللي المفروض يحترموها بتتغيّر دلوقتي مش لما يحصل
         // renderPage() تاني.
         ReaderManager.updateNavButtons();
+        updateGotoButtonLabel();
         var labels = {
           all: 'هيتم عرض جميع صفحات الركوع',
           surah: 'هيتم عرض ركوعات السورة الحالية فقط',
@@ -557,10 +846,78 @@
       }
     });
 
-    // ---- الذهاب إلى ركوع رقم ----
+    // ---- الذهاب إلى ركوع رقم / الذهاب إلى منزل رقم ----
+    // btnGoto نفسه عنصر داخل رأس لوحة "الفهرس" (indexPanel — انظر
+    // index.html)، فمفيش طريقة توصله غير من جوه الفهرس المفتوح أصلاً.
+    // لازم نقفل الفهرس بعد الانتقال دايمًا، وإلا هيفضل فاتح فوق القارئ
+    // ويغطي الركوع الجديد اللي اتنقلنا له فعلًا تحته — ده اللي كان بيبان
+    // كأن "الانتقال مابيحصلش" مع إن state.page كانت بتتغير صح من تحت.
+    // في نطاق العرض = المنزل، نفس الزر يذهب لأول ركوع في منزل رقم N
+    // (١-٧) بدل رقم ركوع مطلق، والفهرس (لو اتفتح تاني بنفس النطاق) يتبع
+    // تلقائيًا لأن computeIndexRows بيحسب نطاق المنزل من سورة state.page
+    // الحالية — تغييرها هنا كافٍ.
     function openGoto(){
+      if(state.displayScope === 'manzil'){
+        Dialogs.openGotoModal(currentManzilNumber(PAGES, state), window.MANZIL_STARTS.length, function(n){
+          var idx = findPageIndexForManzil(PAGES, n);
+          if(idx > -1){
+            Home.openReaderAt(idx);
+            UI.closePanel(els.indexPanel);
+          }
+        }, {
+          title: 'الذهاب إلى منزل رقم',
+          placeholder: 'اكتب رقم المنزل (١ - ' + UI.toArabicDigits(window.MANZIL_STARTS.length) + ')',
+          errorPrefix: 'رقم غير صحيح، اكتب رقمًا من ١ إلى '
+        });
+        return;
+      }
+      // نطاق العرض = الجزء: نفس الزر يذهب لأول ركوع في جزء رقم N (١-٣٠)
+      // بدل رقم ركوع مطلق. الفهرس (لو اتفتح تاني) بيتبع تلقائيًا لأن
+      // computeIndexRows/indexPanelTitleFor بيحسبوا نطاق الجزء من
+      // PAGES[state.page].juz — تغييرها هنا (عبر Home.openReaderAt) كافٍ،
+      // بالظبط زي حالة المنزل فوق.
+      if(state.displayScope === 'juz' && JUZ_INFO.fullMushaf){
+        Dialogs.openGotoModal(currentJuzNumber(PAGES, state), 30, function(n){
+          var idx = findPageIndexForJuz(PAGES, n);
+          if(idx > -1){
+            Home.openReaderAt(idx);
+            UI.closePanel(els.indexPanel);
+          }
+        }, {
+          title: 'الذهاب إلى جزء رقم',
+          placeholder: 'اكتب رقم الجزء (١ - ٣٠)',
+          errorPrefix: 'رقم غير صحيح، اكتب رقمًا من ١ إلى '
+        });
+        return;
+      }
+      // نطاق العرض = السورة الحالية: نفس الزر يذهب لأول ركوع في سورة رقم/
+      // اسم N بدل رقم ركوع مطلق. على عكس فرعي المنزل/الجزء فوق، مربع
+      // الإدخال هنا بيقبل اسم السورة كمان مش رقمها بس — عشان كده بنمرر
+      // resolveInput مخصص (resolveSurahGotoInput فوق) بدل الاعتماد على
+      // فحص الرقم الافتراضي في submitGotoModal. الفهرس (لو اتفتح تاني)
+      // بيتبع تلقائيًا بنفس آلية فرعي المنزل/الجزء (عبر Home.openReaderAt
+      // اللي بتغيّر PAGES[state.page]).
+      if(state.displayScope === 'surah'){
+        var curPageForSurah = PAGES[state.page];
+        var curSurahNum = curPageForSurah ? curPageForSurah.ayahs[0].surah : 1;
+        Dialogs.openGotoModal(curSurahNum, 114, function(n){
+          var idx = SearchManager.getSurahStartPage(n);
+          if(idx !== undefined && idx > -1){
+            Home.openReaderAt(idx);
+            UI.closePanel(els.indexPanel);
+          }
+        }, {
+          title: 'الانتقال إلى سورة',
+          placeholder: 'اكتب رقم السورة أو اسمها',
+          errorMessage: 'رقم أو اسم السورة غير صحيح',
+          resolveInput: resolveSurahGotoInput,
+          inputMode: 'text'
+        });
+        return;
+      }
       Dialogs.openGotoModal(state.page + 1, PAGES.length, function(n){
         Home.openReaderAt(n - 1);
+        UI.closePanel(els.indexPanel);
       });
     }
     els.btnGoto && els.btnGoto.addEventListener('click', openGoto);
@@ -585,6 +942,15 @@
   }
 
   window.Navigation = {
-    init: init
+    init: init,
+    computeIndexRows: computeIndexRows,
+    decideIndexRebuild: decideIndexRebuild,
+    indexPanelTitleFor: indexPanelTitleFor,
+    findPageIndexForManzil: findPageIndexForManzil,
+    currentManzilNumber: currentManzilNumber,
+    findPageIndexForJuz: findPageIndexForJuz,
+    currentJuzNumber: currentJuzNumber,
+    resolveSurahGotoInput: resolveSurahGotoInput,
+    gotoButtonLabelFor: gotoButtonLabelFor
   };
 })();

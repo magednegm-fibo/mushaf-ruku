@@ -57,6 +57,7 @@
     btnIndex: document.getElementById('btnIndex'),
     btnCloseIndex: document.getElementById('btnCloseIndex'),
     indexPanel: document.getElementById('indexPanel'),
+    indexPanelTitle: document.getElementById('indexPanelTitle'),
     indexList: document.getElementById('indexList'),
     btnSettings: document.getElementById('btnSettings'),
     btnCloseSettings: document.getElementById('btnCloseSettings'),
@@ -147,6 +148,7 @@
 
     btnGoto: document.getElementById('btnGoto'),
     gotoModal: document.getElementById('gotoModal'),
+    gotoModalTitle: document.getElementById('gotoModalTitle'),
     gotoInput: document.getElementById('gotoInput'),
     gotoModalCancel: document.getElementById('gotoModalCancel'),
     gotoModalGo: document.getElementById('gotoModalGo'),
@@ -328,10 +330,37 @@
   // JS, which is what every goToPage()/renderPage() reset already assumes.
   if('scrollRestoration' in history) history.scrollRestoration = 'manual';
   history.replaceState({tag:'home'}, '');
+  // btnGoto ("الذهاب إلى ركوع رقم"/"الذهاب إلى منزل رقم") lives INSIDE
+  // الفهرس's own header (see index.html), so it always opens gotoModal
+  // NESTED on top of an already-open indexPanel — never standalone.
+  // Closing gotoModal (UI.closePanel) hides it synchronously and queues
+  // a history.back(); when that back()'s popstate lands, indexPanel is
+  // still the next thing open underneath. Calling closeTopmostOverlay()
+  // for THAT popstate used to find indexPanel open and close it too —
+  // collateral damage the person never asked for, since this event was
+  // only ever meant to confirm gotoModal's already-completed close. That
+  // left indexPanel's own history entry "orphaned": still occupying a
+  // slot, but with nothing open for closeTopmostOverlay() to find later.
+  // Re-opening indexPanel afterwards then closing it normally could pop
+  // back down to that orphaned entry instead of the reader's — with
+  // nothing open there either, the popstate fell through to
+  // Home.maybeGoHomeOnPopstate and exited straight to the home screen
+  // (confirmed on-device via the diagnostic log in v1.0.7).
+  // Fix: a popstate that's only confirming a back() WE issued ourselves
+  // (UI.isSelfInitiatedBackPending()) never needs closeTopmostOverlay()
+  // at all — whatever we meant to close, we already closed synchronously
+  // before calling back(). Only genuine, unrequested popstates (the
+  // hardware/gesture back button) should make it hunt for something to
+  // close.
   window.addEventListener('popstate', function(e){
-    if(UI.closeTopmostOverlay()) return;
+    if(UI.isSelfInitiatedBackPending()){
+      UI.flushPendingOps();
+      return;
+    }
+    if(UI.closeTopmostOverlay()){ UI.flushPendingOps(); return; }
     var tag = e.state && e.state.tag;
     Home.maybeGoHomeOnPopstate(tag);
+    UI.flushPendingOps();
   });
 
   // -----------------------------------------------------------------

@@ -37,6 +37,7 @@ const DYNAMIC_ASSETS = [
   './surah-meta.js',
   './surah-names-vocalized.js',
   './juz-info.js',
+  './rub-info.js',
   './version.js',
   './constants.js',
   './storage-manager.js',

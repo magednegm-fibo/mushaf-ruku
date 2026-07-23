@@ -67,7 +67,39 @@
     els.homeScreen.classList.add('hidden');
     els.readerScreen.classList.remove('hidden');
     if(wasHome){
-      history.pushState({tag:'reader'}, '');
+      // Reached here two ways: (a) directly from the home screen itself
+      // (بطاقة "استكمال القراءة"/"علامة القراءة") — history is currently
+      // sitting on the 'home' entry, so a fresh 'reader' layer belongs on
+      // top of it; or (b) from selecting a row inside a panel that was
+      // opened OVER the home screen (فهرس السور/الأجزاء/البحث/المفضلة,
+      // or the nested "الانتقال إلى آية" dialog stacked over فهرس السور)
+      // — history is still sitting on THAT panel's own 'panel' entry,
+      // which the caller closes right after via UI.closePanel(panel).
+      // Pushing a NEW 'reader' entry in case (b) used to leave the
+      // panel's entry orphaned underneath it: by the time closePanel ran
+      // afterwards, the current top was already 'reader' (not 'panel'),
+      // so closePanel's "only pop if I'm still the current top" check
+      // silently failed to pop it, and that extra unpoppable layer made
+      // the NEXT back-eligible event (hardware back button, or another
+      // panel's own close) land on that orphaned entry — with no panel
+      // actually open there for closeTopmostOverlay() to find, it fell
+      // through to Home.maybeGoHomeOnPopstate and exited straight to the
+      // home screen. (state.lastPageShared was already updated by then,
+      // which is why "استكمال القراءة" afterwards correctly resumed at
+      // the very surah that had just been force-exited from.)
+      // Fix: in case (b), REPLACE that panel's entry with the reader's
+      // in one synchronous history.replaceState (see
+      // UI.replaceHistoryState — fires no popstate, so there's no async
+      // gap either) instead of pushing a separate new layer on top of
+      // it. UI.closePanel(panel) still runs as normal right after (in
+      // every caller) and always hides the panel's DOM either way; its
+      // own history-pop attempt now correctly finds nothing left to pop
+      // (the entry is already 'reader'), so it's a harmless no-op there.
+      if(history.state && history.state.tag === 'panel'){
+        UI.replaceHistoryState('reader');
+      } else {
+        UI.pushHistoryState('reader');
+      }
     }
   }
   function showHome(){
@@ -100,11 +132,7 @@
     ReaderBookmark = deps.ReaderBookmark;
 
     els.btnHome.addEventListener('click', function(){
-      if(history.state && history.state.tag === 'reader'){
-        history.back();
-      } else {
-        showHome();
-      }
+      UI.backIfTag('reader', showHome);
     });
     els.btnContinue.addEventListener('click', function(){ openReaderAt(state[currentLastPageKey()] || 0); });
   }

@@ -43,12 +43,43 @@
   // -----------------------------------------------------------------
   var gotoOnGo = null;
   var gotoMax = 0;
-  function openGotoModal(currentPage1Based, maxPage, onGo){
+  // errorPrefix/title/placeholder are overridable via opts so this same
+  // modal shell can serve "الذهاب إلى ركوع رقم" (default, ١-٥٥٦),
+  // "الذهاب إلى منزل رقم" (نطاق العرض = المنزل, ١-٧), "الذهاب إلى جزء
+  // رقم" (نطاق العرض = الجزء, ١-٣٠), and "الانتقال إلى سورة" (نطاق العرض
+  // = السورة, ١-١١٤ أو اسمها) without duplicating any modal markup or
+  // open/submit/close logic — see Navigation.openGoto.
+  var gotoErrorPrefix = 'رقم غير صحيح، اكتب رقمًا من ١ إلى ';
+  // resolveInput (اختياري): بيحل محل فحص الرقم الافتراضي بالكامل — لازم
+  // لحالة السورة اللي مربع إدخالها بيقبل اسم مش رقم بس، فمنطق "رقم من ١
+  // لغاية gotoMax" مايكفيش. بياخد النص الخام (زي ما اتكتب، من غير تحويل
+  // أرقام هندية) ويرجّع إما رقم صحيح متحقق منه أو null/undefined لو مش
+  // صالح. errorMessage (اختياري): نص خطأ كامل بديل لـ errorPrefix+gotoMax
+  // — مطلوب هنا لنفس السبب، لأن "اكتب رقمًا من ١ إلى ١١٤" مش وصف دقيق
+  // لمدخل بيقبل اسم كمان.
+  var gotoResolveInput = null;
+  var gotoErrorMessage = null;
+  function openGotoModal(currentValue1Based, maxValue, onGo, opts){
     if(!els.gotoModal) return;
+    opts = opts || {};
     gotoOnGo = onGo;
-    gotoMax = maxPage;
+    gotoMax = maxValue;
+    gotoErrorPrefix = opts.errorPrefix || 'رقم غير صحيح، اكتب رقمًا من ١ إلى ';
+    gotoResolveInput = (typeof opts.resolveInput === 'function') ? opts.resolveInput : null;
+    gotoErrorMessage = opts.errorMessage || null;
+    if(els.gotoModalTitle) els.gotoModalTitle.textContent = opts.title || 'الذهاب إلى ركوع رقم';
+    if(els.gotoInput) els.gotoInput.placeholder = opts.placeholder || ('اكتب رقم الركوع (١ - ' + UI.toArabicDigits(maxValue) + ')');
+    // inputmode controls which on-screen keyboard the device shows.
+    // Defaults to the numeric keypad (existing ركوع/منزل/جزء behavior);
+    // opts.inputMode lets a caller ask for the normal text keyboard
+    // instead (the سورة dialog needs it since its input also accepts a
+    // surah NAME, not just a number — a numeric keypad would make typing
+    // a name impossible). gotoInput itself is type="text" (see
+    // index.html) specifically so a name can be typed at all; a native
+    // type="number" input silently rejects non-digit characters.
+    if(els.gotoInput) els.gotoInput.setAttribute('inputmode', opts.inputMode || 'numeric');
     els.gotoError.textContent = '';
-    els.gotoInput.value = UI.toArabicDigits(currentPage1Based);
+    els.gotoInput.value = UI.toArabicDigits(currentValue1Based);
     UI.openPanel(els.gotoModal);
     setTimeout(function(){ els.gotoInput.focus(); els.gotoInput.select(); }, 150);
   }
@@ -58,10 +89,25 @@
   }
   function submitGotoModal(){
     if(!gotoOnGo) return;
-    var raw = UI.fromArabicDigits(els.gotoInput.value.trim());
-    var n = parseInt(raw, 10);
-    if(!raw || isNaN(n) || n < 1 || n > gotoMax){
-      els.gotoError.textContent = 'رقم غير صحيح، اكتب رقمًا من ١ إلى ' + UI.toArabicDigits(gotoMax);
+    var rawInput = els.gotoInput.value.trim();
+    var n;
+    if(gotoResolveInput){
+      n = gotoResolveInput(rawInput);
+    } else {
+      var raw = UI.fromArabicDigits(rawInput);
+      var parsed = parseInt(raw, 10);
+      n = (!raw || isNaN(parsed) || parsed < 1 || parsed > gotoMax) ? null : parsed;
+    }
+    if(n === null || n === undefined){
+      els.gotoError.textContent = gotoErrorMessage || (gotoErrorPrefix + UI.toArabicDigits(gotoMax));
+      // Same fix as submitAyahJumpModal below: tapping "اذهب" can blur
+      // gotoInput on-device, so restore focus on an invalid entry rather
+      // than leaving the person to tap the field again before retyping.
+      // focus() only — no .select() — for the same IME-relayout/shiver
+      // reason documented there.
+      if(els.gotoInput && document.activeElement !== els.gotoInput){
+        els.gotoInput.focus();
+      }
       return;
     }
     var cb = gotoOnGo;
@@ -87,15 +133,15 @@
   //
   // Unlike favModal/gotoModal (always opened directly over the reader or
   // home screen), this one opens ON TOP of an already-open panel
-  // (settingsPanel) — so it can't reuse UI.closePanel() as-is. closePanel
-  // hides the element immediately and *then* calls history.back(); by the
-  // time the resulting popstate reaches UI.closeTopmostOverlay(), this
-  // modal already reads as "closed", so closeTopmostOverlay falls through
-  // and closes the next open overlay underneath it instead — settingsPanel
-  // — which is exactly the "Cancel sends me to the home screen" bug.
-  // Fix: trigger history.back() WITHOUT hiding first, so the modal is
-  // still the topmost *open* overlay when closeTopmostOverlay runs, and
-  // it (correctly) hides only this modal and stops.
+  // (settingsPanel). It used to defer hiding itself to
+  // UI.closeTopmostOverlay() (running off the resulting popstate) instead
+  // of hiding synchronously like UI.closePanel(), to avoid cascading into
+  // settingsPanel underneath it. That's no longer how it avoids that bug:
+  // app.js's master popstate listener now skips closeTopmostOverlay()
+  // entirely for any self-initiated back (isSelfInitiatedBackPending()),
+  // so hiding synchronously here (see backOutOfClearRemindersModal below)
+  // is both safe and required — closeTopmostOverlay() never runs to do it
+  // for us anymore.
   // -----------------------------------------------------------------
   var clearRemindersOnConfirm = null;
   function openClearRemindersModal(onConfirm, message){
@@ -111,11 +157,13 @@
   }
   function backOutOfClearRemindersModal(){
     if(els.clearRemindersModal.classList.contains('hidden')) return;
-    if(history.state && history.state.tag === 'panel'){
-      history.back(); // popstate -> UI.closeTopmostOverlay() hides just this modal
-    } else {
-      els.clearRemindersModal.classList.add('hidden');
-    }
+    // See the matching comment in backOutOfAyahJumpModal() below: hiding
+    // synchronously up front (rather than only via the fallbackFn on a
+    // tag mismatch) is required now that app.js skips
+    // closeTopmostOverlay() for self-initiated backs, and is safe for
+    // the same reason.
+    els.clearRemindersModal.classList.add('hidden');
+    UI.backIfTag('panel', function(){});
   }
   function closeClearRemindersModal(){
     clearRemindersOnConfirm = null;
@@ -131,15 +179,11 @@
 
   // -----------------------------------------------------------------
   // "الانتقال إلى آية" modal — opened from a small icon on each فهرس
-  // السور row. Same one-shot-callback shape as the modals above, but its
-  // close/cancel logic follows clearRemindersModal's pattern (not
-  // gotoModal's plain UI.closePanel) because this one ALSO always opens
-  // ON TOP of an already-open panel (surahPanel) rather than directly
-  // over the reader/home screen — same "Cancel sends me to the home
-  // screen" bug shape described above, same fix: back out of just this
-  // modal via history.back() without hiding it first, so
-  // closeTopmostOverlay finds THIS modal (still marked open) instead of
-  // falling through to surahPanel underneath it.
+  // السور row. Same one-shot-callback shape as the modals above, and
+  // opens ON TOP of an already-open panel (surahPanel) just like
+  // clearRemindersModal above — see that block's comment for why it
+  // hides itself synchronously (backOutOfAyahJumpModal below) rather
+  // than relying on UI.closeTopmostOverlay().
   // -----------------------------------------------------------------
   var ayahJumpOnGo = null;
   var ayahJumpMax = 0;
@@ -155,11 +199,19 @@
   }
   function backOutOfAyahJumpModal(){
     if(els.ayahJumpModal.classList.contains('hidden')) return;
-    if(history.state && history.state.tag === 'panel'){
-      history.back(); // popstate -> UI.closeTopmostOverlay() hides just this modal
-    } else {
-      els.ayahJumpModal.classList.add('hidden');
-    }
+    // Hide synchronously instead of leaving it to closeTopmostOverlay()
+    // (the old fallbackFn-only-on-tag-mismatch pattern). app.js's master
+    // popstate listener now skips closeTopmostOverlay() entirely whenever
+    // isSelfInitiatedBackPending() is true (added later, to fix a
+    // different bug: gotoModal's self-back cascading into closing
+    // indexPanel underneath it) — so on a matching 'panel' tag, the old
+    // fallbackFn here never ran and this modal never actually got
+    // hidden. Hiding it up front is safe now: closeTopmostOverlay() no
+    // longer runs on this self-initiated back either way, so there's no
+    // risk of it cascading down to close surahPanel underneath (the
+    // original reason this modal avoided UI.closePanel()).
+    els.ayahJumpModal.classList.add('hidden');
+    UI.backIfTag('panel', function(){});
   }
   function closeAyahJumpModal(){
     ayahJumpOnGo = null;

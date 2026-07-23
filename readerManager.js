@@ -93,8 +93,71 @@
     return wrapWaqfSigns(text)
       .replace(IQLAB_MEEM_REGEX, IQLAB_MEEM_HTML)
       .replace(TATWEEL_SEAT_REGEX, tatweelSeatHtml)
-      .replace(NAKH_SHIN_JOIN_REGEX, NAKH_SHIN_JOIN_HTML);
+      .replace(NAKH_SHIN_JOIN_REGEX, NAKH_SHIN_JOIN_HTML)
+      .replace(KALLA_MADDA_REGEX, KALLA_MADDA_HTML);
   }
+
+  // Reported (screenshot, Uthmani/مصحف المدينة mode): كَلَّآ (83:18 and
+  // every other madda-bearing occurrence of "kalla") renders with the
+  // combining madda (U+0653) appearing to sit over the لام instead of
+  // over the tail of the ligature's أَلِف. An earlier attempt in a prior
+  // session added "liga" to font-feature-settings on the theory that the
+  // mandatory ك+ل+ا ligature substitution itself wasn't firing — the
+  // person confirmed on-device that this did NOT fix the bug, and it was
+  // reverted (see style.css history).
+  //
+  // Direct inspection of this font's compiled GSUB/GPOS tables (fontTools,
+  // not assumed) shows the substitution IS firing correctly: ك+ل+ا (in
+  // that exact three-letter shape, harakat ignored) ligates into one
+  // single font glyph ("kla5", GDEF class Ligature) via a
+  // font-specific 3-component ligature -- this is a real, deliberate
+  // glyph in the font for this exact word, not a generic ل+ا ligature.
+  // The font DOES define a MarkLigPos anchor for U+0653 on this glyph's
+  // 3rd component (the أَلِف), at a plausible position near its top-left
+  // -- so the font's own data isn't visibly broken either. That points
+  // the remaining suspicion at the mobile text shaper's handling of
+  // MarkLigPos on a 3-component ligature (uncommon; most GPOS testing
+  // in the wild only covers 2-component cases), which is outside what
+  // any CSS feature flag can influence.
+  //
+  // Since neither the ligature-substitution step nor the font's anchor
+  // data is the fault, the fix follows the same pattern already used
+  // elsewhere in this file for the iqlab meem and the waqf-lazim mark:
+  // stop relying on the mark's native rendering for this one exact
+  // sequence and draw a substitute in its place. The three base letters
+  // (ك ل ا) are left completely untouched so the real "kla5" ligature
+  // still forms and still displays connected -- only the trailing madda
+  // is suppressed from native rendering and redrawn as an absolutely
+  // positioned overlay instead.
+  //
+  // UNCONFIRMED ON DEVICE -- top/left below are a STARTING ESTIMATE ONLY,
+  // aimed at the alif's anchor position reported in the font's own
+  // LigatureAttach data (component 2, roughly upper-left of the
+  // ligature). Open 83:18 (or any of the other 6 occurrences: 74:54,
+  // 75:26, 80:11, 83:7, 83:15, 96:6) on the real device after this
+  // build and nudge the position in style.css (.kalla-madda-glyph)
+  // until the mark sits directly above the tail-end of the ligature
+  // (the أَلِف side, away from the كاف), then report back with the
+  // confirmed values. All 16 madda-LESS occurrences of "kalla" (كَلَّا,
+  // ending in a plain alif with no U+0653) are untouched by this regex
+  // and are not reported as broken, so they're left exactly as-is.
+  // SCOPE NOTE: a full-corpus check found 13 total occurrences of this
+  // exact "kalla" shape, but 6 of them (23:100, 26:62, 70:15, 70:39,
+  // 74:16, 89:21) are immediately followed by a waqf mark with no space
+  // in between. Since wrapWaqfSigns() runs BEFORE this regex in
+  // cleanAyahText and already wraps that trailing run into its own
+  // <span>, the plain 7-codepoint sequence this regex looks for no
+  // longer appears contiguously in those 6 cases, so they are NOT
+  // touched by this fix yet -- confirmed by testing the regex against
+  // the real data.js content, not assumed. They likely have the same
+  // underlying bug and need a follow-up once this simpler batch is
+  // confirmed working on-device.
+  var KALLA_MADDA_REGEX = /\u0643\u064E\u0644\u0651\u064E\u0627\u0653/g;
+  var KALLA_MADDA_HTML =
+    '<span class="kalla-cluster">' +
+      '\u0643\u064E\u0644\u0651\u064E\u0627' +
+      '<span class="kalla-madda-glyph" aria-hidden="true">\u0653</span>' +
+    '</span>';
 
   // Reported (device screenshots, Naskh/Indopak mode, two rounds): the
   // خ in نَخۡشٰٓى (5:52) sits too low relative to the ش that follows it

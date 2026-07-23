@@ -146,7 +146,7 @@
   <!-- ============ INDEX / TOC PANEL (by ruku) ============ -->
   <div id="indexPanel" class="panel hidden">
     <div class="panel-head">
-      <h2>الفهرس</h2>
+      <h2 id="indexPanelTitle">الفهرس</h2>
       <div class="panel-head-actions">
         <button class="icon-btn" id="btnGoto" aria-label="الذهاب إلى ركوع رقم" title="الذهاب إلى ركوع رقم">
           <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M11 8v3l2 2"/></svg>
@@ -601,8 +601,8 @@
   <!-- ============ GO TO PAGE/RUKU MODAL ============ -->
   <div id="gotoModal" class="modal-overlay hidden">
     <div class="modal-box">
-      <h3>الذهاب إلى ركوع رقم</h3>
-      <input type="number" id="gotoInput" class="search-input" placeholder="اكتب رقم الركوع (١ - ٥٥٦)" inputmode="numeric">
+      <h3 id="gotoModalTitle">الذهاب إلى ركوع رقم</h3>
+      <input type="text" id="gotoInput" class="search-input" placeholder="اكتب رقم الركوع (١ - ٥٥٦)" inputmode="numeric">
       <div class="modal-error" id="gotoError"></div>
       <div class="modal-actions">
         <button id="gotoModalCancel" class="modal-btn ghost">إلغاء</button>
@@ -740,14 +740,14 @@
       <div class="setting-row">
         <span>نطاق العرض</span>
         <select class="reciter-select" id="displayScopeSelect">
-          <option value="all">جميع الركوعات</option>
-          <option value="manzil">ركوعات المنزل الحالي</option>
-          <option value="juz">ركوعات الجزء الحالي</option>
-          <option value="surah">ركوعات السورة الحالية</option>
+          <option value="all">المصحف بالكامل</option>
+          <option value="manzil">المنزل الحالي</option>
+          <option value="juz">الجزء الحالي</option>
+          <option value="surah">السورة الحالية</option>
         </select>
       </div>
       <p class="about-text" id="displayScopeHint" style="margin-top:2px;">
-        يتم تحديد المنزل والجزء والسورة وفقًا للصفحة الحالية.
+        يحدد الصفحات التي يمكن التنقل بينها أثناء القراءة.
       </p>
       <hr class="settings-divider">
       <div class="setting-row">
@@ -821,6 +821,7 @@
 <script src="surah-meta.js"></script>
 <script src="surah-names-vocalized.js"></script>
 <script src="juz-info.js"></script>
+<script src="rub-info.js"></script>
 <script src="data.js"></script>
 <script src="constants.js"></script>
 <script src="storage-manager.js"></script>

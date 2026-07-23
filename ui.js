@@ -97,33 +97,113 @@
     window.visualViewport.addEventListener('scroll', syncModalToViewport);
   }
 
-  function openPanel(p){
-    if(!p.classList.contains('hidden')) return; // already open — don't double-push history
-    p.classList.remove('hidden');
-    history.pushState({tag:'panel'}, '');
-    if(p.classList.contains('modal-overlay')){
-      // Sync immediately (covers the case the keyboard is already up from
-      // a previous field) and once more shortly after — the keyboard's
-      // own open animation/resize typically lands a beat after focus,
-      // which happens on a setTimeout in the modal's own open function
-      // (openFavModal/openGotoModal in dialogs.js).
-      syncModalToViewport();
-      setTimeout(syncModalToViewport, 250);
+  // -----------------------------------------------------------------
+  // history.back() is asynchronous — its popstate can land one or more
+  // event-loop turns later (confirmed Chromium/spec behavior, not just
+  // theory; Android WebView's own sync with the native back-stack can
+  // add further real-world latency on top). history.pushState(), by
+  // contrast, is fully synchronous and immediately mutates the current
+  // session-history index. If something calls pushState() (openPanel)
+  // or back() again while an earlier back() from closePanel() is still
+  // in flight, that earlier back() ends up traversing relative to
+  // whatever the index has drifted to by the time it actually runs, not
+  // the index it was requested against — it can pop one layer too many.
+  // Reported symptom this caused: "الذهاب إلى منزل رقم" (submitGotoModal
+  // -> UI.closePanel(gotoModal), queuing a back()) navigates correctly,
+  // but the very next panel opened afterwards (الفهرس) — opened before
+  // that back() had resolved — exits straight to the home screen instead
+  // of just showing/closing normally.
+  // Fix: never let a second history mutation run while our own back()
+  // is still outstanding; queue it and replay it once that back()'s
+  // popstate has actually landed (see flushPendingOps, called from
+  // app.js's master popstate listener after its own handling for THIS
+  // event completes — queued opens/closes must not be mistaken by that
+  // same event's closeTopmostOverlay() for what it's meant to close).
+  // -----------------------------------------------------------------
+  var backInFlight = false;
+  var pendingHistoryOps = [];
+  function runOrQueueHistoryOp(fn){
+    if(backInFlight){
+      pendingHistoryOps.push(fn);
+      return;
+    }
+    fn();
+  }
+  function flushPendingOps(){
+    backInFlight = false;
+    // Stop if an op itself re-triggers a back() — the rest must wait for
+    // THAT popstate, not run immediately in this same flush pass.
+    while(pendingHistoryOps.length && !backInFlight){
+      pendingHistoryOps.shift()();
     }
   }
+  // True from the moment closePanel()/backIfTag() issues its own
+  // history.back() until that specific popstate has actually landed —
+  // see app.js's master popstate listener, which uses this to skip
+  // closeTopmostOverlay() for that one event (see the comment there for
+  // why: closeTopmostOverlay() closing something else in that gap is
+  // exactly the "الذهاب إلى منزل رقم opened from inside الفهرس, closing
+  // it collaterally closes الفهرس too" bug).
+  function isSelfInitiatedBackPending(){ return backInFlight; }
+
+  function openPanel(p){
+    runOrQueueHistoryOp(function(){
+      if(!p.classList.contains('hidden')) return; // already open — don't double-push history
+      p.classList.remove('hidden');
+      history.pushState({tag:'panel'}, '');
+      if(p.classList.contains('modal-overlay')){
+        // Sync immediately (covers the case the keyboard is already up from
+        // a previous field) and once more shortly after — the keyboard's
+        // own open animation/resize typically lands a beat after focus,
+        // which happens on a setTimeout in the modal's own open function
+        // (openFavModal/openGotoModal in dialogs.js).
+        syncModalToViewport();
+        setTimeout(syncModalToViewport, 250);
+      }
+    });
+  }
   function closePanel(p){
-    if(p.classList.contains('hidden')) return; // already closed — nothing to pop
-    p.classList.add('hidden');
-    // Drop the inline top/height override once closed, so the next open
-    // (or a plain CSS-driven layout) isn't stuck with a stale viewport
-    // snapshot from this time.
-    if(p.classList.contains('modal-overlay')){
-      p.style.top = '';
-      p.style.height = '';
-    }
-    if(history.state && history.state.tag === 'panel'){
-      history.back();
-    }
+    runOrQueueHistoryOp(function(){
+      if(p.classList.contains('hidden')) return; // already closed — nothing to pop
+      p.classList.add('hidden');
+      // Drop the inline top/height override once closed, so the next open
+      // (or a plain CSS-driven layout) isn't stuck with a stale viewport
+      // snapshot from this time.
+      if(p.classList.contains('modal-overlay')){
+        p.style.top = '';
+        p.style.height = '';
+      }
+      if(history.state && history.state.tag === 'panel'){
+        backInFlight = true;
+        history.back();
+      }
+    });
+  }
+  // Shared by home.js/dialogs.js for the handful of history mutations
+  // they issue directly (reader-screen enter/exit, "back out of a modal
+  // stacked over another panel without hiding it first") — routed
+  // through the same queue so they can't race against openPanel/
+  // closePanel either.
+  function pushHistoryState(tag){
+    runOrQueueHistoryOp(function(){ history.pushState({tag: tag}, ''); });
+  }
+  // Synchronous — fires no popstate at all, so it never has an async gap
+  // for a stray/queued traversal to race against. Used when a panel's
+  // own history entry is being turned INTO the reader's entry (see
+  // Home.showReader) instead of popped-then-replaced-by-a-separate-push
+  // — the two are logically one transition, not two.
+  function replaceHistoryState(tag){
+    runOrQueueHistoryOp(function(){ history.replaceState({tag: tag}, ''); });
+  }
+  function backIfTag(tag, fallbackFn){
+    runOrQueueHistoryOp(function(){
+      if(history.state && history.state.tag === tag){
+        backInFlight = true;
+        history.back();
+      } else if(fallbackFn){
+        fallbackFn();
+      }
+    });
   }
 
   // -----------------------------------------------------------------
@@ -174,6 +254,11 @@
     showToast: showToast,
     openPanel: openPanel,
     closePanel: closePanel,
+    pushHistoryState: pushHistoryState,
+    replaceHistoryState: replaceHistoryState,
+    backIfTag: backIfTag,
+    flushPendingOps: flushPendingOps,
+    isSelfInitiatedBackPending: isSelfInitiatedBackPending,
     registerOverlayModals: registerOverlayModals,
     registerOverlayPanels: registerOverlayPanels,
     setOnModalForceClosed: setOnModalForceClosed,

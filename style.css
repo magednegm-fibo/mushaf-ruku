@@ -388,6 +388,41 @@ body.uthmani-font .waqf-sign{
   transform: translateY(-0.3em);
 }
 
+/* Fix for كَلَّآ ("kalla" with madda) -- see KALLA_MADDA_REGEX in
+   readerManager.js for the full diagnosis (this font ligates ك+ل+ا into
+   one dedicated 3-component glyph, "kla5", which does carry a mark
+   anchor for the trailing madda on its أَلِف component -- so this isn't
+   a missing-anchor case like the iqlab meem; it looks like a mobile
+   shaper limitation on 3-component MarkLigPos). The three base letters
+   render untouched (still forms the real "kla5" ligature, still
+   connected); only the madda is suppressed from native rendering and
+   redrawn here, absolutely positioned over the ligature.
+   .kalla-cluster needs display:inline-block (not just position:relative)
+   for the same reason documented on .quran-word below -- a relatively
+   positioned inline span gives an unreliable containing block for an
+   absolutely positioned child in this environment.
+   ROUND 3 -- person asked for the mark to come down a bit more (no
+   mention of left/right this round, so that axis is left as-is).
+   -0.4em -> -0.25em. STILL AN ESTIMATE -- open 83:18/83:7 again after
+   this build and confirm the vertical position, or report if it needs
+   to move further. */
+.kalla-cluster{
+  position: relative;
+  display: inline-block;
+}
+.kalla-madda-glyph{
+  position: absolute;
+  left: -2%;
+  top: -0.25em;
+  transform: translateX(-50%);
+  font-family: var(--font-quran);
+  font-size: 1em;
+  line-height: 1;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
 /* Each Qur'an word is wrapped so a personal reminder star can be anchored
    directly above it without shifting surrounding text. */
 .quran-word{
