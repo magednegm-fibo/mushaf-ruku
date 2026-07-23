@@ -132,7 +132,17 @@
     ReaderBookmark = deps.ReaderBookmark;
 
     els.btnHome.addEventListener('click', function(){
-      UI.backIfTag('reader', showHome);
+      // Show the home screen synchronously up front — app.js's master
+      // popstate listener skips running any callback for self-initiated
+      // backs (see UI.isSelfInitiatedBackPending()), so relying on
+      // showHome() as backIfTag's fallback only worked when the tag
+      // *didn't* match, i.e. never on a normal tap from the reader. That
+      // was the "needs two taps" bug: the first tap silently popped the
+      // history entry with nothing to show for it, and only the second
+      // tap (now on a mismatched tag) actually ran the fallback. Same
+      // fix already applied to the modals in dialogs.js.
+      showHome();
+      UI.backIfTag('reader', function(){});
     });
     els.btnContinue.addEventListener('click', function(){ openReaderAt(state[currentLastPageKey()] || 0); });
   }
