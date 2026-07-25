@@ -555,6 +555,32 @@ body.night .ayah-num span{ background:#1c1c1e; }
   margin:0 -0.02em;
 }
 
+/* علامة السجدة (۩): رسمها في هذا الخط (قبة/مئذنة صغيرة زخرفية) له صندوق
+   ارتفاع أكبر بكثير من حرف عادي بنفس حجم الآية — بلا هذا التصغير يظهر
+   كبيرًا وقد يتراكب مع ما يليه مباشرة (مُبلَّغ: نهاية سورة العلق، حيث
+   الآية نفسها آخر آية في الركوع فيتصادم الرمز مع علامة انتهاء الركوع
+   تحتها). display:inline-block + line-height:1 يحصران صندوقه الرأسي
+   داخل حدوده الخاصة بدل ما يمدد ارتفاع السطر كله. vertical-align:middle
+   يبقيه متمركزًا مع بقية الكلمة الأخيرة بدل الجلوس على خط الأساس فقط. */
+.sajdah-mark{
+  display:inline-block;
+  font-size:0.7em;
+  line-height:1;
+  vertical-align:middle;
+}
+/* Slightly bigger specifically in مصحف المدينة (Uthmani — the default,
+   no body class) per direct user request. Naskh/Indopak keeps the
+   original 0.7em from the base rule above — this override only fires
+   when body.indopak-font is NOT set, i.e. Uthmani script is active. */
+body:not(.indopak-font) .sajdah-mark{
+  font-size:0.95em;
+}
+/* Very slightly smaller specifically in مصحف النسخ (Naskh/Indopak) per
+   direct user request — Uthmani/Madinah is untouched by this rule. */
+body.indopak-font .sajdah-mark{
+  font-size:0.65em;
+}
+
 /* Tatweel used purely as a "seat" for a following superscript alef/madda
    (فَٱدَّـٰرَٰٔتُمۡ, إِسۡرَـٰٓءِيلَ) — the text itself is authentic Uthmani
    rasm, untouched; this only nudges the glyph a hair away from the letters
@@ -1764,6 +1790,12 @@ body.night .waqf-guide-symbol.tajweed-guide-number{ color:#F2F2F2; }
      silently swaps to UthmanicHafs' rendering whenever Uthmani script
      is selected. */
   font-family: 'PDMS Saleem QuranFont', 'Amiri Quran', 'Noto Naskh Arabic', serif;
+}
+/* ۩ reads slightly small/thin next to the other multi-letter badges at
+   the shared 17px — same class of size fix as .waqf-symbol-meem above,
+   just a smaller bump per direct user request ("شوية" — a little). */
+.waqf-symbol-sajdah{
+  font-size:21px;
 }
 .waqf-guide-text b{
   display:block;

@@ -56,6 +56,19 @@
   var IQLAB_MEEM_REGEX = /\u06ED/g;
   var IQLAB_MEEM_HTML = '<span class="iqlab-mark" aria-hidden="true">\u200cم</span>';
 
+  // علامة السجدة (۩ / U+06E9): بلا هذا التغليف، الرمز يُطبَع بحجم الآية
+  // العادي مباشرة — يعني نفس مقاس أي حرف عادي، بينما رسمه في هذا الخط
+  // (شكل قبة/مئذنة صغيرة زخرفية) له صندوق ارتفاع أكبر بكثير من حرف
+  // عادي، فيظهر كبيرًا بشكل ملحوظ ويتسبب أحيانًا في تداخل بصري مع ما
+  // يليه مباشرة (مثال مُبلَّغ: نهاية سورة العلق، حيث الآية نفسها آخر
+  // آية في الركوع فيتراكب الرمز مع علامة انتهاء الركوع تحتها). wrapWaqfSigns
+  // فوق يترك ۩ كنص عادي غير مغلَّف (ضمن نطاق isWaqfMarkAttachable، لأنه
+  // بين 06D6–06ED وليس من WAQF_COMBINING)، فيبقى متاحًا هنا كحرف عادي
+  // في الـHTML الناتج لتغليفه بأمان بنفس نمط IQLAB_MEEM_REGEX أعلاه —
+  // انظر .sajdah-mark في style.css لتصغير الحجم الفعلي.
+  var SAJDAH_MARK_REGEX = /\u06E9/g;
+  var SAJDAH_MARK_HTML = '<span class="sajdah-mark">\u06E9</span>';
+
   // IMPORTANT: the tatweel and the mark(s) riding on it MUST stay inside
   // the same span. Splitting the tatweel into its own element and leaving
   // its combining mark(s) outside broke the font's GPOS mark-to-base
@@ -92,6 +105,7 @@
   function cleanAyahText(text){
     return wrapWaqfSigns(text)
       .replace(IQLAB_MEEM_REGEX, IQLAB_MEEM_HTML)
+      .replace(SAJDAH_MARK_REGEX, SAJDAH_MARK_HTML)
       .replace(TATWEEL_SEAT_REGEX, tatweelSeatHtml)
       .replace(NAKH_SHIN_JOIN_REGEX, NAKH_SHIN_JOIN_HTML)
       .replace(KALLA_MADDA_REGEX, KALLA_MADDA_HTML);
@@ -526,8 +540,35 @@ var KNOWN_SPLIT_WORD_FRAGMENTS = ["اٰ تُوۡهُمۡ", "اٰ تَيۡتُم�
     return src.split(/\s+/).filter(Boolean);
   }
 
+  // علامة السجدة (۩ — U+06E9): موجودة أصلًا في a.textIndopak (بيانات
+  // QUL) بنفس صيغة "مسافة + الرمز" الملحقة بآخر كلمة، في كل مواضع
+  // السجدة المعروفة في هذا المصحف عدا موضع واحد — 96:19 — حيث الرمز
+  // موجود في a.text (مصحف المدينة/العثماني، الذي لا يُعدَّل هنا ولا في
+  // أي مكان آخر) لكنه غائب كليًا من a.textIndopak، فيختفي الرمز في وضع
+  // خط الناسخ لهذه الآية تحديدًا رغم ظهوره الصحيح في العثماني.
+  //
+  // يُلحَق هنا بنفس الصيغة النصية الحرفية المستخدمة أصلًا في بقية
+  // المواضع الأربعة عشر ("مسافة + ۩") قبل تمرير النص لنفس مسار
+  // المعالجة المعتاد (tokenizeAyahWords / MIDWORD_SPACE_REGEX الذي
+  // يتعامل بالفعل بشكل صحيح مع "مسافة + علامة وقف" الملحقة بآخر كلمة —
+  // شوف تعليق tokenizeAyahWords فوق) — بلا أي معالجة خاصة إضافية.
+  //
+  // الشرط مبني على فحص a.text نفسه (لا رقم سورة/آية مكتوب يدويًا)
+  // فيبقى صحيحًا تلقائيًا حتى لو تغيّرت بيانات textIndopak مستقبلًا:
+  // إذا أُضيفت العلامة هناك لاحقًا، يصبح الشرط الثاني false ولا يتكرر
+  // الإلحاق. مستخرجة كدالة منفصلة (بدل تضمينها مباشرة في
+  // renderAyahWords) عشان تصير قابلة للاختبار مباشرة بمعزل عن state.
+  function resolveAyahSourceText(a, fontStyle){
+    var src = (fontStyle !== 'uthmani' && a.textIndopak) ? a.textIndopak : a.text;
+    if(fontStyle !== 'uthmani' && a.textIndopak &&
+       /\u06E9\s*$/.test(a.text) && a.textIndopak.indexOf('\u06E9') === -1){
+      src = src.replace(/\s*$/, '') + ' \u06E9';
+    }
+    return src;
+  }
+
   function renderAyahWords(a){
-    var src = (state.fontStyle !== 'uthmani' && a.textIndopak) ? a.textIndopak : a.text;
+    var src = resolveAyahSourceText(a, state.fontStyle);
     var words = tokenizeAyahWords(src).map(function(w){
       return w.split(MIDWORD_SPACE_PLACEHOLDER).join(' ').split(KNOWN_SPLIT_PLACEHOLDER).join('\u00A0');
     });
@@ -904,6 +945,7 @@ var KNOWN_SPLIT_WORD_FRAGMENTS = ["اٰ تُوۡهُمۡ", "اٰ تَيۡتُم�
     findPageIndexForAyah: findPageIndexForAyah,
     openAyahByNumber: openAyahByNumber,
     tokenizeAyahWords: tokenizeAyahWords,
+    resolveAyahSourceText: resolveAyahSourceText,
     renderAyahTextWithHighlight: renderAyahTextWithHighlight
   };
 })();

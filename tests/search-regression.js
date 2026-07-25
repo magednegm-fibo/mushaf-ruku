@@ -97,6 +97,65 @@ function findAyah(surah, ayah){
 // per-ayah bug is reported and fixed — this is the permanent record.
 // =====================================================================
 
+// A0z. Sajdah mark (۩ / U+06E9) missing from textIndopak — 96:19 is the
+// one confirmed ayah (out of all 15 sajdah ayaat in this mushaf) whose
+// a.text (Uthmani/Madinah, never edited) ends with the sajdah mark but
+// whose a.textIndopak (QUL dataset) omits it entirely, unlike the other
+// 14 sajdah ayaat which already carry it correctly. Fixed via
+// resolveAyahSourceText() in readerManager.js, which reconstructs it in
+// Indopak mode using the exact "space + ۩" textual form QUL already uses
+// for the other 14 occurrences — data.js itself is untouched.
+(function(){
+  var a = findAyah(96, 19);
+  check('96:19 (Uthmani/data.js) ends with the sajdah mark — sanity check', function(){
+    return /\u06E9\s*$/.test(a.text) || ('a.text unexpectedly missing sajdah mark: ' + JSON.stringify(a.text));
+  });
+  check('96:19 raw textIndopak from data.js is missing the sajdah mark (documents the source gap)', function(){
+    return a.textIndopak.indexOf('\u06E9') === -1 || 'expected the raw dataset gap to still exist — data.js may have changed upstream';
+  });
+  var resolvedUthmani = ReaderManager.resolveAyahSourceText(a, 'uthmani');
+  check('96:19 resolveAyahSourceText() in uthmani mode is untouched (still exactly a.text)', function(){
+    return resolvedUthmani === a.text;
+  });
+  var resolvedIndopak = ReaderManager.resolveAyahSourceText(a, 'indopak');
+  check('96:19 resolveAyahSourceText() in indopak mode adds the sajdah mark', function(){
+    return /\u06E9\s*$/.test(resolvedIndopak) || ('sajdah mark still missing after fix: ' + JSON.stringify(resolvedIndopak));
+  });
+  check('96:19 resolveAyahSourceText() in indopak mode keeps every other character of textIndopak unchanged', function(){
+    var base = a.textIndopak.replace(/\s*$/, '');
+    return resolvedIndopak.indexOf(base) === 0 || ('unexpected mutation of the base text: ' + JSON.stringify(resolvedIndopak));
+  });
+  var words = ReaderManager.tokenizeAyahWords(resolvedIndopak);
+  check('96:19 the sajdah mark stays attached to the last word (not its own separate token) — matches how the other 14 sajdah ayaat tokenize', function(){
+    var lastWord = words[words.length - 1];
+    return (lastWord.indexOf('\u06E9') !== -1) || ('sajdah mark ended up in its own token instead of the last word: ' + JSON.stringify(words));
+  });
+
+  // Sanity check on a normal sajdah ayah that already worked before this
+  // fix (22:18) — must never be double-appended.
+  var a2 = findAyah(22, 18);
+  var resolved2 = ReaderManager.resolveAyahSourceText(a2, 'indopak');
+  check('22:18 (already-correct sajdah ayah) is not double-appended', function(){
+    var count = (resolved2.match(/\u06E9/g) || []).length;
+    return count === 1 || ('expected exactly 1 sajdah mark, found ' + count + ': ' + JSON.stringify(resolved2));
+  });
+  // Reported (device screenshot, Naskh/Indopak): the sajdah mark's glyph
+  // in this font is a large ornamental icon (much taller than a normal
+  // letter), rendering oversized and overlapping the ruku-end mark right
+  // below it when the sajdah ayah is also the last ayah of its ركوع (as
+  // at 96:19). Fixed via .sajdah-mark wrap in readerManager.js/style.css.
+  check('96:19 rendered HTML wraps the sajdah mark in .sajdah-mark for sizing', function(){
+    var html = ReaderManager.renderAyahTextWithHighlight(resolvedIndopak, null);
+    return html.indexOf('<span class="sajdah-mark">\u06E9</span>') !== -1 ||
+      ('sajdah mark not wrapped for sizing: ' + html);
+  });
+  check('22:18 (Uthmani, already-correct sajdah ayah) also wraps the sajdah mark in .sajdah-mark', function(){
+    var html = ReaderManager.renderAyahTextWithHighlight(a2.text, null);
+    return html.indexOf('<span class="sajdah-mark">\u06E9</span>') !== -1 ||
+      ('sajdah mark not wrapped for sizing: ' + html);
+  });
+})();
+
 // A0. Ruku-end waqf mark data bug — 4:33 (ركوع 66) is the last ayah of
 // its ركوع. Its textIndopak wrongly ended with the "لا" (no-stop,
 // U+06D9) Sajawandi mark — the ONLY one of all 556 ruku-ending ayaat

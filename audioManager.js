@@ -65,6 +65,12 @@
     applyPlaybackRate(audioPlayer);
     if(audioPlayer){
       audioPlayer.addEventListener('playing', function(){
+        // نفس حارس مستمع 'ended' تحت مباشرة: 'playing' متأخر/عالق يخص
+        // محاولة تجاوزها الزمن (مثلاً وصل بعد stopListening()) لازم
+        // يتجاهَل بدل ما يعيد ضبط loading أو يشغّل prefetch لهدف محدش
+        // بيستمع له فعليًا — نفس فئة سلوك المتصفح/الـWebView الموثقة في
+        // تعليق attachErrorGuard تحت، بس لحدث 'playing' بدل 'error'.
+        if(!listenState.playing) return;
         listenState.loading = false;
         updateListenButton();
         // الآية الحالية بدأت التشغيل فعليًا بنجاح — الشرط الوحيد لبدء
@@ -121,6 +127,28 @@
         // listenState.playlist; anything else (ruku/single) falls through
         // to the simple same-page-ayah-array advance below.
         if(PLAYLIST_RECITATION_MODES.indexOf(listenState.mode) !== -1){
+          // "تكرار تلاوة الركوع" (الإعدادات): playlists span many rukuات
+          // back to back with no natural pause between them, so a ruku
+          // boundary here is detected by the NEXT playlist item belonging
+          // to a different page (each PAGES entry is exactly one ruku —
+          // see readerManager.js) than the item that just finished, or
+          // there being no next item at all (end of the whole playlist).
+          // Crossing that boundary re-plays the ruku that just finished,
+          // from its own first item (which may be its بسملة marker, so
+          // the repeat includes it too — same as the plain-ruku path),
+          // until it has played the configured number of times.
+          var curPlItem = listenState.playlist[listenState.playlistIndex];
+          var nxtPlItem = listenState.playlist[listenState.playlistIndex + 1];
+          var crossingRuku = curPlItem && (!nxtPlItem || nxtPlItem.pageIdx !== curPlItem.pageIdx);
+          if(crossingRuku){
+            var plRukuTarget = state.rukuRepeatCount || 1;
+            listenState.rukuRepeatsPlayed = (listenState.rukuRepeatsPlayed || 0) + 1;
+            if(listenState.rukuRepeatsPlayed < plRukuTarget){
+              playSurahPlaylistAt(listenState.playlist, findRukuStartIndex(listenState.playlist, listenState.playlistIndex), listenState.mode);
+              return;
+            }
+            listenState.rukuRepeatsPlayed = 0;
+          }
           playSurahPlaylistAt(listenState.playlist, listenState.playlistIndex + 1, listenState.mode);
           return;
         }
@@ -136,7 +164,7 @@
     }
     return audioPlayer;
   }
-  var listenState = { playing:false, loading:false, page:null, ayahIndex:0, mode:'ruku', playlist:null, playlistIndex:0, repeatsPlayed:0, bismillahFor:null };
+  var listenState = { playing:false, loading:false, page:null, ayahIndex:0, mode:'ruku', playlist:null, playlistIndex:0, repeatsPlayed:0, rukuRepeatsPlayed:0, bismillahFor:null };
   // Modes that mean "keep advancing through listenState.playlist" in the
   // 'ended' handler above, instead of the simple same-page ayah-array
   // advance. 'surah'/'juz' predate نطاق العرض (still used by the
@@ -646,6 +674,7 @@
     listenState.playing = false;
     listenState.loading = false;
     listenState.repeatsPlayed = 0;
+    listenState.rukuRepeatsPlayed = 0;
     listenState.bismillahFor = null;
     clearAyahHighlight();
     updateListenButton();
@@ -702,13 +731,31 @@
 
   function playAyahAt(pageIdx, ayahIdx, mode, opts){
     var p = PAGES[pageIdx];
+    var effectiveMode = mode || 'ruku';
     if(!p || !p.ayahs[ayahIdx]){
-      // Reached the end of the ruku's ayahs — playback is done.
+      // Reached the end of the ruku's ayahs. "تكرار تلاوة الركوع"
+      // (الإعدادات): only applies to the plain ruku-playback path (زر
+      // \"استماع\" مع نطاق التلاوة = \"الركوع\"، الافتراضي) — not to
+      // 'single' (الضغط المطول على آية واحدة, which always plays exactly
+      // once) and not to the playlist-driven modes (surah/juz/manzil/all,
+      // handled entirely by playSurahPlaylistAt/the 'ended' handler
+      // above, never routed through this out-of-range branch). Restart
+      // the same ruku from its first ayah until it has played the
+      // configured number of times, mirroring \"تكرار تلاوة الآية\"'s
+      // own counter/target pattern just above in the 'ended' handler.
+      if(effectiveMode === 'ruku'){
+        var rukuTarget = state.rukuRepeatCount || 1;
+        listenState.rukuRepeatsPlayed = (listenState.rukuRepeatsPlayed || 0) + 1;
+        if(listenState.rukuRepeatsPlayed < rukuTarget){
+          playAyahAt(pageIdx, 0, 'ruku');
+          return;
+        }
+        listenState.rukuRepeatsPlayed = 0;
+      }
       stopListening();
       return;
     }
     var a = p.ayahs[ayahIdx];
-    var effectiveMode = mode || 'ruku';
     // البسملة بس لمسار "الاستماع للركوع" (أول الركوع أو لما التشغيل
     // يوصل لبداية سورة جديدة أثناء الركوع نفسه) — مش للضغط المطول على
     // آية واحدة (mode:'single'). الضغط المطول قصده تسميع/مراجعة الآية
@@ -839,6 +886,19 @@
       if(list[i].pageIdx === pageIdx && list[i].ayahIdx === ayahIdx) return list.slice(i);
     }
     return list;
+  }
+
+  // Walks backward from `idx` to the first playlist item that still
+  // belongs to the same ruku (same pageIdx — each PAGES entry is exactly
+  // one ruku), i.e. the item playback should restart at when "تكرار
+  // تلاوة الركوع" repeats the ruku that item is part of. Naturally
+  // includes that ruku's بسملة marker item, if any, since
+  // insertBismillahBeforeSurahs gives the marker the same pageIdx as the
+  // real ayah 1 item right after it.
+  function findRukuStartIndex(playlist, idx){
+    var start = idx;
+    while(start > 0 && playlist[start - 1].pageIdx === playlist[idx].pageIdx) start--;
+    return start;
   }
 
   function playSurahPlaylistAt(playlist, idx, mode){
@@ -1084,6 +1144,32 @@
     applyRecitationRepeatChoice();
   }
 
+  // "تكرار تلاوة الركوع" (الإعدادات): how many times the WHOLE ruku is
+  // recited back to back before playback stops — distinct from "تكرار
+  // تلاوة الآية" above, which repeats each individual ayah in place
+  // before moving to the next one. Only applies to the plain ruku-
+  // playback path (see the effectiveMode === 'ruku' check in
+  // playAyahAt's end-of-ruku branch); the ayah-number long-press
+  // ('single' mode) and نطاق العرض playlists (surah/juz/manzil/all) are
+  // unaffected. Same storage/UI pattern as setupRecitationRepeatSelect
+  // just above. Default is 1 (no repetition).
+  var RUKU_REPEAT_COUNTS = ['1', '2', '3'];
+  function applyRukuRepeatChoice(){
+    if(!els.rukuRepeatSelect) return;
+    var val = String(state.rukuRepeatCount || 1);
+    els.rukuRepeatSelect.value = RUKU_REPEAT_COUNTS.indexOf(val) !== -1 ? val : '1';
+  }
+  function setupRukuRepeatSelect(){
+    if(!els.rukuRepeatSelect) return;
+    els.rukuRepeatSelect.addEventListener('change', function(){
+      var val = els.rukuRepeatSelect.value;
+      if(RUKU_REPEAT_COUNTS.indexOf(val) === -1) val = '1';
+      state.rukuRepeatCount = parseInt(val, 10);
+      saveState();
+    });
+    applyRukuRepeatChoice();
+  }
+
   // "سرعة تشغيل التلاوة" (الإعدادات): playback speed via the native
   // Audio.playbackRate property — 0.75× أبطأ، 1× طبيعية (الافتراضي)،
   // 1.25× أسرع. Applied at getAudioPlayer() creation time and again on
@@ -1123,6 +1209,7 @@
     setupAutoScrollToggle();
     setupRecitationScopeSelect();
     setupRecitationRepeatSelect();
+    setupRukuRepeatSelect();
     setupPlaybackSpeedSelect();
     setupMediaSessionHandlers();
   }
