@@ -676,6 +676,22 @@
     listenState.repeatsPlayed = 0;
     listenState.rukuRepeatsPlayed = 0;
     listenState.bismillahFor = null;
+    // "نطاق التلاوة" can be switched (نطاق العرض <-> الركوع) between
+    // playback sessions without ever touching listenState.mode's owner
+    // (playAyahAt/playSurahPlaylistAt always overwrite .mode correctly
+    // on their own next call) — but nothing previously cleared
+    // .playlist/.playlistIndex here. The 'ended' handler's very first
+    // check (currentItem = listenState.playlist[listenState.playlistIndex])
+    // reads those two unconditionally, with no check that the NEW
+    // session is even a playlist-driven mode — so a stale نطاق العرض
+    // playlist left over from an earlier session could still be
+    // consulted during a later plain-ruku session, and if its leftover
+    // index happened to sit on a بسملة marker, a ruku ayah finishing was
+    // misread as "the بسملة just finished," jumping into that stale
+    // playlist's next item instead of the ruku's own next ayah. Clearing
+    // both here removes the stale data at its source.
+    listenState.playlist = null;
+    listenState.playlistIndex = 0;
     clearAyahHighlight();
     updateListenButton();
     setMediaSessionPlaybackState('none');
@@ -984,6 +1000,28 @@
   // الحالي (جميع الركوعات/المنزل/الجزء/السورة) بدل ما يقف عند آخر آية في
   // الركوع. بيستخدم نفس آلية الفهرس (تشغيل سورة/جزء/منزل/كل المصحف) لكن
   // بيقصّها (slicePlaylistFrom) عشان تبدأ من نفس الركوع الحالي.
+  // Shared by toggleListen() (starting a fresh نطاق العرض session) and by
+  // setupRecitationScopeSelect() below (converting an ALREADY-PLAYING
+  // plain-ruku session into a نطاق العرض one mid-playback). Maps the
+  // current "نطاق العرض" setting to the matching playlist builder for
+  // whatever surah/juz the given page belongs to.
+  function buildEffectiveScopePlaylist(pageIdx){
+    var p = PAGES[pageIdx];
+    if(!p) return null;
+    var effectiveScope = state.displayScope || 'all';
+    var fullList;
+    if(effectiveScope === 'surah'){
+      fullList = buildSurahPlaylist(p.ayahs[0].surah);
+    } else if(effectiveScope === 'juz'){
+      fullList = buildJuzPlaylist(p.juz);
+    } else if(effectiveScope === 'manzil'){
+      fullList = buildManzilPlaylist(p.ayahs[0].surah);
+    } else {
+      fullList = buildAllPlaylist();
+    }
+    return {fullList: fullList, effectiveScope: effectiveScope};
+  }
+
   function toggleListen(){
     if(listenState.playing && listenState.page === state.page){
       stopListening();
@@ -996,23 +1034,13 @@
       playAyahAt(state.page, 0, 'ruku');
       return;
     }
-    var effectiveScope = state.displayScope || 'all';
-    var fullList;
-    if(effectiveScope === 'surah'){
-      fullList = buildSurahPlaylist(p.ayahs[0].surah);
-    } else if(effectiveScope === 'juz'){
-      fullList = buildJuzPlaylist(p.juz);
-    } else if(effectiveScope === 'manzil'){
-      fullList = buildManzilPlaylist(p.ayahs[0].surah);
-    } else {
-      fullList = buildAllPlaylist();
-    }
-    var sliced = slicePlaylistFrom(fullList, state.page, 0);
+    var built = buildEffectiveScopePlaylist(state.page);
+    var sliced = slicePlaylistFrom(built.fullList, state.page, 0);
     if(!sliced.length){
       playAyahAt(state.page, 0, 'ruku');
       return;
     }
-    playSurahPlaylistAt(sliced, 0, effectiveScope);
+    playSurahPlaylistAt(sliced, 0, built.effectiveScope);
   }
 
   // Long-press on an ayah's number marker (the star-shaped ٱ marker at the
@@ -1106,6 +1134,69 @@
       if(RECITATION_SCOPES.indexOf(val) === -1) val = 'ruku';
       state.recitationScope = val;
       saveState();
+      // Changing "نطاق التلاوة" to "الركوع" WHILE a "نطاق العرض" session
+      // is actively playing must take effect on that session right away
+      // — not just on the next press of "استماع". Without this, the
+      // 'ended' handler keeps following listenState.mode (still 'all'/
+      // 'surah'/'juz'/'manzil' from when the session started) and the
+      // playlist it's already chained through, so it silently crosses
+      // into the NEXT ruku the moment the current one ends, exactly as
+      // if the setting had never been changed. Switching listenState.mode
+      // to 'ruku' here routes the very next 'ended' event through the
+      // plain-ruku end-of-array/end-of-ruku branch in playAyahAt instead
+      // — listenState.page/.ayahIndex are already correct (kept in sync
+      // by playSurahPlaylistAt on every item), so this doesn't skip or
+      // repeat anything, it just stops chaining onward. Clearing
+      // .playlist/.playlistIndex too (same reasoning as stopListening())
+      // keeps the 'ended' handler's بسملة-check from ever reading this
+      // now-irrelevant playlist again.
+      if(listenState.playing && val === 'ruku' && listenState.mode !== 'ruku'){
+        // If the ayah currently sounding is actually a نطاق العرض
+        // بسملة marker (see insertBismillahBeforeSurahs — it shares its
+        // pageIdx/ayahIdx with the REAL ayah 1 item right after it,
+        // since the بسملة clip isn't itself a recited ayah), dropping
+        // straight to plain-ruku mode here would make the next 'ended'
+        // event misread "the بسملة just finished" as "the ayah at this
+        // index just finished" and jump straight to ayah 2 — skipping
+        // ayah 1's actual recitation entirely. Route it through the
+        // same listenState.bismillahFor handoff the plain-ruku بسملة
+        // path already uses (see playBismillahThenAyah/'ended' above)
+        // so the real ayah 1 still plays once the بسملة clip ends.
+        var currentPlItem = listenState.playlist ? listenState.playlist[listenState.playlistIndex] : null;
+        listenState.mode = 'ruku';
+        listenState.playlist = null;
+        listenState.playlistIndex = 0;
+        if(currentPlItem && currentPlItem.bismillah){
+          listenState.bismillahFor = {pageIdx: currentPlItem.pageIdx, ayahIdx: currentPlItem.ayahIdx, mode: 'ruku'};
+        }
+      } else if(listenState.playing && val === 'displayScope' && listenState.mode === 'ruku'){
+        // The reverse direction: a plain-ruku session is already playing
+        // and the setting is switched to "نطاق العرض" mid-playback — the
+        // currently-sounding ayah must keep playing uninterrupted, but
+        // once it (or the ruku it's in) ends, playback should now
+        // continue into the wider نطاق العرض instead of stopping at the
+        // ruku boundary. Build the matching playlist for the CURRENT
+        // page (listenState.page — kept in sync with the actual playing
+        // ayah by playAyahAt) and locate this exact ayah in it, so
+        // nothing is skipped or repeated.
+        var built = buildEffectiveScopePlaylist(listenState.page);
+        var sliced = built ? slicePlaylistFrom(built.fullList, listenState.page, listenState.ayahIndex) : [];
+        // slicePlaylistFrom can land on a بسملة marker (it shares its
+        // pageIdx/ayahIdx with the real ayah right after it) — correct
+        // only if we're still actually playing that بسملة clip right
+        // now (listenState.bismillahFor set). If the real ayah is
+        // already playing, the بسملة is done, so skip the marker or the
+        // next 'ended' event would misread it as "بسملة just finished"
+        // and replay this same ayah instead of advancing.
+        if(sliced.length && sliced[0].bismillah && !listenState.bismillahFor){
+          sliced = sliced.slice(1);
+        }
+        if(sliced.length){
+          listenState.playlist = sliced;
+          listenState.playlistIndex = 0;
+          listenState.mode = built.effectiveScope;
+        }
+      }
     });
     applyRecitationScopeChoice();
   }

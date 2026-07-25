@@ -112,6 +112,22 @@ function fakeButton(){
   };
 }
 
+// Minimal fake <select> element — just enough for setupRecitationScopeSelect's
+// real addEventListener('change', ...) wiring to work, so a test can flip
+// نطاق التلاوة mid-playback exactly like tapping the select in the UI
+// instead of calling any internal function directly.
+function fakeSelect(initialValue){
+  var listeners = {};
+  return {
+    value: initialValue,
+    addEventListener: function(type, fn){ (listeners[type] = listeners[type] || []).push(fn); },
+    change: function(newValue){
+      this.value = newValue;
+      (listeners.change || []).forEach(function(fn){ fn(); });
+    }
+  };
+}
+
 function loadAudioManager(){
   var window = {};
   global.window = window;
@@ -464,10 +480,383 @@ function runPlaylistRukuRepeatTest(){
   });
 }
 
+// ---------------------------------------------------------------------
+// Regression case: reported bug — "نطاق التلاوة" switched to "نطاق
+// العرض", used once (so listenState.playlist/playlistIndex get
+// populated with a بسملة marker at index 0, e.g. starting a surah
+// mid-mushaf playlist), then switched back to "الركوع". stopListening()
+// reset every OTHER piece of listenState but never cleared .playlist/
+// .playlistIndex — so that stale playlist/index kept sitting there.
+// The shared 'ended' handler's very first check
+// (`currentItem = listenState.playlist[listenState.playlistIndex]`)
+// reads that leftover data unconditionally, with no check that
+// listenState.mode is even a playlist mode — so if the stale index
+// happened to point at a بسملة marker, finishing ANY ayah in the new
+// plain-ruku session was misread as "the بسملة just finished" and
+// jumped into the stale playlist's next item instead of doing the
+// normal same-ruku advance. This is exactly the reported symptom:
+// pick نطاق العرض, use it once, switch back to الركوع — playback then
+// misbehaves instead of stopping cleanly at the ruku's own end.
+// ---------------------------------------------------------------------
+function runStalePlaylistAfterScopeSwitchTest(){
+  var loaded = loadAudioManager();
+  var AudioManager = loaded.AudioManager;
+
+  // page 0: the ruku ("الركوع" mode target) — two ayahs, neither the
+  // first of a surah, so no بسملة complicates this page's own sequence.
+  // page 1: a different ruku whose one ayah IS a surah's first ayah, so
+  // buildAllPlaylist()/insertBismillahBeforeSurahs() gives it a بسملة
+  // marker — this is what "نطاق العرض" playback (once) leaves behind in
+  // listenState.playlist/playlistIndex.
+  var PAGES = [
+    { juz: 1, ayahs: [
+      { surah: 2, ayah: 5, surahName: 'البقرة' },
+      { surah: 2, ayah: 6, surahName: 'البقرة' }
+    ] },
+    { juz: 1, ayahs: [
+      { surah: 3, ayah: 1, surahName: 'آل عمران' }
+    ] }
+  ];
+  var state = {
+    page: 1, reciter: 'abdulbasit', playbackRate: 1,
+    recitationRepeatCount: 1, rukuRepeatCount: 1,
+    recitationScope: 'displayScope', displayScope: 'all'
+  };
+
+  global.window.SearchManager = { getSurahStartPage: function(){ return 0; } };
+  global.window.getManzilRange = function(){ return { start: 1, end: 114 }; };
+
+  var els = { ayahFlow: fakeElement(), btnListen: fakeButton() };
+  AudioManager.init({
+    PAGES: PAGES,
+    state: state,
+    els: els,
+    goTo: function(i){ state.page = i; },
+    showToast: function(){},
+    saveState: function(){}
+  });
+
+  // ---- Step 1: نطاق التلاوة = نطاق العرض, on page 1 (سورة آل عمران
+  // 3:1) — toggleListen() slices buildAllPlaylist() down to start right
+  // at the بسملة marker for that ayah, leaving listenState.playlist /
+  // .playlistIndex pointing at it (index 0). ----
+  els.btnListen.click();
+  var audio = loaded.getAudioInstance();
+  check('نطاق العرض playback starts at the بسملة for 3:1', function(){
+    return audio.src.indexOf('bismillah') !== -1 || audio.src.indexOf('001001') !== -1
+      || ('expected a بسملة src, got: ' + audio.src);
+  });
+
+  // ---- Step 2: stop, then switch نطاق التلاوة back to الركوك and move
+  // to the ruku page (page 0). ----
+  AudioManager.stopListening();
+  state.recitationScope = 'ruku';
+  state.page = 0;
+
+  // ---- Step 3: tap "استماع" again — plain-ruku playback of 2:5. ----
+  els.btnListen.click();
+  check('Ruku playback starts at 2:5', function(){
+    return audio.src.indexOf('002005.mp3') !== -1 || ('expected 2:5, got: ' + audio.src);
+  });
+
+  var endedListener = (audio._listeners.ended || [])[0];
+  // ---- Ayah 2:5 finishes — must advance to 2:6 within the SAME ruku,
+  // not follow the stale نطاق العرض playlist into سورة آل عمران. ----
+  endedListener();
+  check(
+    'End of 2:5 advances to 2:6 within the ruku, ignoring the stale نطاق العرض playlist',
+    function(){
+      return audio.src.indexOf('002006.mp3') !== -1
+        || ('stale playlist leaked through — got src: ' + audio.src);
+    }
+  );
+
+  // ---- Ayah 2:6 finishes — end of the (2-ayah) ruku, rukuRepeatCount:1
+  // means playback must stop cleanly, not jump into the stale playlist's
+  // real 3:1 item either. ----
+  endedListener();
+  check(
+    'End of ruku stops playback cleanly instead of leaking into the stale نطاق العرض playlist',
+    function(){
+      return audio.src === '' || ('expected playback to stop, got src: ' + audio.src);
+    }
+  );
+}
+
+// ---------------------------------------------------------------------
+// Regression case: reported bug — نطاق التلاوة = نطاق العرض, تلاوة
+// شغّالة فعليًا (لسه ما وصلتش لنهاية الركوك الحالي)، ثم يفتح المستخدم
+// الإعدادات ويرجّع نطاق التلاوة لـ"الركوع" وهو لسه بيسمع. The select's
+// 'change' handler previously only wrote state.recitationScope — it
+// never touched the ALREADY-RUNNING session's listenState.mode/playlist,
+// so the live 'ended' handler kept following the old نطاق العرض chain
+// and crossed straight into the next ruku the moment the current one
+// ended, exactly as if the setting change had no effect at all until
+// the NEXT "استماع" press. This is distinct from
+// runStalePlaylistAfterScopeSwitchTest above, which covers switching
+// scope AFTER stopping — this one covers switching scope WHILE still
+// playing.
+// ---------------------------------------------------------------------
+function runScopeSwitchDuringPlaybackTest(){
+  var loaded = loadAudioManager();
+  var AudioManager = loaded.AudioManager;
+
+  // page 0: the ruku that's actively playing when the scope is switched
+  // — two ayahs, neither a surah's first, so بسملة insertion never
+  // complicates this page's own sequence.
+  // page 1: the NEXT ruku in the نطاق العرض ("كل المصحف") playlist —
+  // playback must NOT reach this page once the scope switch takes
+  // effect.
+  var PAGES = [
+    { juz: 1, ayahs: [
+      { surah: 2, ayah: 5, surahName: 'البقرة' },
+      { surah: 2, ayah: 6, surahName: 'البقرة' }
+    ] },
+    { juz: 1, ayahs: [
+      { surah: 3, ayah: 1, surahName: 'آل عمران' }
+    ] }
+  ];
+  var state = {
+    page: 0, reciter: 'abdulbasit', playbackRate: 1,
+    recitationRepeatCount: 1, rukuRepeatCount: 1,
+    recitationScope: 'displayScope', displayScope: 'all'
+  };
+
+  global.window.SearchManager = { getSurahStartPage: function(){ return 0; } };
+  global.window.getManzilRange = function(){ return { start: 1, end: 114 }; };
+
+  var els = {
+    ayahFlow: fakeElement(),
+    btnListen: fakeButton(),
+    recitationScopeSelect: fakeSelect('displayScope')
+  };
+  AudioManager.init({
+    PAGES: PAGES,
+    state: state,
+    els: els,
+    goTo: function(i){ state.page = i; },
+    showToast: function(){},
+    saveState: function(){}
+  });
+
+  // ---- Start نطاق العرض ("كل المصحف") playback at 2:5. ----
+  els.btnListen.click();
+  var audio = loaded.getAudioInstance();
+  check('نطاق العرض playback starts at 2:5', function(){
+    return audio.src.indexOf('002005.mp3') !== -1 || ('expected 2:5, got: ' + audio.src);
+  });
+
+  var endedListener = (audio._listeners.ended || [])[0];
+  // ---- Ayah 2:5 finishes -> advances to 2:6, still within the same
+  // ruku (unaffected either way — sanity check only). ----
+  endedListener();
+  check('2:5 finishing advances to 2:6', function(){
+    return audio.src.indexOf('002006.mp3') !== -1;
+  });
+
+  // ---- While 2:6 is still playing, switch نطاق التلاوة back to
+  // الركوع from الإعدادات. ----
+  els.recitationScopeSelect.change('ruku');
+
+  // ---- Ayah 2:6 finishes -> end of the ruku. Must stop cleanly right
+  // here, NOT cross into page 1 (3:1) the way the still-live نطاق العرض
+  // playlist would have. ----
+  endedListener();
+  check(
+    'Switching نطاق التلاوة to الركوع mid-playback stops at the end of the current ruku',
+    function(){
+      return audio.src === '' || ('kept chaining into the next ruku — got src: ' + audio.src);
+    }
+  );
+}
+
+// ---------------------------------------------------------------------
+// Feature/regression case: the reverse direction of
+// runScopeSwitchDuringPlaybackTest — نطاق التلاوة = الركوع, تلاوة
+// شغّالة، وقبل نهاية الركوع يغيّر المستخدم الإعداد لـ"نطاق العرض" وهو
+// لسه بيسمع. Per direct user request, this must now "follow the new
+// setting intelligently": the ayah already sounding keeps playing
+// uninterrupted, but once the current ruku ends, playback must continue
+// into the next ruku (وصولًا لنهاية نطاق العرض) instead of stopping at
+// the ruku boundary the way a plain-ruku session normally would.
+// ---------------------------------------------------------------------
+function runRukuToDisplayScopeSwitchDuringPlaybackTest(){
+  var loaded = loadAudioManager();
+  var AudioManager = loaded.AudioManager;
+
+  // page 0: the ruku actively playing when the setting is switched —
+  // two ayahs, neither a surah's first. page 1: the next ruku (a
+  // surah's first ayah, so it carries a بسملة marker in the نطاق العرض
+  // playlist) — playback SHOULD reach it now, unlike the plain-ruku
+  // path which would have stopped at the end of page 0.
+  var PAGES = [
+    { juz: 1, ayahs: [
+      { surah: 2, ayah: 5, surahName: 'البقرة' },
+      { surah: 2, ayah: 6, surahName: 'البقرة' }
+    ] },
+    { juz: 1, ayahs: [
+      { surah: 3, ayah: 1, surahName: 'آل عمران' }
+    ] }
+  ];
+  var state = {
+    page: 0, reciter: 'abdulbasit', playbackRate: 1,
+    recitationRepeatCount: 1, rukuRepeatCount: 1,
+    recitationScope: 'ruku', displayScope: 'all'
+  };
+
+  global.window.SearchManager = { getSurahStartPage: function(){ return 0; } };
+  global.window.getManzilRange = function(){ return { start: 1, end: 114 }; };
+
+  var els = {
+    ayahFlow: fakeElement(),
+    btnListen: fakeButton(),
+    recitationScopeSelect: fakeSelect('ruku')
+  };
+  AudioManager.init({
+    PAGES: PAGES,
+    state: state,
+    els: els,
+    goTo: function(i){ state.page = i; },
+    showToast: function(){},
+    saveState: function(){}
+  });
+
+  // ---- Start الركوع playback at 2:5. ----
+  els.btnListen.click();
+  var audio = loaded.getAudioInstance();
+  check('الركوع playback starts at 2:5', function(){
+    return audio.src.indexOf('002005.mp3') !== -1;
+  });
+
+  var endedListener = (audio._listeners.ended || [])[0];
+  // ---- 2:5 finishes -> advances to 2:6, still within the ruku. ----
+  endedListener();
+  check('2:5 finishing advances to 2:6', function(){
+    return audio.src.indexOf('002006.mp3') !== -1;
+  });
+
+  // ---- While 2:6 is still playing, switch نطاق التلاوة to نطاق
+  // العرض. The currently-sounding ayah must NOT be interrupted. ----
+  var srcBeforeSwitch = audio.src;
+  els.recitationScopeSelect.change('displayScope');
+  check('Switching the setting mid-ayah does not interrupt the ayah already playing', function(){
+    return audio.src === srcBeforeSwitch;
+  });
+
+  // ---- 2:6 finishes -> end of the ruku. Must now CONTINUE into the
+  // next ruku's بسملة (نطاق العرض = كل المصحف), not stop. ----
+  endedListener();
+  check(
+    'End of the ruku continues into نطاق العرض instead of stopping, once the setting was switched mid-playback',
+    function(){
+      return audio.src.indexOf('001001.mp3') !== -1 || ('expected بسملة for 3:1, got: ' + audio.src);
+    }
+  );
+}
+
+// ---------------------------------------------------------------------
+// Regression case: reported bug — نطاق التلاوة = الركوع في سورة
+// الإخلاص، يتحول أثناء التلاوة لـ"نطاق العرض" (فيكمل تلقائيًا لسورة
+// الفلق ويبدأ بالبسملة، حسب الميزة الجديدة أعلاه)، ثم يرجع المستخدم
+// نطاق التلاوة لـ"الركوع" وهو لسه بيسمع البسملة نفسها (مش الآية
+// الحقيقية). البسملة في مسار الـplaylist بتشارك pageIdx/ayahIdx بتوع
+// الآية الحقيقية اللي بعدها مباشرة — فلو التحويل لوضع "الركوع" فضّل
+// معتمد إن الفهرس الحالي (listenState.ayahIndex) يمثّل "آية خلصت
+// تلاوتها فعلاً"، هيقفز لـ"الآية اللي بعدها" (آية ٢) بمجرد ما البسملة
+// تخلص — من غير ما الآية ١ الحقيقية تتلى خالص. المفروض بعد انتهاء
+// البسملة تتلى الآية ١ عادي، وبعد كده الآية ٢.
+// ---------------------------------------------------------------------
+function runRukuSwitchDuringPlaylistBismillahTest(){
+  var loaded = loadAudioManager();
+  var AudioManager = loaded.AudioManager;
+
+  // page 0: a ruku that is NOT a surah's first ayah (so the plain-ruku
+  // path's own بسملة auto-insertion doesn't also fire here and muddy the
+  // exact transition being tested) — represents "سورة الإخلاص" playing
+  // when the reported bug's first scope switch happens.
+  // page 1: سورة الفلق — starts a new surah, so its ayah 1 carries a
+  // بسملة marker in the نطاق العرض playlist; has a second ayah so the
+  // test can tell "played ayah 1" apart from "skipped straight to 2".
+  var PAGES = [
+    { juz: 1, ayahs: [
+      { surah: 2, ayah: 5, surahName: 'البقرة' }
+    ] },
+    { juz: 1, ayahs: [
+      { surah: 113, ayah: 1, surahName: 'الفلق' },
+      { surah: 113, ayah: 2, surahName: 'الفلق' }
+    ] }
+  ];
+  var state = {
+    page: 0, reciter: 'abdulbasit', playbackRate: 1,
+    recitationRepeatCount: 1, rukuRepeatCount: 1,
+    recitationScope: 'ruku', displayScope: 'all'
+  };
+
+  global.window.SearchManager = { getSurahStartPage: function(){ return 0; } };
+  global.window.getManzilRange = function(){ return { start: 1, end: 114 }; };
+
+  var els = {
+    ayahFlow: fakeElement(),
+    btnListen: fakeButton(),
+    recitationScopeSelect: fakeSelect('ruku')
+  };
+  AudioManager.init({
+    PAGES: PAGES,
+    state: state,
+    els: els,
+    goTo: function(i){ state.page = i; },
+    showToast: function(){},
+    saveState: function(){}
+  });
+
+  // ---- Start الركوع playback at 2:5. ----
+  els.btnListen.click();
+  var audio = loaded.getAudioInstance();
+  check('الركوع playback starts at 2:5', function(){
+    return audio.src.indexOf('002005.mp3') !== -1;
+  });
+
+  // ---- Switch to نطاق العرض WHILE 2:5 is still playing. ----
+  els.recitationScopeSelect.change('displayScope');
+
+  var endedListener = (audio._listeners.ended || [])[0];
+  // ---- 2:5 finishes -> end of its (one-ayah) ruku -> continues into
+  // سورة الفلق's بسملة (نطاق العرض now active). ----
+  endedListener();
+  check('End of 2:5 ruku continues into بسملة الفلق', function(){
+    return audio.src.indexOf('001001.mp3') !== -1 || ('expected بسملة, got: ' + audio.src);
+  });
+
+  // ---- Switch back to الركوع WHILE the بسملة clip itself is still
+  // playing (not yet 113:1's real audio). ----
+  els.recitationScopeSelect.change('ruku');
+
+  // ---- The بسملة finishes -> must play the REAL 113:1 next, not skip
+  // straight to 113:2. ----
+  endedListener();
+  check(
+    'بسملة finishing after the mid-بسملة scope switch plays the real 113:1, not 113:2',
+    function(){
+      return audio.src.indexOf('113001.mp3') !== -1
+        || ('skipped ayah 1 — got src: ' + audio.src);
+    }
+  );
+
+  // ---- 113:1 finishes -> advances normally to 113:2. ----
+  endedListener();
+  check('113:1 finishing advances normally to 113:2', function(){
+    return audio.src.indexOf('113002.mp3') !== -1 || ('expected 113:2, got: ' + audio.src);
+  });
+}
+
 run();
 runPrefetchStaleEventTest();
 runRukuRepeatTest();
 runPlaylistRukuRepeatTest();
+runStalePlaylistAfterScopeSwitchTest();
+runScopeSwitchDuringPlaybackTest();
+runRukuToDisplayScopeSwitchDuringPlaybackTest();
+runRukuSwitchDuringPlaylistBismillahTest();
 
 console.log('\n=== Audio Regression Suite — ' + PROJECT_DIR + ' ===');
 console.log('PASS: ' + results.pass + '   FAIL: ' + results.fail);
