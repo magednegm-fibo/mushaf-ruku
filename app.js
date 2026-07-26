@@ -170,6 +170,8 @@
     waqfDeleteMenu: document.getElementById('waqfDeleteMenu'),
     waqfDeleteMenuItem: document.getElementById('waqfDeleteMenuItem'),
     waqfToggle: document.getElementById('waqfToggle'),
+    madMunfasilToggle: document.getElementById('madMunfasilToggle'),
+    madMunfasilRow: document.getElementById('madMunfasilRow'),
     btnClearAllReminders: document.getElementById('btnClearAllReminders'),
     clearRemindersModal: document.getElementById('clearRemindersModal'),
     clearRemindersModalText: document.getElementById('clearRemindersModalText'),

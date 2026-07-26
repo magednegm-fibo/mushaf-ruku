@@ -103,12 +103,24 @@
   }
 
   function cleanAyahText(text){
-    return wrapWaqfSigns(text)
+    var out = wrapWaqfSigns(text)
       .replace(IQLAB_MEEM_REGEX, IQLAB_MEEM_HTML)
       .replace(SAJDAH_MARK_REGEX, SAJDAH_MARK_HTML)
       .replace(TATWEEL_SEAT_REGEX, tatweelSeatHtml)
       .replace(NAKH_SHIN_JOIN_REGEX, NAKH_SHIN_JOIN_HTML)
-      .replace(KALLA_MADDA_REGEX, KALLA_MADDA_HTML);
+      .replace(KALLA_MADDA_REGEX, KALLA_MADDA_HTML)
+      .replace(KALLA_MADDA_WAQF_REGEX, kallaMaddaWaqfHtml)
+      .replace(LAM_ALEF_MADDA_REGEX, lamAlefMaddaHtml);
+    // مد منفصل: تحليل مبني على رسم الخط العثماني (a.text) تحديدًا، تم
+    // التحقق منه على كامل بيانات هذا الحقل فقط — غير مُفعَّل بعد في وضع
+    // الناسخ/الإندوباك (textIndopak)، الذي يستخدم رموزًا مختلفة لبعض
+    // الحروف (راجع searchManager.js لتفاصيل هذا الاختلاف بين الخطين).
+    if(state && state.fontStyle === 'uthmani'){
+      out = out.replace(MAD_MUNFASIL_REGEX, madMunfasilHtml);
+      out = out.replace(YA_HA_MUNFASIL_REGEX, yaHaMunfasilHtml);
+      out = out.replace(MAD_SILA_KUBRA_REGEX, madSilaKubraHtml);
+    }
+    return out;
   }
 
   // Reported (screenshot, Uthmani/مصحف المدينة mode): كَلَّآ (83:18 and
@@ -172,6 +184,488 @@
       '\u0643\u064E\u0644\u0651\u064E\u0627' +
       '<span class="kalla-madda-glyph" aria-hidden="true">\u0653</span>' +
     '</span>';
+
+  // Follow-up fix (reported directly, screenshot, 70:15, Uthmani mode):
+  // the SAME misplaced-madda glyph bug as KALLA_MADDA_REGEX above, but
+  // for the 6 occurrences that regex explicitly could NOT reach yet (see
+  // the SCOPE NOTE in the long comment above): 23:100, 26:62, 70:15,
+  // 70:39, 74:16, 89:21. All 6 are كَلَّآ immediately followed by a waqf
+  // mark with no space in between, and wrapWaqfSigns() runs BEFORE this
+  // point in cleanAyahText -- for exactly these 6 words (and only these,
+  // confirmed against data.js), it treats the لام as a fresh "new base
+  // letter", flushing the preceding ك+fatha as bare plain text and
+  // opening a *separate* <span class="waqf-sign"> starting at the لام.
+  // That tag sitting between ك and ل is why the plain 7-codepoint
+  // KALLA_MADDA_REGEX above never matches these 6: the sequence is no
+  // longer textually contiguous.
+  //
+  // Rather than touch wrapWaqfSigns()'s general-purpose letter-flushing
+  // logic (risking every other already-confirmed collision fix that
+  // depends on it), this matches the exact resulting shape instead: ك+
+  // fatha, then the waqf-sign span's opening tag, then ل+shadda+fatha+
+  // alef+maddah, then the waqf mark character(s) (deliberately requiring
+  // NO further nested tag before the closing </span> -- confirmed all 6
+  // occurrences are a single plain mark here with no sila/sakta-lift
+  // collision, so this stays narrowly scoped to the confirmed shape
+  // rather than guessing at cases that don't exist in the data).
+  //
+  // Output nests .kalla-cluster OUTSIDE the original .waqf-sign span
+  // (rather than duplicating or reordering it), so the waqf mark keeps
+  // rendering through the exact same .waqf-sign sizing/positioning rules
+  // as every other waqf mark in the mushaf -- this fix only changes
+  // where the madda glyph is drawn, same as KALLA_MADDA_REGEX above.
+  // UNCONFIRMED ON DEVICE -- reuses .kalla-cluster/.kalla-madda-glyph
+  // as-is (no new CSS), same offset already tuned for the plain case;
+  // open 70:15 after this build and confirm it looks right, since the
+  // madda glyph here sits inside the enlarged .waqf-sign font-size
+  // context (1.2em/1.3em) rather than ambient size, which may need its
+  // own nudge.
+  var KALLA_MADDA_WAQF_REGEX =
+    /\u0643\u064E(<span class="waqf-sign">)\u0644\u0651\u064E\u0627\u0653([^<]*)(<\/span>)/g;
+  function kallaMaddaWaqfHtml(match, waqfSignOpen, markChars, waqfSignClose){
+    return '<span class="kalla-cluster">' +
+      '\u0643\u064E' + waqfSignOpen +
+      '\u0644\u0651\u064E\u0627' +
+      '<span class="kalla-madda-glyph" aria-hidden="true">\u0653</span>' +
+      markChars + waqfSignClose +
+    '</span>';
+  }
+
+  // Reported directly (screenshots, on-device, Uthmani mode): the SAME
+  // "maddah sits over the لام instead of the tail of the الف" glitch
+  // fixed above for كَلَّآ also happens for إِلَّآ and أَلَآ — i.e. it
+  // is NOT specific to the ك+ل+ا "kla5" 3-component ligature. Checked
+  // directly in this font's compiled GSUB tables (fontTools) before
+  // writing this: لام+ألف forms its OWN separate 2-component ligature
+  // regardless of what precedes it -- "la001" when لام is word-initial
+  // (start of a standalone لَآ), "la002" when it's word-medial (any
+  // other preceding letter, e.g. إِلَّآ/أَلَآ) -- distinct font glyphs
+  // from "kla5", so this needed its own fix rather than just widening
+  // KALLA_MADDA_REGEX's match.
+  //
+  // A full scan of every لَا/لَّا+maddah occurrence in data.js (391
+  // total, across 30 distinct words: إِلَّآ ×100, وَلَآ ×53, لَآ ×48,
+  // هَـٰٓؤُلَآءِ ×38, ءَالَآءِ ×32, أَلَآ ×23, and 24 rarer shapes) found
+  // this is NOT always مد منفصل the way كَلَّآ always is: some of these
+  // words (هَـٰٓؤُلَآءِ، ءَالَآءِ، أُوْلَآءِ، لَآئِمٖ) have a hamzah
+  // glued on RIGHT AFTER the maddah within the SAME word (لَآءِ) --
+  // that's مد متصل, not منفصل. So this fix does two independent things
+  // per occurrence: (1) ALWAYS suppress+redraw the maddah to fix the
+  // glyph position (a rendering bug, unrelated to which madd rule
+  // applies), and (2) ONLY ALSO add the مد منفصل colour/weight class
+  // when this exact occurrence reaches the end of its word the same way
+  // MAD_MUNFASIL_REGEX below checks -- otherwise it's left in plain ink,
+  // same as any other مد متصل word. This is also why this block runs
+  // BEFORE MAD_MUNFASIL_REGEX in cleanAyahText: once this claims a
+  // maddah into its own nested span, the plain "ا\u0653" adjacency
+  // MAD_MUNFASIL_REGEX looks for no longer exists at that spot, so it
+  // naturally skips it instead of double-processing -- same pattern
+  // already relied on for كَلَّآ vs KALLA_MADDA_REGEX above.
+  //
+  // UNCONFIRMED ON DEVICE for this broader word set specifically --
+  // reuses كَلَّآ's already-3-rounds-tuned offset as a starting estimate
+  // (kla5 is a different glyph outline from la001/la002, so this may
+  // still need its own separate nudge; report back after checking 2:9
+  // and 2:12, the two words confirmed broken so far).
+  // Reported directly (screenshot, on-device, Uthmani mode): the الفاء
+  // in فَلَآ (81:15, التكوير) rendered visibly DISCONNECTED from the
+  // لا that follows it once the fix above started skipping the cluster
+  // for any letter that joins forward -- that skip fixed the connection
+  // but brought back the ORIGINAL glitch this whole block exists for
+  // (the maddah sitting over the لام instead of the tail of the الف),
+  // confirmed on-device as still present in فَلَآ after that change.
+  // Root cause of the connection break was never "wrapping" itself --
+  // it's specifically that .lam-alef-madda-cluster is display:inline-block
+  // (a fresh shaping/formatting context that nothing outside it can
+  // cursively join into). The كَلَّآ fix above never hit this because it
+  // wraps ALL THREE base letters (ك ل ا) of that self-contained word
+  // together, so every join that needs to happen (ك-ل and ل-ا) happens
+  // fully INSIDE the same inline-block, with nothing outside needing to
+  // reach in. The same trick works here: when exactly one ordinary
+  // forward-joining letter sits immediately before لا+madda AND that
+  // letter is itself the very first letter of the word (nothing further
+  // back to worry about -- cleanAyahText runs one word at a time, so a
+  // match at the very start of `str` really is the start of the word),
+  // absorb that one letter into the SAME cluster instead of leaving it
+  // outside. That covers the reported فَلَآ (ف is word-initial here) and
+  // the same shape for any other single-prefix-letter word. Multi-letter
+  // joining runs before the لا (rarer, unconfirmed in this mushaf) are
+  // deliberately NOT absorbed -- the regex only takes one prefix letter,
+  // so anything with a longer joining run in front still falls through
+  // to the safe fallback below (skip wrapping, keep the native join,
+  // accept the uncorrected maddah position for that rarer shape only).
+  var LAM_ALEF_NON_JOINING_BEFORE = {0x0627:1, 0x0622:1, 0x0623:1, 0x0625:1, 0x0671:1, 0x062F:1, 0x0630:1, 0x0631:1, 0x0632:1, 0x0648:1, 0x0629:1, 0x0621:1, 0x0624:1, 0x0626:1};
+  // Ordinary Arabic base letters that DO join forward (i.e. everything
+  // except the non-connector set above) -- used only to opt a single
+  // word-initial prefix letter into the cluster, per the fix above.
+  var LAM_ALEF_PREFIX_LETTER_CLASS = '\u0628\u062A\u062B\u062C\u062D\u062E\u0633\u0634\u0635\u0636\u0637\u0638\u0639\u063A\u0641\u0642\u0643\u0644\u0645\u0646\u0647\u064A';
+  var LAM_ALEF_MADDA_REGEX = new RegExp(
+    '(^[' + LAM_ALEF_PREFIX_LETTER_CLASS + '][\\u064B-\\u065F]*)?' +
+    '\\u0644(\\u0651)?\\u064E\\u0627(\\u0653)', 'g'
+  );
+  function lamAlefMaddaHtml(match, prefix, shadda, madda, offset, str){
+    var core = (prefix || '') + '\u0644' + (shadda || '') + '\u064E\u0627';
+    if(!prefix){
+      // No word-initial prefix letter was absorbed by the regex -- fall
+      // back to checking whatever actually precedes this match in the
+      // string (same check as before): safe to wrap only at true word
+      // start or after a letter that never joins forward anyway.
+      var before = str.slice(0, offset)
+        .replace(/<[^>]+>/g, '')
+        .replace(/[\u0610-\u061A\u064B-\u065F\u0670\u06D6-\u06ED\u0640]+$/, '');
+      if(before.length){
+        var precedingCp = before.charCodeAt(before.length - 1);
+        if(!LAM_ALEF_NON_JOINING_BEFORE[precedingCp]) return match;
+      }
+    }
+    var after = str.slice(offset + match.length);
+    var isMunfasil = /^(?:<span[^>]*>)?(?:\u0627\u0652)?(?:\u0615|[\u06D6-\u06DC])*(?:<\/span>)*$/.test(after);
+    var glyphClass = 'lam-alef-madda-glyph' + (isMunfasil ? ' mad-munfasil' : '');
+    return '<span class="lam-alef-madda-cluster">' + core +
+      '<span class="' + glyphClass + '" aria-hidden="true">' + madda + '</span>' +
+    '</span>';
+  }
+
+  // المد المنفصل (mad munfasil) — Uthmani/مصحف المدينة mode only.
+  //
+  // The rasm itself already marks this: a maddah (U+0653) over a genuine
+  // madd letter (ا/و/ي) sits at the very END of its word whenever the
+  // hamzah that causes the madd starts the NEXT word (the whole reason a
+  // madd letter followed by a same-word hamzah — مد متصل, e.g. جَآءَ —
+  // and a word-final madd letter before a hamzah-initial next word — مد
+  // منفصل, e.g. قَالُوٓا۟ إِنَّمَا — both get a maddah in the first
+  // place, and how the rasm already tells them apart without needing any
+  // cross-word lookup here: this file renders one word at a time (see
+  // renderAyahWords/cleanAyahText below), so by the time this word's
+  // string ends, "the hamzah is word-final" and "the hamzah is absent
+  // because it's in the next word" are the same observable fact.
+  //
+  // Verified against every \u0653 occurrence in data.js (5,652 total)
+  // before writing this regex, not assumed:
+  //   - word-final base+maddah (بare, or with the silent extra alif+sukun
+  //     that trails a واو-madd verb ending, or with a trailing waqf mark
+  //     attached to the same word) = 2,318 occurrences = مد منفصل. This
+  //     is exactly what this regex matches.
+  //   - maddah immediately followed (same word) by a hamzah letter
+  //     (ء أ إ ؤ ئ, incl. the tatweel-seated combining-hamzah spelling) =
+  //     1,548+ occurrences = مد متصل. NOT matched (base+maddah isn't at
+  //     the end of the string in these).
+  //   - maddah immediately followed by a doubled/shaddah consonant (e.g.
+  //     ٱلضَّآلِّينَ، حَآجُّوكُم) = a different rule entirely (مد لازم
+  //     كلمي مثقل, shaddah-caused not hamzah-caused). NOT matched.
+  //   - maddah riding on a hamzah letter itself (أٓخِرَة) = مد بدل, a
+  //     word-INTERNAL construction unrelated to this cross-word rule.
+  //     NOT matched (this regex requires the letter under the maddah to
+  //     be a plain ا/و/ي, never a hamzah).
+  //   - maddah riding on a dagger alef (ٱلسُّوٓأَىٰٓ's second maddah) or
+  //     on the small connecting واو/يا pronoun markers (لَهُۥٓ — مد
+  //     الصلة الكبرى, a related but separately-named rule) = NOT matched
+  //     on purpose; out of scope for this pass.
+  //   - the "ءَآلذَّكَرَيۡنِ" / "ءَآلۡـَٰٔنَ" / "ءَآللَّهُ" shape (مد
+  //     الفرق, a third distinct hamzah-caused madd) = NOT matched (what
+  //     follows the maddah there is a plain لام, neither a hamzah nor
+  //     the end of the word).
+  //
+  // Presentational only, same guarantee as every other regex in this
+  // file: data.js is never touched, only the rendered HTML wrapping.
+  //
+  // Runs LAST in cleanAyahText, deliberately, and reads the maddah's
+  // base letter straight off the (mostly still-contiguous) OUTPUT of
+  // every earlier step rather than the raw word — two things earlier in
+  // this file already carved out the exceptions that would otherwise
+  // trip it up:
+  //   1) كَلَّآ (KALLA_MADDA_REGEX, just above) isolates its maddah into
+  //      its own nested <span> BEFORE this runs, which breaks the direct
+  //      ا+\u0653 adjacency this regex requires — so it silently never
+  //      matches those 7 words here. That's fine: every كَلَّآ+maddah
+  //      occurrence is provably مد منفصل (the word ends right there), so
+  //      .kalla-madda-glyph just gets the same --mad-munfasil color
+  //      directly in style.css instead. The other 6 كَلَّآ occurrences
+  //      (immediately followed by a waqf mark, so KALLA_MADDA_REGEX
+  //      doesn't touch them either — see its own comment above) DO stay
+  //      plain-text-contiguous and get caught by the general case below,
+  //      same as any other waqf-adjacent مد منفصل word.
+  //   2) wrapWaqfSigns() (below) bundles a word-final base+maddah+waqf-
+  //      mark run together into one <span class="waqf-sign">...</span>
+  //      — still contiguous internally (it never splits a base letter
+  //      from a mark that combines onto it), just wrapped. The optional
+  //      groups below account for that trailing "</span>" (zero or more,
+  //      for any further nesting) landing right after the waqf marks, at
+  //      the true end of the word string either way.
+  //
+  // Wraps ONLY the base letter + maddah together in one span — never the
+  // maddah alone — matching the "keep a mark glued to its own base
+  // letter in one DOM text node" rule documented at length elsewhere in
+  // this file (see TATWEEL_SEAT_REGEX and wrapWaqfSigns' own comments):
+  // this environment's shaper only anchors a GPOS mark correctly within
+  // a single run. The trailing silent الف/سكون (واو-madd endings) and
+  // any waqf mark after it are deliberately left OUTSIDE this span and
+  // uncoloured: wrapWaqfSigns (above) already treats that الف as a
+  // fresh base letter starting its OWN cluster whenever a waqf mark
+  // follows it — confirmed on-device-equivalent by testing this file's
+  // actual output, not assumed — so its سكون anchors to ITS OWN الف
+  // either way, never to the واو before it; splitting there was already
+  // happening before this feature existed and changes nothing about
+  // that anchoring. A zero-width lookahead is used specifically so this
+  // regex can SEE past that split (including the waqf-sign span's own
+  // opening tag, when present) to confirm the string still ends the way
+  // مد منفصل requires, without pulling any of that trailing text into
+  // the coloured span itself. Only `color` is applied in CSS
+  // (.mad-munfasil) — no size/position change, so there is nothing here
+  // that could shift anchoring even in principle.
+  // UPDATE (reported directly: 2:7 وَعَلَىٰٓ أَبۡصَٰرِهِمۡ was NOT being
+  // coloured): the base letter isn't always a plain ا/و/ي. This mushaf
+  // also spells the madd-yaa sound as أَلِف مَقۡصُورَة (ى, U+0649) with
+  // a dagger alef (U+0670) riding on it as a second combining mark
+  // UNDER the maddah — e.g. عَلَىٰٓ, مُوسَىٰٓ, إِلَىٰٓ, ٱسۡتَوَىٰٓ. Full
+  // re-scan of data.js after this report found 394 such word-final
+  // occurrences (all مد منفصل, same "ends right there" logic as
+  // everything above) that the original ا/و/ي-only base set silently
+  // missed — ى is now included, with the dagger alef as an optional
+  // extra combining mark between it and the maddah, wrapped inside the
+  // same span so it stays glued to its true base letter (ى), not
+  // orphaned the way splitting it out would have broken GPOS anchoring.
+  // (Re-verified this doesn't reopen any of the excluded categories:
+  // ى/دagger-alef bases immediately followed by a hamzah letter, e.g.
+  // أُوْلَـٰٓئِكَ, or by a doubled consonant/tatweel-hamzah run, still
+  // fail the lookahead exactly like the ا/و/ي cases already did.)
+  var MAD_MUNFASIL_REGEX = /([\u0627\u0648\u064A\u0649])(\u0670)?(\u0653)(?=(?:<span[^>]*>)?(?:\u0627\u0652)?(?:\u0615|[\u06D6-\u06DC])*(?:<\/span>)*$)/g;
+  function madMunfasilHtml(match, base, dagger, madda){
+    return '<span class="mad-munfasil">' + base + (dagger || '') + madda + '</span>';
+  }
+
+  // UPDATE (reported directly, four distinct cases): the two regexes
+  // above still miss real مد منفصل because they were built on "hamzah
+  // starts the NEXT word" == "hamzah is absent from THIS word's text" —
+  // true for ordinary words, but wrong for two fixed vocative/tanbih
+  // particles that Uthmani rasm writes GLUED to the word after them as
+  // one continuous shape even though they are grammatically two separate
+  // words: يَـٰٓأَيُّهَا (يا + أيها) and هَـٰٓؤُلَآءِ / هَـٰٓأَنتُمۡ (ها +
+  // أولاء/أنتم). Full scan of every ي/ه + فتحة + tatweel + dagger-alef +
+  // maddah + hamzah-letter shape in data.js (verified against the
+  // rendered output of TATWEEL_SEAT_REGEX above, which already wraps the
+  // tatweel+dagger-alef+maddah into its own <span> before this runs)
+  // found exactly 185 يَـٰٓأَ.../يَـٰٓأَهۡلَ occurrences and 50
+  // هَـٰٓؤُلَآءِ/هَـٰٓأَنتُمۡ occurrences — every single one of these,
+  // with no exceptions, is the same fixed two-word construction, never a
+  // genuine one-word مد متصل, so (unlike the general rule) these are
+  // unconditionally مد منفصل regardless of what follows.
+  // Colours ONLY the tatweel-seat span's contents (the dagger-alef +
+  // maddah standing in for the "invisible" أَلِف of يا/ها) by appending
+  // the class onto TATWEEL_SEAT_REGEX's own span rather than nesting a
+  // second span inside it — nesting spans here would put the mark in a
+  // fresh shaping run and risk re-breaking the GPOS anchoring that
+  // TATWEEL_SEAT_REGEX's own comment already warns about. The ي/ه
+  // consonant itself and its فتحة are left completely untouched (they
+  // are not part of the mad symbol here — unlike the general regex,
+  // where the base letter captured IS the silent madd letter itself).
+  //
+  // UPDATE (reported directly): يَـٰٓـَٔادَمُ ("يا آدم", 2:33, 2:35, 7:19,
+  // 20:117, 20:120 — 5 occurrences, checked against the full rasm scan
+  // above) was silently missed. Its hamza is not the plain hamza-letter
+  // this regex's lookahead expects — the rasm here spells it as a
+  // second, separate tatweel carrying the hamza-above mark (U+0640
+  // U+0654), immediately followed by the actual alef, rather than a
+  // single precomposed hamza-on-alef letter like أ. That second
+  // tatweel isn't matched by TATWEEL_SEAT_REGEX itself (it requires a
+  // dagger alef, U+0670, right after the tatweel — this one doesn't
+  // have one) so it's left as plain unwrapped text sitting right after
+  // the tatweel-seat span, which is exactly where the lookahead looks.
+  // Added \u0640\u0654 as an alternate lookahead branch for this one
+  // case; every other munfasil case above (bare hamza letters) is
+  // untouched since the alternation only adds a new match, never
+  // removes the old one.
+  var YA_HA_MUNFASIL_REGEX = /([\u064A\u0647]\u064E)(<span class="tatweel-seat[^"]*)(">\u0640\u0670\u0653<\/span>)(?=[\u0621\u0623\u0624\u0625\u0626]|\u0640\u0654)/g;
+  function yaHaMunfasilHtml(match, base, openTag, rest){
+    return base + openTag + ' mad-munfasil' + rest;
+  }
+
+  // UPDATE (reported directly): مد الصلة الكبرى — the small connecting
+  // واو/يا riding on a هاء الكناية (third-person "hu"/"hi" pronoun
+  // suffix), stretched to a full madd because a hamzah-initial word
+  // follows (e.g. بِهِۦٓ إِلَّا، يَسۡتَحۡيِۦٓ أَن، لَهُۥٓ أَجۡرُهُۥ) —
+  // was explicitly out of scope in the original pass above (see its
+  // comment: "a related but separately-named rule... NOT matched on
+  // purpose"). Per direct request this mushaf now colours it the same
+  // as ordinary مد منفصل: both share the same acoustic length (4-5
+  // harakat) and the same hamzah-initial-next-word trigger, and this
+  // mushaf doesn't expose a separate colour for the "kubra" sub-rule.
+  // U+06E5 (small واو) / U+06E6 (small يا) immediately followed by a
+  // maddah (U+0653) is unambiguous: this exact two-character shape is
+  // ONLY ever produced by the sila-kubra rasm convention (the base set
+  // is deliberately just these two marks, nothing else), so no
+  // muttasil/lazim/badal exclusion logic is needed the way the general
+  // regex above needs it. Same end-of-word lookahead as the general
+  // regex (this file renders one word at a time), so a سكون-instance
+  // that ISN'T word-final (shouldn't occur for this suffix, but kept
+  // for safety/symmetry) is still left uncoloured.
+  var MAD_SILA_KUBRA_REGEX = /([\u06E5\u06E6])(\u0653)(?=(?:<span[^>]*>)?(?:\u0615|[\u06D6-\u06DC])*(?:<\/span>)*$)/g;
+  function madSilaKubraHtml(match, base, madda){
+    return '<span class="mad-munfasil">' + base + madda + '</span>';
+  }
+
+  // ملاحظة عامة على الجداول الخمسة التالية (SAKTA_HIGHLIGHT_WORDS،
+  // MUQATTAAT_MAD_WORDS، SEEN_AS_SAD_WORDS، MAD_FARQ_WORDS،
+  // TAJWEED_NOTE_WORDS): كانت التعليقات الأصلية تصف هذا التلوين بأنه
+  // "تطبيق مباشر لطلب المستخدم" دون تفسير جامع. أكّد المستخدم لاحقًا أن
+  // السبب الحقيقي وراء تلوين كل هذه المواضع بلون --mad-munfasil نفسه
+  // هو الإشارة إلى مواضع الخلاف بين طريقَي رواية حفص عن عاصم: طريق
+  // الروضة (المعدِّل) وطريق الشاطبية — وليس تمييزًا اعتباطيًا لكل كلمة
+  // على حدة كما كانت التعليقات القديمة تُوحي.
+  //
+  // السكتات الأربع الواجبة عند حفص عن عاصم: أربعة مواضع ثابتة بالنص (لا
+  // خامس لها) يسكت فيها القارئ سكتة لطيفة بلا تنفس بين كلمتين، لمنع توهّم
+  // معنى غير مقصود لو وُصل الكلام بلا سكت (مثال: "من راق" بلا سكت على
+  // النون تُدغَم فتُسمَع "مرَّاق"). كل موضع منها مُعلَّم أصلًا في رسم
+  // المصحف بعلامة السكتة (۟ۜ U+06DC) على الكلمة الأولى — نفس العلامة التي
+  // يعالجها WAQF_SAKTA_LIFT_HTML أعلاه — وهذا فقط يضيف على كلمتَي كل
+  // موضع نفس لون المد المنفصل (متغيّر --mad-munfasil نفسه، وليس نسخة
+  // منفصلة منه، حتى يبقى مطابقًا تمامًا له لو تغيّر لاحقًا) — راجع
+  // الملاحظة العامة أعلى هذا الجدول لسبب هذا التلوين (خلاف الروضة/
+  // الشاطبية). مفعّل في الرسمين معًا (العثماني والإندوباك) — راجع تعليق
+  // renderAyahWords أدناه لتفاصيل التحقق من تطابق فهرسة الكلمات بين
+  // الخطين. المفاتيح "سورة:آية" والقيم أرقام فهرس الكلمة (0-based) كما
+  // تُنتجها tokenizeAyahWords بالضبط (نفس الفهرس يشير لنفس الكلمة في
+  // الخطين لكل المواضع أدناه):
+  //   75:27  ["وَقِيلَ","مَنۡۜ","رَاقٖ"]                → 1، 2
+  //   83:14  ["كَلَّاۖ","بَلۡۜ","رَانَ",...]              → 1، 2
+  //   36:52  [...,"مِن","مَّرۡقَدِنَاۜۗ","هَٰذَا",...]     → 5، 6
+  //   18:1   [...,"لَّهُۥ","عِوَجَاۜ"] (آخر كلمة بالآية)   → 10
+  //   18:2   ["قَيِّمٗا",...] (أول كلمة بالآية التالية)     → 0
+  // آخر موضعين (18:1/18:2) يقعان في آيتين مختلفتين — كل كلمة تُلوَّن على
+  // حدة في آيتها، فتظهران متجاورتين ملوّنتين بنفس اللون في صفحة القراءة
+  // رغم انتمائهما لعنصرين منفصلين في الـDOM.
+  var SAKTA_HIGHLIGHT_WORDS = {
+    '75:27': [1, 2],
+    '83:14': [1, 2],
+    '36:52': [5, 6],
+    '18:1': [10],
+    '18:2': [0]
+  };
+
+  // فواتح السور (الحروف المقطَّعة): طلب مباشر من المستخدم لتلوين حرفين
+  // من فواتح السور بنفس لون المد المنفصل بالضبط — "كٓهيعٓصٓ" (مريم 19:1)
+  // و"عٓسٓقٓ" (الشورى 42:2). كل حرف من هذه الحروف يُنطق باسمه (كاف، هاء،
+  // ياء، عين، صاد، سين، قاف...)، وبعض هذه الأسماء ينتهي بحرف مد (نحو
+  // "كاااف")، وهذا هو ما ترسمه المدّة (U+0653) الظاهرة فعلًا في a.text
+  // فوق ك ع ص س ق هنا تحديدًا (لا فوق ه/ي، اللذين مدّهما طبيعي بلا علامة
+  // في الرسم) — هذا مد مختلف عن المد المنفصل (مد لازم حرفي، لا مد
+  // منفصل)، لكن التلوين هنا فقط تطبيق للون --mad-munfasil نفسه — راجع
+  // الملاحظة العامة أعلى جدول SAKTA_HIGHLIGHT_WORDS لسبب هذا التلوين
+  // (خلاف الروضة/الشاطبية)، وليس ادّعاءً بأن هذا مد منفصل فعلًا. يُلوَّن هنا
+  // الكلمة (الحرف المقطَّع) كاملة كوحدة واحدة، بنفس أسلوب SAKTA_HIGHLIGHT_WORDS
+  // أعلاه، لا حرفًا واحدًا بمفرده -- كل من الآيتين كلمة/حرف مقطَّع واحد
+  // يشكّل الآية كلها (فهرس الكلمة 0 في الحالتين). مفعّل في الرسمين معًا
+  // (العثماني والإندوباك، راجع تعليق renderAyahWords أدناه)، ومقصور على
+  // هاتين الآيتين حصرًا كما طُلب -- لم يُطبَّق
+  // على بقية فواتح السور الأخرى (الم، طه، يس، ص، حم، ق، ن، ...) لعدم
+  // ورود طلب بذلك.
+  //
+  // UPDATE (طلب مباشر لاحق): أُضيف "ن" (القلم 68:1) و"يس" (يس 36:1)
+  // بنفس المبرر والأسلوب أعلاه بالضبط -- المدّة (U+0653) ظاهرة فعليًا في
+  // a.text فوق النون في "نٓۚ" (تليها علامة وقف جائز ۚ، ضمن نفس الكلمة/
+  // الفهرس 0)، وفوق السين في "يسٓ" (الكلمة/الآية كاملة بحرفين، فهرس 0)،
+  // لنفس سبب مد اسم الحرف. لم يُطبَّق على بقية الحروف المفردة الأخرى
+  // (ص وحدها، ق وحدها، ن مكرر في مواضع أخرى إن وُجدت) لعدم ورود طلب بها.
+  var MUQATTAAT_MAD_WORDS = {
+    '19:1': [0],
+    '42:2': [0],
+    '68:1': [0],
+    '36:1': [0]
+  };
+
+  // كلمات السين المرسومة صادًا: أربع كلمات مشهورة في المصحف رُسمت فيها
+  // السين الأصلية بحرف الصاد (لغة قريش) بدل السين (لغة تميم)، وثلاث منها
+  // تحمل فوق الصاد سينًا صغيرة (نفس الرمز U+06DC المستخدم أيضًا للسكتة
+  // في مكان آخر من هذا الملف — رمز واحد بمعنيين مختلفين حسب موضعه)
+  // للدلالة على جواز القراءة بالوجهين (بالصاد والسين معًا)، بينما
+  // "بمصيطر" (الغاشية 22) لا سين صغيرة فوقها لأن حفصًا يقرؤها بالصاد
+  // وجهًا واحدًا فقط. هذا ليس مدًّا من أي نوع (لا مد منفصل ولا غيره) —
+  // التلوين هنا فقط تطبيق للون --mad-munfasil نفسه؛ راجع الملاحظة العامة
+  // أعلى جدول SAKTA_HIGHLIGHT_WORDS لسبب هذا التلوين (خلاف الروضة/
+  // الشاطبية)، وليس ادّعاءً بأنها مد. تُلوَّن الكلمة كاملة كوحدة واحدة، بنفس أسلوب الجداول أعلاه.
+  // مفعّل في الرسمين معًا (العثماني والإندوباك)، ومقصور على هذه المواضع
+  // الأربعة تحديدًا:
+  //   52:37  ["أَمۡ","عِندَهُمۡ",...,"ٱلۡمُصَۜيۡطِرُونَ"]   → 6
+  //   88:22  ["لَّسۡتَ","عَلَيۡهِم","بِمُصَيۡطِرٍ"]           → 2
+  //   2:245  [...,"يَقۡبِضُ","وَيَبۡصُۜطُ",...]              → 13
+  //          (مصحف النسخ: هذا الفهرس (13) لا يُستخدم هناك -- مستثنى من
+  //          هذا التفعيل تحديدًا كما سبق، لكن وَيَبۡصُۜطُ نفسها لا تزال
+  //          تُلوَّن في مصحف النسخ عبر آلية بديلة منفصلة -- راجع
+  //          normalizeSeenAsSadFallbackWord/SEEN_AS_SAD_INDOPAK_FALLBACK_2_245
+  //          فوق renderAyahWords أدناه. يعمل الفهرس العادي (13) بشكل
+  //          طبيعي في العثماني كما هو).
+  //   7:69   [...,"ٱلۡخَلۡقِ","بَصۜۡطَةٗۖ",...]               → 21
+  var SEEN_AS_SAD_WORDS = {
+    '52:37': [6],
+    '88:22': [2],
+    '2:245': [13],
+    '7:69': [21]
+  };
+
+  // مد الفرق: ثلاث كلمات فقط في القرآن (ست مواضع) تجمع همزة الاستفهام
+  // مع همزة الوصل بعدها فتُبدَل همزة الوصل ألفًا ثابتة مع مدّة، للتفريق
+  // بين الاستفهام والخبر لو حُذفت (مثال: "ءالله" استفهام إنكاري، لو
+  // حُذفت الهمزة الثانية ونُطقت "الله" لصار خبرًا لا استفهامًا). هذا مد
+  // لازم (الفرق) وليس مد منفصل — MAD_MUNFASIL_REGEX أعلاه يستثنيه فعلًا
+  // بالتصميم (يشترط أن يكون آخر الكلمة، وهذه الكلمات تتبع المدة فيها
+  // حروف أخرى، انظر تعليق MAD_MUNFASIL_REGEX). التلوين هنا فقط تطبيق
+  // للون --mad-munfasil نفسه؛ راجع الملاحظة العامة أعلى جدول
+  // SAKTA_HIGHLIGHT_WORDS لسبب هذا التلوين (خلاف الروضة/الشاطبية)، وليس
+  // ادّعاءً بأنها مد منفصل. تُلوَّن الكلمة كاملة كوحدة واحدة. مفعّل في
+  // الرسمين معًا (العثماني والإندوباك). المواضع الستة كاملة (لا خامس/سابع لها):
+  //   10:51  ["...","ءَامَنتُم","بِهِۦٓۚ","ءَآلۡـَٰٔنَ",...]  → 6
+  //   10:91  ["ءَآلۡـَٰٔنَ",...]                              → 0
+  //   6:143  [...,"قُلۡ","ءَآلذَّكَرَيۡنِ",...]                → 9
+  //   6:144  [...,"قُلۡ","ءَآلذَّكَرَيۡنِ",...]                → 7
+  //   10:59  [...,"قُلۡ","ءَآللَّهُ",...]                     → 13
+  //   27:59  [...,"ٱصۡطَفَىٰٓۗ","ءَآللَّهُ",...]                → 8
+  var MAD_FARQ_WORDS = {
+    '10:51': [6],
+    '10:91': [0],
+    '6:143': [9],
+    '6:144': [7],
+    '10:59': [13],
+    '27:59': [8]
+  };
+
+  // دفعة كلمات متنوعة طلبها المستخدم مباشرة، كل واحدة منها ظاهرة
+  // رسمية/نطقية مختلفة، لكن كلها تُلوَّن بنفس لون --mad-munfasil بالضبط؛
+  // راجع الملاحظة العامة أعلى جدول SAKTA_HIGHLIGHT_WORDS لسبب هذا
+  // التلوين (خلاف الروضة/الشاطبية) — وليست كلها مد منفصل فعليًا:
+  //   12:11  تَأۡمَ۬نَّا — علامة الإشمام (U+06EC) فوق النون: إشارة لضم
+  //          الشفتين بلا صوت عند سكون الميم (أصلها تَأۡمَنُونَنَا) دلالة
+  //          على الحركة الأصلية المحذوفة بالإدغام. كلمة واحدة → فهرس 5.
+  //   26:63  فِرۡقٖ — كما طلب المستخدم بالحرف، بلا أي علامة خاصة مرتبطة
+  //          بها في بيانات هذا المصحف؛ التلوين هنا تنفيذ مباشر للطلب
+  //          فقط، بلا أي تفسير تجويدي إضافي → فهرس 10.
+  //   27:36  ءَاتَىٰنِۦَ — ياء الإضافة الساكنة محذوفة رسمًا ومستبدلة بياء
+  //          صغيرة فوق الحرف (U+06E6) فوق كسرة النون، تذكيرًا بالياء
+  //          الأصلية الساقطة نطقًا في بعض القراءات/الوقف. كلمة واحدة →
+  //          فهرس 7 (وليس "ءَاتَىٰكُمۚ" الأخرى في نفس الآية، فهي فعل
+  //          عادي بلا ياء إضافة محذوفة).
+  //   76:4   سَلَٰسِلَاْ — ألف مبدلة من التنوين لكلمة أعجمية ممنوعة من
+  //          الصرف جزئيًا (يجوز فيها الوجهان: تنوين أو ألف بلا تنوين)،
+  //          مكتوبة بسكون فوق الألف (U+0652) للدلالة على أنها لا تُلفَظ
+  //          مدًّا كاملًا وقفًا ووصلًا. كلمة واحدة → فهرس 3.
+  //   30:54  ضَعۡفٖ / ضَعۡفٖ / ضَعۡفٗا — كما طلب المستخدم بالحرف، بلا أي
+  //          علامة خاصة مرتبطة بها في بيانات هذا المصحف (نفس حال "فرق"
+  //          أعلاه) — تلوين مباشر للطلب فقط، بلا تفسير تجويدي إضافي.
+  //          المواضع الثلاثة كلها في نفس الآية → فهرس 4، 9، 16. (مصحف
+  //          النسخ فقط: مستثنى من التفعيل أدناه تحديدًا -- راجع تعليق
+  //          renderAyahWords؛ يعمل بشكل طبيعي في العثماني.)
+  // ملاحظة: كانت هذه القائمة تشمل أيضًا 7:176 (يلهث ذلك) و11:42 (اركب
+  // معنا) و77:20 (نخلقكم) — أُزيلت الثلاثة بناءً على طلب مباشر لاحق من
+  // المستخدم بإلغاء التلوين عنها تحديدًا، دون المساس ببقية الجدول.
+  // مفعّل في الرسمين معًا (العثماني والإندوباك، عدا 30:54 في النسخ كما
+  // سبق)، بنفس أسلوب الجداول أعلاه.
+  var TAJWEED_NOTE_WORDS = {
+    '12:11': [5],
+    '26:63': [10],
+    '27:36': [7],
+    '76:4': [3],
+    '30:54': [4, 9, 16]
+  };
 
   // Reported (device screenshots, Naskh/Indopak mode, two rounds): the
   // خ in نَخۡشٰٓى (5:52) sits too low relative to the ش that follows it
@@ -567,14 +1061,91 @@ var KNOWN_SPLIT_WORD_FRAGMENTS = ["اٰ تُوۡهُمۡ", "اٰ تَيۡتُم�
     return src;
   }
 
+  // Indopak-only fallback for the ONE seen-as-sad word left unreachable
+  // by the 2:245 tokenization-mismatch exclusion above (its own comment
+  // explains WHY 2:245 is excluded from the normal index lookup; this
+  // function is the targeted workaround for that one specific word,
+  // added on direct request rather than fixing the tokenization itself).
+  // وَيَبۡصُۜطُ can't be found by its old Uthmani-based word index in
+  // Indopak mode anymore (the extra floating-mark tokens earlier in that
+  // ayah's Indopak text shift every index after them), but the word
+  // itself is still findable directly by its own base letters,
+  // independent of where it lands in the token list. Strips every
+  // combining mark down to bare base letters -- ordinary harakat, the
+  // classical Unicode waqf-mark range, AND this font's PUA waqf
+  // extensions (e.g. the small-high-seen U+06DC drawn on this exact
+  // word, plus the standalone marks in WAQF_STANDALONE/WAQF_COMBINING
+  // above, all outside \u0621-\u064A so the single allow-list regex
+  // below drops them too, no separate list needed) -- then folds ص back
+  // to س, the phonetic spelling this whole "seen written as sad"
+  // feature is about, so a lookup for "ويبسط" finds "وَيَبۡصُۜطُ"
+  // regardless of which exact marks happen to be riding on it that
+  // release. Deliberately narrow: only ever consulted for this one
+  // ayah key in Indopak mode (see the guard at its only call site in
+  // renderAyahWords below), so it cannot affect any other word, ayah,
+  // or the Uthmani path.
+  function normalizeSeenAsSadFallbackWord(w){
+    return String(w)
+      .replace(/[^\u0621-\u064A]/g, '')
+      .replace(/\u0635/g, '\u0633');
+  }
+  var SEEN_AS_SAD_INDOPAK_FALLBACK_2_245 = '\u0648\u064A\u0628\u0633\u0637'; // "ويبسط"
+
   function renderAyahWords(a){
     var src = resolveAyahSourceText(a, state.fontStyle);
     var words = tokenizeAyahWords(src).map(function(w){
       return w.split(MIDWORD_SPACE_PLACEHOLDER).join(' ').split(KNOWN_SPLIT_PLACEHOLDER).join('\u00A0');
     });
+    var ayahKey = a.surah + ':' + a.ayah;
+    // UPDATE (طلب مباشر): كانت هذه الجداول الخمسة (وألوانها) مقصورة على
+    // مصحف المدينة (Uthmani) فقط. طُلب تفعيلها في مصحف النسخ (Naskh/
+    // Indopak) أيضًا -- بخلاف المد المنفصل العام (MAD_MUNFASIL_REGEX/
+    // YA_HA_MUNFASIL_REGEX/MAD_SILA_KUBRA_REGEX في cleanAyahText أعلاه)،
+    // الذي يبقى مقصورًا على العثماني كما هو تمامًا (اختلافات رسم كثيرة
+    // بين الخطين تمنع تعميمه)، هذا لأن هذه الجداول لا تعتمد على تحليل
+    // رسمي عام بل على فهرس كلمة محدد سلفًا لكل موضع، وهو ما تحقّقنا منه
+    // مباشرة: تشغيل tokenizeAyahWords على a.text وa.textIndopak لكل
+    // آية من الآيات الـ24 في الجداول الخمسة أظهر تطابقًا تامًا في عدد
+    // وترتيب الكلمات لِـ22 منها -- فهرس الكلمة نفسه يشير لنفس الكلمة
+    // بالضبط في الخطّين، فلا حاجة لجدول فهارس منفصل بمصحف النسخ.
+    //
+    // الاستثناء: آيتان فقط (2:245 وَ30:54) يختلف فيهما عدد الكلمات بين
+    // الخطين في نص الإندوباك (QUL) تحديدًا -- علامات وقف عائمة ورمز ۞
+    // تظهر كرمز/كلمة منفصلة بمسافة حقيقية في a.textIndopak بدل أن تكون
+    // ملتصقة بالكلمة المجاورة كما في a.text، فيزيد عدد الكلمات هناك (18
+    // بدل 16 في 2:245، و27 بدل 24 في 30:54) ويُزيح باقي الفهارس. تفعيل
+    // هذين الموضعين بنفس الفهرس القديم كان سيُلوّن كلمة خاطئة تمامًا في
+    // مصحف النسخ، فبقيا مستثنيين هنا فقط (يبقيان يعملان بشكل طبيعي في
+    // مصحف المدينة) -- إصلاح هذا التفاوت يحتاج تعديل آلية التوكينة نفسها
+    // (KNOWN_SPLIT_WORD_FRAGMENTS وما شابه)، وهو تغيير في البنية التحتية
+    // خارج نطاق هذا التعديل تحديدًا.
+    var saktaIdxs = SAKTA_HIGHLIGHT_WORDS[ayahKey] || null;
+    var muqattaatIdxs = MUQATTAAT_MAD_WORDS[ayahKey] || null;
+    var seenSadIdxs = (state.fontStyle === 'uthmani' || ayahKey !== '2:245') ?
+      (SEEN_AS_SAD_WORDS[ayahKey] || null) : null;
+    // See normalizeSeenAsSadFallbackWord above -- fires ONLY for this
+    // exact excluded case (Indopak mode, ayah 2:245), never touching
+    // Uthmani rendering or any other ayah's lookup.
+    if(!seenSadIdxs && state.fontStyle !== 'uthmani' && ayahKey === '2:245'){
+      for(var seenSadFallbackIdx = 0; seenSadFallbackIdx < words.length; seenSadFallbackIdx++){
+        if(normalizeSeenAsSadFallbackWord(words[seenSadFallbackIdx]) === SEEN_AS_SAD_INDOPAK_FALLBACK_2_245){
+          seenSadIdxs = [seenSadFallbackIdx];
+          break;
+        }
+      }
+    }
+    var madFarqIdxs = MAD_FARQ_WORDS[ayahKey] || null;
+    var tajweedNoteIdxs = (state.fontStyle === 'uthmani' || ayahKey !== '30:54') ?
+      (TAJWEED_NOTE_WORDS[ayahKey] || null) : null;
     return words.map(function(w, idx){
       var key = a.surah + ':' + a.ayah + ':' + idx;
-      return '<span class="quran-word" data-key="' + key + '">' +
+      var extraCls = '';
+      if(saktaIdxs && saktaIdxs.indexOf(idx) !== -1) extraCls += ' sakta-word';
+      if(muqattaatIdxs && muqattaatIdxs.indexOf(idx) !== -1) extraCls += ' muqattaat-mad-word';
+      if(seenSadIdxs && seenSadIdxs.indexOf(idx) !== -1) extraCls += ' seen-as-sad-word';
+      if(madFarqIdxs && madFarqIdxs.indexOf(idx) !== -1) extraCls += ' mad-farq-word';
+      if(tajweedNoteIdxs && tajweedNoteIdxs.indexOf(idx) !== -1) extraCls += ' tajweed-note-word';
+      return '<span class="quran-word' + extraCls + '" data-key="' + key + '">' +
         cleanAyahText(w) +
         '<span class="waqf-mark" aria-hidden="true">\u2605</span>' +
       '</span>';
@@ -946,6 +1517,7 @@ var KNOWN_SPLIT_WORD_FRAGMENTS = ["اٰ تُوۡهُمۡ", "اٰ تَيۡتُم�
     openAyahByNumber: openAyahByNumber,
     tokenizeAyahWords: tokenizeAyahWords,
     resolveAyahSourceText: resolveAyahSourceText,
+    renderAyahWords: renderAyahWords,
     renderAyahTextWithHighlight: renderAyahTextWithHighlight
   };
 })();

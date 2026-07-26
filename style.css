@@ -58,6 +58,34 @@
   --emerald-light: #2C6E57;
   --gold: #A9793B;
   --gold-bright: #C9A227;
+  /* علامة المد المنفصل — لون مميز يشد انتباه القارئ فوق ورقة المصحف
+     الفاتحة (paper #F6F1E4)، بتباين كافٍ عن حبر النص العادي (ink).
+     UPDATE: تم رفع التشبع سابقًا (من #C0392B إلى #D62839) بعد بلاغ
+     بعدم وضوح اللون على حروف صغيرة كـ"ىٰٓ" مقارنة بحرف كامل كـ"آ" — لا
+     تغيير في نطاق الحروف الملوَّنة نفسه، تفاديًا لخطر كسر اتصال الحروف
+     المجاورة عبر فصلها بعناصر HTML منفصلة.
+     UPDATE 2 (طلب مباشر لاحق، بعد معاينة الشكل فعليًا): اللون الأحمر
+     (#D62839) كان يتشابه بصريًا مع علامات التذكير الشخصية الحمراء
+     (.waqf-mark.mark-red في هذا الملف)، فيسبّب لبسًا بين الاثنين على
+     الصفحة. غُيِّر إلى "عنبري داكن" (#C67C00) — لون مختلف تمامًا عن أي
+     لون تستخدمه علامات التذكير الثلاثة (أحمر/أخضر/أزرق).
+     UPDATE 3 (طلب مباشر: توحيد اللون بين الوضعين): كان الوضع الليلي
+     يستخدم قيمة أفتح (--mad-munfasil override في قسم body.night أسفل
+     هذا الملف) لضمان الوضوح على الخلفية الداكنة، بينما النهاري ظل على
+     #C67C00. طُلب توحيدهما، فأصبح النهاري نفس القيمة المغمَّقة التي
+     كانت مخصصة لليلي (#D98527) — كلا الوضعين بنفس اللون بالضبط.
+     UPDATE 4 (طلب مباشر: درجة عنبري داكن أخرى): تغيّر اللون الموحَّد من
+     #D98527 إلى #A86A00 — نفس الأسلوب (لون واحد لكلا الوضعين).
+     UPDATE 5 (طلب مباشر: تغميق ~12%، بين 10-15% المطلوبة): #A86A00 (168,
+     106, 0) × 0.88 ≈ (148, 93, 0) = #945D00.
+     UPDATE 6 (طلب مباشر نهائي، بعد معاينة كل الألوان المجرَّبة جنبًا
+     إلى جنب): تغيّر إلى "برتقالي محمر" (Vermilion) #D35400 — كان لحظتها
+     موحَّدًا لكلا الوضعين (نفس القيمة في :root وفي body.night أسفل هذا
+     الملف).
+     UPDATE 7 (طلب مباشر: فصل الوضعين مجددًا): #D35400 يبقى للوضع
+     النهاري هنا فقط؛ الوضع الليلي أصبح لونًا مختلفًا (Goldenrod
+     #DAA520) — انظر override في body.night أسفل هذا الملف. */
+  --mad-munfasil: #D35400;
   --gold-pale: #E8C874;
   --shadow: 0 18px 40px -18px rgba(14, 51, 42, .45);
   --radius: 18px;
@@ -421,6 +449,157 @@ body.uthmani-font .waqf-sign{
   pointer-events: none;
   user-select: none;
   -webkit-user-select: none;
+  /* كَلَّآ دائمًا مد منفصل (الكلمة تنتهي عند الألف مباشرة). بلا لون/وزن
+     خاص هنا افتراضيًا — يرث لون الحبر العادي من .ayah-flow المحيطة،
+     فيبقى شكل الحرف سليمًا حتى لو كان إعداد "إظهار مواضع قصر المنفصل"
+     متوقفًا. التلوين الفعلي مُطبَّق فقط عبر body.show-mad-munfasil
+     أسفل هذا الملف (انظر التعليق هناك) — انظر MAD_MUNFASIL_REGEX في
+     readerManager.js لتفاصيل باقي حالات المد المنفصل في المصحف. */
+}
+
+/* عام: لام+ألف+مدة (لا/لّا + ٓ) — نفس علة "كلا" أعلاه (المدة تظهر فوق
+   اللام بدل الألف)، لكن بلا حصر بحرف سابق معيّن — انظر الشرح الكامل
+   فوق LAM_ALEF_MADDA_REGEX في readerManager.js. بخلاف كَلَّآ، هذه
+   الكلمات ليست كلها مد منفصل بالضرورة (بعضها مد متصل مثل هَـٰٓؤُلَآءِ)،
+   فاللون هنا غير ثابت — يُضاف فقط عبر فئة .mad-munfasil المنفصلة متى
+   كانت الحالة مد منفصل فعلًا (يقرّرها JS، ليس هنا). بلا لون افتراضي هنا
+   حتى تبقى حالات المد المتصل بلون الحبر العادي كأي كلمة أخرى.
+   نفس قيم الموضع المضبوطة لـ"كلّآ" (تقدير أولي فقط — "كلا" ربطة خط
+   مختلفة فعليًا عن "لا" العادية، فقد تحتاج ضبطًا منفصلًا لاحقًا). */
+.lam-alef-madda-cluster{
+  position: relative;
+  display: inline-block;
+}
+.lam-alef-madda-glyph{
+  position: absolute;
+  left: -2%;
+  top: -0.25em;
+  transform: translateX(-50%);
+  font-family: var(--font-quran);
+  font-size: 1em;
+  line-height: 1;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* المد المنفصل (mad munfasil) — انظر الشرح الكامل فوق MAD_MUNFASIL_REGEX
+   في readerManager.js. تلوين + محاولة وزن خط أخف من bold(700)، بلا أي
+   تغيير في الحجم أو الموضع أو العرض، وبلا توسيع نطاق الحروف الملوَّنة —
+   الحرف والعلامة يبقيان داخل نفس العنصر تمامًا كما كانا، فلا يتأثر ربط
+   الخط (GPOS) بينهما.
+   UPDATE (طلب صريح لحل محافظ بعد أن bold(700) غيّر الطابع البصري
+   للمصحف): فُحص ملف الخط (UthmanicHafs.woff2) مباشرة بـfontTools قبل
+   هذا التغيير — usWeightClass=400، وليس خطًا متغيّرًا (fvar)، أي لا
+   يحمل أي وزن حقيقي غير Regular. فأي font-weight غير 400 هنا سيُحاكى
+   (synthetic) من المتصفح، لا رسمة حقيقية من الخط. جُرِّب 600 أولًا؛
+   هذه تجربة 500 كما طُلب صراحة — إن لم يُحدث فرقًا بصريًا حقيقيًا
+   فالخطوة التالية هي الحذف الكامل لـfont-weight هنا — بلا اللجوء
+   لـ700 إطلاقًا. */
+.mad-munfasil{
+  /* بلا لون/وزن هنا افتراضيًا — انظر التعليق فوق body.show-mad-munfasil
+     أسفل هذا الملف لسبب هذا التغيير ولمكان التلوين الفعلي. */
+}
+
+/* السكتات الأربع الواجبة عند حفص — انظر SAKTA_HIGHLIGHT_WORDS في
+   readerManager.js لتفاصيل المواضع الأربعة وأرقام فهرسة كلماتها. نفس
+   المتغيّر ونفس الوزن المستخدَمين في .mad-munfasil أعلاه بالضبط (طلب
+   صريح من المستخدم)، وليست نسخة بلون منفصل، حتى تتبع أي تغيير مستقبلي
+   في --mad-munfasil تلقائيًا. */
+.sakta-word{
+  /* بلا لون/وزن هنا افتراضيًا — انظر التعليق فوق body.show-mad-munfasil
+     أسفل هذا الملف. */
+}
+
+/* فواتح السور المطلوب تلوينها — انظر MUQATTAAT_MAD_WORDS في
+   readerManager.js. نفس المتغيّر ونفس الوزن المستخدَمين في
+   .mad-munfasil/.sakta-word أعلاه بالضبط (طلب صريح من المستخدم). */
+.muqattaat-mad-word{
+  /* بلا لون/وزن هنا افتراضيًا — انظر التعليق فوق body.show-mad-munfasil
+     أسفل هذا الملف. */
+}
+
+/* كلمات السين المرسومة صادًا — انظر SEEN_AS_SAD_WORDS في
+   readerManager.js. نفس المتغيّر ونفس الوزن المستخدَمين في
+   .mad-munfasil أعلاه بالضبط (طلب صريح من المستخدم). */
+.seen-as-sad-word{
+  /* بلا لون/وزن هنا افتراضيًا — انظر التعليق فوق body.show-mad-munfasil
+     أسفل هذا الملف. */
+}
+
+/* مد الفرق (ءالله / ءالآن / ءالذكرين) — انظر MAD_FARQ_WORDS في
+   readerManager.js. نفس المتغيّر ونفس الوزن المستخدَمين في
+   .mad-munfasil أعلاه بالضبط (طلب صريح من المستخدم). */
+.mad-farq-word{
+  /* بلا لون/وزن هنا افتراضيًا — انظر التعليق فوق body.show-mad-munfasil
+     أسفل هذا الملف. */
+}
+
+/* دفعة كلمات متنوعة (إشمام، إدغام صغير عبر كلمتين، ياء إضافة محذوفة،
+   ألف مبدلة من التنوين) — انظر TAJWEED_NOTE_WORDS في readerManager.js.
+   نفس المتغيّر ونفس الوزن المستخدَمين في .mad-munfasil أعلاه بالضبط
+   (طلب صريح من المستخدم). */
+.tajweed-note-word{
+  /* بلا لون/وزن هنا افتراضيًا — انظر التعليق فوق body.show-mad-munfasil
+     مباشرة أسفل هذا التعليق. */
+}
+
+/* إعداد "إظهار الخلاف لقصر المنفصل" (settings.js: applyMadMunfasilVisibility،
+   state.showMadMunfasilUthmani — متاح فقط مع مصحف المدينة، القيمة
+   الافتراضية false/متوقفة). ليس كل من
+   يستخدم التطبيق يريد رؤية تلوين مواضع الخلاف بين طريق الروضة/المعدل
+   وطريق الشاطبية أثناء القراءة العادية، بينما من يتعلّم التجويد
+   سيستفيد منها — فالتلوين هنا اختياري بالكامل، ومتوقف افتراضيًا.
+   كل الفئات السبع أدناه (المجموعة الكاملة الموصوفة في الملاحظة العامة
+   فوق SAKTA_HIGHLIGHT_WORDS في readerManager.js) بلا لون/وزن خاص بها في
+   تعريفها الأصلي أعلاه في هذا الملف؛ هذا هو المكان الوحيد الذي يُطبَّق
+   منه اللون والوزن فعليًا، ومقصور على وجود فئة body.show-mad-munfasil. */
+body.show-mad-munfasil .kalla-madda-glyph{
+  color: var(--mad-munfasil);
+  font-weight: 600;
+}
+body.show-mad-munfasil .mad-munfasil,
+body.show-mad-munfasil .sakta-word,
+body.show-mad-munfasil .muqattaat-mad-word,
+body.show-mad-munfasil .seen-as-sad-word,
+body.show-mad-munfasil .mad-farq-word,
+body.show-mad-munfasil .tajweed-note-word{
+  color: var(--mad-munfasil);
+  font-weight: 500;
+}
+/* تكبير طفيف جدًا (5%) لحرف المد المنفصل فقط — لا يشمل sakta-word/
+   muqattaat-mad-word/seen-as-sad-word/mad-farq-word/tajweed-note-word
+   أعلاه، لذا قاعدة منفصلة بدل إضافته للـ selector المشترك. نفس أسلوب
+   body.uthmani-font .waqf-sign (font-size على نفس الـ span الذي يضم
+   الحرف الأساسي + المدة معًا، وليس transform:scale): هذا الملف لا
+   يستخدم transform في أي مكان لدمج حرف+علامة، وتحويل هذا الـ span إلى
+   inline-block (شرط CSS لتفعيل transform على عنصر inline) يُدخل مسارًا
+   جديدًا كليًا لم يُختبر من قبل هنا (baseline من نوع inline-block،
+   وصندوق تخطيط لا يتأثر بالتحويل البصري فيتيح تراكبًا بصريًا مع السطر
+   المجاور دون أن ينعكس ذلك على الـ layout). بينما font-size يبقي هذا
+   الحرف على نفس مسار كل تعديلات هذا الملف (.waqf-mark-lower،
+   .waqf-sila-lift...) وقد سبق اختباره فعلًا على نفس الخط (UthmanicHafs)
+   بفارق أكبر بكثير (1.2em/1.3em) دون أن ينكسر ربط GPOS بين الحرف
+   والمدة، فهذا الفارق الأصغر (1.05em) أقل خطورة من ذلك المُختبَر أصلًا.
+   مقصور على body.show-mad-munfasil مثل باقي تنسيق هذا الصنف. */
+body.show-mad-munfasil .mad-munfasil{
+    font-size: 1.2em;
+    /* عمدًا نفس قيمة body.uthmani-font .waqf-sign أعلاه بالضبط (بدل قيمة
+       منفصلة كانت 1.04em) — طلب صريح: يكون تكبير حرف المد المنفصل مطابقًا
+       لتكبير علامة الوقف تمامًا في كل موضع، سواء انتهت الكلمة بعلامة وقف
+       أم لا، فلا يوجد إلا مقياس تكبير واحد في كل الملف. */
+}
+/* عندما تنتهي كلمة المد المنفصل مباشرة بعلامة وقف، wrapWaqfSigns() يغلّف
+   الحرف+المدة+علامة الوقف معًا أولًا في span واحد (waqf-sign) قبل أن
+   يُضيف MAD_MUNFASIL_REGEX span متداخلًا (mad-munfasil) حول الحرف+المدة
+   (راجع ترتيب التنفيذ في cleanAyahText، readerManager.js؛ تأكيد فعلي:
+   110 موضعًا في data.js). بما أن em تتراكم مع التعشيش، فبلا هذه القاعدة
+   سيصل حرف المد إلى 1.2×1.2 = 1.44em بدل 1.2em المقصودة. بما أن القيمتين
+   الآن متطابقتان أصلًا (1.2em)، فكل ما يلزم هنا هو منع الإضافة الثانية —
+   الحرف يرث الـ1.2em من waqf-sign المحيط به فيصل لنفس الحجم تمامًا في
+   الحالتين (بوقف أو بدونه)، بلا أي تراكم. */
+body.show-mad-munfasil .waqf-sign .mad-munfasil{
+    font-size: 1em;
 }
 
 /* Each Qur'an word is wrapped so a personal reminder star can be anchored
@@ -972,9 +1151,25 @@ body.night{ background: #000000; }
 body.night #app{ background: #000000; }
 body.night .page-frame{ background:#1c1c1e; border-color:rgba(255,255,255,.14); }
 body.night .ayah-flow{ color:#F2F2F2; }
+/* علامة المد المنفصل في الوضع الليلي — لون منفصل عن النهاري بطلب
+   مباشر: "غولدنرود" (Goldenrod)، بينما النهاري يبقى على "برتقالي محمر"
+   (Vermilion) #D35400 المعرَّف في :root أعلى هذا الملف.
+   UPDATE (طلب مباشر: تفتيح قليلًا): كان #DAA520 (218,165,32)، فُتِّح
+   ~12% نحو الأبيض → (222,176,59) = #DEB03B. */
+body.night{ --mad-munfasil: #DEB03B; }
 body.night .surah-cartouche, body.night .surah-cartouche b, body.night .surah-cartouche span{ color:#F2F2F2; }
 body.night .ayah-num{ color:#F2F2F2; }
-body.night .ruku-mark{ color:#F2F2F2; border-color:rgba(255,255,255,.14); }
+/* الدائرة حول علامة الركوع في الوضع الليلي — أخضر بطلب مباشر، نفس
+   الأخضر #4CAF50 المستخدم في الشاشة الرئيسية بالوضع الليلي (أيقونات
+   البلاطات وشريط التقدّم)، بدل الحدّ الأبيض الشفاف الافتراضي. */
+body.night .ruku-mark{ color:#F2F2F2; border-color:#4CAF50; }
+/* Reported directly (screenshot, night mode): the dashed divider above
+   "نهاية الركوع..." still used the day-mode gold rgba(169,121,59,.4)
+   from .ruku-end's base rule above, unlike every other card divider in
+   night mode (page-frame, panel-head, index-item, setting-row, etc.),
+   which all use this same dim rgba(255,255,255,.14) gray. Matches that
+   existing convention instead of introducing a new color. */
+body.night .ruku-end{ border-top-color: rgba(255,255,255,.14); }
 .ruku-end.incomplete .ruku-mark{
   font-size: 20px;
   color: var(--ink-soft);

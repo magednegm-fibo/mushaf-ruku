@@ -58,6 +58,13 @@
     // refresh the toggle switch and the hide/show class to match this
     // mode's value.
     applyWaqfVisibility();
+    // Mad-munfasil visibility now applies in both script modes — see
+    // renderAyahWords()/the comment above SAKTA_HIGHLIGHT_WORDS in
+    // readerManager.js for why this is safe (verified word-index
+    // alignment, with 2:245/30:54 excluded there specifically). Still
+    // refreshed here on every script-mode switch so the toggle's
+    // checked state re-syncs immediately either way.
+    applyMadMunfasilVisibility();
     // Reading progress (percentage / reached count) is shared between
     // both script modes, but re-rendered here anyway since the settings
     // panel/home screen may currently be visible.
@@ -89,6 +96,38 @@
   function applyWaqfVisibility(){
     document.body.classList.toggle('hide-waqf-marks', state[currentWaqfVisibilityKey()] === false);
     if(els.waqfToggle) els.waqfToggle.checked = state[currentWaqfVisibilityKey()] !== false;
+  }
+
+  // -----------------------------------------------------------------
+  // إظهار مواضع قصر المنفصل (مواضع الخلاف بين طريق الروضة/المعدل وطريق
+  // الشاطبية — انظر الملاحظة العامة فوق SAKTA_HIGHLIGHT_WORDS في
+  // readerManager.js لتفاصيل كل الحالات المشمولة). لا حاجة لإعادة رسم
+  // الصفحة عند تبديل هذا الخيار: التلوين مبني بالكامل على فئة body.show-
+  // mad-munfasil في style.css (انظر التعليق هناك)، فتبديل فئة body وحدها
+  // كافٍ فورًا بلا أي عمل إضافي من JS.
+  //
+  // UPDATE (طلب مباشر): هذا الخيار كان مقصورًا على مصحف المدينة
+  // (Uthmani) فقط -- الزر هناك كان دائمًا مُقفلًا على "متوقف" ومعطَّلاً
+  // في مصحف النسخ (Naskh/Indopak). فُعِّل الآن في الرسمين معًا: تحقّقنا
+  // مباشرة من فهرسة الكلمات (tokenizeAyahWords) لكل آية في الجداول
+  // الخمسة المعنية، وتطابقت بين الخطين لـ22 من أصل 24 آية -- الاستثناءان
+  // (2:245 و30:54) يبقيان يعملان في العثماني فقط تحديدًا داخل
+  // renderAyahWords نفسها (راجع تعليقها)، دون أي أثر على هذا المفتاح
+  // العام. القيمة تُحفظ تحت مفتاح واحد مشترك بين الخطين
+  // (showMadMunfasilUthmani -- الاسم قديم من فترة القصر على العثماني
+  // فقط ولم يُعَد تسميته تجنبًا لأي تغيير غير ضروري في البنية التحتية،
+  // لكنه يعمل الآن كتفضيل عام واحد للقارئ في كلا المصحفين).
+  // -----------------------------------------------------------------
+  function applyMadMunfasilVisibility(){
+    var isOn = !!state.showMadMunfasilUthmani;
+    document.body.classList.toggle('show-mad-munfasil', isOn);
+    if(els.madMunfasilToggle){
+      els.madMunfasilToggle.checked = isOn;
+      els.madMunfasilToggle.disabled = false;
+    }
+    if(els.madMunfasilRow){
+      els.madMunfasilRow.title = '';
+    }
   }
 
   // -----------------------------------------------------------------
@@ -175,6 +214,11 @@
       applyWaqfVisibility(); saveState();
     });
 
+    els.madMunfasilToggle && els.madMunfasilToggle.addEventListener('change', function(){
+      state.showMadMunfasilUthmani = els.madMunfasilToggle.checked;
+      applyMadMunfasilVisibility(); saveState();
+    });
+
     els.btnClearAllReminders && els.btnClearAllReminders.addEventListener('click', function(){
       var scriptName = state.fontStyle === 'uthmani' ? 'مصحف المدينة' : 'مصحف النسخ';
       var message = 'سيتم حذف جميع علامات التذكير في ' + scriptName + '، ولا يمكن التراجع عن هذا الإجراء.';
@@ -226,6 +270,7 @@
     applyFontStyle();
     applyNight();
     applyWaqfVisibility();
+    applyMadMunfasilVisibility();
     if(els.pinchZoomToggle) els.pinchZoomToggle.checked = state.pinchZoomEnabled !== false;
     if(els.wakeLockToggle){
       els.wakeLockToggle.checked = !!state.keepScreenAwake && WAKE_LOCK_SUPPORTED;

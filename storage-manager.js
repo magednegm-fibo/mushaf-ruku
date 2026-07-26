@@ -64,7 +64,7 @@
       furthestUthmani:0, furthestIndopak:0,
       lastPageUthmani:0, lastPageIndopak:0, lastPageShared:0,
       fontStyle:'uthmani', showWaqfMarksUthmani:true, showWaqfMarksIndopak:true,
-      pinchZoomEnabled:true, keepScreenAwake:false, reciter:'abdulbasit',
+      pinchZoomEnabled:true, keepScreenAwake:false, showMadMunfasilUthmani:false, reciter:'abdulbasit',
       autoScrollEnabled:true, recitationRepeatCount:1, rukuRepeatCount:1, playbackRate:1,
       displayScope:'all', recitationScope:'ruku'
     };
@@ -107,6 +107,16 @@
       result.showWaqfMarksUthmani = result.showWaqfMarks;
       result.showWaqfMarksIndopak = result.showWaqfMarks;
       delete result.showWaqfMarks;
+    }
+    // Migration: older saved states had a single shared `showMadMunfasil`
+    // toggle that applied to both script modes. The setting is now only
+    // usable in مصحف المدينة (Uthmani) — مصحف النسخ (Naskh/Indopak) always
+    // forces it off — so carry the old value over into the Uthmani-only
+    // key rather than dropping it, since that's the one mode where it
+    // still applies.
+    if(result.showMadMunfasil !== undefined){
+      result.showMadMunfasilUthmani = result.showMadMunfasil;
+      delete result.showMadMunfasil;
     }
     // Migration: older saved states had a single shared `furthest` (reading
     // progress) field, and "continue last reading" always resumed at the
