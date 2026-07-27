@@ -111,15 +111,22 @@
       .replace(KALLA_MADDA_REGEX, KALLA_MADDA_HTML)
       .replace(KALLA_MADDA_WAQF_REGEX, kallaMaddaWaqfHtml)
       .replace(LAM_ALEF_MADDA_REGEX, lamAlefMaddaHtml);
-    // مد منفصل: تحليل مبني على رسم الخط العثماني (a.text) تحديدًا، تم
-    // التحقق منه على كامل بيانات هذا الحقل فقط — غير مُفعَّل بعد في وضع
-    // الناسخ/الإندوباك (textIndopak)، الذي يستخدم رموزًا مختلفة لبعض
-    // الحروف (راجع searchManager.js لتفاصيل هذا الاختلاف بين الخطين).
-    if(state && state.fontStyle === 'uthmani'){
-      out = out.replace(MAD_MUNFASIL_REGEX, madMunfasilHtml);
-      out = out.replace(YA_HA_MUNFASIL_REGEX, yaHaMunfasilHtml);
-      out = out.replace(MAD_SILA_KUBRA_REGEX, madSilaKubraHtml);
-    }
+    // مد منفصل العام (MAD_MUNFASIL_REGEX/YA_HA_MUNFASIL_REGEX/
+    // MAD_SILA_KUBRA_REGEX): DISABLED بطلب صريح من المستخدم. كانت هذه
+    // الثلاثة تُلوِّن كل موضع مد منفصل عاديّ في المصحف كله (آلاف
+    // المواضع، تحقُّق أصلي: 2,318 لِـMAD_MUNFASIL_REGEX وحدها) — تلوين
+    // شامل لا علاقة له بمواضع الخلاف الفعلية بين طريقَي الروضة/الشاطبية،
+    // بخلاف الجداول الخمسة أسفل هذا الملف (SAKTA_HIGHLIGHT_WORDS إلخ)
+    // التي تمثّل فعلًا مواضع خلاف محددة (24 آية فقط). طُلب توحيد سلوك
+    // مصحف المدينة مع مصحف النسخ، الذي لم يُفعِّل هذا التلوين الشامل
+    // أصلًا لاختلاف الرسم بين الخطين — فبقي هناك مقصورًا على الجداول
+    // الخمسة + كلّا (KALLA_MADDA_REGEX، غير مُتأثرة بهذا التغيير). لذا
+    // أُوقِف الاستدعاء هنا بالكامل، فيرجع كل نص مد منفصل عادي للون
+    // الحبر الطبيعي وللحجم الطبيعي (لا span إضافي، لا تكبير) في مصحف
+    // المدينة أيضًا. المتغيرات MAD_MUNFASIL_REGEX/YA_HA_MUNFASIL_REGEX/
+    // MAD_SILA_KUBRA_REGEX ودوال الـHTML الخاصة بها أُبقيت معرَّفة أسفل
+    // هذا الملف (غير مُستدعاة من أي مكان الآن) توثيقًا للتحقق السابق منها
+    // ولإمكان إعادة التفعيل مستقبلًا لو تغيّر الطلب.
     return out;
   }
 
@@ -318,9 +325,12 @@
         if(!LAM_ALEF_NON_JOINING_BEFORE[precedingCp]) return match;
       }
     }
-    var after = str.slice(offset + match.length);
-    var isMunfasil = /^(?:<span[^>]*>)?(?:\u0627\u0652)?(?:\u0615|[\u06D6-\u06DC])*(?:<\/span>)*$/.test(after);
-    var glyphClass = 'lam-alef-madda-glyph' + (isMunfasil ? ' mad-munfasil' : '');
+    // كان يُضاف هنا صنف "mad-munfasil" (تلوين) عندما تنتهي الكلمة عند
+    // هذه المدة فعلًا (مد منفصل حقيقي) — أُوقِف بنفس طلب إلغاء التلوين
+    // الشامل للمد المنفصل العام أعلى هذا الملف (انظر تعليق cleanAyahText).
+    // الغلاف lam-alef-madda-glyph نفسه يبقى دون تغيير: وظيفته الأصلية
+    // إصلاح موضع رسمة المدة (glyph)، لا علاقة له بالتلوين.
+    var glyphClass = 'lam-alef-madda-glyph';
     return '<span class="lam-alef-madda-cluster">' + core +
       '<span class="' + glyphClass + '" aria-hidden="true">' + madda + '</span>' +
     '</span>';

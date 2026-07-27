@@ -1,4 +1,4 @@
-// Regression test for readerManager.js's مد منفصل highlighting.
+// Regression test for readerManager.js's مد منفصل (general) highlighting.
 //
 // Node script, no build step:
 //   node tests/mad-munfasil-regression.js
@@ -7,18 +7,26 @@
 // Exit code 0 if every check passes, 1 if any fails. Loads readerManager.js
 // in a minimal sandbox (see _load-reader-manager.js) and data.js as plain
 // JSON-ish text, then renders each ayah through the same
-// renderAyahTextWithHighlight() pipeline the app uses, and checks the
-// resulting HTML for the expected "mad-munfasil" class placement.
+// renderAyahTextWithHighlight() pipeline the app uses.
 //
-// Covers:
-//   1. The 5 "يَـٰٓـَٔادَمُ" (يا آدم) occurrences (2:33, 2:35, 7:19,
-//      20:117, 20:120) that YA_HA_MUNFASIL_REGEX previously missed
-//      because the hamza there rides on its own tatweel instead of
-//      being a plain hamza letter.
-//   2. A sample of the pre-existing "يَـٰٓأَيُّهَا" / "هَـٰٓؤُلَآءِ"
-//      munfasil cases, to confirm the fix didn't regress them.
-//   3. A sample of the general (non-يا/ها) مد منفصل rule, to confirm
-//      that unrelated highlighting logic is untouched.
+// UPDATE (direct request): the blanket general مد منفصل coloring
+// (MAD_MUNFASIL_REGEX / YA_HA_MUNFASIL_REGEX / MAD_SILA_KUBRA_REGEX, plus
+// the conditional class on lam-alef-madda-glyph) used to mark EVERY
+// ordinary مد منفصل occurrence in the whole mushaf (thousands of words) --
+// not specifically the "مواضع اختلاف روضة الحفاظ" the toggle's own label
+// promises. That blanket marking was never active in مصحف النسخ (Indopak)
+// to begin with (script/rasm differences made it unsafe to extend there --
+// see cleanAyahText's comment). Per direct request, مصحف المدينة (Uthmani)
+// now matches مصحف النسخ: only the curated khilaf tables (see
+// mad-munfasil-indopak-regression.js, which already exercises those in
+// both scripts) plus كَلَّآ (a separate, always-مد-منفصل feature, untouched
+// by this change) stay colored -- the ordinary/general مد منفصل text
+// renders in plain ink at the normal size again, in BOTH script modes.
+//
+// This suite now asserts the OPPOSITE of its original checks: that the
+// "mad-munfasil" class is never produced anymore, for every case
+// (يَـٰٓـَٔادَمُ, يَـٰٓأَيُّهَا, هَـٰٓؤُلَآءِ, and the plain general rule),
+// while كلّا's own (unrelated) glyph/class is confirmed still present.
 'use strict';
 const fs = require('fs');
 const path = require('path');
@@ -55,29 +63,25 @@ function check(label, cond, extra) {
 }
 
 // ---------------------------------------------------------------------
-// 1. يَـٰٓـَٔادَمُ ("يا آدم") — the reported bug. All 5 occurrences.
+// 1. يَـٰٓـَٔادَمُ ("يا آدم") -- must NOT carry mad-munfasil anymore.
 // ---------------------------------------------------------------------
-console.log('يَـٰٓـَٔادَمُ (يا آدم) — 5 occurrences:');
+console.log('يَـٰٓـَٔادَمُ (يا آدم) -- 5 occurrences, mad-munfasil now removed:');
 const YA_ADAM_CASES = [[2, 33], [2, 35], [7, 19], [20, 117], [20, 120]];
 for (const [surah, ayah] of YA_ADAM_CASES) {
   const text = getAyahText(surah, ayah);
   const html = RM.renderAyahTextWithHighlight(text, null);
-  // The tatweel-seat span immediately preceding the yaa/alef cluster
-  // must now carry the mad-munfasil class.
-  const hasMunfasilTatweelSeat = /class="tatweel-seat[^"]*mad-munfasil[^"]*"/.test(html) ||
-                                  /class="tatweel-seat[^"]* mad-munfasil"/.test(html) ||
-                                  /class="[^"]*tatweel-seat[^"]*mad-munfasil[^"]*"/.test(html);
+  const hasMunfasilTatweelSeat = /class="[^"]*tatweel-seat[^"]*mad-munfasil[^"]*"/.test(html);
   check(
-    surah + ':' + ayah + ' — يا آدم tatweel-seat span carries mad-munfasil',
-    hasMunfasilTatweelSeat,
+    surah + ':' + ayah + ' -- يا آدم tatweel-seat span no longer carries mad-munfasil',
+    !hasMunfasilTatweelSeat,
     'rendered HTML snippet: ' + html.slice(0, 200)
   );
 }
 
 // ---------------------------------------------------------------------
-// 2. Pre-existing يَـٰٓأَيُّهَا / هَـٰٓؤُلَآءِ cases still work.
+// 2. يَـٰٓأَيُّهَا / هَـٰٓؤُلَآءِ -- must NOT carry mad-munfasil anymore.
 // ---------------------------------------------------------------------
-console.log('\nExisting يَـٰٓأَيُّهَا / هَـٰٓؤُلَآءِ cases (must still pass):');
+console.log('\nيَـٰٓأَيُّهَا / هَـٰٓؤُلَآءِ cases (mad-munfasil now removed):');
 const YA_AYYUHA_CASES = [
   [22, 1],   // يَـٰٓأَيُّهَا ٱلنَّاسُ
   [24, 21],  // يَـٰٓأَيُّهَا ٱلَّذِينَ ءَامَنُواْ
@@ -87,8 +91,8 @@ for (const [surah, ayah] of YA_AYYUHA_CASES) {
   const html = RM.renderAyahTextWithHighlight(text, null);
   const hasMunfasilTatweelSeat = /class="[^"]*tatweel-seat[^"]*mad-munfasil[^"]*"/.test(html);
   check(
-    surah + ':' + ayah + ' — يَـٰٓأَيُّهَا tatweel-seat span still carries mad-munfasil',
-    hasMunfasilTatweelSeat,
+    surah + ':' + ayah + ' -- يَـٰٓأَيُّهَا tatweel-seat span no longer carries mad-munfasil',
+    !hasMunfasilTatweelSeat,
     'rendered HTML snippet: ' + html.slice(0, 200)
   );
 }
@@ -101,29 +105,65 @@ for (const [surah, ayah] of HAA_ULAA_CASES) {
   const html = RM.renderAyahTextWithHighlight(text, null);
   const hasMunfasilTatweelSeat = /class="[^"]*tatweel-seat[^"]*mad-munfasil[^"]*"/.test(html);
   check(
-    surah + ':' + ayah + ' — هَـٰٓؤُلَآءِ tatweel-seat span still carries mad-munfasil',
-    hasMunfasilTatweelSeat,
+    surah + ':' + ayah + ' -- هَـٰٓؤُلَآءِ tatweel-seat span no longer carries mad-munfasil',
+    !hasMunfasilTatweelSeat,
     'rendered HTML snippet: ' + html.slice(0, 200)
   );
 }
 
 // ---------------------------------------------------------------------
-// 3. General مد منفصل rule (unrelated to يا/ها) still works.
+// 3. General مد منفصل rule (unrelated to يا/ها) -- must NOT render any
+//    mad-munfasil span anymore, anywhere in the whole ayah.
 // ---------------------------------------------------------------------
-console.log('\nGeneral مد منفصل rule (sanity, unrelated code path):');
+console.log('\nGeneral مد منفصل rule (mad-munfasil now removed):');
 const GENERAL_MUNFASIL_CASES = [
   [21, 25],  // وَمَآ أَرۡسَلۡنَا مِن قَبۡلِكَ مِن رَّسُولٍ إِلَّا نُوحِيٓ إِلَيۡهِ
 ];
 for (const [surah, ayah] of GENERAL_MUNFASIL_CASES) {
   const text = getAyahText(surah, ayah);
   const html = RM.renderAyahTextWithHighlight(text, null);
-  const hasMadMunfasilSpan = /class="mad-munfasil"/.test(html);
+  const hasMadMunfasilSpan = /class="[^"]*\bmad-munfasil\b[^"]*"/.test(html);
   check(
-    surah + ':' + ayah + ' — general مد منفصل still renders a mad-munfasil span',
-    hasMadMunfasilSpan,
+    surah + ':' + ayah + ' -- general مد منفصل no longer renders any mad-munfasil span',
+    !hasMadMunfasilSpan,
     'rendered HTML snippet: ' + html.slice(0, 200)
   );
 }
 
-console.log('\n' + pass + ' passed, ' + fail + ' failed.');
+// ---------------------------------------------------------------------
+// 4. Sanity: كَلَّآ (kalla-madda-glyph) is a SEPARATE, always-مد-منفصل
+//    feature untouched by this change -- must still render its own glyph
+//    span (a different class from "mad-munfasil", never affected by it).
+// ---------------------------------------------------------------------
+console.log('\nكَلَّآ (kalla-madda-glyph) -- separate feature, must still render:');
+{
+  const [surah, ayah] = [83, 18]; // كَلَّآ ۖ إِنَّ كِتَٰبَ ٱلۡأَبۡرَارِ
+  const text = getAyahText(surah, ayah);
+  const html = RM.renderAyahTextWithHighlight(text, null);
+  const hasKallaGlyph = /class="kalla-madda-glyph"/.test(html);
+  check(
+    surah + ':' + ayah + ' -- كَلَّآ still renders its own kalla-madda-glyph span',
+    hasKallaGlyph,
+    'rendered HTML snippet: ' + html.slice(0, 200)
+  );
+}
+
+// ---------------------------------------------------------------------
+// 5. UPDATE (direct follow-up request): كَلَّآ's OWN coloring
+//    (body.show-mad-munfasil .kalla-madda-glyph { color: ... }) has also
+//    been removed from style.css, in both script modes -- it wasn't one
+//    of the five curated khilaf tables, so it now stays plain ink too,
+//    same as the general مد منفصل text. This is a CSS-level check (no
+//    HTML class involved -- .kalla-madda-glyph itself is untouched,
+//    confirmed above; only its color rule is gone).
+// ---------------------------------------------------------------------
+console.log('\nكَلَّآ coloring removed from style.css (CSS-level check):');
+const cssSrc = fs.readFileSync(path.join(rootDir, 'style.css'), 'utf8');
+const kallaColorRuleGone = !/body\.show-mad-munfasil\s+\.kalla-madda-glyph\s*\{[^}]*color/.test(cssSrc);
+check(
+  'style.css -- .kalla-madda-glyph no longer has a color rule under body.show-mad-munfasil',
+  kallaColorRuleGone,
+  'style.css still appears to color .kalla-madda-glyph'
+);
+
 process.exit(fail === 0 ? 0 : 1);
