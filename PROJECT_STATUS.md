@@ -1,6 +1,6 @@
 # Project Status
 
-**الإصدار الحالي:** 1.0.161  
+**الإصدار الحالي:** 1.0.172  
 **آخر تحديث:** 2026-07-30
 
 هذا الملف يُحدَّث مع كل إصدار ويُضمَّن دائمًا داخل الـ ZIP.  
@@ -133,6 +133,13 @@
 
 ## Change Log
 
+### 1.0.172
+- Non-Kufi ayah-head marks (U+E021): colored star overlay **Uthmani/Madinah only** (Indopak keeps native PDMS glyph).
+- Long-press label includes waqf degree from docs inventory: `رأس آية لغير الكوفيين [ لا ]` etc. (117 with symbol, 4 bare).
+- Hide default/personal waqf star when co-located with non-Kufi head.
+- Sajawandi/reminder mark size bump Uthmani only; legend text; night contrast; lazim meem popup shape.
+- `non-kufi-heads.js` added to SW DYNAMIC_ASSETS. Symbols aligned with `docs/non-kufi-ayah-head-marks.md`.
+
 ### 1.0.161
 - Long-press on a word carrying a colored default Sajawandi stop-mark (ط/ص/م/ز/ق/قف/ج) no longer opens the personal reminder-mark menu; it shows a small popup naming the waqf type instead (e.g. "ص وقف مرخص للضرورة"), colored to match the mark's own color (blue/green/red/brown), auto-dismissing after ~2.6s or on outside tap.
 - New elements: `#waqfInfoPopup` / `#waqfInfoSymbol` / `#waqfInfoLabel` (index.html), wired in `app.js`, logic in `reader-reminders.js` (`DEFAULT_MARK_INFO`, `resolveDefaultMarkInfo`, `openInfoPopup`), styling in `style.css` (`.waqf-info-popup`, `.info-red/green/blue/brown`).
@@ -215,7 +222,7 @@
 
 ## Project Metrics
 
-**Current Version:** 1.0.159
+**Current Version:** 1.0.172
 
 **Regression Tests:**
 - Stop Marks: 263/263 PASS

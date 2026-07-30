@@ -103,7 +103,12 @@
   }
 
   function cleanAyahText(text){
-    var out = wrapWaqfSigns(text)
+    // رأس غير الكوفيين (U+E021): في مصحف المدينة فقط نخفيه ونستبدله
+    // بنجمتنا الملوّنة (.non-kufi-mark). في مصحف النسخ نبقي الرمز الأصلي
+    // من خط PDMS دون أي تعديل (طلب مباشر: الشغل على المدينة فقط).
+    var src = String(text);
+    if(state.fontStyle === 'uthmani') src = src.replace(/\uE021/g, '');
+    var out = wrapWaqfSigns(src)
       .replace(IQLAB_MEEM_REGEX, IQLAB_MEEM_HTML)
       .replace(SAJDAH_MARK_REGEX, SAJDAH_MARK_HTML)
       .replace(TATWEEL_SEAT_REGEX, tatweelSeatHtml)
@@ -2126,8 +2131,43 @@ var KNOWN_SPLIT_WORD_FRAGMENTS = ["اٰ تُوۡهُمۡ", "اٰ تَيۡتُم�
       var isDefaultJeem = !!(defaultJeemIdxs && defaultJeemIdxs.indexOf(idx) !== -1) &&
         idx !== words.length - 1;
       if(isDefaultJeem) extraCls += ' has-default-jeem';
+      // رأس آية لغير الكوفيين — نجمة ملوّنة في مصحف المدينة فقط.
+      // مصحف النسخ يحتفظ برمز U+E021 الأصلي من PDMS (بدون تدخل).
+      var isUthmani = state.fontStyle === 'uthmani';
+      var nonKufiColor = null;
+      if(isUthmani){
+        var nonKufiMap = window.NON_KUFI_HEADS_UTHMANI;
+        var nonKufiBaseMap = window.NON_KUFI_HEADS_BASE_UTHMANI;
+        nonKufiColor = (nonKufiMap && nonKufiMap[key]) || null;
+        if(nonKufiColor && nonKufiBaseMap && nonKufiBaseMap[key]){
+          var expectedBase = nonKufiBaseMap[key];
+          var actualBase = String(w).replace(/[\u0640]/g, '')
+            .replace(/[^\u0621-\u064A\u0671]/g, '')
+            .replace(/\u0671/g, '\u0627')
+            .replace(/[\u0622\u0623\u0625]/g, '\u0627')
+            .replace(/\u0629/g, '\u0647')
+            .replace(/\u0649/g, '\u064A')
+            .replace(/\u0626/g, '\u064A')
+            .replace(/\u0624/g, '\u0648')
+            .replace(/\u0621/g, '');
+          var soft = function(s){ return s.replace(/\u064A/g, '').replace(/\u0627/g, ''); };
+          var baseOk = (actualBase === expectedBase) ||
+            (soft(actualBase) === soft(expectedBase)) ||
+            (soft(actualBase).length >= 3 && soft(expectedBase).length >= 3 &&
+              (soft(actualBase).indexOf(soft(expectedBase)) !== -1 ||
+               soft(expectedBase).indexOf(soft(actualBase)) !== -1));
+          if(!baseOk) nonKufiColor = null;
+        }
+      }
+      if(nonKufiColor) extraCls += ' has-non-kufi-head';
+      var nonKufiHtml = nonKufiColor
+        ? ('<span class="non-kufi-mark mark-' + nonKufiColor + '" aria-label="رأس آية لغير الكوفيين">' +
+           '<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M20 2 L23 10 L31 6 L27 14 L36 15 L28 20 L36 25 L27 26 L31 34 L23 30 L20 38 L17 30 L9 34 L13 26 L4 25 L12 20 L4 15 L13 14 L9 6 L17 10 Z"/></svg>' +
+           '</span>')
+        : '';
       return '<span class="quran-word' + extraCls + '" data-key="' + key + '">' +
         cleanAyahText(w) +
+        nonKufiHtml +
         '<span class="waqf-mark" aria-hidden="true">\u2605</span>' +
       '</span>';
     }).join(' ');

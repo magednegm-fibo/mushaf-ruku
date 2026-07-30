@@ -25,7 +25,10 @@
   // waqf type here instead of the personal reminder-mark menu. Colors
   // match the exact mapping in style.css (.has-default-* → .waqf-mark.mark-*).
   var DEFAULT_MARK_INFO = [
-    {cls: 'has-default-waqf-lazim', symbol: 'م', label: 'وقف لازم', color: 'red'},
+    // ميم الوقف اللازم: حرف «م» (U+0645) بخط المصحف في الـpopup —
+    // U+06D8 ۘ علامة عالية صغيرة فوق السطر فكانت بالكاد تظهر في الواجهة.
+    // الشكل القرآني يأتي من font-family (Uthmanic Hafs / Saleem) في CSS.
+    {cls: 'has-default-waqf-lazim', symbol: '\u0645', label: 'وقف لازم', color: 'red'},
     {cls: 'has-default-waqf', symbol: 'ط', label: 'وقف مطلق', color: 'blue'},
     {cls: 'has-default-qif', symbol: 'قف', label: 'وقف مستحب', color: 'blue'},
     {cls: 'has-default-jeem', symbol: 'ج', label: 'وقف جائز', color: 'brown'},
@@ -38,6 +41,34 @@
       if(wordEl.classList.contains(DEFAULT_MARK_INFO[i].cls)) return DEFAULT_MARK_INFO[i];
     }
     return null;
+  }
+  // Long-press: درجة الوقف من NON_KUFI_HEADS_SYM_* فقط (عند E021 نفسه).
+  // ممنوع مسح الجيران — كان يلتقط ص/لا من آية أخرى
+  // (مثال: 37:9 دحورا بلا علامة ← ظهر خطأ [ ص ] من 37:8 جانب).
+  // مفتاح موجود في الرؤوس وغير موجود في SYM = موضع عارٍ → بلا أقواس.
+  function resolveNonKufiWaqfSymbol(wordEl){
+    var key = wordEl.getAttribute('data-key');
+    if(!key) return null;
+    var isUthmani = (typeof state !== 'undefined' && state.fontStyle === 'uthmani') ||
+      (document.body && document.body.classList.contains('uthmani-font'));
+    var symMap = isUthmani ? window.NON_KUFI_HEADS_SYM_UTHMANI : window.NON_KUFI_HEADS_SYM_INDOPAK;
+    if(symMap && symMap[key]) return symMap[key];
+    return null;
+  }
+  function resolveNonKufiMarkInfo(wordEl){
+    if(!wordEl.classList.contains('has-non-kufi-head')) return null;
+    var mark = wordEl.querySelector('.non-kufi-mark');
+    var color = 'blue';
+    if(mark){
+      if(mark.classList.contains('mark-red')) color = 'red';
+      else if(mark.classList.contains('mark-green')) color = 'green';
+      else if(mark.classList.contains('mark-brown')) color = 'brown';
+      else if(mark.classList.contains('mark-blue')) color = 'blue';
+    }
+    var label = 'رأس آية لغير الكوفيين';
+    var waqfSym = resolveNonKufiWaqfSymbol(wordEl);
+    if(waqfSym) label += '  [ ' + waqfSym + ' ]';
+    return {symbol: '۝', label: label, color: color};
   }
 
   function loadWaqfMarks(){ return StorageManager.loadReminder(state.fontStyle); }
@@ -237,6 +268,10 @@
         // A word carrying a colored default Sajawandi stop-mark (ط/ص/م/ز/ق/قف/ج)
         // shows its waqf type instead of the reminder menu — checked first,
         // and at fire time, so it always reflects this exact word.
+        // Non-Kufi ayah head takes priority when present: the reader
+        // long-pressed specifically to learn what the small star means.
+        var nonKufiInfo = resolveNonKufiMarkInfo(wordEl);
+        if(nonKufiInfo){ openInfoPopup(nonKufiInfo, x, y); return; }
         var defaultInfo = resolveDefaultMarkInfo(wordEl);
         if(defaultInfo){ openInfoPopup(defaultInfo, x, y); return; }
         // Decide add vs. delete at fire time (not at press-start), so it

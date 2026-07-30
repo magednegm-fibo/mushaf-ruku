@@ -604,16 +604,65 @@ body.show-mad-munfasil .tajweed-note-word{
   user-select:none;
   -webkit-user-select:none;
 }
-/* مصحف المدينة فقط: إنزال نجوم التذكير + السجاوندي سنة صغيرة أوي لتحت
-   (مع بقائها فوق الكلمة — لا bottom-based). */
+/* مصحف المدينة فقط: إنزال نجوم التذكير + السجاوندي سنة صغيرة لتحت
+   (مع بقائها فوق الكلمة — لا bottom-based). الحجم رُفع شوية صغيرة
+   في المدينة فقط (طلب مباشر) مع الإبقاء على عدم الاصطدام برأس الكلمة. */
 body.uthmani-font .waqf-mark{
-  transform: translate(-50%, -22%);
+  transform: translate(-50%, 12%);
+  font-size: 0.40em;
 }
 .quran-word.has-waqf .waqf-mark{ display:inline-block; }
 .waqf-mark.mark-red{ color:#C62828; }
 .waqf-mark.mark-green{ color:#2E7D32; }
 .waqf-mark.mark-blue{ color:#1565C0; }
 .waqf-mark.mark-brown{ color:#A9793B; }
+
+/* ------------------------------------------------------------------
+   رأس آية لغير الكوفيين — نجمة 10 رؤوس (نفس SVG رأس الآية) مُعبّأة
+   بلون الوقف، بنفس حجم نجوم التذكير تقريباً (.waqf-mark 0.4em /
+   0.32em عثماني)، بدون رقم. اللون من NON_KUFI_HEADS_* + قواعد السجاوندي.
+   ------------------------------------------------------------------ */
+.non-kufi-mark{
+  display: inline-block;
+  width: 0.55em;
+  height: 0.55em;
+  vertical-align: middle;
+  /* ابتعاد سنة صغيرة عن الكلمة المضيفة (margin-inline-start = ناحية الكلمة) */
+  margin-inline: 0.2em 0.08em;
+  line-height: 0;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+body.uthmani-font .non-kufi-mark{
+  width: 0.45em;
+  height: 0.45em;
+}
+.non-kufi-mark svg{
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.non-kufi-mark svg path{
+  fill: currentColor;
+  stroke: none;
+}
+.non-kufi-mark.mark-red{ color:#C62828; }
+.non-kufi-mark.mark-green{ color:#2E7D32; }
+.non-kufi-mark.mark-blue{ color:#1565C0; }
+.non-kufi-mark.mark-brown{ color:#A9793B; }
+body.night .non-kufi-mark.mark-red{ color:#E53935; }
+body.night .non-kufi-mark.mark-green{ color:#43A047; }
+body.night .non-kufi-mark.mark-blue{ color:#1E88E5; }
+body.night .non-kufi-mark.mark-brown{ color:#C9A06A; }
+/* إخفاء مع مفتاح "إظهار علامات التذكير والوقف" */
+body.hide-waqf-marks .non-kufi-mark{ display:none !important; }
+/* عند اجتماع رأس آية لغير الكوفيين مع علامة تذكير/سجاوندي:
+   نكتفي برأس الآية (تحمل نفس اللون) ونخفي نجمة الوقف لتفادي التكرار. */
+.quran-word.has-non-kufi-head .waqf-mark{
+  display: none !important;
+}
+
 /* "إظهار علامات التذكير والوقف" — hides personal stars AND default
    Sajawandi stars together (طلب مباشر 2026-07-30). */
 body.hide-waqf-marks .quran-word.has-waqf .waqf-mark,
@@ -660,6 +709,28 @@ body.hide-waqf-marks .quran-word.has-default-jeem .waqf-mark{
 .quran-word.has-default-jeem:not(.has-waqf) .waqf-mark{
   display:inline-block;
   color:#A9793B;
+}
+
+/* الوضع الليلي: فتح ألوان علامات التذكير + السجاوندي شوية صغيرة
+   علشان تبان أوضح على الخلفية السودة (بدون ما تبهت في الوضع النهاري). */
+body.night .waqf-mark.mark-red,
+body.night .quran-word.has-default-waqf-lazim:not(.has-waqf) .waqf-mark{
+  color:#E53935;
+}
+body.night .waqf-mark.mark-green,
+body.night .quran-word.has-default-sad-rukhsa:not(.has-waqf) .waqf-mark,
+body.night .quran-word.has-default-zay-jawaz:not(.has-waqf) .waqf-mark,
+body.night .quran-word.has-default-qad-qila:not(.has-waqf) .waqf-mark{
+  color:#43A047;
+}
+body.night .waqf-mark.mark-blue,
+body.night .quran-word.has-default-waqf:not(.has-waqf) .waqf-mark,
+body.night .quran-word.has-default-qif:not(.has-waqf) .waqf-mark{
+  color:#1E88E5;
+}
+body.night .waqf-mark.mark-brown,
+body.night .quran-word.has-default-jeem:not(.has-waqf) .waqf-mark{
+  color:#C9A06A;
 }
 
 /* مواضع خلاف قصر المنفصل (البنفسجي) لم تعد مرتبطة إطلاقًا بمفتاح
@@ -729,9 +800,24 @@ body.night .waqf-color-btn:active{ background: rgba(255,255,255,.08); }
   font-size: 16px;
   font-weight:700;
 }
+/* ميم الوقف اللازم في الـpopup: نفس شكل دليل القارئ (.waqf-symbol-meem)
+   — PDMS Saleem فقط، أكبر شوية (28px) ومرفوعة سنة فوق خط النص. */
+.waqf-info-popup.info-red .waqf-info-symbol{
+  font-family: 'PDMS Saleem QuranFont', 'Amiri Quran', 'Noto Naskh Arabic', serif;
+  font-size: 28px;
+  font-weight: 400;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transform: translateY(-0.12em);
+}
 .waqf-info-label{
-  font-size: 13px;
+  font-size: 14px;
   font-weight:600;
+  line-height: 1.2;
+  display: inline-flex;
+  align-items: center;
 }
 .waqf-info-popup.info-red .waqf-info-symbol,
 .waqf-info-popup.info-red .waqf-info-label{ color:#C62828; }

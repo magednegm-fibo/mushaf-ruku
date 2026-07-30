@@ -52,6 +52,7 @@ const DYNAMIC_ASSETS = [
   './reader-reminders.js',
   './reader-guide.js',
   './reader-tafsir.js',
+  './non-kufi-heads.js',
   './home.js',
   './settings.js',
   './navigation.js',
