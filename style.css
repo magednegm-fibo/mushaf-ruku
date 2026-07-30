@@ -84,8 +84,14 @@
      الملف).
      UPDATE 7 (طلب مباشر: فصل الوضعين مجددًا): #D35400 يبقى للوضع
      النهاري هنا فقط؛ الوضع الليلي أصبح لونًا مختلفًا (Goldenrod
-     #DAA520) — انظر override في body.night أسفل هذا الملف. */
-  --mad-munfasil: #D35400;
+     #DAA520) — انظر override في body.night أسفل هذا الملف.
+     UPDATE 8 (طلب مباشر: الابتعاد عن الأحمر/الأزرق/الأخضر الآن
+     المستخدَمة لعلامات الوقف الافتراضية الثلاثة — mark-red/mark-blue/
+     mark-green): تغيّر إلى بنفسجي (Purple) #6A1B9A، بعد معاينة 4
+     اقتراحات فعليًا على خلفية الصفحة الحقيقية (نهاري/ليلي) واختيار
+     البنفسجي كأبعدها بصريًا عن الثلاثة. الوضع الليلي أصبح بنفسجي أفتح
+     (#CE93D8) — انظر override في body.night أسفل هذا الملف. */
+  --mad-munfasil: #6A1B9A;
   --gold-pale: #E8C874;
   --shadow: 0 18px 40px -18px rgba(14, 51, 42, .45);
   --radius: 18px;
@@ -544,16 +550,15 @@ body.uthmani-font .waqf-sign{
      مباشرة أسفل هذا التعليق. */
 }
 
-/* إعداد "مواضع اختلاف روضة الحفاظ" (settings.js: applyMadMunfasilVisibility،
-   state.showMadMunfasilUthmani — القيمة الافتراضية false/متوقفة، يعمل في
-   كلا الخطين). ليس كل من يستخدم التطبيق يريد رؤية تلوين مواضع الخلاف بين
-   طريق الروضة/المعدل وطريق الشاطبية أثناء القراءة العادية، بينما من
-   يتعلّم التجويد سيستفيد منها — فالتلوين هنا اختياري بالكامل، ومتوقف
-   افتراضيًا. الفئات الخمس أدناه (الجداول الخمسة الموصوفة في الملاحظة
-   العامة فوق SAKTA_HIGHLIGHT_WORDS في readerManager.js) بلا لون/وزن خاص
-   بها في تعريفها الأصلي أعلاه في هذا الملف؛ هذا هو المكان الوحيد الذي
-   يُطبَّق منه اللون والوزن فعليًا، ومقصور على وجود فئة
-   body.show-mad-munfasil.
+/* مواضع اختلاف روضة الحفاظ (settings.js: applyMadMunfasilVisibility).
+   UPDATE (طلب صريح): حُذف مفتاح التشغيل/الإيقاف من الإعدادات نهائيًا —
+   هذا التلوين مفعّل الآن دائمًا بشكل افتراضي في كلا الخطين، بلا أي خيار
+   لإيقافه. فئة body.show-mad-munfasil تُضاف الآن دون شرط عند كل تحميل
+   (انظر applyMadMunfasilVisibility في settings.js)، وبقي شكل الـselector
+   نفسه هنا فقط لتفادي إعادة هيكلة غير ضرورية. الفئات الخمس أدناه
+   (الجداول الخمسة الموصوفة في الملاحظة العامة فوق SAKTA_HIGHLIGHT_WORDS
+   في readerManager.js) بلا لون/وزن خاص بها في تعريفها الأصلي أعلاه في
+   هذا الملف؛ هذا هو المكان الوحيد الذي يُطبَّق منه اللون والوزن فعليًا.
    UPDATE (طلب صريح): صنف .mad-munfasil نفسه (المد المنفصل العام —
    MAD_MUNFASIL_REGEX/YA_HA_MUNFASIL_REGEX/MAD_SILA_KUBRA_REGEX/
    lam-alef-madda-glyph في readerManager.js) لم يعد يُضاف لأي عنصر إطلاقًا
@@ -594,17 +599,73 @@ body.show-mad-munfasil .tajweed-note-word{
   transform: translate(-50%, -48%);
   font-size: 0.4em;
   line-height:1;
-  color:#C62828; /* overridden per-mark by .mark-red/.mark-green/.mark-blue */
+  color:#C62828; /* overridden per-mark by .mark-red/.mark-green/.mark-blue/.mark-brown */
   pointer-events:auto;
   user-select:none;
   -webkit-user-select:none;
+}
+/* مصحف المدينة فقط: إنزال نجوم التذكير + السجاوندي سنة صغيرة أوي لتحت
+   (مع بقائها فوق الكلمة — لا bottom-based). */
+body.uthmani-font .waqf-mark{
+  transform: translate(-50%, -22%);
 }
 .quran-word.has-waqf .waqf-mark{ display:inline-block; }
 .waqf-mark.mark-red{ color:#C62828; }
 .waqf-mark.mark-green{ color:#2E7D32; }
 .waqf-mark.mark-blue{ color:#1565C0; }
-/* Global toggle in الإعدادات: hides every mark without deleting any of them. */
-body.hide-waqf-marks .waqf-mark{ display:none !important; }
+.waqf-mark.mark-brown{ color:#A9793B; }
+/* "إظهار علامات التذكير والوقف" — hides personal stars AND default
+   Sajawandi stars together (طلب مباشر 2026-07-30). */
+body.hide-waqf-marks .quran-word.has-waqf .waqf-mark,
+body.hide-waqf-marks .quran-word.has-default-waqf .waqf-mark,
+body.hide-waqf-marks .quran-word.has-default-sad-rukhsa .waqf-mark,
+body.hide-waqf-marks .quran-word.has-default-waqf-lazim .waqf-mark,
+body.hide-waqf-marks .quran-word.has-default-zay-jawaz .waqf-mark,
+body.hide-waqf-marks .quran-word.has-default-qad-qila .waqf-mark,
+body.hide-waqf-marks .quran-word.has-default-qif .waqf-mark,
+body.hide-waqf-marks .quran-word.has-default-jeem .waqf-mark{
+  display:none !important;
+}
+
+/* ------------------------------------------------------------------
+   Default Sajawandi stop marks — طلب مباشر 2026-07-30:
+   بدل تلوين نص الكلمة، تُعرض نجمة تذكير فوق الكلمة بنفس ألوان
+   .waqf-mark.mark-* (أزرق/أخضر/أحمر/بني). الكلاسات has-default-* تبقى
+   على الكلمة (للاختبارات والمنطق) لكن لا تُغيّر لون الحبر.
+   :not(.has-waqf) حتى لا تتعارض مع علامة تذكير شخصية على نفس الكلمة.
+   ------------------------------------------------------------------ */
+
+/* ط + قف → أزرق (#1565C0 = .waqf-mark.mark-blue) */
+.quran-word.has-default-waqf:not(.has-waqf) .waqf-mark,
+.quran-word.has-default-qif:not(.has-waqf) .waqf-mark{
+  display:inline-block;
+  color:#1565C0;
+}
+
+/* ص + ز + ق → أخضر (#2E7D32 = .waqf-mark.mark-green) */
+.quran-word.has-default-sad-rukhsa:not(.has-waqf) .waqf-mark,
+.quran-word.has-default-zay-jawaz:not(.has-waqf) .waqf-mark,
+.quran-word.has-default-qad-qila:not(.has-waqf) .waqf-mark{
+  display:inline-block;
+  color:#2E7D32;
+}
+
+/* م → أحمر (#C62828 = .waqf-mark.mark-red) */
+.quran-word.has-default-waqf-lazim:not(.has-waqf) .waqf-mark{
+  display:inline-block;
+  color:#C62828;
+}
+
+/* ج → بني (#A9793B = .waqf-mark.mark-brown) */
+.quran-word.has-default-jeem:not(.has-waqf) .waqf-mark{
+  display:inline-block;
+  color:#A9793B;
+}
+
+/* مواضع خلاف قصر المنفصل (البنفسجي) لم تعد مرتبطة إطلاقًا بمفتاح
+   "إظهار علامات التذكير" (body.hide-waqf-marks) — تبقى ملونة دائمًا
+   بصرف النظر عن حالته (طلب صريح 2026-07-30). فحُذف حزام الأمان الذي
+   كان يُلغي اللون هنا سابقًا، وحُذف تصفير --mad-munfasil أيضًا. */
 
 /* ---------- Long-press reminder-mark popups (add / pick color / delete) ---------- */
 .waqf-menu{
@@ -612,17 +673,17 @@ body.hide-waqf-marks .waqf-mark{ display:none !important; }
   z-index: 90;
   background: var(--paper);
   border: 1px solid var(--gold);
-  border-radius: 12px;
+  border-radius: 11px;
   box-shadow: var(--shadow);
   overflow:hidden;
 }
 .waqf-menu-item{
   display:flex;
   align-items:center;
-  gap:8px;
-  padding: 12px 16px;
+  gap:7px;
+  padding: 11px 14px;
   font-family: var(--font-ui);
-  font-size: 14px;
+  font-size: 13px;
   font-weight:600;
   color: var(--ink);
   background: transparent;
@@ -637,20 +698,49 @@ body.night .waqf-color-btn:active{ background: rgba(255,255,255,.08); }
 .waqf-color-menu{
   display:flex;
   align-items:center;
-  gap:4px;
-  padding:8px;
+  gap:3px;
+  padding:7px;
 }
 .waqf-color-btn{
-  width:34px;
-  height:34px;
-  font-size:17px;
+  width:31px;
+  height:31px;
+  font-size:15px;
   display:flex;
   align-items:center;
   justify-content:center;
   background:transparent;
-  border-radius:8px;
+  border-radius:7px;
 }
 .waqf-color-btn:active{ background: var(--paper-edge); }
+
+/* Long-press over a colored Sajawandi stop-mark word: shows its waqf
+   type instead of the reminder menu. Text color matches the word's own
+   mark color exactly (.waqf-mark.mark-red/green/blue/brown). */
+.waqf-info-popup{
+  display:flex;
+  align-items:center;
+  gap:7px;
+  padding: 10px 14px;
+  font-family: var(--font-ui);
+  white-space: nowrap;
+}
+.waqf-info-symbol{
+  font-family: var(--font-quran, var(--font-ui));
+  font-size: 16px;
+  font-weight:700;
+}
+.waqf-info-label{
+  font-size: 13px;
+  font-weight:600;
+}
+.waqf-info-popup.info-red .waqf-info-symbol,
+.waqf-info-popup.info-red .waqf-info-label{ color:#C62828; }
+.waqf-info-popup.info-green .waqf-info-symbol,
+.waqf-info-popup.info-green .waqf-info-label{ color:#2E7D32; }
+.waqf-info-popup.info-blue .waqf-info-symbol,
+.waqf-info-popup.info-blue .waqf-info-label{ color:#1565C0; }
+.waqf-info-popup.info-brown .waqf-info-symbol,
+.waqf-info-popup.info-brown .waqf-info-label{ color:#A9793B; }
 
 .waqf-io-row{ display:flex; gap:10px; margin: 6px 0 18px; }
 .waqf-io-row .modal-btn{ flex:1; font-size:12.5px; padding:9px 6px; }
@@ -1128,13 +1218,14 @@ body.night .reset-btn{ color:#D2857E; border-color:#D2857E; }
 body.night{ background: #000000; }
 body.night #app{ background: #000000; }
 body.night .page-frame{ background:#1c1c1e; border-color:rgba(255,255,255,.14); }
-body.night .ayah-flow{ color:#F2F2F2; }
+body.night .ayah-flow{ color:#F2F0EA; }
 /* علامة المد المنفصل في الوضع الليلي — لون منفصل عن النهاري بطلب
-   مباشر: "غولدنرود" (Goldenrod)، بينما النهاري يبقى على "برتقالي محمر"
-   (Vermilion) #D35400 المعرَّف في :root أعلى هذا الملف.
-   UPDATE (طلب مباشر: تفتيح قليلًا): كان #DAA520 (218,165,32)، فُتِّح
-   ~12% نحو الأبيض → (222,176,59) = #DEB03B. */
-body.night{ --mad-munfasil: #DEB03B; }
+   مباشر: نسخة أفتح من نفس البنفسجي المستخدَم نهاريًا (Purple #6A1B9A،
+   المعرَّف في :root أعلى هذا الملف).
+   UPDATE (طلب مباشر: الابتعاد عن الأحمر/الأزرق/الأخضر، بعد معاينة عدة
+   اقتراحات على الصفحة الحقيقية): كان #DEB03B (Goldenrod)، تغيّر إلى
+   بنفسجي فاتح #CE93D8. */
+body.night{ --mad-munfasil: #CE93D8; }
 body.night .surah-cartouche, body.night .surah-cartouche b, body.night .surah-cartouche span{ color:#F2F2F2; }
 body.night .ayah-num{ color:#F2F2F2; }
 /* الدائرة حول علامة الركوع في الوضع الليلي — أخضر بطلب مباشر، نفس
@@ -1364,7 +1455,7 @@ body.night .bookmark-btn.active{ background:#4CAF50; border-color:#4CAF50; color
 
 /* ---------- Listen button (استماع لتلاوة الركوع) ---------- */
 .listen-btn{
-  position:absolute; top:60px; left:10px; z-index:3;
+  position:absolute; top:52px; left:10px; z-index:3;
   width:34px; height:34px; border-radius:50%;
   border:1px solid rgba(22,73,58,.4);
   background: rgba(246,239,221,.7);
@@ -1385,7 +1476,7 @@ body.night .listen-btn.active{ background:#4CAF50; border-color:#4CAF50; color:#
    the same way .listen-btn sits directly below .fav-btn on the left, so
    the four overlay icons form a symmetric 2x2 grid. */
 .tafsir-btn{
-  position:absolute; top:60px; right:10px; z-index:3;
+  position:absolute; top:52px; right:10px; z-index:3;
   width:34px; height:34px; border-radius:50%;
   border:1px solid rgba(22,73,58,.4);
   background: rgba(246,239,221,.7);
@@ -1927,6 +2018,97 @@ body.night .waqf-guide-symbol.tajweed-guide-number{ color:#F2F2F2; }
 #tajweedRulesTab .waqf-guide-footnote{
   font-size: 13px;
 }
+/* Divider before the "تمييز مواضع الخلاف" box — same dashed line style
+   already used above (border-top on .waqf-guide-footnote, which is what
+   visually separates the زرعان list's last item, "ضَعْفٍ"/"ضَعْفًا", from
+   the "المصدر: نظم..." paragraph). Standalone element (rather than
+   reusing border-top on the box itself) so it doesn't double up against
+   the box's own full border below it. */
+.qasr-munfasil-divider{
+  border-top: 1px dashed rgba(169,121,59,.4);
+  margin: 18px 2px 0;
+}
+body.night .qasr-munfasil-divider{ border-color: rgba(255,255,255,.14); }
+/* "تمييز مواضع الخلاف" box at the end of قصر المنفصل (added per
+   direct request) — a visually distinct, bordered box rather than a
+   plain trailing footnote line, since a plain line read as too easy to
+   miss/skip. Border + subtle gold tint follows the same "accent card"
+   language used elsewhere for callouts (e.g. .juz-marker's tinted
+   band), not a new visual language. Top margin trimmed (18px -> 12px)
+   since .qasr-munfasil-divider directly above already supplies its own
+   18px of top spacing -- keeping both at 18px stacked would double the
+   gap under the divider line. */
+.qasr-munfasil-note-box{
+  margin: 12px 2px 6px;
+  padding: 14px 16px;
+  border: 1px solid var(--gold);
+  border-radius: 12px;
+  background: rgba(169,121,59,.08);
+}
+body.night .qasr-munfasil-note-box{
+  border-color: rgba(216,182,98,.3);
+  background: rgba(216,182,98,.06);
+}
+/* Heading: bold, and sized to match this tab's own section headings
+   (.tajweed-guide-section, e.g. "ما ينفرد به طريق زرعان") per direct
+   request — same font-family/size/weight/color, day uses --gold, night
+   uses the section heading's own night override (#F2F2F2). */
+.qasr-munfasil-note-label{
+  display: block;
+  font-family: var(--font-ui);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--gold);
+  margin-bottom: 6px;
+}
+body.night .qasr-munfasil-note-label{ color:#F2F2F2; }
+/* Body line: kept at the tab's bumped explanation-text size (14px, see
+   #tajweedRulesTab .waqf-guide-text p above) on its own line under the
+   heading. */
+.qasr-munfasil-note-text{
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--ink-soft);
+  text-align: justify;
+  text-align-last: right;
+}
+body.night .qasr-munfasil-note-text{ color:#9A9A9E; }
+
+/* كلمة «البنفسجي» فقط داخل صندوق تمييز مواضع الخلاف —
+   نفس درجة --mad-munfasil المستخدمة مع كلمات الخلاف في الصفحة
+   (#6A1B9A نهاري / #CE93D8 ليلي). قيم صريحة ثابتة، غير مرتبطة بأي
+   مفتاح إعداد. */
+.mad-munfasil-color-name{
+  color: #6A1B9A;
+  font-weight: 700;
+}
+body.night .mad-munfasil-color-name{ color: #CE93D8; }
+
+/* دليل ألوان علامات تذكير الوقف (نهاية تبويب علامات الوقف) —
+   أسماء الألوان ملوّنة بنفس درجات .waqf-mark.mark-* المستخدمة
+   لنجوم التذكير الشخصية والافتراضية في الصفحة. */
+.reminder-color-legend{
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-family: var(--font-ui);
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--ink-soft);
+}
+body.night .reminder-color-legend{ color:#9A9A9E; }
+.reminder-color-legend li{ margin: 0; }
+.legend-color-name{ font-weight: 700; }
+/* مطابق لـ .waqf-mark.mark-red / mark-blue / mark-brown / mark-green */
+.legend-color-name.legend-red{ color: #C62828; }
+.legend-color-name.legend-blue{ color: #1565C0; }
+.legend-color-name.legend-brown{ color: #A9793B; }
+.legend-color-name.legend-green{ color: #2E7D32; }
 
 /* ---------- Waqf marks guide (علامات الوقف والابتداء) ---------- */
 .waqf-guide-list{ display:flex; flex-direction:column; }

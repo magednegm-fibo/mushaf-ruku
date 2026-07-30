@@ -64,7 +64,8 @@
       furthestUthmani:0, furthestIndopak:0,
       lastPageUthmani:0, lastPageIndopak:0, lastPageShared:0,
       fontStyle:'uthmani', showWaqfMarksUthmani:true, showWaqfMarksIndopak:true,
-      pinchZoomEnabled:true, keepScreenAwake:false, showMadMunfasilUthmani:false, reciter:'abdulbasit',
+      colorCodingEnabled:true,
+      pinchZoomEnabled:true, keepScreenAwake:false, reciter:'abdulbasit',
       autoScrollEnabled:true, recitationRepeatCount:1, rukuRepeatCount:1, playbackRate:1,
       displayScope:'all', recitationScope:'ruku'
     };
@@ -108,16 +109,13 @@
       result.showWaqfMarksIndopak = result.showWaqfMarks;
       delete result.showWaqfMarks;
     }
-    // Migration: older saved states had a single shared `showMadMunfasil`
-    // toggle that applied to both script modes. The setting is now only
-    // usable in مصحف المدينة (Uthmani) — مصحف النسخ (Naskh/Indopak) always
-    // forces it off — so carry the old value over into the Uthmani-only
-    // key rather than dropping it, since that's the one mode where it
-    // still applies.
-    if(result.showMadMunfasil !== undefined){
-      result.showMadMunfasilUthmani = result.showMadMunfasil;
-      delete result.showMadMunfasil;
-    }
+    // Migration: the مواضع اختلاف روضة الحفاظ toggle (old keys
+    // `showMadMunfasil` / `showMadMunfasilUthmani`) was removed — the
+    // coloring is now always on, unconditionally, in both script modes.
+    // Drop any leftover stored values from older versions so they don't
+    // linger unused in the saved state.
+    delete result.showMadMunfasil;
+    delete result.showMadMunfasilUthmani;
     // Migration: older saved states had a single shared `furthest` (reading
     // progress) field, and "continue last reading" always resumed at the
     // single shared `page`. Seed both script modes' progress and last-read

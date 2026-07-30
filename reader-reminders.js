@@ -1,11 +1,11 @@
 // ReaderReminders: علامات التذكير الشخصية — per-word colored reminder
 // marks, added/removed via a long-press on any word, plus their
 // export/import as JSON. Stored as a flat map:
-// { "surah:ayah:wordIndex": {c: 'red'|'green'|'blue', t: timestamp} }.
+// { "surah:ayah:wordIndex": {c: 'red'|'green'|'blue'|'brown', t: timestamp} }.
 // Purely a personal reading aid layered on top of the Qur'an text — it
 // never touches or alters the ayah text itself. The app assigns no
 // meaning to any color; each reader decides for themselves what
-// red/green/blue means to them.
+// red/green/blue/brown means to them.
 // Loaded before app.js (see index.html). Call ReaderReminders.init(deps)
 // once; deps:
 //   els, state, UI, AudioManager
@@ -18,7 +18,27 @@
   var els, state, UI, AudioManager, currentWaqfVisibilityKey;
 
   var waqfMarks = {};
-  var REMINDER_COLORS = {red:1, green:1, blue:1};
+  var REMINDER_COLORS = {red:1, green:1, blue:1, brown:1};
+
+  // Long-press on a word carrying one of the default colored Sajawandi
+  // stop-marks (has-default-* class set by readerManager.js) shows its
+  // waqf type here instead of the personal reminder-mark menu. Colors
+  // match the exact mapping in style.css (.has-default-* → .waqf-mark.mark-*).
+  var DEFAULT_MARK_INFO = [
+    {cls: 'has-default-waqf-lazim', symbol: 'م', label: 'وقف لازم', color: 'red'},
+    {cls: 'has-default-waqf', symbol: 'ط', label: 'وقف مطلق', color: 'blue'},
+    {cls: 'has-default-qif', symbol: 'قف', label: 'وقف مستحب', color: 'blue'},
+    {cls: 'has-default-jeem', symbol: 'ج', label: 'وقف جائز', color: 'brown'},
+    {cls: 'has-default-zay-jawaz', symbol: 'ز', label: 'وقف مجوز لوجه', color: 'green'},
+    {cls: 'has-default-qad-qila', symbol: 'ق', label: 'قد قيل عليه الوقف', color: 'green'},
+    {cls: 'has-default-sad-rukhsa', symbol: 'ص', label: 'وقف مرخص للضرورة', color: 'green'}
+  ];
+  function resolveDefaultMarkInfo(wordEl){
+    for(var i = 0; i < DEFAULT_MARK_INFO.length; i++){
+      if(wordEl.classList.contains(DEFAULT_MARK_INFO[i].cls)) return DEFAULT_MARK_INFO[i];
+    }
+    return null;
+  }
 
   function loadWaqfMarks(){ return StorageManager.loadReminder(state.fontStyle); }
   function saveWaqfMarks(){ StorageManager.saveReminder(state.fontStyle, waqfMarks); }
@@ -33,7 +53,7 @@
     wordEl.classList.toggle('has-waqf', !!mark);
     var markSpan = wordEl.querySelector('.waqf-mark');
     if(markSpan){
-      markSpan.classList.remove('mark-red', 'mark-green', 'mark-blue');
+      markSpan.classList.remove('mark-red', 'mark-green', 'mark-blue', 'mark-brown');
       if(mark) markSpan.classList.add('mark-' + (REMINDER_COLORS[mark.c] ? mark.c : 'red'));
     }
   }
@@ -69,7 +89,7 @@
     els.pageScroll.querySelectorAll('.quran-word.has-waqf').forEach(function(wordEl){
       wordEl.classList.remove('has-waqf');
       var markSpan = wordEl.querySelector('.waqf-mark');
-      if(markSpan) markSpan.classList.remove('mark-red', 'mark-green', 'mark-blue');
+      if(markSpan) markSpan.classList.remove('mark-red', 'mark-green', 'mark-blue', 'mark-brown');
     });
   }
 
@@ -158,11 +178,35 @@
         menuEl.style.top = top + 'px';
       });
     }
+    var infoPopupTimer = null;
     function closeMenus(){
       els.waqfMenu.classList.add('hidden');
       els.waqfColorMenu.classList.add('hidden');
       els.waqfDeleteMenu.classList.add('hidden');
+      if(els.waqfInfoPopup){
+        els.waqfInfoPopup.classList.add('hidden');
+        els.waqfInfoPopup.classList.remove('info-red', 'info-green', 'info-blue', 'info-brown');
+      }
+      if(infoPopupTimer){ clearTimeout(infoPopupTimer); infoPopupTimer = null; }
       pendingKey = null;
+    }
+    // Shows the waqf type of a colored Sajawandi word instead of the
+    // add/delete reminder menu — no key/color action pending, so it
+    // doesn't touch pendingKey. Auto-dismisses after a few seconds, or
+    // immediately on an outside tap like the other popups.
+    function openInfoPopup(info, x, y){
+      if(!els.waqfInfoPopup) return;
+      els.waqfMenu.classList.add('hidden');
+      els.waqfColorMenu.classList.add('hidden');
+      els.waqfDeleteMenu.classList.add('hidden');
+      els.waqfInfoSymbol.textContent = info.symbol;
+      els.waqfInfoLabel.textContent = info.label;
+      els.waqfInfoPopup.classList.remove('info-red', 'info-green', 'info-blue', 'info-brown');
+      els.waqfInfoPopup.classList.add('info-' + info.color);
+      els.waqfInfoPopup.classList.remove('hidden');
+      positionMenu(els.waqfInfoPopup, x, y);
+      if(infoPopupTimer) clearTimeout(infoPopupTimer);
+      infoPopupTimer = setTimeout(closeMenus, 2600);
     }
     function openColorMenu(wordEl, x, y){
       pendingKey = wordEl.getAttribute('data-key');
@@ -190,6 +234,11 @@
         AudioManager.resumeScrollSync();
       },
       onFire: function(wordEl, x, y){
+        // A word carrying a colored default Sajawandi stop-mark (ط/ص/م/ز/ق/قف/ج)
+        // shows its waqf type instead of the reminder menu — checked first,
+        // and at fire time, so it always reflects this exact word.
+        var defaultInfo = resolveDefaultMarkInfo(wordEl);
+        if(defaultInfo){ openInfoPopup(defaultInfo, x, y); return; }
         // Decide add vs. delete at fire time (not at press-start), so it
         // always reflects this exact word's current state, no matter
         // whether the finger landed on the dot or elsewhere on the word.
@@ -218,13 +267,13 @@
 
     // Tapping anywhere outside an open popup closes it without acting.
     function outsideClose(e){
-      var openMenu = ![els.waqfMenu, els.waqfColorMenu, els.waqfDeleteMenu].every(function(m){
+      var popups = [els.waqfMenu, els.waqfColorMenu, els.waqfDeleteMenu];
+      if(els.waqfInfoPopup) popups.push(els.waqfInfoPopup);
+      var openMenu = !popups.every(function(m){
         return m.classList.contains('hidden');
       });
       if(!openMenu) return;
-      var insideAny = els.waqfMenu.contains(e.target) ||
-        els.waqfColorMenu.contains(e.target) ||
-        els.waqfDeleteMenu.contains(e.target);
+      var insideAny = popups.some(function(m){ return m.contains(e.target); });
       if(!insideAny) closeMenus();
     }
     document.addEventListener('touchstart', outsideClose, {passive:true});

@@ -93,41 +93,26 @@
   function currentWaqfVisibilityKey(){
     return state.fontStyle === 'uthmani' ? 'showWaqfMarksUthmani' : 'showWaqfMarksIndopak';
   }
+  // "إظهار علامات التذكير" — يخفي/يظهر معًا:
+  //   • علامات التذكير الشخصية
+  //   • نجوم الوقف السجاوندي الافتراضية
+  // (عبر body.hide-waqf-marks في style.css). لا علاقة له باللون
+  // البنفسجي لمواضع خلاف قصر المنفصل — ذاك مربوط بمفتاحه المستقل في
+  // applyMadMunfasilVisibility أدناه (طلب صريح: يبقى ملونًا دائمًا).
   function applyWaqfVisibility(){
-    document.body.classList.toggle('hide-waqf-marks', state[currentWaqfVisibilityKey()] === false);
-    if(els.waqfToggle) els.waqfToggle.checked = state[currentWaqfVisibilityKey()] !== false;
+    var show = state[currentWaqfVisibilityKey()] !== false;
+    document.body.classList.toggle('hide-waqf-marks', !show);
+    if(els.waqfToggle) els.waqfToggle.checked = show;
   }
 
+
   // -----------------------------------------------------------------
-  // إظهار مواضع قصر المنفصل (مواضع الخلاف بين طريق الروضة/المعدل وطريق
-  // الشاطبية — انظر الملاحظة العامة فوق SAKTA_HIGHLIGHT_WORDS في
-  // readerManager.js لتفاصيل كل الحالات المشمولة). لا حاجة لإعادة رسم
-  // الصفحة عند تبديل هذا الخيار: التلوين مبني بالكامل على فئة body.show-
-  // mad-munfasil في style.css (انظر التعليق هناك)، فتبديل فئة body وحدها
-  // كافٍ فورًا بلا أي عمل إضافي من JS.
-  //
-  // UPDATE (طلب مباشر): هذا الخيار كان مقصورًا على مصحف المدينة
-  // (Uthmani) فقط -- الزر هناك كان دائمًا مُقفلًا على "متوقف" ومعطَّلاً
-  // في مصحف النسخ (Naskh/Indopak). فُعِّل الآن في الرسمين معًا: تحقّقنا
-  // مباشرة من فهرسة الكلمات (tokenizeAyahWords) لكل آية في الجداول
-  // الخمسة المعنية، وتطابقت بين الخطين لـ22 من أصل 24 آية -- الاستثناءان
-  // (2:245 و30:54) يبقيان يعملان في العثماني فقط تحديدًا داخل
-  // renderAyahWords نفسها (راجع تعليقها)، دون أي أثر على هذا المفتاح
-  // العام. القيمة تُحفظ تحت مفتاح واحد مشترك بين الخطين
-  // (showMadMunfasilUthmani -- الاسم قديم من فترة القصر على العثماني
-  // فقط ولم يُعَد تسميته تجنبًا لأي تغيير غير ضروري في البنية التحتية،
-  // لكنه يعمل الآن كتفضيل عام واحد للقارئ في كلا المصحفين).
+  // مواضع خلاف قصر المنفصل (بنفسجي) — مفعّلة دائمًا بلا أي شرط، ولا
+  // علاقة لها بمفتاح "إظهار علامات التذكير" أو أي إعداد آخر (طلب صريح
+  // 2026-07-30: يجب أن تبقى ملونة دائمًا).
   // -----------------------------------------------------------------
   function applyMadMunfasilVisibility(){
-    var isOn = !!state.showMadMunfasilUthmani;
-    document.body.classList.toggle('show-mad-munfasil', isOn);
-    if(els.madMunfasilToggle){
-      els.madMunfasilToggle.checked = isOn;
-      els.madMunfasilToggle.disabled = false;
-    }
-    if(els.madMunfasilRow){
-      els.madMunfasilRow.title = '';
-    }
+    document.body.classList.add('show-mad-munfasil');
   }
 
   // -----------------------------------------------------------------
@@ -214,11 +199,7 @@
       applyWaqfVisibility(); saveState();
     });
 
-    els.madMunfasilToggle && els.madMunfasilToggle.addEventListener('change', function(){
-      state.showMadMunfasilUthmani = els.madMunfasilToggle.checked;
-      applyMadMunfasilVisibility(); saveState();
-    });
-
+    
     els.btnClearAllReminders && els.btnClearAllReminders.addEventListener('click', function(){
       var scriptName = state.fontStyle === 'uthmani' ? 'مصحف المدينة' : 'مصحف النسخ';
       var message = 'سيتم حذف جميع علامات التذكير في ' + scriptName + '، ولا يمكن التراجع عن هذا الإجراء.';

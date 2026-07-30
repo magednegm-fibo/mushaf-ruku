@@ -359,6 +359,17 @@
         </div>
       </div>
       <p class="waqf-guide-footnote">تنبيه: هذه العلامات وضعت لتيسير القراءة وفهم المعنى، وهي اجتهادات لعلماء الوقف والابتداء، وليست جميعها محل اتفاق، لذلك قد تختلف بعض مواضعها بين المصاحف والروايات.</p>
+        <div class="qasr-munfasil-divider"></div>
+        <div class="qasr-munfasil-note-box">
+          <div class="qasr-munfasil-note-label">دليل ألوان علامات تذكير الوقف</div>
+          <p class="qasr-munfasil-note-text">اعتمد هذا التطبيق ترميزًا لونيًا لعلامات تذكير الوقف، لتيسير تمييز مراتب الوقف أثناء التلاوة:</p>
+          <ul class="reminder-color-legend">
+            <li><span class="legend-color-name legend-red">الأحمر</span>: وقف لازم.</li>
+            <li><span class="legend-color-name legend-blue">الأزرق</span>: الوقف أولى.</li>
+            <li><span class="legend-color-name legend-brown">البني</span>: الوقف الجائز.</li>
+            <li><span class="legend-color-name legend-green">الأخضر</span>: الوصل أولى.</li>
+          </ul>
+        </div>
       </div>
 
             <div class="guide-tab-panel hidden" id="tajweedRulesTab">
@@ -550,6 +561,11 @@
         </div>
 
         <p class="waqf-guide-footnote">المصدر: نظم «بهجة اللحاظ فيما لحفص من روضة الحفاظ» للشيخ إبراهيم السمنودي.<br>تنبيه مهم: هذه القراءة صحيحة متواترة ومنتشرة في زماننا لمناسبتها لمرتبة الحدر وصلاة القيام. لكنها طريق مختلف عن الطريق المعتمد في نص هذا المصحف (طريق الشاطبية)، فلا يجوز مزج أحكام الطريقين أثناء التلاوة. من أراد القراءة بهذا الطريق فعليه تلقيه بالسند المتصل عن معلّم متقن له تحديدًا.</p>
+        <div class="qasr-munfasil-divider"></div>
+        <div class="qasr-munfasil-note-box">
+          <div class="qasr-munfasil-note-label">تمييز مواضع الخلاف</div>
+          <p class="qasr-munfasil-note-text">تم تلوين الكلمات التي يقع فيها الخلاف بين طريق الشاطبية وطريق روضة الحفاظ باللون <span class="mad-munfasil-color-name">البنفسجي</span>؛ لتسهيل التعرف عليها أثناء التلاوة.</p>
+        </div>
       </div>
 
 <div class="guide-tab-panel hidden" id="khatmDuaTab">
@@ -657,11 +673,13 @@
   </div>
 
   <!-- Step 2: pick a color. The app assigns no meaning to any color — each
-       reader decides for themselves what red/green/blue stands for. -->
+       reader decides for themselves what red/green/blue/brown stands for.
+       Order (RTL, right→left): أزرق، بني، أخضر، أحمر. -->
   <div id="waqfColorMenu" class="waqf-menu waqf-color-menu hidden">
     <button class="waqf-color-btn" data-color="blue" aria-label="أزرق">🔵</button>
-    <button class="waqf-color-btn" data-color="red" aria-label="أحمر">🔴</button>
+    <button class="waqf-color-btn" data-color="brown" aria-label="بني">🟤</button>
     <button class="waqf-color-btn" data-color="green" aria-label="أخضر">🟢</button>
+    <button class="waqf-color-btn" data-color="red" aria-label="أحمر">🔴</button>
   </div>
 
   <!-- Tapping an existing mark directly opens this instead. -->
@@ -670,6 +688,13 @@
       <span>🗑</span>
       <span>حذف العلامة</span>
     </button>
+  </div>
+
+  <!-- Long-press on a word carrying a colored Sajawandi stop-mark (ط/ص/م/ز/ق/قف/ج)
+       shows its waqf type here instead of the reminder-mark menu above. -->
+  <div id="waqfInfoPopup" class="waqf-menu waqf-info-popup hidden">
+    <span id="waqfInfoSymbol" class="waqf-info-symbol"></span>
+    <span id="waqfInfoLabel" class="waqf-info-label"></span>
   </div>
 
   <!-- ============ SETTINGS PANEL ============ -->
@@ -697,7 +722,7 @@
         </div>
       </div>
       <div class="setting-row">
-        <span>إظهار علامات التذكير</span>
+        <span>علامات تذكير الوقف</span>
         <label class="switch">
           <input type="checkbox" id="waqfToggle" checked>
           <span class="slider"></span>
@@ -706,13 +731,6 @@
       <p class="about-text" id="waqfMarksHint" style="margin-top:2px;">
         🕒 اضغط مطولًا على الكلمة لإضافة أو حذف علامة تذكير.
       </p>
-      <div class="setting-row" id="madMunfasilRow">
-        <span>مواضع اختلاف روضة الحفاظ</span>
-        <label class="switch">
-          <input type="checkbox" id="madMunfasilToggle">
-          <span class="slider"></span>
-        </label>
-      </div>
       <hr class="settings-divider">
       <div class="setting-row">
         <span>القارئ</span>
@@ -844,6 +862,8 @@
 <script src="surah-names-vocalized.js"></script>
 <script src="juz-info.js"></script>
 <script src="rub-info.js"></script>
+<script src="waqf-positions.js"></script>
+<script src="sila-positions.js"></script>
 <script src="data.js"></script>
 <script src="constants.js"></script>
 <script src="storage-manager.js"></script>
