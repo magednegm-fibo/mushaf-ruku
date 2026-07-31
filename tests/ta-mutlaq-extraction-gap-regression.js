@@ -72,13 +72,16 @@ function wordHtml(html, key) {
   const nextIdx = html.indexOf('data-key="', startIdx + 1);
   return html.slice(startIdx, nextIdx === -1 ? html.length : nextIdx);
 }
-function hasDefaultWaqfClass(html, key) {
+function hasClass(html, key, className) {
   const startIdx = html.indexOf('data-key="' + key + '"');
   if (startIdx === -1) return false;
   const before = html.slice(0, startIdx);
   const classMatch = /class="([^"]*)"\s*$/.exec(before);
   if (!classMatch) return false;
-  return classMatch[1].split(/\s+/).indexOf('has-default-waqf') !== -1;
+  return classMatch[1].split(/\s+/).indexOf(className) !== -1;
+}
+function hasDefaultWaqfClass(html, key) {
+  return hasClass(html, key, 'has-default-waqf');
 }
 
 const waqfSandbox = { window: {} };
@@ -109,6 +112,19 @@ const BATCH = {
   '65:7': [13, 20], '66:9': [9], '74:27': [4], '74:47': [3], '77:14': [5],
   '79:43': [4], '79:44': [3], '79:45': [5], '82:18': [6], '83:8': [4],
   '83:19': [4], '88:1': [4], '89:15': [11], '97:2': [5]
+};
+
+// These two words carry a raw ط (TA_MUTLAQ) codepoint in textIndopak — so
+// they correctly count toward the "raw ط" ground truth above and belong
+// in BATCH — but the SAME word also carries a قف (QIF) mark on the exact
+// same token. Established project policy (readerManager.js, DEFAULT_QIF_WORDS
+// comment: "ط+قف على نفس توكن النسخ → قف"; also documented in
+// FINAL_WAQF_REVIEW_STATUS.md) resolves ط×قف conflicts in favour of قف, so
+// these two render with has-default-qif instead of has-default-waqf. This
+// is the correct, intended, final rendering — not an extraction gap.
+const QIF_WINS_OVER_TA_MUTLAQ = {
+  '2:102:66': true,
+  '59:9:24': true
 };
 
 // --- Ground truth: real-word U+0615 count per ayah, computed straight
@@ -167,6 +183,14 @@ for (const key in BATCH) {
     // convention), but rendered data-key uses a 0-based word index.
     const wordKey = parts[0] + ':' + parts[1] + ':' + (w - 1);
     const isLastWord = w === uWordCount;
+    const batchKey = key + ':' + w;
+    if (QIF_WINS_OVER_TA_MUTLAQ[batchKey]) {
+      // Resolved قف, not ط — see comment above QIF_WINS_OVER_TA_MUTLAQ.
+      const okQif = hasClass(html, wordKey, 'has-default-qif');
+      if (!okQif) allRendered = false;
+      check(key + ' word ' + w + ' (data-key ' + wordKey + ') carries has-default-qif (ط×قف conflict, قف wins by policy)', okQif, 'word html: ' + wordHtml(html, wordKey));
+      continue;
+    }
     const ok = hasDefaultWaqfClass(html, wordKey);
     if (isLastWord) {
       if (ok) allRendered = false;

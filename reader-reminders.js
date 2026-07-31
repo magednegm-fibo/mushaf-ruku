@@ -58,12 +58,21 @@
   function resolveNonKufiMarkInfo(wordEl){
     if(!wordEl.classList.contains('has-non-kufi-head')) return null;
     var mark = wordEl.querySelector('.non-kufi-mark');
-    var color = 'blue';
+    // بلا mark-* = موضع عارٍ (لا علامة وقف) → popup بحبر النص (info-plain)
+    var color = 'plain';
     if(mark){
       if(mark.classList.contains('mark-red')) color = 'red';
       else if(mark.classList.contains('mark-green')) color = 'green';
       else if(mark.classList.contains('mark-brown')) color = 'brown';
       else if(mark.classList.contains('mark-blue')) color = 'blue';
+    }
+    // رأس بلا لون خاص به (رمز غير «لا»، مثل م/ط/ص/ز/ق/قف/ج): نجمة
+    // السجاوندي المقابلة تُرسم على نفس هذه الكلمة عبر .waqf-mark
+    // (has-default-*)، لا عبر .non-kufi-mark. يجب أن يطابق لون الـpopup
+    // لونها، لا حبر النص الافتراضي.
+    if(color === 'plain'){
+      var defaultInfoSameWord = resolveDefaultMarkInfo(wordEl);
+      if(defaultInfoSameWord) color = defaultInfoSameWord.color;
     }
     var label = 'رأس آية لغير الكوفيين';
     var waqfSym = resolveNonKufiWaqfSymbol(wordEl);
@@ -219,7 +228,7 @@
       els.waqfDeleteMenu.classList.add('hidden');
       if(els.waqfInfoPopup){
         els.waqfInfoPopup.classList.add('hidden');
-        els.waqfInfoPopup.classList.remove('info-red', 'info-green', 'info-blue', 'info-brown');
+        els.waqfInfoPopup.classList.remove('info-red', 'info-green', 'info-blue', 'info-brown', 'info-plain');
       }
       if(infoPopupTimer){ clearTimeout(infoPopupTimer); infoPopupTimer = null; }
       pendingKey = null;
@@ -235,7 +244,7 @@
       els.waqfDeleteMenu.classList.add('hidden');
       els.waqfInfoSymbol.textContent = info.symbol;
       els.waqfInfoLabel.textContent = info.label;
-      els.waqfInfoPopup.classList.remove('info-red', 'info-green', 'info-blue', 'info-brown');
+      els.waqfInfoPopup.classList.remove('info-red', 'info-green', 'info-blue', 'info-brown', 'info-plain');
       els.waqfInfoPopup.classList.add('info-' + info.color);
       els.waqfInfoPopup.classList.remove('hidden');
       positionMenu(els.waqfInfoPopup, x, y);
@@ -338,6 +347,9 @@
     exportMarks: exportMarks,
     importMarksFromFile: importMarksFromFile,
     // For UI's onModalForceClosed hook.
-    REMINDER_COLORS: REMINDER_COLORS
+    REMINDER_COLORS: REMINDER_COLORS,
+    // Test-only hook (regression tests run under Node without a real
+    // DOM/long-press flow) — not used by the app itself.
+    _resolveNonKufiMarkInfo: resolveNonKufiMarkInfo
   };
 })();

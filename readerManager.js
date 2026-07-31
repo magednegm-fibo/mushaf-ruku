@@ -116,22 +116,6 @@
       .replace(KALLA_MADDA_REGEX, KALLA_MADDA_HTML)
       .replace(KALLA_MADDA_WAQF_REGEX, kallaMaddaWaqfHtml)
       .replace(LAM_ALEF_MADDA_REGEX, lamAlefMaddaHtml);
-    // مد منفصل العام (MAD_MUNFASIL_REGEX/YA_HA_MUNFASIL_REGEX/
-    // MAD_SILA_KUBRA_REGEX): DISABLED بطلب صريح من المستخدم. كانت هذه
-    // الثلاثة تُلوِّن كل موضع مد منفصل عاديّ في المصحف كله (آلاف
-    // المواضع، تحقُّق أصلي: 2,318 لِـMAD_MUNFASIL_REGEX وحدها) — تلوين
-    // شامل لا علاقة له بمواضع الخلاف الفعلية بين طريقَي الروضة/الشاطبية،
-    // بخلاف الجداول الخمسة أسفل هذا الملف (SAKTA_HIGHLIGHT_WORDS إلخ)
-    // التي تمثّل فعلًا مواضع خلاف محددة (24 آية فقط). طُلب توحيد سلوك
-    // مصحف المدينة مع مصحف النسخ، الذي لم يُفعِّل هذا التلوين الشامل
-    // أصلًا لاختلاف الرسم بين الخطين — فبقي هناك مقصورًا على الجداول
-    // الخمسة + كلّا (KALLA_MADDA_REGEX، غير مُتأثرة بهذا التغيير). لذا
-    // أُوقِف الاستدعاء هنا بالكامل، فيرجع كل نص مد منفصل عادي للون
-    // الحبر الطبيعي وللحجم الطبيعي (لا span إضافي، لا تكبير) في مصحف
-    // المدينة أيضًا. المتغيرات MAD_MUNFASIL_REGEX/YA_HA_MUNFASIL_REGEX/
-    // MAD_SILA_KUBRA_REGEX ودوال الـHTML الخاصة بها أُبقيت معرَّفة أسفل
-    // هذا الملف (غير مُستدعاة من أي مكان الآن) توثيقًا للتحقق السابق منها
-    // ولإمكان إعادة التفعيل مستقبلًا لو تغيّر الطلب.
     return out;
   }
 
@@ -261,18 +245,11 @@
   // this is NOT always مد منفصل the way كَلَّآ always is: some of these
   // words (هَـٰٓؤُلَآءِ، ءَالَآءِ، أُوْلَآءِ، لَآئِمٖ) have a hamzah
   // glued on RIGHT AFTER the maddah within the SAME word (لَآءِ) --
-  // that's مد متصل, not منفصل. So this fix does two independent things
-  // per occurrence: (1) ALWAYS suppress+redraw the maddah to fix the
-  // glyph position (a rendering bug, unrelated to which madd rule
-  // applies), and (2) ONLY ALSO add the مد منفصل colour/weight class
-  // when this exact occurrence reaches the end of its word the same way
-  // MAD_MUNFASIL_REGEX below checks -- otherwise it's left in plain ink,
-  // same as any other مد متصل word. This is also why this block runs
-  // BEFORE MAD_MUNFASIL_REGEX in cleanAyahText: once this claims a
-  // maddah into its own nested span, the plain "ا\u0653" adjacency
-  // MAD_MUNFASIL_REGEX looks for no longer exists at that spot, so it
-  // naturally skips it instead of double-processing -- same pattern
-  // already relied on for كَلَّآ vs KALLA_MADDA_REGEX above.
+  // that's مد متصل, not منفصل. This fix ALWAYS suppress+redraws the
+  // maddah to fix the glyph position (a rendering bug, unrelated to
+  // which madd rule applies). No colour class is applied — colouring of
+  // specific khilaf words is handled separately by the curated tables
+  // further below (SAKTA_HIGHLIGHT_WORDS etc.).
   //
   // UNCONFIRMED ON DEVICE for this broader word set specifically --
   // reuses كَلَّآ's already-3-rounds-tuned offset as a starting estimate
@@ -330,200 +307,19 @@
         if(!LAM_ALEF_NON_JOINING_BEFORE[precedingCp]) return match;
       }
     }
-    // كان يُضاف هنا صنف "mad-munfasil" (تلوين) عندما تنتهي الكلمة عند
-    // هذه المدة فعلًا (مد منفصل حقيقي) — أُوقِف بنفس طلب إلغاء التلوين
-    // الشامل للمد المنفصل العام أعلى هذا الملف (انظر تعليق cleanAyahText).
-    // الغلاف lam-alef-madda-glyph نفسه يبقى دون تغيير: وظيفته الأصلية
-    // إصلاح موضع رسمة المدة (glyph)، لا علاقة له بالتلوين.
+    // Glyph-position fix only (maddah sits over لام instead of the
+    // alif tail) — no colour class is applied here.
     var glyphClass = 'lam-alef-madda-glyph';
     return '<span class="lam-alef-madda-cluster">' + core +
       '<span class="' + glyphClass + '" aria-hidden="true">' + madda + '</span>' +
     '</span>';
   }
 
-  // المد المنفصل (mad munfasil) — Uthmani/مصحف المدينة mode only.
-  //
-  // The rasm itself already marks this: a maddah (U+0653) over a genuine
-  // madd letter (ا/و/ي) sits at the very END of its word whenever the
-  // hamzah that causes the madd starts the NEXT word (the whole reason a
-  // madd letter followed by a same-word hamzah — مد متصل, e.g. جَآءَ —
-  // and a word-final madd letter before a hamzah-initial next word — مد
-  // منفصل, e.g. قَالُوٓا۟ إِنَّمَا — both get a maddah in the first
-  // place, and how the rasm already tells them apart without needing any
-  // cross-word lookup here: this file renders one word at a time (see
-  // renderAyahWords/cleanAyahText below), so by the time this word's
-  // string ends, "the hamzah is word-final" and "the hamzah is absent
-  // because it's in the next word" are the same observable fact.
-  //
-  // Verified against every \u0653 occurrence in data.js (5,652 total)
-  // before writing this regex, not assumed:
-  //   - word-final base+maddah (بare, or with the silent extra alif+sukun
-  //     that trails a واو-madd verb ending, or with a trailing waqf mark
-  //     attached to the same word) = 2,318 occurrences = مد منفصل. This
-  //     is exactly what this regex matches.
-  //   - maddah immediately followed (same word) by a hamzah letter
-  //     (ء أ إ ؤ ئ, incl. the tatweel-seated combining-hamzah spelling) =
-  //     1,548+ occurrences = مد متصل. NOT matched (base+maddah isn't at
-  //     the end of the string in these).
-  //   - maddah immediately followed by a doubled/shaddah consonant (e.g.
-  //     ٱلضَّآلِّينَ، حَآجُّوكُم) = a different rule entirely (مد لازم
-  //     كلمي مثقل, shaddah-caused not hamzah-caused). NOT matched.
-  //   - maddah riding on a hamzah letter itself (أٓخِرَة) = مد بدل, a
-  //     word-INTERNAL construction unrelated to this cross-word rule.
-  //     NOT matched (this regex requires the letter under the maddah to
-  //     be a plain ا/و/ي, never a hamzah).
-  //   - maddah riding on a dagger alef (ٱلسُّوٓأَىٰٓ's second maddah) or
-  //     on the small connecting واو/يا pronoun markers (لَهُۥٓ — مد
-  //     الصلة الكبرى, a related but separately-named rule) = NOT matched
-  //     on purpose; out of scope for this pass.
-  //   - the "ءَآلذَّكَرَيۡنِ" / "ءَآلۡـَٰٔنَ" / "ءَآللَّهُ" shape (مد
-  //     الفرق, a third distinct hamzah-caused madd) = NOT matched (what
-  //     follows the maddah there is a plain لام, neither a hamzah nor
-  //     the end of the word).
-  //
-  // Presentational only, same guarantee as every other regex in this
-  // file: data.js is never touched, only the rendered HTML wrapping.
-  //
-  // Runs LAST in cleanAyahText, deliberately, and reads the maddah's
-  // base letter straight off the (mostly still-contiguous) OUTPUT of
-  // every earlier step rather than the raw word — two things earlier in
-  // this file already carved out the exceptions that would otherwise
-  // trip it up:
-  //   1) كَلَّآ (KALLA_MADDA_REGEX, just above) isolates its maddah into
-  //      its own nested <span> BEFORE this runs, which breaks the direct
-  //      ا+\u0653 adjacency this regex requires — so it silently never
-  //      matches those 7 words here. That's fine: every كَلَّآ+maddah
-  //      occurrence is provably مد منفصل (the word ends right there), so
-  //      .kalla-madda-glyph just gets the same --mad-munfasil color
-  //      directly in style.css instead. The other 6 كَلَّآ occurrences
-  //      (immediately followed by a waqf mark, so KALLA_MADDA_REGEX
-  //      doesn't touch them either — see its own comment above) DO stay
-  //      plain-text-contiguous and get caught by the general case below,
-  //      same as any other waqf-adjacent مد منفصل word.
-  //   2) wrapWaqfSigns() (below) bundles a word-final base+maddah+waqf-
-  //      mark run together into one <span class="waqf-sign">...</span>
-  //      — still contiguous internally (it never splits a base letter
-  //      from a mark that combines onto it), just wrapped. The optional
-  //      groups below account for that trailing "</span>" (zero or more,
-  //      for any further nesting) landing right after the waqf marks, at
-  //      the true end of the word string either way.
-  //
-  // Wraps ONLY the base letter + maddah together in one span — never the
-  // maddah alone — matching the "keep a mark glued to its own base
-  // letter in one DOM text node" rule documented at length elsewhere in
-  // this file (see TATWEEL_SEAT_REGEX and wrapWaqfSigns' own comments):
-  // this environment's shaper only anchors a GPOS mark correctly within
-  // a single run. The trailing silent الف/سكون (واو-madd endings) and
-  // any waqf mark after it are deliberately left OUTSIDE this span and
-  // uncoloured: wrapWaqfSigns (above) already treats that الف as a
-  // fresh base letter starting its OWN cluster whenever a waqf mark
-  // follows it — confirmed on-device-equivalent by testing this file's
-  // actual output, not assumed — so its سكون anchors to ITS OWN الف
-  // either way, never to the واو before it; splitting there was already
-  // happening before this feature existed and changes nothing about
-  // that anchoring. A zero-width lookahead is used specifically so this
-  // regex can SEE past that split (including the waqf-sign span's own
-  // opening tag, when present) to confirm the string still ends the way
-  // مد منفصل requires, without pulling any of that trailing text into
-  // the coloured span itself. Only `color` is applied in CSS
-  // (.mad-munfasil) — no size/position change, so there is nothing here
-  // that could shift anchoring even in principle.
-  // UPDATE (reported directly: 2:7 وَعَلَىٰٓ أَبۡصَٰرِهِمۡ was NOT being
-  // coloured): the base letter isn't always a plain ا/و/ي. This mushaf
-  // also spells the madd-yaa sound as أَلِف مَقۡصُورَة (ى, U+0649) with
-  // a dagger alef (U+0670) riding on it as a second combining mark
-  // UNDER the maddah — e.g. عَلَىٰٓ, مُوسَىٰٓ, إِلَىٰٓ, ٱسۡتَوَىٰٓ. Full
-  // re-scan of data.js after this report found 394 such word-final
-  // occurrences (all مد منفصل, same "ends right there" logic as
-  // everything above) that the original ا/و/ي-only base set silently
-  // missed — ى is now included, with the dagger alef as an optional
-  // extra combining mark between it and the maddah, wrapped inside the
-  // same span so it stays glued to its true base letter (ى), not
-  // orphaned the way splitting it out would have broken GPOS anchoring.
-  // (Re-verified this doesn't reopen any of the excluded categories:
-  // ى/دagger-alef bases immediately followed by a hamzah letter, e.g.
-  // أُوْلَـٰٓئِكَ, or by a doubled consonant/tatweel-hamzah run, still
-  // fail the lookahead exactly like the ا/و/ي cases already did.)
-  var MAD_MUNFASIL_REGEX = /([\u0627\u0648\u064A\u0649])(\u0670)?(\u0653)(?=(?:<span[^>]*>)?(?:\u0627\u0652)?(?:\u0615|[\u06D6-\u06DC])*(?:<\/span>)*$)/g;
-  function madMunfasilHtml(match, base, dagger, madda){
-    return '<span class="mad-munfasil">' + base + (dagger || '') + madda + '</span>';
-  }
-
-  // UPDATE (reported directly, four distinct cases): the two regexes
-  // above still miss real مد منفصل because they were built on "hamzah
-  // starts the NEXT word" == "hamzah is absent from THIS word's text" —
-  // true for ordinary words, but wrong for two fixed vocative/tanbih
-  // particles that Uthmani rasm writes GLUED to the word after them as
-  // one continuous shape even though they are grammatically two separate
-  // words: يَـٰٓأَيُّهَا (يا + أيها) and هَـٰٓؤُلَآءِ / هَـٰٓأَنتُمۡ (ها +
-  // أولاء/أنتم). Full scan of every ي/ه + فتحة + tatweel + dagger-alef +
-  // maddah + hamzah-letter shape in data.js (verified against the
-  // rendered output of TATWEEL_SEAT_REGEX above, which already wraps the
-  // tatweel+dagger-alef+maddah into its own <span> before this runs)
-  // found exactly 185 يَـٰٓأَ.../يَـٰٓأَهۡلَ occurrences and 50
-  // هَـٰٓؤُلَآءِ/هَـٰٓأَنتُمۡ occurrences — every single one of these,
-  // with no exceptions, is the same fixed two-word construction, never a
-  // genuine one-word مد متصل, so (unlike the general rule) these are
-  // unconditionally مد منفصل regardless of what follows.
-  // Colours ONLY the tatweel-seat span's contents (the dagger-alef +
-  // maddah standing in for the "invisible" أَلِف of يا/ها) by appending
-  // the class onto TATWEEL_SEAT_REGEX's own span rather than nesting a
-  // second span inside it — nesting spans here would put the mark in a
-  // fresh shaping run and risk re-breaking the GPOS anchoring that
-  // TATWEEL_SEAT_REGEX's own comment already warns about. The ي/ه
-  // consonant itself and its فتحة are left completely untouched (they
-  // are not part of the mad symbol here — unlike the general regex,
-  // where the base letter captured IS the silent madd letter itself).
-  //
-  // UPDATE (reported directly): يَـٰٓـَٔادَمُ ("يا آدم", 2:33, 2:35, 7:19,
-  // 20:117, 20:120 — 5 occurrences, checked against the full rasm scan
-  // above) was silently missed. Its hamza is not the plain hamza-letter
-  // this regex's lookahead expects — the rasm here spells it as a
-  // second, separate tatweel carrying the hamza-above mark (U+0640
-  // U+0654), immediately followed by the actual alef, rather than a
-  // single precomposed hamza-on-alef letter like أ. That second
-  // tatweel isn't matched by TATWEEL_SEAT_REGEX itself (it requires a
-  // dagger alef, U+0670, right after the tatweel — this one doesn't
-  // have one) so it's left as plain unwrapped text sitting right after
-  // the tatweel-seat span, which is exactly where the lookahead looks.
-  // Added \u0640\u0654 as an alternate lookahead branch for this one
-  // case; every other munfasil case above (bare hamza letters) is
-  // untouched since the alternation only adds a new match, never
-  // removes the old one.
-  var YA_HA_MUNFASIL_REGEX = /([\u064A\u0647]\u064E)(<span class="tatweel-seat[^"]*)(">\u0640\u0670\u0653<\/span>)(?=[\u0621\u0623\u0624\u0625\u0626]|\u0640\u0654)/g;
-  function yaHaMunfasilHtml(match, base, openTag, rest){
-    return base + openTag + ' mad-munfasil' + rest;
-  }
-
-  // UPDATE (reported directly): مد الصلة الكبرى — the small connecting
-  // واو/يا riding on a هاء الكناية (third-person "hu"/"hi" pronoun
-  // suffix), stretched to a full madd because a hamzah-initial word
-  // follows (e.g. بِهِۦٓ إِلَّا، يَسۡتَحۡيِۦٓ أَن، لَهُۥٓ أَجۡرُهُۥ) —
-  // was explicitly out of scope in the original pass above (see its
-  // comment: "a related but separately-named rule... NOT matched on
-  // purpose"). Per direct request this mushaf now colours it the same
-  // as ordinary مد منفصل: both share the same acoustic length (4-5
-  // harakat) and the same hamzah-initial-next-word trigger, and this
-  // mushaf doesn't expose a separate colour for the "kubra" sub-rule.
-  // U+06E5 (small واو) / U+06E6 (small يا) immediately followed by a
-  // maddah (U+0653) is unambiguous: this exact two-character shape is
-  // ONLY ever produced by the sila-kubra rasm convention (the base set
-  // is deliberately just these two marks, nothing else), so no
-  // muttasil/lazim/badal exclusion logic is needed the way the general
-  // regex above needs it. Same end-of-word lookahead as the general
-  // regex (this file renders one word at a time), so a سكون-instance
-  // that ISN'T word-final (shouldn't occur for this suffix, but kept
-  // for safety/symmetry) is still left uncoloured.
-  var MAD_SILA_KUBRA_REGEX = /([\u06E5\u06E6])(\u0653)(?=(?:<span[^>]*>)?(?:\u0615|[\u06D6-\u06DC])*(?:<\/span>)*$)/g;
-  function madSilaKubraHtml(match, base, madda){
-    return '<span class="mad-munfasil">' + base + madda + '</span>';
-  }
-
   // ملاحظة عامة على الجداول الخمسة التالية (SAKTA_HIGHLIGHT_WORDS،
   // MUQATTAAT_MAD_WORDS، SEEN_AS_SAD_WORDS، MAD_FARQ_WORDS،
   // TAJWEED_NOTE_WORDS): كانت التعليقات الأصلية تصف هذا التلوين بأنه
   // "تطبيق مباشر لطلب المستخدم" دون تفسير جامع. أكّد المستخدم لاحقًا أن
-  // السبب الحقيقي وراء تلوين كل هذه المواضع بلون --mad-munfasil نفسه
+  // السبب الحقيقي وراء تلوين كل هذه المواضع بلون --khilaf-highlight نفسه
   // هو الإشارة إلى مواضع الخلاف بين طريقَي رواية حفص عن عاصم: طريق
   // الروضة (المعدِّل) وطريق الشاطبية — وليس تمييزًا اعتباطيًا لكل كلمة
   // على حدة كما كانت التعليقات القديمة تُوحي.
@@ -534,7 +330,7 @@
   // النون تُدغَم فتُسمَع "مرَّاق"). كل موضع منها مُعلَّم أصلًا في رسم
   // المصحف بعلامة السكتة (۟ۜ U+06DC) على الكلمة الأولى — نفس العلامة التي
   // يعالجها WAQF_SAKTA_LIFT_HTML أعلاه — وهذا فقط يضيف على كلمتَي كل
-  // موضع نفس لون المد المنفصل (متغيّر --mad-munfasil نفسه، وليس نسخة
+  // موضع نفس لون المد المنفصل (متغيّر --khilaf-highlight نفسه، وليس نسخة
   // منفصلة منه، حتى يبقى مطابقًا تمامًا له لو تغيّر لاحقًا) — راجع
   // الملاحظة العامة أعلى هذا الجدول لسبب هذا التلوين (خلاف الروضة/
   // الشاطبية). مفعّل في الرسمين معًا (العثماني والإندوباك) — راجع تعليق
@@ -565,7 +361,7 @@
   // "كاااف")، وهذا هو ما ترسمه المدّة (U+0653) الظاهرة فعلًا في a.text
   // فوق ك ع ص س ق هنا تحديدًا (لا فوق ه/ي، اللذين مدّهما طبيعي بلا علامة
   // في الرسم) — هذا مد مختلف عن المد المنفصل (مد لازم حرفي، لا مد
-  // منفصل)، لكن التلوين هنا فقط تطبيق للون --mad-munfasil نفسه — راجع
+  // منفصل)، لكن التلوين هنا فقط تطبيق للون --khilaf-highlight نفسه — راجع
   // الملاحظة العامة أعلى جدول SAKTA_HIGHLIGHT_WORDS لسبب هذا التلوين
   // (خلاف الروضة/الشاطبية)، وليس ادّعاءً بأن هذا مد منفصل فعلًا. يُلوَّن هنا
   // الكلمة (الحرف المقطَّع) كاملة كوحدة واحدة، بنفس أسلوب SAKTA_HIGHLIGHT_WORDS
@@ -596,7 +392,7 @@
   // للدلالة على جواز القراءة بالوجهين (بالصاد والسين معًا)، بينما
   // "بمصيطر" (الغاشية 22) لا سين صغيرة فوقها لأن حفصًا يقرؤها بالصاد
   // وجهًا واحدًا فقط. هذا ليس مدًّا من أي نوع (لا مد منفصل ولا غيره) —
-  // التلوين هنا فقط تطبيق للون --mad-munfasil نفسه؛ راجع الملاحظة العامة
+  // التلوين هنا فقط تطبيق للون --khilaf-highlight نفسه؛ راجع الملاحظة العامة
   // أعلى جدول SAKTA_HIGHLIGHT_WORDS لسبب هذا التلوين (خلاف الروضة/
   // الشاطبية)، وليس ادّعاءً بأنها مد. تُلوَّن الكلمة كاملة كوحدة واحدة، بنفس أسلوب الجداول أعلاه.
   // مفعّل في الرسمين معًا (العثماني والإندوباك)، ومقصور على هذه المواضع
@@ -622,13 +418,11 @@
   // مع همزة الوصل بعدها فتُبدَل همزة الوصل ألفًا ثابتة مع مدّة، للتفريق
   // بين الاستفهام والخبر لو حُذفت (مثال: "ءالله" استفهام إنكاري، لو
   // حُذفت الهمزة الثانية ونُطقت "الله" لصار خبرًا لا استفهامًا). هذا مد
-  // لازم (الفرق) وليس مد منفصل — MAD_MUNFASIL_REGEX أعلاه يستثنيه فعلًا
-  // بالتصميم (يشترط أن يكون آخر الكلمة، وهذه الكلمات تتبع المدة فيها
-  // حروف أخرى، انظر تعليق MAD_MUNFASIL_REGEX). التلوين هنا فقط تطبيق
-  // للون --mad-munfasil نفسه؛ راجع الملاحظة العامة أعلى جدول
-  // SAKTA_HIGHLIGHT_WORDS لسبب هذا التلوين (خلاف الروضة/الشاطبية)، وليس
-  // ادّعاءً بأنها مد منفصل. تُلوَّن الكلمة كاملة كوحدة واحدة. مفعّل في
-  // الرسمين معًا (العثماني والإندوباك). المواضع الستة كاملة (لا خامس/سابع لها):
+  // لازم (الفرق) وليس مد منفصل. التلوين هنا تطبيق للون --khilaf-highlight
+  // (خلاف الروضة/الشاطبية) — راجع الملاحظة العامة أعلى جدول
+  // SAKTA_HIGHLIGHT_WORDS — وليس ادّعاءً بأنها مد منفصل. تُلوَّن الكلمة
+  // كاملة كوحدة واحدة. مفعّل في الرسمين معًا (العثماني والإندوباك).
+  // المواضع الستة كاملة (لا خامس/سابع لها):
   //   10:51  ["...","ءَامَنتُم","بِهِۦٓۚ","ءَآلۡـَٰٔنَ",...]  → 6
   //   10:91  ["ءَآلۡـَٰٔنَ",...]                              → 0
   //   6:143  [...,"قُلۡ","ءَآلذَّكَرَيۡنِ",...]                → 9
@@ -645,7 +439,7 @@
   };
 
   // دفعة كلمات متنوعة طلبها المستخدم مباشرة، كل واحدة منها ظاهرة
-  // رسمية/نطقية مختلفة، لكن كلها تُلوَّن بنفس لون --mad-munfasil بالضبط؛
+  // رسمية/نطقية مختلفة، لكن كلها تُلوَّن بنفس لون --khilaf-highlight بالضبط؛
   // راجع الملاحظة العامة أعلى جدول SAKTA_HIGHLIGHT_WORDS لسبب هذا
   // التلوين (خلاف الروضة/الشاطبية) — وليست كلها مد منفصل فعليًا:
   //   12:11  تَأۡمَ۬نَّا — علامة الإشمام (U+06EC) فوق النون: إشارة لضم
@@ -1268,7 +1062,14 @@
       '48:29:44': true, '49:9:26': true, '49:13:16': true, '58:6:10': true,
       '58:12:11': true, '58:12:15': true, '58:13:7': true, '58:13:20': true,
       '59:7:33': true, '62:5:11': true, '62:5:18': true, '65:4:14': true,
-      '65:4:20': true
+      '65:4:20': true,
+      // WAQF_REVIEW high-confidence (Indopak = source of truth) — 1.0.191
+      '2:72:6': true,
+      // Interactive review batch (Host Word chosen visually via the
+      // WAQF_REVIEW tool, one entry per approved case) — 1.0.192
+      '5:46:26': true, '69:3:4': true, '70:7:2': true, '79:30:4': true,
+      '79:42:5': true, '90:12:4': true, '91:10:4': true, '101:3:4': true,
+      '101:10:4': true, '104:5:4': true
     },
     // 46:15 الكلمة 39 ("ذُرِّيَّتِيٓۖ") — راجع تعليق الدفعة الثانية أعلاه:
     // الكلمة تحمل ط وج معًا خامًا في نص النسخ؛ قرار مباشر من المستخدم
@@ -1301,7 +1102,14 @@
       '25:4:12': true, '41:35:5': true, '52:18:4': true,
       // Hard Indopak→Uthmani alignments (mark on/after token; mid-ayah)
       '3:150:3': true, '4:142:6': true, '9:95:14': true, '12:30:10': true,
-      '12:96:9': true, '12:96:13': true, '21:5:9': true
+      '12:96:9': true, '12:96:13': true, '21:5:9': true,
+      // WAQF_REVIEW high-confidence (Indopak = source of truth) — 1.0.191
+      '2:72:11': true, '3:48:5': true, '3:152:32': true, '4:171:28': true, '5:110:26': true, '6:161:7': true, '7:160:15': true, '7:187:10': true, '7:189:18': true, '10:15:31': true, '10:83:19': true, '35:43:21': true, '40:45:10': true, '56:23:3': true, '57:12:22': true, '59:9:31': true, '66:4:17': true, '76:11:8': true, '79:16:6': true,
+      // Interactive review batch (Host Word chosen visually via the
+      // WAQF_REVIEW tool, one entry per approved case) — 1.0.192
+      '2:198:20': true, '2:258:43': true, '4:37:15': true, '7:43:23': true,
+      '7:176:13': true, '9:78:11': true, '22:78:40': true, '23:46:7': true,
+      '53:54:3': true, '66:2:8': true, '89:16:10': true
     },
     // قف (QIF) — فجوات WAQF_REVIEW (Indopak U+E01E → كلمة المدينة).
     // سياسة التعارض على نفس الكلمة (1.0.139):
@@ -1311,7 +1119,10 @@
       '3:50:16': true, '4:171:28': true, '6:62:9': true,
       '7:43:16': true, '7:46:14': true, '11:63:18': true, '28:25:22': true,
       // ط+قف على نفس توكن النسخ → قف
-      '2:102:66': true, '59:9:24': true
+      '2:102:66': true, '59:9:24': true,
+      // Interactive review batch (Host Word chosen visually via the
+      // WAQF_REVIEW tool, one entry per approved case) — 1.0.192
+      '48:29:31': true
     },
     // ز (ZAY_JAWAZ) — فجوات WAQF_REVIEW (Indopak U+E01A)
     // آخر كلمة / لا / صلي: لا تُضاف
@@ -1319,7 +1130,12 @@
       '4:171:25': true, '5:7:12': true, '6:165:18': true, '7:157:12': true,
       '10:23:18': true, '11:91:14': true, '12:21:19': true, '18:62:6': true,
       '20:121:11': true, '28:25:5': true, '28:26:4': true, '33:53:33': true,
-      '48:29:18': true
+      '48:29:18': true,
+      // WAQF_REVIEW high-confidence (Indopak = source of truth) — 1.0.191
+      '37:75:5': true,
+      // Interactive review batch (Host Word chosen visually via the
+      // WAQF_REVIEW tool, one entry per approved case) — 1.0.192
+      '4:121:3': true
     },
     // ق (QAD_QILA) — فجوات WAQF_REVIEW (Indopak U+E01C)
     'QAD_QILA': {
@@ -1329,9 +1145,24 @@
     // ص (SAD_RUKHSA) — فجوات WAQF_REVIEW (Indopak U+E01B)
     'SAD_RUKHSA': {
       '2:144:9': true, '2:282:110': true,
-      '5:46:12': true, '6:71:23': true, '16:28:5': true
+      '5:46:12': true, '6:71:23': true, '16:28:5': true,
       // سور الشمس القصيرة: أغلبها آخر كلمة (policy OK)
       // 20:121:15 آخر كلمة + صلي؛ 91:14:2 مستبعد سابقًا
+      // Interactive review batch (Host Word chosen visually via the
+      // WAQF_REVIEW tool, one entry per approved case) — 1.0.192
+      '79:29:4': true, '79:31:4': true
+    },
+    // م (WAQF_LAZIM) — فجوات WAQF_REVIEW: الاستخراج من النسخ نجح
+    // (U+06D8) لكن المحاذاة إلى رقم كلمة المدينة فشلت فبقيت في
+    // WAQF_REVIEW بلا word. تُضاف هنا يدويًا بعد التحقق من نص المدينة.
+    // 4:171 الكلمة 43 = وَلَدٞۘ (U+06D8 على نفس الكلمة في الرسم العثماني).
+    'WAQF_LAZIM': {
+      '4:171:43': true,
+      // WAQF_REVIEW high-confidence (Indopak = source of truth) — 1.0.191
+      '2:258:12': true, '3:170:19': true, '7:187:15': true, '38:21:4': true, '51:24:6': true, '59:7:37': true,
+      // Interactive review batch (Host Word chosen visually via the
+      // WAQF_REVIEW tool, one entry per approved case) — 1.0.192
+      '20:9:4': true, '79:15:4': true
     }
   };
 
@@ -1428,7 +1259,7 @@
   // ط (الوقف المطلق) — طُبِّق أول مرة كرمز ط عائم فوق الكلمة، ثم — طلب
   // مباشر لاحق — استُبدل بتلوين نص الكلمة نفسها مباشرة (بلا رمز عائم
   // إطلاقًا)، بنفس أسلوب تلوين الكلمات الآخر في هذا الملف (راجع
-  // body.show-mad-munfasil في style.css كمثال على نفس النمط). لا تُوضع
+  // body.show-khilaf-highlight في style.css كمثال على نفس النمط). لا تُوضع
   // عند آخر كلمة في الآية (طلب مباشر: نهاية الآية علامة وقف بالفعل).
   //
   // طبقة مستقلة تمامًا عن نظام "علامات التذكير الشخصية"
@@ -2046,15 +1877,12 @@ var KNOWN_SPLIT_WORD_FRAGMENTS = ["اٰ تُوۡهُمۡ", "اٰ تَيۡتُم�
     var ayahKey = a.surah + ':' + a.ayah;
     // UPDATE (طلب مباشر): كانت هذه الجداول الخمسة (وألوانها) مقصورة على
     // مصحف المدينة (Uthmani) فقط. طُلب تفعيلها في مصحف النسخ (Naskh/
-    // Indopak) أيضًا -- بخلاف المد المنفصل العام (MAD_MUNFASIL_REGEX/
-    // YA_HA_MUNFASIL_REGEX/MAD_SILA_KUBRA_REGEX في cleanAyahText أعلاه)،
-    // الذي يبقى مقصورًا على العثماني كما هو تمامًا (اختلافات رسم كثيرة
-    // بين الخطين تمنع تعميمه)، هذا لأن هذه الجداول لا تعتمد على تحليل
-    // رسمي عام بل على فهرس كلمة محدد سلفًا لكل موضع، وهو ما تحقّقنا منه
-    // مباشرة: تشغيل tokenizeAyahWords على a.text وa.textIndopak لكل
-    // آية من الآيات الـ24 في الجداول الخمسة أظهر تطابقًا تامًا في عدد
-    // وترتيب الكلمات لِـ22 منها -- فهرس الكلمة نفسه يشير لنفس الكلمة
-    // بالضبط في الخطّين، فلا حاجة لجدول فهارس منفصل بمصحف النسخ.
+    // Indopak) أيضًا. هذه الجداول لا تعتمد على تحليل رسمي عام بل على
+    // فهرس كلمة محدد سلفًا لكل موضع، وهو ما تحقّقنا منه مباشرة: تشغيل
+    // tokenizeAyahWords على a.text وa.textIndopak لكل آية من الآيات
+    // الـ24 في الجداول الخمسة أظهر تطابقًا تامًا في عدد وترتيب الكلمات
+    // لِـ22 منها -- فهرس الكلمة نفسه يشير لنفس الكلمة بالضبط في الخطّين،
+    // فلا حاجة لجدول فهارس منفصل بمصحف النسخ.
     //
     // الاستثناء: آيتان فقط (2:245 وَ30:54) يختلف فيهما عدد الكلمات بين
     // الخطين في نص الإندوباك (QUL) تحديدًا -- علامات وقف عائمة ورمز ۞
@@ -2099,6 +1927,101 @@ var KNOWN_SPLIT_WORD_FRAGMENTS = ["اٰ تُوۡهُمۡ", "اٰ تَيۡتُم�
       (DEFAULT_QIF_WORDS[ayahKey] || null) : null;
     var defaultJeemIdxs = (state.fontStyle === 'uthmani') ?
       (DEFAULT_JEEM_WORDS[ayahKey] || null) : null;
+    // نجمة السجاوندي المرتبطة برأس غير الكوفيين (ما عدا «لا»):
+    // تُعرض على **الكلمة المضيفة نفسها** (كلمة رأس الآية — مثل يسقون
+    // في 28:23)، لا على الفهرس السابق. الفهرس في الخريطة قد ينزاح؛
+    // لذلك نُطابق حروف الأساس (NON_KUFI_HEADS_BASE_UTHMANI) مع نص
+    // الكلمة الفعلي في الآية. الرأس نفسه يُرسم بلون خط المصحف.
+    // «لا»: الرأس يبقى أخضر، بلا نجمة سجاوندي إضافية على نفس الكلمة.
+    var shiftedMutlaqIdxs = [];
+    var shiftedSadIdxs = [];
+    var shiftedLazimIdxs = [];
+    var shiftedZayIdxs = [];
+    var shiftedQadIdxs = [];
+    var shiftedQifIdxs = [];
+    var shiftedJeemIdxs = [];
+    // فهرس مضيف مُتحقق منه بالحروف → لضبط لون الرأس لاحقًا
+    var nonKufiHostResolved = Object.create(null); // key "surah:ayah:idx" → {sym, color}
+    function nonKufiBaseNorm(s){
+      return String(s || '').replace(/[\u0640]/g, '')
+        .replace(/[^\u0621-\u064A\u0671]/g, '')
+        .replace(/\u0671/g, '\u0627')
+        .replace(/[\u0622\u0623\u0625]/g, '\u0627')
+        .replace(/\u0629/g, '\u0647')
+        .replace(/\u0649/g, '\u064A')
+        .replace(/\u0626/g, '\u064A')
+        .replace(/\u0624/g, '\u0648')
+        .replace(/\u0621/g, '');
+    }
+    function nonKufiBaseSoft(s){
+      return nonKufiBaseNorm(s).replace(/\u064A/g, '').replace(/\u0627/g, '');
+    }
+    function nonKufiBaseOk(actual, expected){
+      var a = nonKufiBaseNorm(actual), e = nonKufiBaseNorm(expected);
+      if(a === e) return true;
+      var sa = nonKufiBaseSoft(actual), se = nonKufiBaseSoft(expected);
+      if(sa === se) return true;
+      if(sa.length >= 3 && se.length >= 3 &&
+        (sa.indexOf(se) !== -1 || se.indexOf(sa) !== -1)) return true;
+      return false;
+    }
+    function findWordIdxByBase(wordList, expectedBase, preferredIdx){
+      if(!expectedBase) return -1;
+      // 1) الفهرس المخزَّن إن طابق الأساس (الأدق عند تكرار الكلمة في الآية)
+      if(typeof preferredIdx === 'number' && preferredIdx >= 0 && preferredIdx < wordList.length &&
+        nonKufiBaseOk(wordList[preferredIdx], expectedBase)){
+        return preferredIdx;
+      }
+      // 2) مطابقة أساس تامة وحيدة
+      var exact = [];
+      for(var fi = 0; fi < wordList.length; fi++){
+        if(nonKufiBaseNorm(wordList[fi]) === nonKufiBaseNorm(expectedBase)) exact.push(fi);
+      }
+      if(exact.length === 1) return exact[0];
+      if(exact.length > 1 && typeof preferredIdx === 'number' && exact.indexOf(preferredIdx) !== -1) return preferredIdx;
+      if(exact.length > 1) return exact[0];
+      // 3) مطابقة مرنة وحيدة فقط (تجنّب التقاط كلمة أخرى بالخطأ)
+      var softHits = [];
+      for(var fj = 0; fj < wordList.length; fj++){
+        if(nonKufiBaseOk(wordList[fj], expectedBase)) softHits.push(fj);
+      }
+      if(softHits.length === 1) return softHits[0];
+      if(softHits.length > 1 && typeof preferredIdx === 'number' && softHits.indexOf(preferredIdx) !== -1) return preferredIdx;
+      return -1;
+    }
+    if(state.fontStyle === 'uthmani'){
+      var nkMapShift = window.NON_KUFI_HEADS_UTHMANI;
+      var nkSymShift = window.NON_KUFI_HEADS_SYM_UTHMANI;
+      var nkBaseShift = window.NON_KUFI_HEADS_BASE_UTHMANI;
+      if(nkMapShift){
+        // اجمع مفاتيح هذه الآية من الخريطة
+        var ayahPrefix = a.surah + ':' + a.ayah + ':';
+        Object.keys(nkMapShift).forEach(function(skey){
+          if(skey.indexOf(ayahPrefix) !== 0) return;
+          var mapIdx = parseInt(skey.slice(ayahPrefix.length), 10);
+          var expectedBase = nkBaseShift && nkBaseShift[skey];
+          var hostIdx = (expectedBase) ? findWordIdxByBase(words, expectedBase, mapIdx) : -1;
+          if(hostIdx < 0 && !isNaN(mapIdx) && mapIdx >= 0 && mapIdx < words.length){
+            // احتياطي: الفهرس المخزَّن إن طابق الأساس أو لم يتوفر أساس
+            if(!expectedBase || nonKufiBaseOk(words[mapIdx], expectedBase)) hostIdx = mapIdx;
+          }
+          if(hostIdx < 0) return;
+          var hostKey = a.surah + ':' + a.ayah + ':' + hostIdx;
+          var sSym = nkSymShift && nkSymShift[skey];
+          var sCol = nkMapShift[skey];
+          nonKufiHostResolved[hostKey] = {sym: sSym || '', color: sCol, mapKey: skey};
+          // ما عدا «لا» وبلا رمز: ضع نجمة سجاوندي على المضيف نفسه
+          if(!sSym || sSym === 'لا') return;
+          if(sSym === 'ط') shiftedMutlaqIdxs.push(hostIdx);
+          else if(sSym === 'قف') shiftedQifIdxs.push(hostIdx);
+          else if(sSym === 'ص') shiftedSadIdxs.push(hostIdx);
+          else if(sSym === 'ز') shiftedZayIdxs.push(hostIdx);
+          else if(sSym === 'ق' || sSym === 'قلي') shiftedQadIdxs.push(hostIdx);
+          else if(sSym === 'ج') shiftedJeemIdxs.push(hostIdx);
+          else if(sSym === 'م') shiftedLazimIdxs.push(hostIdx);
+        });
+      }
+    }
     return words.map(function(w, idx){
       var key = a.surah + ':' + a.ayah + ':' + idx;
       var extraCls = '';
@@ -2111,57 +2034,70 @@ var KNOWN_SPLIT_WORD_FRAGMENTS = ["اٰ تُوۡهُمۡ", "اٰ تَيۡتُم�
       // الآية نفسها علامة وقف بالفعل، فتكرار العلامة الافتراضية هناك
       // زائد. نفس القيد يُطبَّق على ص وز وق (قد قيل) وقف وج أدناه. م
       // (الوقف اللازم) أدناه مستثناة عمدًا من هذا القيد — طلب مباشر صريح.
-      var isDefaultWaqfMutlaq = !!(defaultWaqfMutlaqIdxs && defaultWaqfMutlaqIdxs.indexOf(idx) !== -1) &&
-        idx !== words.length - 1;
+      var isDefaultWaqfMutlaq = ((!!(defaultWaqfMutlaqIdxs && defaultWaqfMutlaqIdxs.indexOf(idx) !== -1) &&
+        idx !== words.length - 1) || shiftedMutlaqIdxs.indexOf(idx) !== -1);
       if(isDefaultWaqfMutlaq) extraCls += ' has-default-waqf';
-      var isDefaultSadRukhsa = !!(defaultSadRukhsaIdxs && defaultSadRukhsaIdxs.indexOf(idx) !== -1) &&
-        idx !== words.length - 1;
+      var isDefaultSadRukhsa = ((!!(defaultSadRukhsaIdxs && defaultSadRukhsaIdxs.indexOf(idx) !== -1) &&
+        idx !== words.length - 1) || shiftedSadIdxs.indexOf(idx) !== -1);
       if(isDefaultSadRukhsa) extraCls += ' has-default-sad-rukhsa';
-      var isDefaultWaqfLazim = !!(defaultWaqfLazimIdxs && defaultWaqfLazimIdxs.indexOf(idx) !== -1);
+      var isDefaultWaqfLazim = !!(defaultWaqfLazimIdxs && defaultWaqfLazimIdxs.indexOf(idx) !== -1) ||
+        shiftedLazimIdxs.indexOf(idx) !== -1;
       if(isDefaultWaqfLazim) extraCls += ' has-default-waqf-lazim';
-      var isDefaultZayJawaz = !!(defaultZayJawazIdxs && defaultZayJawazIdxs.indexOf(idx) !== -1) &&
-        idx !== words.length - 1;
+      var isDefaultZayJawaz = ((!!(defaultZayJawazIdxs && defaultZayJawazIdxs.indexOf(idx) !== -1) &&
+        idx !== words.length - 1) || shiftedZayIdxs.indexOf(idx) !== -1);
       if(isDefaultZayJawaz) extraCls += ' has-default-zay-jawaz';
-      var isDefaultQadQila = !!(defaultQadQilaIdxs && defaultQadQilaIdxs.indexOf(idx) !== -1) &&
-        idx !== words.length - 1;
+      var isDefaultQadQila = ((!!(defaultQadQilaIdxs && defaultQadQilaIdxs.indexOf(idx) !== -1) &&
+        idx !== words.length - 1) || shiftedQadIdxs.indexOf(idx) !== -1);
       if(isDefaultQadQila) extraCls += ' has-default-qad-qila';
-      var isDefaultQif = !!(defaultQifIdxs && defaultQifIdxs.indexOf(idx) !== -1) &&
-        idx !== words.length - 1;
+      var isDefaultQif = ((!!(defaultQifIdxs && defaultQifIdxs.indexOf(idx) !== -1) &&
+        idx !== words.length - 1) || shiftedQifIdxs.indexOf(idx) !== -1);
       if(isDefaultQif) extraCls += ' has-default-qif';
-      var isDefaultJeem = !!(defaultJeemIdxs && defaultJeemIdxs.indexOf(idx) !== -1) &&
-        idx !== words.length - 1;
+      var isDefaultJeem = ((!!(defaultJeemIdxs && defaultJeemIdxs.indexOf(idx) !== -1) &&
+        idx !== words.length - 1) || shiftedJeemIdxs.indexOf(idx) !== -1);
       if(isDefaultJeem) extraCls += ' has-default-jeem';
-      // رأس آية لغير الكوفيين — نجمة ملوّنة في مصحف المدينة فقط.
-      // مصحف النسخ يحتفظ برمز U+E021 الأصلي من PDMS (بدون تدخل).
+      // رأس آية لغير الكوفيين — نجمة في مصحف المدينة فقط.
+      // المضيف يُحدَّد بمطابقة حروف الأساس (أعلاه) لا بالفهرس وحده.
+      // «لا»: رأس أخضر. غير «لا»: رأس بلون المصحف + نجمة سجاوندي على نفس الكلمة.
+      // بلا رمز: رأس بلون المصحف فقط. مصحف النسخ: بدون تدخل.
       var isUthmani = state.fontStyle === 'uthmani';
-      var nonKufiColor = null;
+      var nonKufiColor = null; // null = ليس رأس غير كوفي؛ "" = بلا لون (حبر النص)
       if(isUthmani){
-        var nonKufiMap = window.NON_KUFI_HEADS_UTHMANI;
-        var nonKufiBaseMap = window.NON_KUFI_HEADS_BASE_UTHMANI;
-        nonKufiColor = (nonKufiMap && nonKufiMap[key]) || null;
-        if(nonKufiColor && nonKufiBaseMap && nonKufiBaseMap[key]){
-          var expectedBase = nonKufiBaseMap[key];
-          var actualBase = String(w).replace(/[\u0640]/g, '')
-            .replace(/[^\u0621-\u064A\u0671]/g, '')
-            .replace(/\u0671/g, '\u0627')
-            .replace(/[\u0622\u0623\u0625]/g, '\u0627')
-            .replace(/\u0629/g, '\u0647')
-            .replace(/\u0649/g, '\u064A')
-            .replace(/\u0626/g, '\u064A')
-            .replace(/\u0624/g, '\u0648')
-            .replace(/\u0621/g, '');
-          var soft = function(s){ return s.replace(/\u064A/g, '').replace(/\u0627/g, ''); };
-          var baseOk = (actualBase === expectedBase) ||
-            (soft(actualBase) === soft(expectedBase)) ||
-            (soft(actualBase).length >= 3 && soft(expectedBase).length >= 3 &&
-              (soft(actualBase).indexOf(soft(expectedBase)) !== -1 ||
-               soft(expectedBase).indexOf(soft(actualBase)) !== -1));
-          if(!baseOk) nonKufiColor = null;
+        var resolved = nonKufiHostResolved[key];
+        if(resolved){
+          if(resolved.sym === 'لا'){
+            nonKufiColor = 'green';
+          } else if(resolved.sym){
+            nonKufiColor = ''; // لون المصحف؛ السجاوندي على نفس الكلمة عبر shifted*
+          } else {
+            nonKufiColor = ''; // عارٍ بلا علامة وقف
+          }
+        } else {
+          // مفاتيح بلا أساس/فشل المطابقة: مسار احتياطي بالفهرس القديم
+          var nonKufiMap = window.NON_KUFI_HEADS_UTHMANI;
+          var nonKufiBaseMap = window.NON_KUFI_HEADS_BASE_UTHMANI;
+          if(nonKufiMap && Object.prototype.hasOwnProperty.call(nonKufiMap, key)){
+            nonKufiColor = nonKufiMap[key];
+            if(nonKufiBaseMap && nonKufiBaseMap[key] && !nonKufiBaseOk(w, nonKufiBaseMap[key])){
+              nonKufiColor = null;
+            }
+            var fbSym = window.NON_KUFI_HEADS_SYM_UTHMANI && window.NON_KUFI_HEADS_SYM_UTHMANI[key];
+            if(nonKufiColor !== null && fbSym && fbSym !== 'لا') nonKufiColor = '';
+            if(nonKufiColor !== null && fbSym === 'لا') nonKufiColor = 'green';
+          }
         }
       }
-      if(nonKufiColor) extraCls += ' has-non-kufi-head';
-      var nonKufiHtml = nonKufiColor
-        ? ('<span class="non-kufi-mark mark-' + nonKufiColor + '" aria-label="رأس آية لغير الكوفيين">' +
+      if(nonKufiColor !== null) extraCls += ' has-non-kufi-head';
+      if(nonKufiColor !== null && isUthmani){
+        var _nkR = nonKufiHostResolved[key];
+        var _nkSym = (_nkR && _nkR.sym) || (window.NON_KUFI_HEADS_SYM_UTHMANI && window.NON_KUFI_HEADS_SYM_UTHMANI[key]) || '';
+        if(_nkSym === 'لا') extraCls += ' has-non-kufi-la';
+      }
+
+      var nonKufiColorCls = (nonKufiColor === 'red' || nonKufiColor === 'green' ||
+        nonKufiColor === 'blue' || nonKufiColor === 'brown')
+        ? (' mark-' + nonKufiColor) : '';
+      var nonKufiHtml = nonKufiColor !== null
+        ? ('<span class="non-kufi-mark' + nonKufiColorCls + '" aria-label="رأس آية لغير الكوفيين">' +
            '<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M20 2 L23 10 L31 6 L27 14 L36 15 L28 20 L36 25 L27 26 L31 34 L23 30 L20 38 L17 30 L9 34 L13 26 L4 25 L12 20 L4 15 L13 14 L9 6 L17 10 Z"/></svg>' +
            '</span>')
         : '';

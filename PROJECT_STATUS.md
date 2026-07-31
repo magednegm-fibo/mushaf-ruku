@@ -1,6 +1,6 @@
 # Project Status
 
-**الإصدار الحالي:** 1.0.178  
+**الإصدار الحالي:** 1.0.191  
 **آخر تحديث:** 2026-07-31
 
 هذا الملف يُحدَّث مع كل إصدار ويُضمَّن دائمًا داخل الـ ZIP.  
@@ -20,6 +20,25 @@
 ---
 
 ## Completed
+
+### نجمة السجاوندي على الكلمة المضيفة لرأس غير الكوفيين (1.0.182 + توثيق 1.0.183)
+
+**المضيف** = مطابقة حروف الأساس (لا الفهرس وحده). مثال: 28:23 → **يسقون**.
+- غير **لا**: ⭐ سجاوندي باللون المناسب **+** رأس بلون خط المصحف على **نفس المضيف**.
+- **لا**: رأس أخضر فقط (`has-non-kufi-la`).
+- عارٍ (4): رأس بلون المصحف فقط.
+- المرجع الرسمي: `docs/non-kufi-ayah-head-marks.md` §3–4.
+
+### رؤوس غير الكوفيين العارية — لون خط المصحف (1.0.179 + توثيق 1.0.180)
+
+المواضع الأربعة بلا علامة وقف ملاصقة (`20:88` موسى، `29:67` يؤمنون، `37:9` دحورا، `47:4` منهم):
+- قيمة الخريطة `""` → نجمة بدون `mark-red/green/blue/brown`.
+- `color: inherit` على `.non-kufi-mark` → **لون خط المصحف** في الوضعين:
+  - نهاري: `#2B2013` (`--ink`)
+  - ليلي: `#F2F0EA` (`body.night .ayah-flow`)
+- الضغط المطوّل: `info-plain` بنفس حبر النص.
+- باقي الـ117 تبقى ملوّنة حسب درجة الوقف.
+- المرجع الرسمي: `docs/non-kufi-ayah-head-marks.md` §3.
 
 ### ألوان العرض — بنفسجي الخلاف + popup الليلي (1.0.178)
 
@@ -177,6 +196,44 @@
 ---
 
 ## Change Log
+
+### 1.0.191
+- Policy: Indopak (`textIndopak`) is the sole source of truth for stop-mark *types*; Madinah is display-only after word mapping.
+- Closed **27** high-confidence `WAQF_REVIEW` gaps via `DEFAULT_MARK_MANUAL_ADDITIONS` (JEEM 19, WAQF_LAZIM 6, TA_MUTLAQ 1, ZAY_JAWAZ 1). Medium/Low left in REVIEW.
+
+### 1.0.190
+- `DEFAULT_MARK_MANUAL_ADDITIONS['WAQF_LAZIM']`: first manual bridge from `WAQF_REVIEW` — add **4:171 word 43** (`وَلَدٞۘ`) so Madinah mode applies `has-default-waqf-lazim` red coloring (Indopak U+06D8 was extracted but alignment never produced a `WAQF_POSITIONS` word index).
+
+### 1.0.189
+- Soften default Sajawandi colored-word enlargement (`has-default-*`) further: **1.15em → 1.1em** (Madinah only). Native `.waqf-sign` and double-scale guard unchanged.
+
+### 1.0.188
+- Soften default Sajawandi colored-word enlargement (`has-default-*`) from 1.2em to **1.15em** (Madinah only). Native `.waqf-sign` sizing and double-scale guard unchanged.
+
+### 1.0.187
+- Dead-code cleanup: permanently removed the old general مد منفصل highlighting (`MAD_MUNFASIL_REGEX` / `YA_HA_MUNFASIL_REGEX` / `MAD_SILA_KUBRA_REGEX` and helpers). Ordinary مد منفصل text stays plain ink.
+- Semantic rename of remaining purple-khilaf identifiers so they no longer imply the removed feature: `--mad-munfasil` → `--khilaf-highlight`, `body.show-mad-munfasil` → `body.show-khilaf-highlight`, `applyMadMunfasilVisibility` → `applyKhilafHighlightVisibility`, `.mad-munfasil-color-name` → `.khilaf-highlight-color-name`. Curated قصر المنفصل khilaf tables unchanged in behaviour.
+
+### 1.0.186
+- Madinah-mushaf words colored by a default Sajawandi mark (ط/ص/م/ز/ق/قف/ج) but with no native embedded waqf glyph of their own now enlarge 1.2em, same degree as `.waqf-sign` (words carrying an original mushaf waqf mark) — طلب مباشر 2026-07-31. Guarded against double-scaling if the same word also contains a native `.waqf-sign`; the "إظهار علامات التذكير والوقف" toggle resets the enlargement too. `tests/color-coding-toggle-regression.js` extended with 3 new checks.
+
+### 1.0.185
+- Default Sajawandi stop marks (ط/ص/م/ز/ق/قف/ج): reverted to coloring the word's own text with the mark's color, removing the star entirely (طلب مباشر 2026-07-31 — direct reversal of the 1.0.148 star design). `.non-kufi-mark` decoupled from parent-word color so it keeps mushaf ink regardless (1.0.179 decision unchanged). "إظهار علامات التذكير والوقف" toggle now resets word-text color instead of hiding a star. `tests/color-coding-toggle-regression.js` and `tests/default-waqf-mutlaq-marks-regression.js` updated to assert the new word-coloring design instead of the old star design (21 checks rewritten).
+
+### 1.0.184
+- Fix: long-press info popup for a رأس آية لغير الكوفيين now matches the color of the Sajawandi mark on the same word (was falling back to plain mushaf ink when the paired mark lives on `.waqf-mark` rather than `.non-kufi-mark` itself). New regression test: `tests/non-kufi-info-popup-color-regression.js`.
+
+### 1.0.183
+- Formal documentation of non-Kufi host-word Sajawandi rules in `docs/non-kufi-ayah-head-marks.md` §3–4 (host = base match; star on same word; لا exception). PROJECT_STATUS + heads header aligned.
+
+### 1.0.182
+- Fix: Sajawandi star on **host word** (base-letter match, e.g. يسقون 28:23), not previous index. لا = green head only. Bare = mushaf ink.
+
+### 1.0.180
+- Document non-Kufi bare heads: star uses mushaf text ink in day (`--ink` #2B2013) and night (`#F2F0EA`) via `color: inherit` — `docs/non-kufi-ayah-head-marks.md` §3, style/heads comments.
+
+### 1.0.179
+- Non-Kufi bare heads (4, no adjacent waqf): uncolored star (`color: inherit`), map value `""`, long-press `info-plain`.
 
 ### 1.0.178
 - Darken قصر المنفصل khilaf purple ~12%: day `#5D1888`, night `#B581BE` (`--mad-munfasil` + guide «البنفسجي»).

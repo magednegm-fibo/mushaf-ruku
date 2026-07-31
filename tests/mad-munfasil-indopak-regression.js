@@ -159,12 +159,12 @@ for (const [key, idxs, cls] of UTHMANI_SANITY_CASES) {
 }
 
 // ---------------------------------------------------------------------
-// 4. Sanity: general مد منفصل (MAD_MUNFASIL_REGEX etc.) must remain
-//    Uthmani-only — this change must not touch that separate gate.
+// 4. Sanity: the permanently-removed general مد منفصل highlighting must
+//    not reappear (no "mad-munfasil" class on ordinary مد منفصل words).
 // ---------------------------------------------------------------------
-console.log('\nGeneral مد منفصل still excluded from Indopak (must remain untouched):');
+console.log('\nGeneral مد منفصل must not produce a mad-munfasil class:');
 {
-  const a = findAyah(21, 25); // وَمَآ أَرۡسَلۡنَا ... general مد منفصل case
+  const a = findAyah(21, 25); // وَمَآ أَرۡسَلۡنَا ... ordinary مد منفصل case
   const html = RM_indopak.renderAyahWords(a);
   const hasGeneralMunfasil = /class="mad-munfasil"/.test(html);
   check(

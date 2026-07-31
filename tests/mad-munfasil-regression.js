@@ -9,24 +9,16 @@
 // JSON-ish text, then renders each ayah through the same
 // renderAyahTextWithHighlight() pipeline the app uses.
 //
-// UPDATE (direct request): the blanket general مد منفصل coloring
-// (MAD_MUNFASIL_REGEX / YA_HA_MUNFASIL_REGEX / MAD_SILA_KUBRA_REGEX, plus
-// the conditional class on lam-alef-madda-glyph) used to mark EVERY
-// ordinary مد منفصل occurrence in the whole mushaf (thousands of words) --
-// not specifically the "مواضع اختلاف روضة الحفاظ" the toggle's own label
-// promises. That blanket marking was never active in مصحف النسخ (Indopak)
-// to begin with (script/rasm differences made it unsafe to extend there --
-// see cleanAyahText's comment). Per direct request, مصحف المدينة (Uthmani)
-// now matches مصحف النسخ: only the curated khilaf tables (see
-// mad-munfasil-indopak-regression.js, which already exercises those in
-// both scripts) plus كَلَّآ (a separate, always-مد-منفصل feature, untouched
-// by this change) stay colored -- the ordinary/general مد منفصل text
-// renders in plain ink at the normal size again, in BOTH script modes.
+// Guard suite: the old blanket general مد منفصل highlighting was
+// permanently removed. Only the curated khilaf tables (مواضع اختلاف
+// روضة الحفاظ — see mad-munfasil-indopak-regression.js) keep the purple
+// --khilaf-highlight colour. Ordinary مد منفصل text must render in plain
+// ink with no "mad-munfasil" class, in BOTH script modes.
 //
-// This suite now asserts the OPPOSITE of its original checks: that the
-// "mad-munfasil" class is never produced anymore, for every case
-// (يَـٰٓـَٔادَمُ, يَـٰٓأَيُّهَا, هَـٰٓؤُلَآءِ, and the plain general rule),
-// while كلّا's own (unrelated) glyph/class is confirmed still present.
+// This suite asserts that the "mad-munfasil" class is never produced for
+// ordinary cases (يَـٰٓـَٔادَمُ, يَـٰٓأَيُّهَا, هَـٰٓؤُلَآءِ, and plain
+// general مد منفصل), while كَلَّآ's glyph-position span
+// (kalla-madda-glyph) remains present for its rendering fix.
 'use strict';
 const fs = require('fs');
 const path = require('path');
@@ -150,7 +142,7 @@ console.log('\nكَلَّآ (kalla-madda-glyph) -- separate feature, must still 
 
 // ---------------------------------------------------------------------
 // 5. UPDATE (direct follow-up request): كَلَّآ's OWN coloring
-//    (body.show-mad-munfasil .kalla-madda-glyph { color: ... }) has also
+//    (body.show-khilaf-highlight .kalla-madda-glyph { color: ... }) has also
 //    been removed from style.css, in both script modes -- it wasn't one
 //    of the five curated khilaf tables, so it now stays plain ink too,
 //    same as the general مد منفصل text. This is a CSS-level check (no
@@ -159,9 +151,9 @@ console.log('\nكَلَّآ (kalla-madda-glyph) -- separate feature, must still 
 // ---------------------------------------------------------------------
 console.log('\nكَلَّآ coloring removed from style.css (CSS-level check):');
 const cssSrc = fs.readFileSync(path.join(rootDir, 'style.css'), 'utf8');
-const kallaColorRuleGone = !/body\.show-mad-munfasil\s+\.kalla-madda-glyph\s*\{[^}]*color/.test(cssSrc);
+const kallaColorRuleGone = !/body\.show-khilaf-highlight\s+\.kalla-madda-glyph\s*\{[^}]*color/.test(cssSrc);
 check(
-  'style.css -- .kalla-madda-glyph no longer has a color rule under body.show-mad-munfasil',
+  'style.css -- .kalla-madda-glyph no longer has a color rule under body.show-khilaf-highlight',
   kallaColorRuleGone,
   'style.css still appears to color .kalla-madda-glyph'
 );

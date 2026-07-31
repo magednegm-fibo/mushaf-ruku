@@ -72,13 +72,13 @@ check(
 
 
 check(
-  'applyWaqfVisibility no longer touches body.show-mad-munfasil (decoupled — purple stays on regardless)',
-  !/function applyWaqfVisibility[\s\S]{0,400}?show-mad-munfasil/.test(settingsSrc),
+  'applyWaqfVisibility no longer touches body.show-khilaf-highlight (decoupled — purple stays on regardless)',
+  !/function applyWaqfVisibility[\s\S]{0,400}?show-khilaf-highlight/.test(settingsSrc),
   ''
 );
 check(
-  'applyMadMunfasilVisibility always adds body.show-mad-munfasil unconditionally',
-  /function applyMadMunfasilVisibility\s*\(\)\s*\{\s*document\.body\.classList\.add\(['"]show-mad-munfasil['"]\)/.test(settingsSrc),
+  'applyKhilafHighlightVisibility always adds body.show-khilaf-highlight unconditionally',
+  /function applyKhilafHighlightVisibility\s*\(\)\s*\{\s*document\.body\.classList\.add\(['"]show-khilaf-highlight['"]\)/.test(settingsSrc),
   ''
 );
 
@@ -91,9 +91,8 @@ check(
   ''
 );
 check(
-  'hide-waqf-marks hides has-default-waqf stars',
-  /body\.hide-waqf-marks[\s\S]{0,400}?\.has-default-waqf[\s\S]{0,80}?display\s*:\s*none\s*!important/.test(styleSrc)
-  || /body\.hide-waqf-marks[\s\S]{0,500}?\.has-default-waqf\s+\.waqf-mark/.test(styleSrc),
+  'hide-waqf-marks resets has-default-waqf word-text color to ink (no more star to hide — طلب مباشر 2026-07-31)',
+  /body\.hide-waqf-marks[\s\S]{0,900}?\.has-default-waqf:not\(\.has-waqf\)[\s\S]{0,700}?color\s*:\s*inherit\s*!important/.test(styleSrc),
   ''
 );
 check(
@@ -102,9 +101,9 @@ check(
   ''
 );
 check(
-  'hide-waqf-marks no longer neutralizes --mad-munfasil (purple قصر المنفصل stays colored regardless of the toggle)',
-  !/html\s+body\.hide-waqf-marks\s*\{\s*--mad-munfasil\s*:\s*inherit/.test(styleSrc)
-    && !/body\.hide-waqf-marks\.show-mad-munfasil/.test(styleSrc),
+  'hide-waqf-marks no longer neutralizes --khilaf-highlight (purple قصر المنفصل stays colored regardless of the toggle)',
+  !/html\s+body\.hide-waqf-marks\s*\{\s*--khilaf-highlight\s*:\s*inherit/.test(styleSrc)
+    && !/body\.hide-waqf-marks\.show-khilaf-highlight/.test(styleSrc),
   ''
 );
 check(
@@ -113,8 +112,24 @@ check(
   ''
 );
 check(
-  'default Sajawandi stars still defined (on when toggle is on)',
-  /\.quran-word\.has-default-waqf:not\(\.has-waqf\)\s*\.waqf-mark[\s\S]{0,120}?color\s*:\s*#1565C0/i.test(styleSrc),
+  'default Sajawandi marks color the word TEXT, not a star (طلب مباشر 2026-07-31 — رجوع لتلوين الكلمة، إلغاء النجمة)',
+  /\.quran-word\.has-default-waqf:not\(\.has-waqf\)\s*,[\s\S]{0,120}?\{\s*color\s*:\s*#1565C0/i.test(styleSrc)
+    && /\.quran-word\.has-default-waqf:not\(\.has-waqf\)\s*\.waqf-mark[\s\S]{0,400}?display\s*:\s*none\s*!important/i.test(styleSrc),
+  ''
+);
+check(
+  'Madinah-mushaf default-Sajawandi-colored words enlarge 1.2em (has-default-* now matches native .waqf-sign exactly)',
+  /body\.uthmani-font\s+\.quran-word\.has-default-waqf:not\(\.has-waqf\)\s*,[\s\S]{0,600}?\{\s*font-size\s*:\s*1\.2em/.test(styleSrc),
+  ''
+);
+check(
+  'nested native .waqf-sign inside an already-enlarged default-marked word is reset to 1em (no double-scaling)',
+  /body\.uthmani-font\s+\.quran-word\.has-default-waqf:not\(\.has-waqf\)\s*\.waqf-sign[\s\S]{0,600}?\{\s*font-size\s*:\s*1em/.test(styleSrc),
+  ''
+);
+check(
+  'hide-waqf-marks also resets the has-default-* word enlargement back to normal size',
+  /body\.hide-waqf-marks\.uthmani-font\s+\.quran-word\.has-default-waqf:not\(\.has-waqf\)\s*,[\s\S]{0,600}?\{\s*font-size\s*:\s*1em/.test(styleSrc),
   ''
 );
 

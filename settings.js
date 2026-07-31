@@ -71,7 +71,7 @@
     // alignment, with 2:245/30:54 excluded there specifically). Still
     // refreshed here on every script-mode switch so the toggle's
     // checked state re-syncs immediately either way.
-    applyMadMunfasilVisibility();
+    applyKhilafHighlightVisibility();
     // Reading progress (percentage / reached count) is shared between
     // both script modes, but re-rendered here anyway since the settings
     // panel/home screen may currently be visible.
@@ -101,11 +101,12 @@
     return state.fontStyle === 'uthmani' ? 'showWaqfMarksUthmani' : 'showWaqfMarksIndopak';
   }
   // "إظهار علامات التذكير" — يخفي/يظهر معًا:
-  //   • علامات التذكير الشخصية
-  //   • نجوم الوقف السجاوندي الافتراضية
+  //   • علامات التذكير الشخصية (نجمة فوق الكلمة)
+  //   • تلوين نص الكلمات لعلامات الوقف السجاوندي الافتراضية (طلب مباشر
+  //     2026-07-31 — لم تعد نجمة، بل تلوين مباشر لنص الكلمة نفسها)
   // (عبر body.hide-waqf-marks في style.css). لا علاقة له باللون
   // البنفسجي لمواضع خلاف قصر المنفصل — ذاك مربوط بمفتاحه المستقل في
-  // applyMadMunfasilVisibility أدناه (طلب صريح: يبقى ملونًا دائمًا).
+  // applyKhilafHighlightVisibility أدناه (طلب صريح: يبقى ملونًا دائمًا).
   function applyWaqfVisibility(){
     var show = state[currentWaqfVisibilityKey()] !== false;
     document.body.classList.toggle('hide-waqf-marks', !show);
@@ -118,8 +119,8 @@
   // علاقة لها بمفتاح "إظهار علامات التذكير" أو أي إعداد آخر (طلب صريح
   // 2026-07-30: يجب أن تبقى ملونة دائمًا).
   // -----------------------------------------------------------------
-  function applyMadMunfasilVisibility(){
-    document.body.classList.add('show-mad-munfasil');
+  function applyKhilafHighlightVisibility(){
+    document.body.classList.add('show-khilaf-highlight');
   }
 
   // -----------------------------------------------------------------
@@ -258,7 +259,7 @@
     applyFontStyle();
     applyNight();
     applyWaqfVisibility();
-    applyMadMunfasilVisibility();
+    applyKhilafHighlightVisibility();
     if(els.pinchZoomToggle) els.pinchZoomToggle.checked = state.pinchZoomEnabled !== false;
     if(els.wakeLockToggle){
       els.wakeLockToggle.checked = !!state.keepScreenAwake && WAKE_LOCK_SUPPORTED;

@@ -70,7 +70,7 @@
      الصفحة. غُيِّر إلى "عنبري داكن" (#C67C00) — لون مختلف تمامًا عن أي
      لون تستخدمه علامات التذكير الثلاثة (أحمر/أخضر/أزرق).
      UPDATE 3 (طلب مباشر: توحيد اللون بين الوضعين): كان الوضع الليلي
-     يستخدم قيمة أفتح (--mad-munfasil override في قسم body.night أسفل
+     يستخدم قيمة أفتح (--khilaf-highlight override في قسم body.night أسفل
      هذا الملف) لضمان الوضوح على الخلفية الداكنة، بينما النهاري ظل على
      #C67C00. طُلب توحيدهما، فأصبح النهاري نفس القيمة المغمَّقة التي
      كانت مخصصة لليلي (#D98527) — كلا الوضعين بنفس اللون بالضبط.
@@ -95,7 +95,7 @@
      (106, 27, 154) × 0.88 ≈ (93, 24, 135) = #5D1888 نهاريًا؛ والليلي
      #CE93D8 (206, 147, 216) × 0.88 ≈ (181, 129, 190) = #B581BE — انظر
      override في body.night أسفل هذا الملف. */
-  --mad-munfasil: #5D1888;
+  --khilaf-highlight: #5D1888;
   --gold-pale: #E8C874;
   --shadow: 0 18px 40px -18px rgba(14, 51, 42, .45);
   --radius: 18px;
@@ -459,23 +459,15 @@ body.uthmani-font .waqf-sign{
   pointer-events: none;
   user-select: none;
   -webkit-user-select: none;
-  /* كَلَّآ دائمًا مد منفصل (الكلمة تنتهي عند الألف مباشرة). بلا لون/وزن
-     خاص هنا افتراضيًا — يرث لون الحبر العادي من .ayah-flow المحيطة،
-     فيبقى شكل الحرف سليمًا حتى لو كان إعداد "إظهار مواضع قصر المنفصل"
-     متوقفًا. التلوين الفعلي مُطبَّق فقط عبر body.show-mad-munfasil
-     أسفل هذا الملف (انظر التعليق هناك) — انظر MAD_MUNFASIL_REGEX في
-     readerManager.js لتفاصيل باقي حالات المد المنفصل في المصحف. */
+  /* Glyph-position fix only (maddah over لام vs alif tail).
+     Inherits plain ayah-flow ink — no colour class applied. */
 }
 
 /* عام: لام+ألف+مدة (لا/لّا + ٓ) — نفس علة "كلا" أعلاه (المدة تظهر فوق
    اللام بدل الألف)، لكن بلا حصر بحرف سابق معيّن — انظر الشرح الكامل
-   فوق LAM_ALEF_MADDA_REGEX في readerManager.js. بخلاف كَلَّآ، هذه
-   الكلمات ليست كلها مد منفصل بالضرورة (بعضها مد متصل مثل هَـٰٓؤُلَآءِ)،
-   فاللون هنا غير ثابت — يُضاف فقط عبر فئة .mad-munfasil المنفصلة متى
-   كانت الحالة مد منفصل فعلًا (يقرّرها JS، ليس هنا). بلا لون افتراضي هنا
-   حتى تبقى حالات المد المتصل بلون الحبر العادي كأي كلمة أخرى.
-   نفس قيم الموضع المضبوطة لـ"كلّآ" (تقدير أولي فقط — "كلا" ربطة خط
-   مختلفة فعليًا عن "لا" العادية، فقد تحتاج ضبطًا منفصلًا لاحقًا). */
+   فوق LAM_ALEF_MADDA_REGEX في readerManager.js. Glyph-position fix only;
+   no colour class is applied. Same position values as كَلَّآ (starting
+   estimate — kla5 vs la001/la002 may still need a separate nudge). */
 .lam-alef-madda-cluster{
   position: relative;
   display: inline-block;
@@ -493,98 +485,57 @@ body.uthmani-font .waqf-sign{
   -webkit-user-select: none;
 }
 
-/* المد المنفصل (mad munfasil) — انظر الشرح الكامل فوق MAD_MUNFASIL_REGEX
-   في readerManager.js. تلوين + محاولة وزن خط أخف من bold(700)، بلا أي
-   تغيير في الحجم أو الموضع أو العرض، وبلا توسيع نطاق الحروف الملوَّنة —
-   الحرف والعلامة يبقيان داخل نفس العنصر تمامًا كما كانا، فلا يتأثر ربط
-   الخط (GPOS) بينهما.
-   UPDATE (طلب صريح لحل محافظ بعد أن bold(700) غيّر الطابع البصري
-   للمصحف): فُحص ملف الخط (UthmanicHafs.woff2) مباشرة بـfontTools قبل
-   هذا التغيير — usWeightClass=400، وليس خطًا متغيّرًا (fvar)، أي لا
-   يحمل أي وزن حقيقي غير Regular. فأي font-weight غير 400 هنا سيُحاكى
-   (synthetic) من المتصفح، لا رسمة حقيقية من الخط. جُرِّب 600 أولًا؛
-   هذه تجربة 500 كما طُلب صراحة — إن لم يُحدث فرقًا بصريًا حقيقيًا
-   فالخطوة التالية هي الحذف الكامل لـfont-weight هنا — بلا اللجوء
-   لـ700 إطلاقًا. */
-.mad-munfasil{
-  /* بلا لون/وزن هنا افتراضيًا — انظر التعليق فوق body.show-mad-munfasil
-     أسفل هذا الملف لسبب هذا التغيير ولمكان التلوين الفعلي. */
-}
-
 /* السكتات الأربع الواجبة عند حفص — انظر SAKTA_HIGHLIGHT_WORDS في
    readerManager.js لتفاصيل المواضع الأربعة وأرقام فهرسة كلماتها. نفس
-   المتغيّر ونفس الوزن المستخدَمين في .mad-munfasil أعلاه بالضبط (طلب
-   صريح من المستخدم)، وليست نسخة بلون منفصل، حتى تتبع أي تغيير مستقبلي
-   في --mad-munfasil تلقائيًا. */
+   المتغيّر --khilaf-highlight ونفس الوزن (طلب صريح من المستخدم)، وليست
+   نسخة بلون منفصل، حتى تتبع أي تغيير مستقبلي في --khilaf-highlight تلقائيًا. */
 .sakta-word{
-  /* بلا لون/وزن هنا افتراضيًا — انظر التعليق فوق body.show-mad-munfasil
+  /* بلا لون/وزن هنا افتراضيًا — انظر التعليق فوق body.show-khilaf-highlight
      أسفل هذا الملف. */
 }
 
 /* فواتح السور المطلوب تلوينها — انظر MUQATTAAT_MAD_WORDS في
-   readerManager.js. نفس المتغيّر ونفس الوزن المستخدَمين في
-   .mad-munfasil/.sakta-word أعلاه بالضبط (طلب صريح من المستخدم). */
+   readerManager.js. نفس المتغيّر --khilaf-highlight ونفس الوزن (طلب صريح من المستخدم). */
 .muqattaat-mad-word{
-  /* بلا لون/وزن هنا افتراضيًا — انظر التعليق فوق body.show-mad-munfasil
+  /* بلا لون/وزن هنا افتراضيًا — انظر التعليق فوق body.show-khilaf-highlight
      أسفل هذا الملف. */
 }
 
 /* كلمات السين المرسومة صادًا — انظر SEEN_AS_SAD_WORDS في
-   readerManager.js. نفس المتغيّر ونفس الوزن المستخدَمين في
-   .mad-munfasil أعلاه بالضبط (طلب صريح من المستخدم). */
+   readerManager.js. نفس المتغيّر --khilaf-highlight ونفس الوزن (طلب صريح من المستخدم). */
 .seen-as-sad-word{
-  /* بلا لون/وزن هنا افتراضيًا — انظر التعليق فوق body.show-mad-munfasil
+  /* بلا لون/وزن هنا افتراضيًا — انظر التعليق فوق body.show-khilaf-highlight
      أسفل هذا الملف. */
 }
 
 /* مد الفرق (ءالله / ءالآن / ءالذكرين) — انظر MAD_FARQ_WORDS في
-   readerManager.js. نفس المتغيّر ونفس الوزن المستخدَمين في
-   .mad-munfasil أعلاه بالضبط (طلب صريح من المستخدم). */
+   readerManager.js. نفس المتغيّر --khilaf-highlight ونفس الوزن (طلب صريح من المستخدم). */
 .mad-farq-word{
-  /* بلا لون/وزن هنا افتراضيًا — انظر التعليق فوق body.show-mad-munfasil
+  /* بلا لون/وزن هنا افتراضيًا — انظر التعليق فوق body.show-khilaf-highlight
      أسفل هذا الملف. */
 }
 
 /* دفعة كلمات متنوعة (إشمام، إدغام صغير عبر كلمتين، ياء إضافة محذوفة،
    ألف مبدلة من التنوين) — انظر TAJWEED_NOTE_WORDS في readerManager.js.
-   نفس المتغيّر ونفس الوزن المستخدَمين في .mad-munfasil أعلاه بالضبط
-   (طلب صريح من المستخدم). */
+   نفس المتغيّر --khilaf-highlight ونفس الوزن (طلب صريح من المستخدم). */
 .tajweed-note-word{
-  /* بلا لون/وزن هنا افتراضيًا — انظر التعليق فوق body.show-mad-munfasil
+  /* بلا لون/وزن هنا افتراضيًا — انظر التعليق فوق body.show-khilaf-highlight
      مباشرة أسفل هذا التعليق. */
 }
 
-/* مواضع اختلاف روضة الحفاظ (settings.js: applyMadMunfasilVisibility).
-   UPDATE (طلب صريح): حُذف مفتاح التشغيل/الإيقاف من الإعدادات نهائيًا —
-   هذا التلوين مفعّل الآن دائمًا بشكل افتراضي في كلا الخطين، بلا أي خيار
-   لإيقافه. فئة body.show-mad-munfasil تُضاف الآن دون شرط عند كل تحميل
-   (انظر applyMadMunfasilVisibility في settings.js)، وبقي شكل الـselector
-   نفسه هنا فقط لتفادي إعادة هيكلة غير ضرورية. الفئات الخمس أدناه
-   (الجداول الخمسة الموصوفة في الملاحظة العامة فوق SAKTA_HIGHLIGHT_WORDS
-   في readerManager.js) بلا لون/وزن خاص بها في تعريفها الأصلي أعلاه في
-   هذا الملف؛ هذا هو المكان الوحيد الذي يُطبَّق منه اللون والوزن فعليًا.
-   UPDATE (طلب صريح): صنف .mad-munfasil نفسه (المد المنفصل العام —
-   MAD_MUNFASIL_REGEX/YA_HA_MUNFASIL_REGEX/MAD_SILA_KUBRA_REGEX/
-   lam-alef-madda-glyph في readerManager.js) لم يعد يُضاف لأي عنصر إطلاقًا
-   بعد أن أُوقِف استدعاؤها هناك — كان يُلوِّن آلاف مواضع المد المنفصل
-   العادية في كل المصحف، لا مواضع الخلاف تحديدًا فقط، بخلاف مصحف النسخ
-   الذي لم يُفعِّل هذا التلوين الشامل أصلًا. فحُذف .mad-munfasil من
-   الـselector هنا وحُذفت قاعدتا تكبيره أدناه (كانتا موجودتين سابقًا)،
-   فيرجع نص المد المنفصل العادي للون وحجم الحبر الطبيعيين دائمًا، بصرف
-   النظر عن حالة هذا الإعداد — تمامًا كسلوك مصحف النسخ.
-   UPDATE 2 (طلب صريح): .kalla-madda-glyph (كَلَّآ) حُذفت من هنا كذلك، في
-   كِلا الخطّين. كَلَّآ دائمًا مد منفصل فعليًا، لكنها ليست من ضمن الجداول
-   الخمسة التي تمثّل تحديدًا مواضع الخلاف بين طريقَي الروضة/الشاطبية —
-   فتلوينها كان يندرج تحت نفس فئة "التلوين العام" التي أُزيلت أعلاه، لا
-   فئة "مواضع الخلاف" التي يقتصر عليها هذا الإعداد الآن. الـspan نفسه
-   (kalla-madda-glyph في readerManager.js) يبقى دون أي تغيير — وظيفته
-   الأصلية إصلاح موضع رسمة المدة (glyph)، لا علاقة له بالتلوين. */
-body.show-mad-munfasil .sakta-word,
-body.show-mad-munfasil .muqattaat-mad-word,
-body.show-mad-munfasil .seen-as-sad-word,
-body.show-mad-munfasil .mad-farq-word,
-body.show-mad-munfasil .tajweed-note-word{
-  color: var(--mad-munfasil);
+/* مواضع اختلاف روضة الحفاظ / قصر المنفصل (settings.js:
+   applyKhilafHighlightVisibility). التلوين مفعّل دائمًا في كلا الخطين —
+   لا يوجد مفتاح تشغيل/إيقاف في الإعدادات. فئة body.show-khilaf-highlight
+   تُضاف دون شرط عند كل تحميل؛ شكل الـselector بقي كما هو لتفادي إعادة
+   هيكلة غير ضرورية. الفئات الخمس أدناه (الجداول في readerManager.js فوق
+   SAKTA_HIGHLIGHT_WORDS) بلا لون/وزن في تعريفها الأصلي أعلاه؛ هذا هو
+   المكان الوحيد الذي يُطبَّق منه اللون والوزن فعليًا عبر --khilaf-highlight. */
+body.show-khilaf-highlight .sakta-word,
+body.show-khilaf-highlight .muqattaat-mad-word,
+body.show-khilaf-highlight .seen-as-sad-word,
+body.show-khilaf-highlight .mad-farq-word,
+body.show-khilaf-highlight .tajweed-note-word{
+  color: var(--khilaf-highlight);
   font-weight: 500;
 
 }
@@ -646,6 +597,15 @@ body.uthmani-font .waqf-mark{
   pointer-events: none;
   user-select: none;
   -webkit-user-select: none;
+  /* بلا mark-* = مواضع عارية أو رأس مشارك مضيفًا مع علامة سجاوندي
+     ملوّنة على نفس الكلمة (نص الكلمة الآن يُلوَّن بلون العلامة —
+     طلب مباشر): الرأس نفسه يبقى بلون خط المصحف دومًا، بصرف النظر عن
+     لون الكلمة المضيفة — قرار مستخدم 1.0.179 لم يتغيّر. لذلك لون
+     صريح لا inherit: نهاري --ink (#2B2013)، ليلي #F2F0EA أدناه. */
+  color: var(--ink);
+}
+body.night .non-kufi-mark:not(.mark-red):not(.mark-green):not(.mark-blue):not(.mark-brown){
+  color: #F2F0EA;
 }
 body.uthmani-font .non-kufi-mark{
   width: 0.45em;
@@ -670,86 +630,148 @@ body.night .non-kufi-mark.mark-blue{ color:#1E88E5; }
 body.night .non-kufi-mark.mark-brown{ color:#C9A06A; }
 /* إخفاء مع مفتاح "إظهار علامات التذكير والوقف" */
 body.hide-waqf-marks .non-kufi-mark{ display:none !important; }
-/* عند اجتماع رأس آية لغير الكوفيين مع علامة تذكير/سجاوندي:
-   نكتفي برأس الآية (تحمل نفس اللون) ونخفي نجمة الوقف لتفادي التكرار. */
-.quran-word.has-non-kufi-head .waqf-mark{
+/* رأس غير كوفي + «لا»: الرأس الأخضر يكفي → أخفِ نجمة الوقف على نفس الكلمة.
+   لغير «لا»: أظهر نجمة السجاوندي على **نفس الكلمة المضيفة** مع رأس بلا لون
+   (1.0.182 — تصحيح: المضيف مثل يسقون 28:23 وليس الفهرس السابق). */
+.quran-word.has-non-kufi-head.has-non-kufi-la .waqf-mark{
+  display: none !important;
+}
+.quran-word.has-non-kufi-head:not(.has-non-kufi-la):not(.has-default-waqf):not(.has-default-sad-rukhsa):not(.has-default-waqf-lazim):not(.has-default-zay-jawaz):not(.has-default-qad-qila):not(.has-default-qif):not(.has-default-jeem):not(.has-waqf) .waqf-mark{
+  /* عارٍ بلا سجاوندي ولا تذكير شخصي — لا نجمة وقف فارغة */
   display: none !important;
 }
 
-/* "إظهار علامات التذكير والوقف" — hides personal stars AND default
-   Sajawandi stars together (طلب مباشر 2026-07-30). */
-body.hide-waqf-marks .quran-word.has-waqf .waqf-mark,
-body.hide-waqf-marks .quran-word.has-default-waqf .waqf-mark,
-body.hide-waqf-marks .quran-word.has-default-sad-rukhsa .waqf-mark,
-body.hide-waqf-marks .quran-word.has-default-waqf-lazim .waqf-mark,
-body.hide-waqf-marks .quran-word.has-default-zay-jawaz .waqf-mark,
-body.hide-waqf-marks .quran-word.has-default-qad-qila .waqf-mark,
-body.hide-waqf-marks .quran-word.has-default-qif .waqf-mark,
-body.hide-waqf-marks .quran-word.has-default-jeem .waqf-mark{
+/* "إظهار علامات التذكير والوقف" — hides personal reminder stars.
+   Default Sajawandi marks no longer use a star at all (see block below —
+   طلب مباشر 2026-07-31: تلوين نص الكلمة بدل نجمة)، فلا داعي لإخفائها هنا. */
+body.hide-waqf-marks .quran-word.has-waqf .waqf-mark{
   display:none !important;
 }
 
 /* ------------------------------------------------------------------
-   Default Sajawandi stop marks — طلب مباشر 2026-07-30:
-   بدل تلوين نص الكلمة، تُعرض نجمة تذكير فوق الكلمة بنفس ألوان
-   .waqf-mark.mark-* (أزرق/أخضر/أحمر/بني). الكلاسات has-default-* تبقى
-   على الكلمة (للاختبارات والمنطق) لكن لا تُغيّر لون الحبر.
-   :not(.has-waqf) حتى لا تتعارض مع علامة تذكير شخصية على نفس الكلمة.
+   Default Sajawandi stop marks — طلب مباشر 2026-07-31:
+   عودة إلى تلوين نص الكلمة نفسها بلون العلامة، وإلغاء نجمة السجاوندي
+   نهائيًا لهذه الكلمات (كانت نجمة فوق الكلمة منذ 1.0.148 — الآن رجوع
+   للتلوين المباشر). الكلاسات has-default-* تبقى على الكلمة (تُستخدم
+   أيضًا في resolveDefaultMarkInfo لتلوين نافذة الضغط المطوّل، ولا علاقة
+   لها بالنجمة المُلغاة). :not(.has-waqf) حتى لا تتعارض مع علامة تذكير
+   شخصية على نفس الكلمة (التذكير الشخصي يبقى نجمة كما هو).
    ------------------------------------------------------------------ */
 
-/* ط + قف → أزرق (#1565C0 = .waqf-mark.mark-blue) */
 .quran-word.has-default-waqf:not(.has-waqf) .waqf-mark,
-.quran-word.has-default-qif:not(.has-waqf) .waqf-mark{
-  display:inline-block;
+.quran-word.has-default-sad-rukhsa:not(.has-waqf) .waqf-mark,
+.quran-word.has-default-waqf-lazim:not(.has-waqf) .waqf-mark,
+.quran-word.has-default-zay-jawaz:not(.has-waqf) .waqf-mark,
+.quran-word.has-default-qad-qila:not(.has-waqf) .waqf-mark,
+.quran-word.has-default-qif:not(.has-waqf) .waqf-mark,
+.quran-word.has-default-jeem:not(.has-waqf) .waqf-mark{
+  display:none !important;
+}
+
+/* ط + قف → أزرق (#1565C0 = .waqf-mark.mark-blue) */
+.quran-word.has-default-waqf:not(.has-waqf),
+.quran-word.has-default-qif:not(.has-waqf){
   color:#1565C0;
 }
 
 /* ص + ز + ق → أخضر (#2E7D32 = .waqf-mark.mark-green) */
-.quran-word.has-default-sad-rukhsa:not(.has-waqf) .waqf-mark,
-.quran-word.has-default-zay-jawaz:not(.has-waqf) .waqf-mark,
-.quran-word.has-default-qad-qila:not(.has-waqf) .waqf-mark{
-  display:inline-block;
+.quran-word.has-default-sad-rukhsa:not(.has-waqf),
+.quran-word.has-default-zay-jawaz:not(.has-waqf),
+.quran-word.has-default-qad-qila:not(.has-waqf){
   color:#2E7D32;
 }
 
 /* م → أحمر (#C62828 = .waqf-mark.mark-red) */
-.quran-word.has-default-waqf-lazim:not(.has-waqf) .waqf-mark{
-  display:inline-block;
+.quran-word.has-default-waqf-lazim:not(.has-waqf){
   color:#C62828;
 }
 
 /* ج → بني (#A9793B = .waqf-mark.mark-brown) */
-.quran-word.has-default-jeem:not(.has-waqf) .waqf-mark{
-  display:inline-block;
+.quran-word.has-default-jeem:not(.has-waqf){
   color:#A9793B;
 }
 
-/* الوضع الليلي: فتح ألوان علامات التذكير + السجاوندي شوية صغيرة
-   علشان تبان أوضح على الخلفية السودة (بدون ما تبهت في الوضع النهاري). */
-body.night .waqf-mark.mark-red,
-body.night .quran-word.has-default-waqf-lazim:not(.has-waqf) .waqf-mark{
+/* الوضع الليلي: فتح ألوان السجاوندي شوية صغيرة علشان تبان أوضح على
+   الخلفية السودة (بدون ما تبهت في الوضع النهاري). .waqf-mark.mark-*
+   هنا خاصة بنجمة التذكير الشخصي فقط (لم تعد تخص السجاوندي الافتراضي). */
+body.night .waqf-mark.mark-red{ color:#E53935; }
+body.night .quran-word.has-default-waqf-lazim:not(.has-waqf){
   color:#E53935;
 }
-body.night .waqf-mark.mark-green,
-body.night .quran-word.has-default-sad-rukhsa:not(.has-waqf) .waqf-mark,
-body.night .quran-word.has-default-zay-jawaz:not(.has-waqf) .waqf-mark,
-body.night .quran-word.has-default-qad-qila:not(.has-waqf) .waqf-mark{
+body.night .waqf-mark.mark-green{ color:#43A047; }
+body.night .quran-word.has-default-sad-rukhsa:not(.has-waqf),
+body.night .quran-word.has-default-zay-jawaz:not(.has-waqf),
+body.night .quran-word.has-default-qad-qila:not(.has-waqf){
   color:#43A047;
 }
-body.night .waqf-mark.mark-blue,
-body.night .quran-word.has-default-waqf:not(.has-waqf) .waqf-mark,
-body.night .quran-word.has-default-qif:not(.has-waqf) .waqf-mark{
+body.night .waqf-mark.mark-blue{ color:#1E88E5; }
+body.night .quran-word.has-default-waqf:not(.has-waqf),
+body.night .quran-word.has-default-qif:not(.has-waqf){
   color:#1E88E5;
 }
-body.night .waqf-mark.mark-brown,
-body.night .quran-word.has-default-jeem:not(.has-waqf) .waqf-mark{
+body.night .waqf-mark.mark-brown{ color:#C9A06A; }
+body.night .quran-word.has-default-jeem:not(.has-waqf){
   color:#C9A06A;
+}
+
+/* "إظهار علامات التذكير والوقف" مطفأ → رجوع لون نص السجاوندي
+   الافتراضي لحبر المصحف العادي (النجمة أساسًا محذوفة لهذه الكلمات،
+   فالتلوين هو كل ما يُطفأ هنا). الترتيب بعد قواعد الليل فوق حتى
+   يفوز رغم تساوي التخصيص. */
+body.hide-waqf-marks .quran-word.has-default-waqf:not(.has-waqf),
+body.hide-waqf-marks .quran-word.has-default-sad-rukhsa:not(.has-waqf),
+body.hide-waqf-marks .quran-word.has-default-waqf-lazim:not(.has-waqf),
+body.hide-waqf-marks .quran-word.has-default-zay-jawaz:not(.has-waqf),
+body.hide-waqf-marks .quran-word.has-default-qad-qila:not(.has-waqf),
+body.hide-waqf-marks .quran-word.has-default-qif:not(.has-waqf),
+body.hide-waqf-marks .quran-word.has-default-jeem:not(.has-waqf){
+  color: inherit !important;
+}
+
+/* طلب مباشر 2026-08-01: الكلمة المُلوَّنة بعلامة سجاوندي افتراضية في
+   مصحف المدينة تُكبَّر 1.2em — نفس قيمة تكبير علامة الوقف الأصلية
+   المدمجة (.waqf-sign أعلاه، body.uthmani-font .waqf-sign) بالضبط، بلا
+   أي فارق بينهما. (كانت 1.1em سابقًا؛ عاد الطلب المباشر لمطابقة حجم
+   وقف المدينة تمامًا). :not(.has-waqf) كالمعتاد — لا تتعارض مع علامة
+   تذكير شخصية. */
+body.uthmani-font .quran-word.has-default-waqf:not(.has-waqf),
+body.uthmani-font .quran-word.has-default-sad-rukhsa:not(.has-waqf),
+body.uthmani-font .quran-word.has-default-waqf-lazim:not(.has-waqf),
+body.uthmani-font .quran-word.has-default-zay-jawaz:not(.has-waqf),
+body.uthmani-font .quran-word.has-default-qad-qila:not(.has-waqf),
+body.uthmani-font .quran-word.has-default-qif:not(.has-waqf),
+body.uthmani-font .quran-word.has-default-jeem:not(.has-waqf){
+  font-size: 1.2em;
+}
+/* منع تكبير مضاعف: إن كانت نفس الكلمة تحمل أيضًا علامة وقف أصلية مدمجة
+   (.waqf-sign)، فالكلمة كلها كبرت 1.2em بالفعل أعلاه — فتعود .waqf-sign
+   هنا لحجم 1em نسبي، أي تساوي بقية حروف نفس الكلمة المكبَّرة، بلا تكبير
+   إضافي فوق تكبير الكلمة. */
+body.uthmani-font .quran-word.has-default-waqf:not(.has-waqf) .waqf-sign,
+body.uthmani-font .quran-word.has-default-sad-rukhsa:not(.has-waqf) .waqf-sign,
+body.uthmani-font .quran-word.has-default-waqf-lazim:not(.has-waqf) .waqf-sign,
+body.uthmani-font .quran-word.has-default-zay-jawaz:not(.has-waqf) .waqf-sign,
+body.uthmani-font .quran-word.has-default-qad-qila:not(.has-waqf) .waqf-sign,
+body.uthmani-font .quran-word.has-default-qif:not(.has-waqf) .waqf-sign,
+body.uthmani-font .quran-word.has-default-jeem:not(.has-waqf) .waqf-sign{
+  font-size: 1em;
+}
+/* "إظهار علامات التذكير والوقف" مطفأ → رجوع أيضًا للحجم العادي، ليس
+   فقط اللون — الكبر جزء من نفس التمييز البصري. */
+body.hide-waqf-marks.uthmani-font .quran-word.has-default-waqf:not(.has-waqf),
+body.hide-waqf-marks.uthmani-font .quran-word.has-default-sad-rukhsa:not(.has-waqf),
+body.hide-waqf-marks.uthmani-font .quran-word.has-default-waqf-lazim:not(.has-waqf),
+body.hide-waqf-marks.uthmani-font .quran-word.has-default-zay-jawaz:not(.has-waqf),
+body.hide-waqf-marks.uthmani-font .quran-word.has-default-qad-qila:not(.has-waqf),
+body.hide-waqf-marks.uthmani-font .quran-word.has-default-qif:not(.has-waqf),
+body.hide-waqf-marks.uthmani-font .quran-word.has-default-jeem:not(.has-waqf){
+  font-size: 1em;
 }
 
 /* مواضع خلاف قصر المنفصل (البنفسجي) لم تعد مرتبطة إطلاقًا بمفتاح
    "إظهار علامات التذكير" (body.hide-waqf-marks) — تبقى ملونة دائمًا
    بصرف النظر عن حالته (طلب صريح 2026-07-30). فحُذف حزام الأمان الذي
-   كان يُلغي اللون هنا سابقًا، وحُذف تصفير --mad-munfasil أيضًا. */
+   كان يُلغي اللون هنا سابقًا، وحُذف تصفير --khilaf-highlight أيضًا. */
 
 /* ---------- Long-press reminder-mark popups (add / pick color / delete) ---------- */
 .waqf-menu{
@@ -850,6 +872,11 @@ body.night .waqf-info-popup.info-blue .waqf-info-symbol,
 body.night .waqf-info-popup.info-blue .waqf-info-label{ color:#1E88E5; }
 body.night .waqf-info-popup.info-brown .waqf-info-symbol,
 body.night .waqf-info-popup.info-brown .waqf-info-label{ color:#C9A06A; }
+/* رأس غير كوفي بلا علامة وقف: popup بحبر النص (نهاري/ليلي) */
+.waqf-info-popup.info-plain .waqf-info-symbol,
+.waqf-info-popup.info-plain .waqf-info-label{ color: var(--ink); }
+body.night .waqf-info-popup.info-plain .waqf-info-symbol,
+body.night .waqf-info-popup.info-plain .waqf-info-label{ color:#F2F0EA; }
 
 .waqf-io-row{ display:flex; gap:10px; margin: 6px 0 18px; }
 .waqf-io-row .modal-btn{ flex:1; font-size:12.5px; padding:9px 6px; }
@@ -1336,7 +1363,7 @@ body.night .ayah-flow{ color:#F2F0EA; }
    بنفسجي فاتح #CE93D8.
    UPDATE 2 (طلب مباشر: تغميق ~12%، بين 10-15%): #CE93D8 (206, 147, 216)
    × 0.88 ≈ (181, 129, 190) = #B581BE. */
-body.night{ --mad-munfasil: #B581BE; }
+body.night{ --khilaf-highlight: #B581BE; }
 body.night .surah-cartouche, body.night .surah-cartouche b, body.night .surah-cartouche span{ color:#F2F2F2; }
 body.night .ayah-num{ color:#F2F2F2; }
 /* الدائرة حول علامة الركوع في الوضع الليلي — أخضر بطلب مباشر، نفس
@@ -2188,14 +2215,14 @@ body.night .qasr-munfasil-note-label{ color:#F2F2F2; }
 body.night .qasr-munfasil-note-text{ color:#9A9A9E; }
 
 /* كلمة «البنفسجي» فقط داخل صندوق تمييز مواضع الخلاف —
-   نفس درجة --mad-munfasil المستخدمة مع كلمات الخلاف في الصفحة
+   نفس درجة --khilaf-highlight المستخدمة مع كلمات الخلاف في الصفحة
    (#5D1888 نهاري / #B581BE ليلي). قيم صريحة ثابتة، غير مرتبطة بأي
    مفتاح إعداد. */
-.mad-munfasil-color-name{
+.khilaf-highlight-color-name{
   color: #5D1888;
   font-weight: 700;
 }
-body.night .mad-munfasil-color-name{ color: #B581BE; }
+body.night .khilaf-highlight-color-name{ color: #B581BE; }
 
 /* دليل ألوان علامات تذكير الوقف (نهاية تبويب علامات الوقف) —
    أسماء الألوان ملوّنة بنفس درجات .waqf-mark.mark-* المستخدمة

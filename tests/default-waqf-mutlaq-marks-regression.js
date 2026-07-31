@@ -236,17 +236,18 @@ check(
 // CSS-level check: the coloring rule exists and targets the right class,
 // and the old floating-glyph rule is fully gone.
 check(
-  'style.css shows a reminder star (not word color) for .has-default-waqf',
-  /\.quran-word\.has-default-waqf:not\(\.has-waqf\)\s*\.waqf-mark[\s\S]{0,200}?display\s*:\s*inline-block/.test(styleSrc),
+  'style.css colors the word TEXT (not a star) for .has-default-waqf',
+  /\.quran-word\.has-default-waqf:not\(\.has-waqf\)[\s\S]{0,150}?\{\s*color\s*:/.test(styleSrc)
+    && /\.quran-word\.has-default-waqf:not\(\.has-waqf\)\s*\.waqf-mark[\s\S]{0,400}?display\s*:\s*none\s*!important/.test(styleSrc),
   ''
 );
 check(
-  '.has-default-waqf star uses the exact same blue as .waqf-mark.mark-blue (#1565C0)',
-  /\.quran-word\.has-default-waqf:not\(\.has-waqf\)\s*\.waqf-mark[\s\S]{0,120}?color\s*:\s*#1565C0/i.test(styleSrc),
+  '.has-default-waqf word text uses the exact same blue as .waqf-mark.mark-blue (#1565C0)',
+  /\.quran-word\.has-default-waqf:not\(\.has-waqf\)[\s\S]{0,150}?\{\s*color\s*:\s*#1565C0/i.test(styleSrc),
   ''
 );
 check(
-  'style.css no longer colors the word text itself for .has-default-waqf',
+  'style.css no longer defines the old bare .quran-word.has-default-waqf{color:...} selector (superseded by the :not(.has-waqf) word-coloring rule above)',
   !/\.quran-word\.has-default-waqf\s*\{\s*color\s*:/.test(styleSrc),
   ''
 );
@@ -560,13 +561,14 @@ check(
 );
 
 check(
-  'style.css shows a reminder star for .has-default-sad-rukhsa',
-  /\.quran-word\.has-default-sad-rukhsa:not\(\.has-waqf\)\s*\.waqf-mark[\s\S]{0,200}?display\s*:\s*inline-block/.test(styleSrc),
+  'style.css colors the word TEXT (not a star) for .has-default-sad-rukhsa',
+  /\.quran-word\.has-default-sad-rukhsa:not\(\.has-waqf\)[\s\S]{0,150}?\{\s*color\s*:/.test(styleSrc)
+    && /\.quran-word\.has-default-sad-rukhsa:not\(\.has-waqf\)\s*\.waqf-mark[\s\S]{0,400}?display\s*:\s*none\s*!important/.test(styleSrc),
   ''
 );
 check(
-  '.has-default-sad-rukhsa star uses the exact same green as .waqf-mark.mark-green (#2E7D32)',
-  /\.quran-word\.has-default-sad-rukhsa:not\(\.has-waqf\)\s*\.waqf-mark[\s\S]{0,200}?color\s*:\s*#2E7D32/i.test(styleSrc),
+  '.has-default-sad-rukhsa word text uses the exact same green as .waqf-mark.mark-green (#2E7D32)',
+  /\.quran-word\.has-default-sad-rukhsa:not\(\.has-waqf\)[\s\S]{0,150}?\{\s*color\s*:\s*#2E7D32/i.test(styleSrc),
   ''
 );
 check(
@@ -575,7 +577,7 @@ check(
   ''
 );
 check(
-  'style.css no longer colors the word text itself for .has-default-sad-rukhsa',
+  'style.css no longer defines the old bare .quran-word.has-default-sad-rukhsa{color:...} selector (superseded by the :not(.has-waqf) word-coloring rule above)',
   !/\.quran-word\.has-default-sad-rukhsa\s*\{\s*color\s*:/.test(styleSrc),
   ''
 );
@@ -642,13 +644,14 @@ check(
 );
 
 check(
-  'style.css shows a reminder star for .has-default-waqf-lazim',
-  /\.quran-word\.has-default-waqf-lazim:not\(\.has-waqf\)\s*\.waqf-mark[\s\S]{0,200}?display\s*:\s*inline-block/.test(styleSrc),
+  'style.css colors the word TEXT (not a star) for .has-default-waqf-lazim',
+  /\.quran-word\.has-default-waqf-lazim:not\(\.has-waqf\)[\s\S]{0,150}?\{\s*color\s*:/.test(styleSrc)
+    && /\.quran-word\.has-default-waqf-lazim:not\(\.has-waqf\)\s*\.waqf-mark[\s\S]{0,400}?display\s*:\s*none\s*!important/.test(styleSrc),
   ''
 );
 check(
-  '.has-default-waqf-lazim star uses the exact same red as .waqf-mark.mark-red (#C62828)',
-  /\.quran-word\.has-default-waqf-lazim:not\(\.has-waqf\)\s*\.waqf-mark[\s\S]{0,80}?color\s*:\s*#C62828/i.test(styleSrc),
+  '.has-default-waqf-lazim word text uses the exact same red as .waqf-mark.mark-red (#C62828)',
+  /\.quran-word\.has-default-waqf-lazim:not\(\.has-waqf\)[\s\S]{0,150}?\{\s*color\s*:\s*#C62828/i.test(styleSrc),
   ''
 );
 
@@ -702,13 +705,14 @@ check(
 );
 
 check(
-  'style.css shows a reminder star for .has-default-zay-jawaz',
-  /\.quran-word\.has-default-zay-jawaz:not\(\.has-waqf\)\s*\.waqf-mark[\s\S]{0,200}?display\s*:\s*inline-block/.test(styleSrc),
+  'style.css colors the word TEXT (not a star) for .has-default-zay-jawaz',
+  /\.quran-word\.has-default-zay-jawaz:not\(\.has-waqf\)[\s\S]{0,150}?\{\s*color\s*:/.test(styleSrc)
+    && /\.quran-word\.has-default-zay-jawaz:not\(\.has-waqf\)\s*\.waqf-mark[\s\S]{0,400}?display\s*:\s*none\s*!important/.test(styleSrc),
   ''
 );
 check(
-  '.has-default-zay-jawaz star uses the exact same green as .waqf-mark.mark-green (#2E7D32)',
-  /\.quran-word\.has-default-zay-jawaz:not\(\.has-waqf\)\s*\.waqf-mark[\s\S]{0,200}?color\s*:\s*#2E7D32/i.test(styleSrc),
+  '.has-default-zay-jawaz word text uses the exact same green as .waqf-mark.mark-green (#2E7D32)',
+  /\.quran-word\.has-default-zay-jawaz:not\(\.has-waqf\)[\s\S]{0,150}?\{\s*color\s*:\s*#2E7D32/i.test(styleSrc),
   ''
 );
 
@@ -765,13 +769,14 @@ check(
 );
 
 check(
-  'style.css shows a reminder star for .has-default-qad-qila',
-  /\.quran-word\.has-default-qad-qila:not\(\.has-waqf\)\s*\.waqf-mark[\s\S]{0,200}?display\s*:\s*inline-block/.test(styleSrc),
+  'style.css colors the word TEXT (not a star) for .has-default-qad-qila',
+  /\.quran-word\.has-default-qad-qila:not\(\.has-waqf\)[\s\S]{0,150}?\{\s*color\s*:/.test(styleSrc)
+    && /\.quran-word\.has-default-qad-qila:not\(\.has-waqf\)\s*\.waqf-mark[\s\S]{0,400}?display\s*:\s*none\s*!important/.test(styleSrc),
   ''
 );
 check(
-  '.has-default-qad-qila star uses the exact same green as ص/ز (#2E7D32)',
-  /\.quran-word\.has-default-qad-qila:not\(\.has-waqf\)\s*\.waqf-mark[\s\S]{0,200}?color\s*:\s*#2E7D32/i.test(styleSrc),
+  '.has-default-qad-qila word text uses the exact same green as ص/ز (#2E7D32)',
+  /\.quran-word\.has-default-qad-qila:not\(\.has-waqf\)[\s\S]{0,150}?\{\s*color\s*:\s*#2E7D32/i.test(styleSrc),
   ''
 );
 
@@ -950,13 +955,14 @@ check(
 );
 
 check(
-  'style.css shows a reminder star for .has-default-qif',
-  /\.quran-word\.has-default-qif:not\(\.has-waqf\)\s*\.waqf-mark[\s\S]{0,200}?display\s*:\s*inline-block/.test(styleSrc),
+  'style.css colors the word TEXT (not a star) for .has-default-qif',
+  /\.quran-word\.has-default-qif:not\(\.has-waqf\)[\s\S]{0,150}?\{\s*color\s*:/.test(styleSrc)
+    && /\.quran-word\.has-default-qif:not\(\.has-waqf\)\s*\.waqf-mark[\s\S]{0,400}?display\s*:\s*none\s*!important/.test(styleSrc),
   ''
 );
 check(
-  '.has-default-qif star uses the exact same blue as .waqf-mark.mark-blue (#1565C0)',
-  /\.quran-word\.has-default-qif:not\(\.has-waqf\)\s*\.waqf-mark[\s\S]{0,120}?color\s*:\s*#1565C0/i.test(styleSrc),
+  '.has-default-qif word text uses the exact same blue as .waqf-mark.mark-blue (#1565C0)',
+  /\.quran-word\.has-default-qif:not\(\.has-waqf\)[\s\S]{0,150}?\{\s*color\s*:\s*#1565C0/i.test(styleSrc),
   ''
 );
 
@@ -1168,13 +1174,14 @@ check(
 );
 
 check(
-  'style.css shows a reminder star for .has-default-jeem',
-  /\.quran-word\.has-default-jeem:not\(\.has-waqf\)\s*\.waqf-mark[\s\S]{0,200}?display\s*:\s*inline-block/.test(styleSrc),
+  'style.css colors the word TEXT (not a star) for .has-default-jeem',
+  /\.quran-word\.has-default-jeem:not\(\.has-waqf\)[\s\S]{0,150}?\{\s*color\s*:/.test(styleSrc)
+    && /\.quran-word\.has-default-jeem:not\(\.has-waqf\)\s*\.waqf-mark[\s\S]{0,400}?display\s*:\s*none\s*!important/.test(styleSrc),
   ''
 );
 check(
-  '.has-default-jeem star uses brown matching .waqf-mark.mark-brown (#A9793B)',
-  /\.quran-word\.has-default-jeem:not\(\.has-waqf\)\s*\.waqf-mark[\s\S]{0,80}?color\s*:\s*#A9793B/i.test(styleSrc),
+  '.has-default-jeem word text uses brown matching .waqf-mark.mark-brown (#A9793B)',
+  /\.quran-word\.has-default-jeem:not\(\.has-waqf\)[\s\S]{0,150}?\{\s*color\s*:\s*#A9793B/i.test(styleSrc),
   ''
 );
 
@@ -1931,7 +1938,7 @@ console.log('\nدليل القارئ guide text (قصر المنفصل note box 
 
 check(
   'index.html qasr-munfasil-note-box text explicitly says باللون البنفسجي (direct user-provided wording)',
-  htmlSrc.indexOf('تم تلوين الكلمات التي يقع فيها الخلاف بين طريق الشاطبية وطريق روضة الحفاظ باللون <span class="mad-munfasil-color-name">البنفسجي</span>؛ لتسهيل التعرف عليها أثناء التلاوة.') !== -1,
+  htmlSrc.indexOf('تم تلوين الكلمات التي يقع فيها الخلاف بين طريق الشاطبية وطريق روضة الحفاظ باللون <span class="khilaf-highlight-color-name">البنفسجي</span>؛ لتسهيل التعرف عليها أثناء التلاوة.') !== -1,
   ''
 );
 
