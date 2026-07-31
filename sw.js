@@ -44,6 +44,7 @@ const DYNAMIC_ASSETS = [
   './gestures.js',
   './searchManager.js',
   './audioManager.js',
+  './mark-placement-engine.js',
   './readerManager.js',
   './ui.js',
   './dialogs.js',

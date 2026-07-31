@@ -87,6 +87,9 @@
       markSpan.classList.remove('mark-red', 'mark-green', 'mark-blue', 'mark-brown');
       if(mark) markSpan.classList.add('mark-' + (REMINDER_COLORS[mark.c] ? mark.c : 'red'));
     }
+    // Only this one word's star just changed visibility/color — no need
+    // to re-scan the whole page, just re-check this mark's placement.
+    if(window.MarkPlacementEngine) window.MarkPlacementEngine.resolveWord(wordEl);
   }
   function addWaqfMark(key, color){
     waqfMarks[key] = {c: REMINDER_COLORS[color] ? color : 'red', t: Date.now()};

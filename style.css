@@ -90,8 +90,12 @@
      mark-green): تغيّر إلى بنفسجي (Purple) #6A1B9A، بعد معاينة 4
      اقتراحات فعليًا على خلفية الصفحة الحقيقية (نهاري/ليلي) واختيار
      البنفسجي كأبعدها بصريًا عن الثلاثة. الوضع الليلي أصبح بنفسجي أفتح
-     (#CE93D8) — انظر override في body.night أسفل هذا الملف. */
-  --mad-munfasil: #6A1B9A;
+     (#CE93D8) — انظر override في body.night أسفل هذا الملف.
+     UPDATE 9 (طلب مباشر: تغميق ~12%، بين 10-15% المطلوبة): #6A1B9A
+     (106, 27, 154) × 0.88 ≈ (93, 24, 135) = #5D1888 نهاريًا؛ والليلي
+     #CE93D8 (206, 147, 216) × 0.88 ≈ (181, 129, 190) = #B581BE — انظر
+     override في body.night أسفل هذا الملف. */
+  --mad-munfasil: #5D1888;
   --gold-pale: #E8C874;
   --shadow: 0 18px 40px -18px rgba(14, 51, 42, .45);
   --radius: 18px;
@@ -596,7 +600,12 @@ body.show-mad-munfasil .tajweed-note-word{
   position:absolute;
   left:50%;
   top:0;
-  transform: translate(-50%, -48%);
+  /* --mark-dx/--mark-dy (طلب مباشر 2026-07-31 — Smart Placement Engine،
+     mark-placement-engine.js): إزاحة اختيارية إضافية بالبكسل تُطبَّق فقط
+     عند وجود تداخل فعلي مُقاس زمن التشغيل عبر getBoundingClientRect؛
+     0px افتراضيًا فلا تُغيّر شيئًا في الموضع الأصلي. لا علاقة لها
+     بـ waqf-positions.js ولا بأي إحداثيات ثابتة. */
+  transform: translate(calc(-50% + var(--mark-dx, 0px)), calc(-48% + var(--mark-dy, 0px)));
   font-size: 0.4em;
   line-height:1;
   color:#C62828; /* overridden per-mark by .mark-red/.mark-green/.mark-blue/.mark-brown */
@@ -608,8 +617,12 @@ body.show-mad-munfasil .tajweed-note-word{
    (مع بقائها فوق الكلمة — لا bottom-based). الحجم رُفع شوية صغيرة
    في المدينة فقط (طلب مباشر) مع الإبقاء على عدم الاصطدام برأس الكلمة. */
 body.uthmani-font .waqf-mark{
-  transform: translate(-50%, 12%);
-  font-size: 0.40em;
+  transform: translate(calc(-50% + var(--mark-dx, 0px)), calc(12% + var(--mark-dy, 0px)));
+  font-size: 0.44em; /* +10% (طلب مباشر 2026-07-31): كان 0.40em — يشمل
+                         علامات التذكير الشخصية وعلامات وقف السجاوندي
+                         الافتراضية معًا، لأنهما يشتركان في نفس span
+                         .waqf-mark بنفس هذه القاعدة. مصحف المدينة فقط
+                         (body.uthmani-font) — لم تُمس بقية الخطوط. */
 }
 .quran-word.has-waqf .waqf-mark{ display:inline-block; }
 .waqf-mark.mark-red{ color:#C62828; }
@@ -827,6 +840,16 @@ body.night .waqf-color-btn:active{ background: rgba(255,255,255,.08); }
 .waqf-info-popup.info-blue .waqf-info-label{ color:#1565C0; }
 .waqf-info-popup.info-brown .waqf-info-symbol,
 .waqf-info-popup.info-brown .waqf-info-label{ color:#A9793B; }
+/* الوضع الليلي: نفس درجات العلامات المفتوحة على الخلفية السودة
+   (مطابقة تامة لـ body.night .waqf-mark.mark-* أعلاه). */
+body.night .waqf-info-popup.info-red .waqf-info-symbol,
+body.night .waqf-info-popup.info-red .waqf-info-label{ color:#E53935; }
+body.night .waqf-info-popup.info-green .waqf-info-symbol,
+body.night .waqf-info-popup.info-green .waqf-info-label{ color:#43A047; }
+body.night .waqf-info-popup.info-blue .waqf-info-symbol,
+body.night .waqf-info-popup.info-blue .waqf-info-label{ color:#1E88E5; }
+body.night .waqf-info-popup.info-brown .waqf-info-symbol,
+body.night .waqf-info-popup.info-brown .waqf-info-label{ color:#C9A06A; }
 
 .waqf-io-row{ display:flex; gap:10px; margin: 6px 0 18px; }
 .waqf-io-row .modal-btn{ flex:1; font-size:12.5px; padding:9px 6px; }
@@ -1306,12 +1329,14 @@ body.night #app{ background: #000000; }
 body.night .page-frame{ background:#1c1c1e; border-color:rgba(255,255,255,.14); }
 body.night .ayah-flow{ color:#F2F0EA; }
 /* علامة المد المنفصل في الوضع الليلي — لون منفصل عن النهاري بطلب
-   مباشر: نسخة أفتح من نفس البنفسجي المستخدَم نهاريًا (Purple #6A1B9A،
+   مباشر: نسخة أفتح من نفس البنفسجي المستخدَم نهاريًا (Purple،
    المعرَّف في :root أعلى هذا الملف).
    UPDATE (طلب مباشر: الابتعاد عن الأحمر/الأزرق/الأخضر، بعد معاينة عدة
    اقتراحات على الصفحة الحقيقية): كان #DEB03B (Goldenrod)، تغيّر إلى
-   بنفسجي فاتح #CE93D8. */
-body.night{ --mad-munfasil: #CE93D8; }
+   بنفسجي فاتح #CE93D8.
+   UPDATE 2 (طلب مباشر: تغميق ~12%، بين 10-15%): #CE93D8 (206, 147, 216)
+   × 0.88 ≈ (181, 129, 190) = #B581BE. */
+body.night{ --mad-munfasil: #B581BE; }
 body.night .surah-cartouche, body.night .surah-cartouche b, body.night .surah-cartouche span{ color:#F2F2F2; }
 body.night .ayah-num{ color:#F2F2F2; }
 /* الدائرة حول علامة الركوع في الوضع الليلي — أخضر بطلب مباشر، نفس
@@ -2164,13 +2189,13 @@ body.night .qasr-munfasil-note-text{ color:#9A9A9E; }
 
 /* كلمة «البنفسجي» فقط داخل صندوق تمييز مواضع الخلاف —
    نفس درجة --mad-munfasil المستخدمة مع كلمات الخلاف في الصفحة
-   (#6A1B9A نهاري / #CE93D8 ليلي). قيم صريحة ثابتة، غير مرتبطة بأي
+   (#5D1888 نهاري / #B581BE ليلي). قيم صريحة ثابتة، غير مرتبطة بأي
    مفتاح إعداد. */
 .mad-munfasil-color-name{
-  color: #6A1B9A;
+  color: #5D1888;
   font-weight: 700;
 }
-body.night .mad-munfasil-color-name{ color: #CE93D8; }
+body.night .mad-munfasil-color-name{ color: #B581BE; }
 
 /* دليل ألوان علامات تذكير الوقف (نهاية تبويب علامات الوقف) —
    أسماء الألوان ملوّنة بنفس درجات .waqf-mark.mark-* المستخدمة

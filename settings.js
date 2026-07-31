@@ -26,6 +26,13 @@
     var size = state[currentFontSizeKey()];
     document.documentElement.style.setProperty('--ayah-size', size + 'px');
     els.fontSizeLabel.textContent = size;
+    // Star marks are sized in em relative to the word, so any font-size
+    // change (the +/- buttons, or every tick of a live pinch-zoom) can
+    // change what collides with what — re-check once layout settles.
+    // scheduleResolveAll() coalesces rapid repeated calls into at most
+    // one measurement pass per animation frame, so this stays cheap even
+    // while pinch-zoom fires it continuously.
+    if(window.MarkPlacementEngine && els.ayahFlow) window.MarkPlacementEngine.scheduleResolveAll(els.ayahFlow);
   }
 
   // -----------------------------------------------------------------

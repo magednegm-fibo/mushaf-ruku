@@ -294,6 +294,10 @@
         Home.updateProgressUI();
         saveState();
         ReaderTafsir.prefetchCurrentRuku();
+        // Smart Placement Engine: re-check every reminder/Sajawandi star
+        // on the freshly-rendered page for collisions once layout has
+        // actually settled (double-rAF, wrapped inside scheduleResolveAll).
+        if(window.MarkPlacementEngine) window.MarkPlacementEngine.scheduleResolveAll(els.ayahFlow);
       }
     });
   });

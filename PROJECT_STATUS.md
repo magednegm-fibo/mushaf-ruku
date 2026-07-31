@@ -1,7 +1,7 @@
 # Project Status
 
-**الإصدار الحالي:** 1.0.172  
-**آخر تحديث:** 2026-07-30
+**الإصدار الحالي:** 1.0.178  
+**آخر تحديث:** 2026-07-31
 
 هذا الملف يُحدَّث مع كل إصدار ويُضمَّن دائمًا داخل الـ ZIP.  
 الغرض: حالة واضحة في بداية أي Session جديدة — ما اكتمل، وما هو معلَّق، وما يُفترض ألا يُمس.
@@ -20,6 +20,50 @@
 ---
 
 ## Completed
+
+### ألوان العرض — بنفسجي الخلاف + popup الليلي (1.0.178)
+
+- تغميق بنفسجي مواضع خلاف قصر المنفصل ~12% (×0.88): نهاري `#6A1B9A` → `#5D1888`، ليلي `#CE93D8` → `#B581BE` (يشمل `--mad-munfasil` وكلمة «البنفسجي» في دليل القارئ).
+- نافذة شرح الضغط المطوّل على علامات وقف السجاوندي في الوضع الليلي: نفس درجات `body.night .waqf-mark.mark-*` (أحمر `#E53935`، أخضر `#43A047`، أزرق `#1E88E5`، بني `#C9A06A`) بدل ألوان النهار الأغمق.
+
+### Smart Placement Engine — بحث بالقرب البصري + Cache (1.0.177)
+
+استبدال منطق previous/next-sibling بفحص قرب بصري حقيقي: كل عنصر من
+`.quran-word .ayah-num .ruku-mark .sajdah-mark .waqf-sila-lift
+.waqf-sakta-lift .waqf-mark-lower .waqf-mark-lower-mutlaq
+.waqf-ruku-mark-noon-lift .non-kufi-mark .waqf-mark` يُفحص عبر
+`getBoundingClientRect()` إن وقع صندوقه داخل نصف قطر 50px حول الموضع
+الافتراضي للعلامة (بصرف النظر عن ترتيبه في الـDOM)، مع استبعاد الكلمة
+المضيفة نفسها دائمًا. أضيف Cache بالذاكرة مفتاحه `data-key` الكلمة،
+مع توقيع (حجم الخط + حجم خط العلامة + أبعاد الشاشة + الخط
+عثماني/إندوباك) — أي تغيير في التوقيع يُبطل الإدخال المخزَّن ويُعاد
+البحث الهندسي من جديد؛ غير ذلك يُطبَّق الإزاحة المخزَّنة مباشرة بلا
+إعادة بحث.
+
+### Smart Placement Engine لعلامات التذكير + السجاوندي (1.0.176)
+
+ملف جديد `mark-placement-engine.js`. لا يمس `waqf-positions.js` ولا أي
+إحداثيات ثابتة — يقيس الـDOM المرسوم فعليًا وقت التشغيل عبر
+`getBoundingClientRect()` ويفحص تقاطع مستطيلات (بهامش أمان 6px) مع:
+الكلمة المضيفة (حروف+تشكيل+سجاوندي أصلي، كلها داخل نفس span)، الكلمة
+السابقة/التالية، أرقام الآيات، وعلامة الركوع. إذا وُجد تداخل، يجرّب
+بالترتيب: +8px يمين، -8px يسار، -8px أعلى، +8px أسفل، ثم الأقطار
+الأربعة — أول موضع خالٍ من التداخل يُعتمد، بحد أقصى ~12px إزاحة. لا
+تغيير إطلاقًا إذا كان الموضع الافتراضي خاليًا من التداخل. الإزاحة تُطبَّق
+عبر متغيرات CSS مضافة (`--mark-dx`/`--mark-dy`) فوق الـtransform
+الموجود أصلًا في style.css، فيبقى الموضع الافتراضي كما هو (مفضَّل دائمًا)
+ولا حاجة لأي تعديل يدوي مستقبلي عند تغيير حجم الخط أو حجم العلامة.
+مُفعَّل من: `onAfterRender` (كل تغيير صفحة)، `applyFontSize` (أزرار
++/- والـpinch-zoom)، و`updateWordMarkUI` (إضافة/حذف علامة تذكير على
+كلمة واحدة)، بالإضافة لمستمع resize مُهدَّأ (debounced) لتغييرات
+الاتجاه/حجم الشاشة. مُضاف إلى قائمة الـprecache في `sw.js`.
+
+### تكبير علامات التذكير + السجاوندي (1.0.175)
+
+مصحف المدينة فقط (`body.uthmani-font .waqf-mark`): `font-size` من `0.40em`
+إلى `0.44em` (+10%، طلب مباشر). القاعدة واحدة لعلامات التذكير الشخصية
+وعلامات وقف السجاوندي الافتراضية معًا (نفس الـspan). بقية الخطوط
+(نسخ/إندوباك) لم تُمس.
 
 ### علامات الوقف الافتراضية (تلوين الكلمات)
 
@@ -105,16 +149,17 @@
 
 ## مرجع موثَّق — رأس الآية لعدّ غير الكوفيين
 
-**الملف الكامل:** [`docs/non-kufi-ayah-head-marks.md`](./docs/non-kufi-ayah-head-marks.md)
+**الملف الكامل:** [`docs/non-kufi-ayah-head-marks.md`](./docs/non-kufi-ayah-head-marks.md)  
+**الخرائط:** `non-kufi-heads.js` · **العرض:** مصحف المدينة فقط (منذ 1.0.170)
 
-- الرمز في `textIndopak`: **U+E021** (``) — رأس آية صغير في خط PDMS Saleem = موضع نهاية الآية عند غير الكوفيين.
-- **ليس** علامة ركوع، ولا يُلوَّن حاليًا ضمن `DEFAULT_MARK_TYPES`.
-- **الإجمالي:** 121 موضعًا في المصحف.
-- **مع لا:** 68 · **مع ط:** 27 · **مع ج:** 14 · **مركّبة/قف/ز/ص:** 8 · **بلا علامة ملاصقة:** 4 (`20:88` موسى، `29:67` يؤمنون، `37:9` دحورا، `47:4` منهم).
-- خريطة PUA المعتمدة: E01A→ز، E01B→ص، E01C→ق، E01E→قف.
-- أشهر مثال: الفاتحة 7 بعد «عليهم» الأولى = رأس غير كوفي + لا.
+- الرمز في `textIndopak`: **U+E021** — موضع نهاية الآية عند غير الكوفيين (ليس ركوعًا).
+- **الإجمالي:** 121 · **بدرجة وقف:** 117 · **بلا علامة ملاصقة:** 4 (`20:88` موسى، `29:67` يؤمنون، `37:9` دحورا، `47:4` منهم).
+- **اللون:** لا/ص/ز/ق → أخضر · ط/قف → أزرق · ج → بني · بلا علامة → أزرق.
+- **الضغط المطوّل:** `رأس آية لغير الكوفيين [ لا ]` إن وُجدت علامة؛ بدون أقواس إن لم توجد.
+- **النسخ (Indopak):** بدون تدخل — رمز PDMS الأصلي.
+- قواعد التنفيذ التفصيلية في القسم «قواعد التنفيذ المعتمدة» داخل ملف docs أعلاه.
 
-لا تُعدْ مسح المصحف من الصفر — ارجع للملف أعلاه.
+لا تُعدْ مسح المصحف من الصفر — ارجع للملف أعلاه + `non-kufi-heads.js`.
 
 ---
 
@@ -133,12 +178,24 @@
 
 ## Change Log
 
+### 1.0.178
+- Darken قصر المنفصل khilaf purple ~12%: day `#5D1888`, night `#B581BE` (`--mad-munfasil` + guide «البنفسجي»).
+- Night mode: long-press Sajawandi info popup text uses the same night mark colors as the stars (`#E53935` / `#43A047` / `#1E88E5` / `#C9A06A`).
+
+### 1.0.174
+- Documented non-Kufi display rules in `docs/non-kufi-ayah-head-marks.md` (نطاق المدينة فقط، ألوان، ضغط مطوّل، مواضع عارية، منع مسح الجيران).
+
+### 1.0.173
+- Full audit of 121 non-Kufi heads: fix host `2:10`→اليم+لا؛ `7:29`→ط؛ color↔symbol consistency 0 conflicts.
+
 ### 1.0.172
-- Non-Kufi ayah-head marks (U+E021): colored star overlay **Uthmani/Madinah only** (Indopak keeps native PDMS glyph).
-- Long-press label includes waqf degree from docs inventory: `رأس آية لغير الكوفيين [ لا ]` etc. (117 with symbol, 4 bare).
+- Non-Kufi long-press: symbol from `NON_KUFI_HEADS_SYM_*` only (no neighbor scan — fixed false `[ ص ]` on 37:9 دحورا).
+
+### 1.0.171
+- Non-Kufi ayah-head marks (U+E021): colored star **Uthmani/Madinah only** (Indopak keeps native PDMS glyph).
+- Long-press label: `رأس آية لغير الكوفيين [ لا ]` etc. (117 with symbol, 4 bare).
 - Hide default/personal waqf star when co-located with non-Kufi head.
-- Sajawandi/reminder mark size bump Uthmani only; legend text; night contrast; lazim meem popup shape.
-- `non-kufi-heads.js` added to SW DYNAMIC_ASSETS. Symbols aligned with `docs/non-kufi-ayah-head-marks.md`.
+- `non-kufi-heads.js` in SW `DYNAMIC_ASSETS`.
 
 ### 1.0.161
 - Long-press on a word carrying a colored default Sajawandi stop-mark (ط/ص/م/ز/ق/قف/ج) no longer opens the personal reminder-mark menu; it shows a small popup naming the waqf type instead (e.g. "ص وقف مرخص للضرورة"), colored to match the mark's own color (blue/green/red/brown), auto-dismissing after ~2.6s or on outside tap.
@@ -222,7 +279,7 @@
 
 ## Project Metrics
 
-**Current Version:** 1.0.172
+**Current Version:** 1.0.174
 
 **Regression Tests:**
 - Stop Marks: 263/263 PASS
