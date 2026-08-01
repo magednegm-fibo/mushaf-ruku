@@ -184,13 +184,13 @@ console.log('\n2:245 Indopak fallback (وَيَبۡصُۜطُ located by text, n
 {
   const a = findAyah(2, 245);
   const html = RM_indopak.renderAyahWords(a);
-  const hasSeenSadWord = /class="quran-word seen-as-sad-word"/.test(html);
+  const hasSeenSadWord = /class="quran-word seen-as-sad-word(?: khilaf-word)?"/.test(html);
   check(
-    '2:245 — exactly one .seen-as-sad-word span present in Indopak rendering',
-    (html.match(/class="quran-word seen-as-sad-word"/g) || []).length === 1,
+    '2:245 — exactly one .seen-as-sad-word span present in Indopak rendering (class may also carry khilaf-word, since 2:245 is one of the two documented purple/Sajawandi-overlap positions)',
+    (html.match(/class="quran-word seen-as-sad-word(?: khilaf-word)?"/g) || []).length === 1,
     'rendered HTML: ' + html
   );
-  const coloredSpanMatch = html.match(/<span class="quran-word seen-as-sad-word" data-key="2:245:(\d+)">([\s\S]*?)<span class="waqf-mark"/);
+  const coloredSpanMatch = html.match(/<span class="quran-word seen-as-sad-word(?: khilaf-word)?" data-key="2:245:(\d+)">([\s\S]*?)<span class="waqf-mark"/);
   check(
     '2:245 — the colored span\'s own text is وَيَبۡصُۜطُ (not some other word)',
     !!coloredSpanMatch && coloredSpanMatch[2].indexOf('\u0628\u06E1') !== -1 && coloredSpanMatch[2].indexOf('\u0637') !== -1, // بۡ...ط survives inside the span regardless of nested waqf-sign tags

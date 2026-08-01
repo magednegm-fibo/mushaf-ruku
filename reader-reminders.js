@@ -79,6 +79,41 @@
     if(waqfSym) label += '  [ ' + waqfSym + ' ]';
     return {symbol: '۝', label: label, color: color};
   }
+  // Long-press على كلمة بنفسجية (khilaf-word — موضع خلاف بين طريق
+  // الشاطبية وطريق روضة الحفاظ، راجع docs/khilaf-munfasil-words.md):
+  // طلب مباشر 2026-08-01. نفس منطق resolveNonKufiMarkInfo أعلاه بالضبط
+  // في طريقة تركيب النص — إن كانت نفس الكلمة تحمل أيضًا علامة سجاوندي
+  // افتراضية (مرقدنا 36:52 → وقف لازم، ويبصط 2:245 → وقف مرخص)، يُضاف
+  // رمز تلك العلامة بين قوسين لنفس التسمية.
+  // UPDATE (طلب مباشر لاحق 2026-08-01): الرمز نفسه بين القوسين يأخذ لون
+  // علامته الخاصة (الميم أحمر، الصاد أخضر، وهكذا) — عكس القرار الأول
+  // الذي كان يُبقي كل شيء بنفسجيًا بلا استثناء. بقية النص ("خلاف مع
+  // روضة الحفاظ") يبقى بنفسجيًا دائمًا (info-khilaf على .waqf-info-label
+  // نفسها) — التلوين هنا جزئي فقط على [ الرمز ] معًا (القوسان داخل نفس
+  // الـspan الملوَّن، وليسا نصًّا بنفسجيًا خارجه — طلب مباشر لاحق آخر)،
+  // لا على كامل النافذة، ولذلك يُبنى كـHTML (span مضمَّن بلون خاص) بدل
+  // نص عادي؛ راجع .khilaf-inline-symbol-* في style.css. لا رمز كبير أعلى
+  // النافذة إطلاقًا (طلب مباشر سابق) — symbol فارغ عمدًا، يُخفى بصريًا في
+  // openInfoPopup بدل حذف العنصر من الـDOM.
+  function resolveKhilafMarkInfo(wordEl){
+    if(!wordEl.classList.contains('khilaf-word')) return null;
+    var label = 'خلاف مع روضة الحفاظ';
+    var defaultInfoSameWord = resolveDefaultMarkInfo(wordEl);
+    if(defaultInfoSameWord){
+      // U+00A0 (مسافة غير قابلة للكسر) بدل مسافة عادية: تقرير جهاز حقيقي
+      // مباشر (v1.0.230) أن إصلاح margin-inline-start وحده (v1.0.229) لم
+      // يكفِ — المسافة ظلت غير ظاهرة رغم وجوده في الكود المُغلَّف فعليًا
+      // (تحقَّق حينها بالمقارنة المباشرة). المسافة العادية بين نص خام
+      // وعنصر HTML مضمَّن داخل حاوية inline-flex يمكن أن تُقلَّم عند حدود
+      // عنصر الـflex الضمني في بعض محركات العرض، بخلاف U+00A0 التي لا
+      // تخضع لقواعد كسر/تقليم المسافات إطلاقًا مهما كان موضعها — حل أكثر
+      // اعتمادية من الاتكال على هامش CSS وحده. margin-inline-start يبقى
+      // في style.css كطبقة أمان إضافية، لا كحل وحيد بعد الآن.
+      label += '\u00A0<span class="khilaf-inline-symbol khilaf-inline-symbol-' +
+        defaultInfoSameWord.color + '">[ ' + defaultInfoSameWord.symbol + ' ]</span>';
+    }
+    return {symbol: '', label: label, color: 'khilaf'};
+  }
 
   function loadWaqfMarks(){ return StorageManager.loadReminder(state.fontStyle); }
   function saveWaqfMarks(){ StorageManager.saveReminder(state.fontStyle, waqfMarks); }
@@ -228,7 +263,7 @@
       els.waqfDeleteMenu.classList.add('hidden');
       if(els.waqfInfoPopup){
         els.waqfInfoPopup.classList.add('hidden');
-        els.waqfInfoPopup.classList.remove('info-red', 'info-green', 'info-blue', 'info-brown', 'info-plain');
+        els.waqfInfoPopup.classList.remove('info-red', 'info-green', 'info-blue', 'info-brown', 'info-plain', 'info-khilaf');
       }
       if(infoPopupTimer){ clearTimeout(infoPopupTimer); infoPopupTimer = null; }
       pendingKey = null;
@@ -242,9 +277,10 @@
       els.waqfMenu.classList.add('hidden');
       els.waqfColorMenu.classList.add('hidden');
       els.waqfDeleteMenu.classList.add('hidden');
-      els.waqfInfoSymbol.textContent = info.symbol;
-      els.waqfInfoLabel.textContent = info.label;
-      els.waqfInfoPopup.classList.remove('info-red', 'info-green', 'info-blue', 'info-brown', 'info-plain');
+      els.waqfInfoSymbol.textContent = info.symbol || '';
+      els.waqfInfoSymbol.classList.toggle('is-empty', !info.symbol);
+      els.waqfInfoLabel.innerHTML = info.label;
+      els.waqfInfoPopup.classList.remove('info-red', 'info-green', 'info-blue', 'info-brown', 'info-plain', 'info-khilaf');
       els.waqfInfoPopup.classList.add('info-' + info.color);
       els.waqfInfoPopup.classList.remove('hidden');
       positionMenu(els.waqfInfoPopup, x, y);
@@ -284,6 +320,13 @@
         // long-pressed specifically to learn what the small star means.
         var nonKufiInfo = resolveNonKufiMarkInfo(wordEl);
         if(nonKufiInfo){ openInfoPopup(nonKufiInfo, x, y); return; }
+        // خلاف الروضة/الشاطبية (كلمة بنفسجية) يأتي بعد رأس غير الكوفيين
+        // مباشرة وقبل فحص العلامة الافتراضية — لأن مرقدنا (36:52) وويبصط
+        // (2:245) بنفسجيتان وتحملان أيضًا has-default-* في نفس الوقت؛
+        // يجب أن تظهرا بنافذة الخلاف (مع رمز العلامة بين قوسين) لا
+        // بالنافذة العادية للعلامة وحدها. راجع resolveKhilafMarkInfo.
+        var khilafInfo = resolveKhilafMarkInfo(wordEl);
+        if(khilafInfo){ openInfoPopup(khilafInfo, x, y); return; }
         var defaultInfo = resolveDefaultMarkInfo(wordEl);
         if(defaultInfo){ openInfoPopup(defaultInfo, x, y); return; }
         // Decide add vs. delete at fire time (not at press-start), so it
@@ -348,8 +391,9 @@
     importMarksFromFile: importMarksFromFile,
     // For UI's onModalForceClosed hook.
     REMINDER_COLORS: REMINDER_COLORS,
-    // Test-only hook (regression tests run under Node without a real
+    // Test-only hooks (regression tests run under Node without a real
     // DOM/long-press flow) — not used by the app itself.
-    _resolveNonKufiMarkInfo: resolveNonKufiMarkInfo
+    _resolveNonKufiMarkInfo: resolveNonKufiMarkInfo,
+    _resolveKhilafMarkInfo: resolveKhilafMarkInfo
   };
 })();

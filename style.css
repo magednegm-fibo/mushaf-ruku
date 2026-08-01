@@ -303,10 +303,17 @@ body.night .surah-cartouche .surah-divider::after{ background:#F2F2F2; }
   text-align-last: center;
   color: var(--ink);
   margin:0;
-  /* Let the font's own mark-to-base/mark-to-mark (mark/mkmk) tables position
-     combining Sajawandi waqf signs; without this some engines can drop
-     mkmk chaining when a word is wrapped in its own inline-block span. */
-  font-feature-settings: "mark" 1, "mkmk" 1, "ccmp" 1, "curs" 1;
+  /* No explicit font-feature-settings here (previously: "mark" 1, "mkmk" 1,
+     "ccmp" 1, "curs" 1) — removed while chasing broken Arabic letter
+     joining on iOS Safari/Chrome (WebKit). The confirmed root cause turned
+     out to be unrelated (see body.uthmani-font .waqf-sign below), but this
+     property stayed removed to match the exact build that was confirmed
+     fixed on a real iPhone. Mark/mkmk positioning for waqf marks currently
+     relies on the browser's default OpenType feature application instead
+     of this explicit list. If Sajawandi mark stacking ever needs this
+     re-added, test the specific value on a real iPhone before shipping —
+     an earlier attempt to add calt/liga/init/medi/fina here broke Arabic
+     joining on Android too. */
   font-kerning: normal;
   /* A long-press here is the gesture for adding/removing a personal waqf
      mark, not for the browser's native text selection. Without this, Chrome
@@ -357,18 +364,29 @@ body.indopak-font .ayah-flow{
      size mismatch above does. nowrap keeps them on one line always. */
   white-space: nowrap;
 }
-/* Uthmanic Hafs (مصحف المدينة) doesn't share the Indopak font's problem:
-   its classical waqf marks (U+06D6–06DB) never sit next to a zero-width
-   space in this dataset's "text" field (unlike textIndopak), and a direct
-   side-by-side test at 1em/1.1em/1.3em on the real font file showed the
-   mark staying correctly joined to its base letter at every size tried.
-   So the original enlargement (1.3em, previously confirmed correct for
-   this script mode) is restored here, scoped to Uthmani mode only.
-   NEEDS on-device confirmation, same as every other change in this file
-   — the Indopak case above looked fine in the same kind of test and
-   still turned out to break on a real phone. */
+/* CONFIRMED BUG (was wrong): the previous 1.2em enlargement here (and the
+   1.3em before that) was never actually confirmed on a real device — see
+   the superseded reasoning above. Real iPhone testing (Safari and Chrome,
+   both WebKit) showed broken/disconnected Arabic letters specifically in
+   words carrying a Uthmani waqf mark (ص، ج، قلى، صلى...), and nowhere
+   else. Root cause: wrapWaqfSigns() in readerManager.js bundles the LAST
+   base-letter cluster of a word together with its waqf mark inside this
+   same span (e.g. "رَي" + span["بَۛۚۖ"], not the mark alone) — so any
+   font-size difference between this span and the surrounding word text
+   makes WebKit treat it as a separate shaping run, breaking the cursive
+   join between the letter inside the span and the letters right before
+   it outside it. This is the same class of bug already documented above
+   for the Indopak/PDMS Saleem font (mark-to-base anchoring breaking on a
+   font-size mismatch) — it turned out to affect Uthmani letter joining
+   too, not just mark anchoring. Fix confirmed on a real iPhone across
+   multiple pages, with and without the reminder-marks toggle on, no
+   regressions observed. Do not reintroduce a font-size difference here
+   without testing on a real iPhone first — see
+   docs/ios-letter-joining-regression.md for the full manual test matrix
+   this fix (and any future change near .waqf-sign, font-feature-settings,
+   or the font files themselves) must be re-run against before release. */
 body.uthmani-font .waqf-sign{
-  font-size: 1.2em;
+  font-size: 1em;
 }
 
 /* CORRECTED (was wrong): there used to be a manual "م" replacement here
@@ -769,12 +787,15 @@ body.hide-waqf-marks .quran-word.has-default-jeem:not(.has-waqf):not(.khilaf-wor
   color: inherit !important;
 }
 
-/* طلب مباشر 2026-08-01: الكلمة المُلوَّنة بعلامة سجاوندي افتراضية في
-   مصحف المدينة تُكبَّر 1.2em — نفس قيمة تكبير علامة الوقف الأصلية
-   المدمجة (.waqf-sign أعلاه، body.uthmani-font .waqf-sign) بالضبط، بلا
-   أي فارق بينهما. (كانت 1.1em سابقًا؛ عاد الطلب المباشر لمطابقة حجم
-   وقف المدينة تمامًا). :not(.has-waqf) كالمعتاد — لا تتعارض مع علامة
-   تذكير شخصية. */
+/* طلب مباشر 2026-08-01 (مُحدَّث): الكلمة المُلوَّنة بعلامة سجاوندي
+   افتراضية في مصحف المدينة تُكبَّر 1.1em (كانت 1.2em، ثم أُعيدت إلى
+   1.1em بطلب مباشر لاحق). :not(.has-waqf) كالمعتاد — لا تتعارض مع
+   علامة تذكير شخصية.
+   ملاحظة: body.uthmani-font .waqf-sign نفسها 1em (وليست مكبَّرة) بعد
+   إصلاح تقطّع الحروف على iOS — راجع تعليقها. بما أن 1em هنا وحدة
+   نسبية، فإن أي .waqf-sign داخل كلمة مكبَّرة بهذه القاعدة يرث نفس
+   الـ1.1em المكبَّر تلقائيًا، فتبقى النتيجة متسقة — لذلك لا حاجة
+   لقاعدة فرعية صريحة تعيد .waqf-sign لـ1em هنا. */
 body.uthmani-font .quran-word.has-default-waqf:not(.has-waqf),
 body.uthmani-font .quran-word.has-default-sad-rukhsa:not(.has-waqf),
 body.uthmani-font .quran-word.has-default-waqf-lazim:not(.has-waqf),
@@ -782,20 +803,7 @@ body.uthmani-font .quran-word.has-default-zay-jawaz:not(.has-waqf),
 body.uthmani-font .quran-word.has-default-qad-qila:not(.has-waqf),
 body.uthmani-font .quran-word.has-default-qif:not(.has-waqf),
 body.uthmani-font .quran-word.has-default-jeem:not(.has-waqf){
-  font-size: 1.2em;
-}
-/* منع تكبير مضاعف: إن كانت نفس الكلمة تحمل أيضًا علامة وقف أصلية مدمجة
-   (.waqf-sign)، فالكلمة كلها كبرت 1.2em بالفعل أعلاه — فتعود .waqf-sign
-   هنا لحجم 1em نسبي، أي تساوي بقية حروف نفس الكلمة المكبَّرة، بلا تكبير
-   إضافي فوق تكبير الكلمة. */
-body.uthmani-font .quran-word.has-default-waqf:not(.has-waqf) .waqf-sign,
-body.uthmani-font .quran-word.has-default-sad-rukhsa:not(.has-waqf) .waqf-sign,
-body.uthmani-font .quran-word.has-default-waqf-lazim:not(.has-waqf) .waqf-sign,
-body.uthmani-font .quran-word.has-default-zay-jawaz:not(.has-waqf) .waqf-sign,
-body.uthmani-font .quran-word.has-default-qad-qila:not(.has-waqf) .waqf-sign,
-body.uthmani-font .quran-word.has-default-qif:not(.has-waqf) .waqf-sign,
-body.uthmani-font .quran-word.has-default-jeem:not(.has-waqf) .waqf-sign{
-  font-size: 1em;
+  font-size: 1.1em;
 }
 /* "إظهار علامات التذكير والوقف" مطفأ → رجوع أيضًا للحجم العادي، ليس
    فقط اللون — الكبر جزء من نفس التمييز البصري. */
@@ -974,6 +982,36 @@ body.night .waqf-info-popup.info-brown .waqf-info-label{ color:#C9A06A; }
 .waqf-info-popup.info-plain .waqf-info-label{ color: var(--ink); }
 body.night .waqf-info-popup.info-plain .waqf-info-symbol,
 body.night .waqf-info-popup.info-plain .waqf-info-label{ color:#F2F0EA; }
+
+/* موضع خلاف مع روضة الحفاظ (كلمة بنفسجية، طلب مباشر 2026-08-01): لون
+   مخصص لهذه النافذة، بنفس متغيّر --khilaf-highlight تمامًا (نهاري/ليلي)
+   حتى يطابق لون نص الكلمة نفسها في صفحة القراءة. لا رمز كبير هنا إطلاقًا
+   (طلب مباشر) — راجع .waqf-info-symbol.is-empty أدناه لإخفاء الفراغ
+   الناتج عن حذف الرمز بلا كسر تخطيط الـflex. */
+.waqf-info-popup.info-khilaf .waqf-info-symbol,
+.waqf-info-popup.info-khilaf .waqf-info-label{ color: var(--khilaf-highlight); }
+.waqf-info-symbol.is-empty{ display:none; }
+/* الرمز بين القوسين داخل نافذة "خلاف مع روضة الحفاظ" (مرقدنا/ويبصط)
+   يأخذ لون علامته الخاصة، لا البنفسجي المحيط به — طلب مباشر لاحق
+   2026-08-01. تلوين جزئي داخل .waqf-info-label نفسها، لا على كامل
+   النافذة (راجع resolveKhilafMarkInfo في reader-reminders.js). نفس
+   القيم اللونية المستخدمة لـ.waqf-mark.mark-*/.waqf-info-popup.info-*
+   أعلاه بالضبط، نهاري وليلي. */
+/* margin-inline-start (لا مسافة نصية عادية) لأن .waqf-info-label
+   display:inline-flex؛ نص "خلاف مع روضة الحفاظ" والـspan الملوَّن هنا
+   يصبحان عنصرَي flex منفصلين، فتُقلَّم أي مسافات نصية زائدة بينهما —
+   المسافة الفاصلة يجب أن تكون margin على العنصر نفسه، لا مسافة داخل
+   السلسلة النصية، وإلا اختفت بصريًا رغم وجودها في الكود. */
+.khilaf-inline-symbol{ font-weight:700; margin-inline-start:4px; }
+.waqf-info-popup.info-khilaf .waqf-info-label .khilaf-inline-symbol-red{ color:#C62828; }
+.waqf-info-popup.info-khilaf .waqf-info-label .khilaf-inline-symbol-green{ color:#2E7D32; }
+.waqf-info-popup.info-khilaf .waqf-info-label .khilaf-inline-symbol-blue{ color:#1565C0; }
+.waqf-info-popup.info-khilaf .waqf-info-label .khilaf-inline-symbol-brown{ color:#A9793B; }
+body.night .waqf-info-popup.info-khilaf .waqf-info-label .khilaf-inline-symbol-red{ color:#E53935; }
+body.night .waqf-info-popup.info-khilaf .waqf-info-label .khilaf-inline-symbol-green{ color:#43A047; }
+body.night .waqf-info-popup.info-khilaf .waqf-info-label .khilaf-inline-symbol-blue{ color:#1E88E5; }
+body.night .waqf-info-popup.info-khilaf .waqf-info-label .khilaf-inline-symbol-brown{ color:#C9A06A; }
+
 
 .waqf-io-row{ display:flex; gap:10px; margin: 6px 0 18px; }
 .waqf-io-row .modal-btn{ flex:1; font-size:12.5px; padding:9px 6px; }

@@ -237,8 +237,8 @@ check(
 // and the old floating-glyph rule is fully gone.
 check(
   'style.css colors the word TEXT (not a star) for .has-default-waqf',
-  /\.quran-word\.has-default-waqf:not\(\.has-waqf\)[\s\S]{0,150}?\{\s*color\s*:/.test(styleSrc)
-    && /\.quran-word\.has-default-waqf:not\(\.has-waqf\)\s*\.waqf-mark[\s\S]{0,400}?display\s*:\s*none\s*!important/.test(styleSrc),
+  /\.quran-word\.has-default-waqf:not\(\.has-waqf\)(?::not\(\.khilaf-word\))?[\s\S]{0,250}?\{\s*color\s*:/.test(styleSrc)
+    && /\.quran-word\.has-default-waqf:not\(\.has-waqf\)(?::not\(\.khilaf-word\))?\s*\.waqf-mark[\s\S]{0,600}?display\s*:\s*none\s*!important/.test(styleSrc),
   ''
 );
 check(
@@ -562,13 +562,13 @@ check(
 
 check(
   'style.css colors the word TEXT (not a star) for .has-default-sad-rukhsa',
-  /\.quran-word\.has-default-sad-rukhsa:not\(\.has-waqf\)[\s\S]{0,150}?\{\s*color\s*:/.test(styleSrc)
-    && /\.quran-word\.has-default-sad-rukhsa:not\(\.has-waqf\)\s*\.waqf-mark[\s\S]{0,400}?display\s*:\s*none\s*!important/.test(styleSrc),
+  /\.quran-word\.has-default-sad-rukhsa:not\(\.has-waqf\)(?::not\(\.khilaf-word\))?[\s\S]{0,250}?\{\s*color\s*:/.test(styleSrc)
+    && /\.quran-word\.has-default-sad-rukhsa:not\(\.has-waqf\)(?::not\(\.khilaf-word\))?\s*\.waqf-mark[\s\S]{0,600}?display\s*:\s*none\s*!important/.test(styleSrc),
   ''
 );
 check(
   '.has-default-sad-rukhsa word text uses the exact same green as .waqf-mark.mark-green (#2E7D32)',
-  /\.quran-word\.has-default-sad-rukhsa:not\(\.has-waqf\)[\s\S]{0,150}?\{\s*color\s*:\s*#2E7D32/i.test(styleSrc),
+  /\.quran-word\.has-default-sad-rukhsa:not\(\.has-waqf\)(?::not\(\.khilaf-word\))?[\s\S]{0,250}?\{\s*color\s*:\s*#2E7D32/i.test(styleSrc),
   ''
 );
 check(
@@ -645,8 +645,8 @@ check(
 
 check(
   'style.css colors the word TEXT (not a star) for .has-default-waqf-lazim',
-  /\.quran-word\.has-default-waqf-lazim:not\(\.has-waqf\)[\s\S]{0,150}?\{\s*color\s*:/.test(styleSrc)
-    && /\.quran-word\.has-default-waqf-lazim:not\(\.has-waqf\)\s*\.waqf-mark[\s\S]{0,400}?display\s*:\s*none\s*!important/.test(styleSrc),
+  /\.quran-word\.has-default-waqf-lazim:not\(\.has-waqf\)(?::not\(\.khilaf-word\))?[\s\S]{0,250}?\{\s*color\s*:/.test(styleSrc)
+    && /\.quran-word\.has-default-waqf-lazim:not\(\.has-waqf\)(?::not\(\.khilaf-word\))?\s*\.waqf-mark[\s\S]{0,600}?display\s*:\s*none\s*!important/.test(styleSrc),
   ''
 );
 check(
@@ -706,8 +706,8 @@ check(
 
 check(
   'style.css colors the word TEXT (not a star) for .has-default-zay-jawaz',
-  /\.quran-word\.has-default-zay-jawaz:not\(\.has-waqf\)[\s\S]{0,150}?\{\s*color\s*:/.test(styleSrc)
-    && /\.quran-word\.has-default-zay-jawaz:not\(\.has-waqf\)\s*\.waqf-mark[\s\S]{0,400}?display\s*:\s*none\s*!important/.test(styleSrc),
+  /\.quran-word\.has-default-zay-jawaz:not\(\.has-waqf\)(?::not\(\.khilaf-word\))?[\s\S]{0,250}?\{\s*color\s*:/.test(styleSrc)
+    && /\.quran-word\.has-default-zay-jawaz:not\(\.has-waqf\)(?::not\(\.khilaf-word\))?\s*\.waqf-mark[\s\S]{0,600}?display\s*:\s*none\s*!important/.test(styleSrc),
   ''
 );
 check(
@@ -770,8 +770,8 @@ check(
 
 check(
   'style.css colors the word TEXT (not a star) for .has-default-qad-qila',
-  /\.quran-word\.has-default-qad-qila:not\(\.has-waqf\)[\s\S]{0,150}?\{\s*color\s*:/.test(styleSrc)
-    && /\.quran-word\.has-default-qad-qila:not\(\.has-waqf\)\s*\.waqf-mark[\s\S]{0,400}?display\s*:\s*none\s*!important/.test(styleSrc),
+  /\.quran-word\.has-default-qad-qila:not\(\.has-waqf\)(?::not\(\.khilaf-word\))?[\s\S]{0,250}?\{\s*color\s*:/.test(styleSrc)
+    && /\.quran-word\.has-default-qad-qila:not\(\.has-waqf\)(?::not\(\.khilaf-word\))?\s*\.waqf-mark[\s\S]{0,600}?display\s*:\s*none\s*!important/.test(styleSrc),
   ''
 );
 check(
@@ -956,8 +956,8 @@ check(
 
 check(
   'style.css colors the word TEXT (not a star) for .has-default-qif',
-  /\.quran-word\.has-default-qif:not\(\.has-waqf\)[\s\S]{0,150}?\{\s*color\s*:/.test(styleSrc)
-    && /\.quran-word\.has-default-qif:not\(\.has-waqf\)\s*\.waqf-mark[\s\S]{0,400}?display\s*:\s*none\s*!important/.test(styleSrc),
+  /\.quran-word\.has-default-qif:not\(\.has-waqf\)(?::not\(\.khilaf-word\))?[\s\S]{0,250}?\{\s*color\s*:/.test(styleSrc)
+    && /\.quran-word\.has-default-qif:not\(\.has-waqf\)(?::not\(\.khilaf-word\))?\s*\.waqf-mark[\s\S]{0,600}?display\s*:\s*none\s*!important/.test(styleSrc),
   ''
 );
 check(
@@ -1175,8 +1175,8 @@ check(
 
 check(
   'style.css colors the word TEXT (not a star) for .has-default-jeem',
-  /\.quran-word\.has-default-jeem:not\(\.has-waqf\)[\s\S]{0,150}?\{\s*color\s*:/.test(styleSrc)
-    && /\.quran-word\.has-default-jeem:not\(\.has-waqf\)\s*\.waqf-mark[\s\S]{0,400}?display\s*:\s*none\s*!important/.test(styleSrc),
+  /\.quran-word\.has-default-jeem:not\(\.has-waqf\)(?::not\(\.khilaf-word\))?[\s\S]{0,250}?\{\s*color\s*:/.test(styleSrc)
+    && /\.quran-word\.has-default-jeem:not\(\.has-waqf\)(?::not\(\.khilaf-word\))?\s*\.waqf-mark[\s\S]{0,600}?display\s*:\s*none\s*!important/.test(styleSrc),
   ''
 );
 check(

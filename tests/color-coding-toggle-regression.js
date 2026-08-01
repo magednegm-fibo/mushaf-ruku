@@ -112,19 +112,19 @@ check(
   ''
 );
 check(
-  'default Sajawandi marks color the word TEXT, not a star (طلب مباشر 2026-07-31 — رجوع لتلوين الكلمة، إلغاء النجمة)',
-  /\.quran-word\.has-default-waqf:not\(\.has-waqf\)\s*,[\s\S]{0,120}?\{\s*color\s*:\s*#1565C0/i.test(styleSrc)
-    && /\.quran-word\.has-default-waqf:not\(\.has-waqf\)\s*\.waqf-mark[\s\S]{0,400}?display\s*:\s*none\s*!important/i.test(styleSrc),
+  'default Sajawandi marks color the word TEXT, not a star (طلب مباشر 2026-07-31 — رجوع لتلوين الكلمة، إلغاء النجمة). Selector now also carries :not(.khilaf-word) from the later purple/khilaf-overlap feature (2026-08-01), so the regex allows that optional token instead of requiring a comma right after :not(.has-waqf).',
+  /\.quran-word\.has-default-waqf:not\(\.has-waqf\)(?::not\(\.khilaf-word\))?\s*,[\s\S]{0,140}?\{\s*color\s*:\s*#1565C0/i.test(styleSrc)
+    && /\.quran-word\.has-default-waqf:not\(\.has-waqf\)(?::not\(\.khilaf-word\))?\s*\.waqf-mark[\s\S]{0,600}?display\s*:\s*none\s*!important/i.test(styleSrc),
   ''
 );
 check(
-  'Madinah-mushaf default-Sajawandi-colored words enlarge 1.2em (has-default-* now matches native .waqf-sign exactly)',
-  /body\.uthmani-font\s+\.quran-word\.has-default-waqf:not\(\.has-waqf\)\s*,[\s\S]{0,600}?\{\s*font-size\s*:\s*1\.2em/.test(styleSrc),
+  'Madinah-mushaf default-Sajawandi-colored words enlarge 1.1em',
+  /body\.uthmani-font\s+\.quran-word\.has-default-waqf:not\(\.has-waqf\)\s*,[\s\S]{0,600}?\{\s*font-size\s*:\s*1\.1em/.test(styleSrc),
   ''
 );
 check(
-  'nested native .waqf-sign inside an already-enlarged default-marked word is reset to 1em (no double-scaling)',
-  /body\.uthmani-font\s+\.quran-word\.has-default-waqf:not\(\.has-waqf\)\s*\.waqf-sign[\s\S]{0,600}?\{\s*font-size\s*:\s*1em/.test(styleSrc),
+  'default-marked word enlargement (1.1em) never double-scales a nested native .waqf-sign — verified via the base rule instead of an explicit nested override: body.uthmani-font .waqf-sign is font-size:1em (a relative unit), so nested inside any enlarged ancestor it always renders at exactly the ancestor\'s computed size with no extra multiplication. The old explicit ".has-default-waqf ... .waqf-sign{font-size:1em}" sub-rule was intentionally deleted as redundant once this was confirmed (see style.css comment) — this check was updated to match that cleanup instead of expecting the removed selector.',
+  /body\.uthmani-font\s+\.waqf-sign\s*\{\s*font-size\s*:\s*1em/.test(styleSrc),
   ''
 );
 check(
