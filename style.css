@@ -215,7 +215,14 @@ body{
   font-weight:600;
   color: var(--emerald);
   font-size:15px;
-  line-height: 1.9;
+  /* طلب مباشر: اسم السورة والفاصل معًا — قُلِّص line-height (كان 1.9)
+     ليقع الفاصل عند مستوى محدد بدقة. الطلب التالي (تصحيح): إنزالهما
+     لأسفل بحيث يقع المستوى الأفقي للفاصل عند منتصف زرَّي الاستماع
+     والتفسير تحديدًا (.listen-btn/.tafsir-btn، يمتدان من 52px إلى
+     86px من أعلى .page-frame، فمنتصفهما ~69px) — لا منتصف الأزرار
+     الأربعة كلها كما كان في المحاولة الأولى. margin-top: 0 يحقق هذا
+     بالضبط مع line-height: 1.1 (اختُبر بصريًا). */
+  line-height: 1.1;
   margin: 0 auto 6px;
   padding: 4px 22px 6px;
   position:relative;
@@ -256,6 +263,37 @@ body.night .surah-cartouche .cartouche-sep{ color:#9A9A9E; }
    smaller nudge since this is a short single-line title, not a full
    page of running text. */
 body.indopak-font .surah-cartouche b{ font-size:25px; }
+
+/* طلب مباشر: المربع حول اسم السورة أُلغي — رجوع للنص العادي، مع
+   إضافة فاصل زخرفي قصير أسفل الاسم بدلاً منه. الفاصل عرضه ثابت وصغير
+   (110px) وممركز، بعيدًا تمامًا عن دائرتَي الاستماع/التفسير
+   (.listen-btn/.tafsir-btn) الثابتتين عند أطراف الصفحة (10px من كل
+   حافة، بعرض 34px لكل دائرة، فتنتهي منطقتهما عند ~44px من الحافة) —
+   لا تقاطع ممكن بينهما وبين فاصل بهذا العرض القصير الممركز. */
+.surah-cartouche .surah-divider{
+  display:block;
+  position:relative;
+  width:110px;
+  height:12px;
+  margin: 4px auto 2px;
+}
+.surah-cartouche .surah-divider::before{
+  content:'';
+  position:absolute;
+  top:50%; left:0; right:0;
+  height:1px;
+  background: var(--gold);
+}
+.surah-cartouche .surah-divider::after{
+  content:'';
+  position:absolute;
+  top:50%; left:50%;
+  width:6px; height:6px;
+  background: var(--emerald);
+  transform: translate(-50%,-50%) rotate(45deg);
+}
+body.night .surah-cartouche .surah-divider::before{ background:#C9A06A; }
+body.night .surah-cartouche .surah-divider::after{ background:#F2F2F2; }
 
 .ayah-flow{
   font-family: var(--font-quran);
@@ -658,36 +696,39 @@ body.hide-waqf-marks .quran-word.has-waqf .waqf-mark{
    شخصية على نفس الكلمة (التذكير الشخصي يبقى نجمة كما هو).
    ------------------------------------------------------------------ */
 
-.quran-word.has-default-waqf:not(.has-waqf) .waqf-mark,
-.quran-word.has-default-sad-rukhsa:not(.has-waqf) .waqf-mark,
-.quran-word.has-default-waqf-lazim:not(.has-waqf) .waqf-mark,
-.quran-word.has-default-zay-jawaz:not(.has-waqf) .waqf-mark,
-.quran-word.has-default-qad-qila:not(.has-waqf) .waqf-mark,
-.quran-word.has-default-qif:not(.has-waqf) .waqf-mark,
-.quran-word.has-default-jeem:not(.has-waqf) .waqf-mark{
+.quran-word.has-default-waqf:not(.has-waqf):not(.khilaf-word) .waqf-mark,
+.quran-word.has-default-sad-rukhsa:not(.has-waqf):not(.khilaf-word) .waqf-mark,
+.quran-word.has-default-waqf-lazim:not(.has-waqf):not(.khilaf-word) .waqf-mark,
+.quran-word.has-default-zay-jawaz:not(.has-waqf):not(.khilaf-word) .waqf-mark,
+.quran-word.has-default-qad-qila:not(.has-waqf):not(.khilaf-word) .waqf-mark,
+.quran-word.has-default-qif:not(.has-waqf):not(.khilaf-word) .waqf-mark,
+.quran-word.has-default-jeem:not(.has-waqf):not(.khilaf-word) .waqf-mark{
   display:none !important;
 }
 
-/* ط + قف → أزرق (#1565C0 = .waqf-mark.mark-blue) */
-.quran-word.has-default-waqf:not(.has-waqf),
-.quran-word.has-default-qif:not(.has-waqf){
+/* ط + قف → أزرق (#1565C0 = .waqf-mark.mark-blue). :not(.khilaf-word)
+   طلب مباشر 2026-08-01: كلمات الخلاف البنفسجية تبقى بنفسجية دومًا،
+   ولا يُلوَّن نصها بلون السجاوندي — راجع كتلة "تقاطع البنفسجي مع
+   السجاوندي الافتراضي" أسفل هذا الملف للنجمة البديلة. */
+.quran-word.has-default-waqf:not(.has-waqf):not(.khilaf-word),
+.quran-word.has-default-qif:not(.has-waqf):not(.khilaf-word){
   color:#1565C0;
 }
 
 /* ص + ز + ق → أخضر (#2E7D32 = .waqf-mark.mark-green) */
-.quran-word.has-default-sad-rukhsa:not(.has-waqf),
-.quran-word.has-default-zay-jawaz:not(.has-waqf),
-.quran-word.has-default-qad-qila:not(.has-waqf){
+.quran-word.has-default-sad-rukhsa:not(.has-waqf):not(.khilaf-word),
+.quran-word.has-default-zay-jawaz:not(.has-waqf):not(.khilaf-word),
+.quran-word.has-default-qad-qila:not(.has-waqf):not(.khilaf-word){
   color:#2E7D32;
 }
 
 /* م → أحمر (#C62828 = .waqf-mark.mark-red) */
-.quran-word.has-default-waqf-lazim:not(.has-waqf){
+.quran-word.has-default-waqf-lazim:not(.has-waqf):not(.khilaf-word){
   color:#C62828;
 }
 
 /* ج → بني (#A9793B = .waqf-mark.mark-brown) */
-.quran-word.has-default-jeem:not(.has-waqf){
+.quran-word.has-default-jeem:not(.has-waqf):not(.khilaf-word){
   color:#A9793B;
 }
 
@@ -695,22 +736,22 @@ body.hide-waqf-marks .quran-word.has-waqf .waqf-mark{
    الخلفية السودة (بدون ما تبهت في الوضع النهاري). .waqf-mark.mark-*
    هنا خاصة بنجمة التذكير الشخصي فقط (لم تعد تخص السجاوندي الافتراضي). */
 body.night .waqf-mark.mark-red{ color:#E53935; }
-body.night .quran-word.has-default-waqf-lazim:not(.has-waqf){
+body.night .quran-word.has-default-waqf-lazim:not(.has-waqf):not(.khilaf-word){
   color:#E53935;
 }
 body.night .waqf-mark.mark-green{ color:#43A047; }
-body.night .quran-word.has-default-sad-rukhsa:not(.has-waqf),
-body.night .quran-word.has-default-zay-jawaz:not(.has-waqf),
-body.night .quran-word.has-default-qad-qila:not(.has-waqf){
+body.night .quran-word.has-default-sad-rukhsa:not(.has-waqf):not(.khilaf-word),
+body.night .quran-word.has-default-zay-jawaz:not(.has-waqf):not(.khilaf-word),
+body.night .quran-word.has-default-qad-qila:not(.has-waqf):not(.khilaf-word){
   color:#43A047;
 }
 body.night .waqf-mark.mark-blue{ color:#1E88E5; }
-body.night .quran-word.has-default-waqf:not(.has-waqf),
-body.night .quran-word.has-default-qif:not(.has-waqf){
+body.night .quran-word.has-default-waqf:not(.has-waqf):not(.khilaf-word),
+body.night .quran-word.has-default-qif:not(.has-waqf):not(.khilaf-word){
   color:#1E88E5;
 }
 body.night .waqf-mark.mark-brown{ color:#C9A06A; }
-body.night .quran-word.has-default-jeem:not(.has-waqf){
+body.night .quran-word.has-default-jeem:not(.has-waqf):not(.khilaf-word){
   color:#C9A06A;
 }
 
@@ -718,13 +759,13 @@ body.night .quran-word.has-default-jeem:not(.has-waqf){
    الافتراضي لحبر المصحف العادي (النجمة أساسًا محذوفة لهذه الكلمات،
    فالتلوين هو كل ما يُطفأ هنا). الترتيب بعد قواعد الليل فوق حتى
    يفوز رغم تساوي التخصيص. */
-body.hide-waqf-marks .quran-word.has-default-waqf:not(.has-waqf),
-body.hide-waqf-marks .quran-word.has-default-sad-rukhsa:not(.has-waqf),
-body.hide-waqf-marks .quran-word.has-default-waqf-lazim:not(.has-waqf),
-body.hide-waqf-marks .quran-word.has-default-zay-jawaz:not(.has-waqf),
-body.hide-waqf-marks .quran-word.has-default-qad-qila:not(.has-waqf),
-body.hide-waqf-marks .quran-word.has-default-qif:not(.has-waqf),
-body.hide-waqf-marks .quran-word.has-default-jeem:not(.has-waqf){
+body.hide-waqf-marks .quran-word.has-default-waqf:not(.has-waqf):not(.khilaf-word),
+body.hide-waqf-marks .quran-word.has-default-sad-rukhsa:not(.has-waqf):not(.khilaf-word),
+body.hide-waqf-marks .quran-word.has-default-waqf-lazim:not(.has-waqf):not(.khilaf-word),
+body.hide-waqf-marks .quran-word.has-default-zay-jawaz:not(.has-waqf):not(.khilaf-word),
+body.hide-waqf-marks .quran-word.has-default-qad-qila:not(.has-waqf):not(.khilaf-word),
+body.hide-waqf-marks .quran-word.has-default-qif:not(.has-waqf):not(.khilaf-word),
+body.hide-waqf-marks .quran-word.has-default-jeem:not(.has-waqf):not(.khilaf-word){
   color: inherit !important;
 }
 
@@ -766,6 +807,62 @@ body.hide-waqf-marks.uthmani-font .quran-word.has-default-qad-qila:not(.has-waqf
 body.hide-waqf-marks.uthmani-font .quran-word.has-default-qif:not(.has-waqf),
 body.hide-waqf-marks.uthmani-font .quran-word.has-default-jeem:not(.has-waqf){
   font-size: 1em;
+}
+
+/* ------------------------------------------------------------------
+   تقاطع البنفسجي (خلاف الروضة/قصر المنفصل) مع السجاوندي الافتراضي —
+   طلب مباشر 2026-08-01: إذا كانت الكلمة بنفسجية، لا يُلوَّن نصها بلون
+   علامة الوقف (استُثنيت .khilaf-word من كل قواعد التلوين والإخفاء
+   أعلاه). بدلاً من ذلك تُعرض العلامة كنجمة تذكير في موضعها المعتاد
+   (نفس .waqf-mark)، بلونها المعتاد، بينما تبقى الكلمة بنفسجية بالكامل.
+   المواضع المعروفة حاليًا: 36:52 (سكتة + وقف لازم)، 2:245 (سين كصاد +
+   وقف رخصة). القاعدة عامة فتشمل أي تقاطع مستقبلي تلقائيًا.
+   ------------------------------------------------------------------ */
+.quran-word.khilaf-word.has-default-waqf:not(.has-waqf) .waqf-mark,
+.quran-word.khilaf-word.has-default-qif:not(.has-waqf) .waqf-mark{
+  display:inline-block;
+  color:#1565C0;
+}
+.quran-word.khilaf-word.has-default-sad-rukhsa:not(.has-waqf) .waqf-mark,
+.quran-word.khilaf-word.has-default-zay-jawaz:not(.has-waqf) .waqf-mark,
+.quran-word.khilaf-word.has-default-qad-qila:not(.has-waqf) .waqf-mark{
+  display:inline-block;
+  color:#2E7D32;
+}
+.quran-word.khilaf-word.has-default-waqf-lazim:not(.has-waqf) .waqf-mark{
+  display:inline-block;
+  color:#C62828;
+}
+.quran-word.khilaf-word.has-default-jeem:not(.has-waqf) .waqf-mark{
+  display:inline-block;
+  color:#A9793B;
+}
+body.night .quran-word.khilaf-word.has-default-waqf:not(.has-waqf) .waqf-mark,
+body.night .quran-word.khilaf-word.has-default-qif:not(.has-waqf) .waqf-mark{
+  color:#1E88E5;
+}
+body.night .quran-word.khilaf-word.has-default-sad-rukhsa:not(.has-waqf) .waqf-mark,
+body.night .quran-word.khilaf-word.has-default-zay-jawaz:not(.has-waqf) .waqf-mark,
+body.night .quran-word.khilaf-word.has-default-qad-qila:not(.has-waqf) .waqf-mark{
+  color:#43A047;
+}
+body.night .quran-word.khilaf-word.has-default-waqf-lazim:not(.has-waqf) .waqf-mark{
+  color:#E53935;
+}
+body.night .quran-word.khilaf-word.has-default-jeem:not(.has-waqf) .waqf-mark{
+  color:#C9A06A;
+}
+/* "إظهار علامات التذكير والوقف" مطفأ → إخفاء هذه النجمة أيضًا، بنفس
+   سلوك نجمة التذكير الشخصي — البنفسجي وحده يبقى ظاهرًا دومًا (مستقل
+   عن هذا المفتاح، كما في القاعدة أسفل هذا التعليق). */
+body.hide-waqf-marks .quran-word.khilaf-word.has-default-waqf:not(.has-waqf) .waqf-mark,
+body.hide-waqf-marks .quran-word.khilaf-word.has-default-sad-rukhsa:not(.has-waqf) .waqf-mark,
+body.hide-waqf-marks .quran-word.khilaf-word.has-default-waqf-lazim:not(.has-waqf) .waqf-mark,
+body.hide-waqf-marks .quran-word.khilaf-word.has-default-zay-jawaz:not(.has-waqf) .waqf-mark,
+body.hide-waqf-marks .quran-word.khilaf-word.has-default-qad-qila:not(.has-waqf) .waqf-mark,
+body.hide-waqf-marks .quran-word.khilaf-word.has-default-qif:not(.has-waqf) .waqf-mark,
+body.hide-waqf-marks .quran-word.khilaf-word.has-default-jeem:not(.has-waqf) .waqf-mark{
+  display:none !important;
 }
 
 /* مواضع خلاف قصر المنفصل (البنفسجي) لم تعد مرتبطة إطلاقًا بمفتاح
@@ -898,16 +995,22 @@ body.night .waqf-info-popup.info-plain .waqf-info-label{ color:#F2F0EA; }
   font-size: var(--ayah-size);
 }
 .ayah-num svg{ position:absolute; inset:0; width:100%; height:100%; }
-.ayah-num svg path{ stroke-width: 2.2; }
+.ayah-num svg .ayah-num-outer{ stroke-width: 4.0; }
 .ayah-num span{
   position:relative;
   z-index:1;
   display:flex;
   align-items:center;
   justify-content:center;
-  min-width: 72%;
-  height: 72%;
-  padding: 0 4px;
+  /* طلب مباشر: تصغير الدائرة الفاتحة خلف الرقم (كانت 72%) مع الإبقاء
+     على حجم الرقم نفسه (font-size أدناه بلا تغيير) — الهدف ترك مسافة
+     واضحة بين هذه الدائرة والنجمة الخارجية بعد تصغيرها (ayah-num-outer،
+     أقصى نصف قطر 14 من 40) بدل التصاقهما. الحلقة الذهبية الداخلية
+     أُلغيت بالكامل (طلب مباشر لاحق)، والنجمة الخارجية صُغِّرت لتحل
+     مكانها بدلاً منها. */
+  min-width: 67.21%;
+  height: 67.21%;
+  padding: 0 2px;
   border-radius: 999px;
   /* Solid backing behind the digits: covers the star's inner strokes that
      would otherwise pass right behind the number and clutter it, and gives
@@ -916,13 +1019,21 @@ body.night .waqf-info-popup.info-plain .waqf-info-label{ color:#F2F0EA; }
      instead of squeezing them into a fixed circle. */
   background: var(--paper);
   font-family: var(--font-ui);
-  font-size: clamp(13px, 0.6em, 22px);
+  /* طلب مباشر: توحيد حجم رقم رأس الآية بين حالتي الرقمين والثلاثة أرقام
+     بدل تغييره حسب عدد الخانات. سابقًا كانت حالة الأرقام الثلاثية
+     تكبّر حاوية .ayah-num نفسها (وبالتالي الدائرة الفاتحة خلفها) بنسبة
+     ١٠٪ تقريبًا، فحصل عدم اتساق في حجم الدائرة. الآن الدائرة ثابتة
+     الحجم دائمًا بعد حذف قاعدة .ayah-num.three-digit الخاصة بالعرض
+     والارتفاع،
+     وحجم الرقم موحّد على أكبر قيمة تسع أرقامًا ثلاثية بلا تقاطع مع
+     حافة هذه الدائرة الثابتة. القيمة الجديدة حُسبت بتصغير حجم الخط
+     الثلاثي القديم (0.48em) بنفس نسبة تصغير الدائرة (٪٩٠ تقريبًا) بدل
+     تكبير الدائرة. تحتاج تأكيدًا بصريًا على الجهاز. */
+  font-size: clamp(10px, 0.5em, 16px);
   font-weight:800;
-  letter-spacing: -0.4px;
+  letter-spacing: -0.5px;
 }
 body.night .ayah-num span{ background:#1c1c1e; }
-.ayah-num.three-digit{ width: clamp(33px, 1.65em, 58px); height: clamp(33px, 1.65em, 58px); }
-.ayah-num.three-digit span{ font-size: clamp(11px, 0.48em, 18px); letter-spacing:-0.6px; padding:0 2px; }
 
 /* Small meem mark for إقلاب (iqlab): drawn manually at reduced size and
    nudged below the baseline, since the bundled font's own glyph for the
@@ -1365,7 +1476,7 @@ body.night .ayah-flow{ color:#F2F0EA; }
    × 0.88 ≈ (181, 129, 190) = #B581BE. */
 body.night{ --khilaf-highlight: #B581BE; }
 body.night .surah-cartouche, body.night .surah-cartouche b, body.night .surah-cartouche span{ color:#F2F2F2; }
-body.night .ayah-num{ color:#F2F2F2; }
+body.night .ayah-num{ color:#4CAF50; }
 /* الدائرة حول علامة الركوع في الوضع الليلي — أخضر بطلب مباشر، نفس
    الأخضر #4CAF50 المستخدم في الشاشة الرئيسية بالوضع الليلي (أيقونات
    البلاطات وشريط التقدّم)، بدل الحدّ الأبيض الشفاف الافتراضي. */

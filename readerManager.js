@@ -31,12 +31,24 @@
 
   // -----------------------------------------------------------------
   // Ayah-number marker (the star-shaped ٱ badge with the ayah number)
+  //
+  // طلب مباشر: استبدال الشكل الوردي الناعم بـ16 فصًا (منحنيات Q كثيرة
+  // ولطيفة) بنجمة ثمانية الرؤوس واضحة الأطراف، حسب صورة مرجعية أرسلها
+  // المستخدم. نصف القطر الخارجي بقي بلا تغيير (٦ إلى ٣٤ ضمن viewBox
+  // 40×40، أي نفس أقصى امتداد للشكل القديم) حتى لا يتأثر قطر رأس
+  // الآية ولا حجم الدائرة خلف الرقم. نصف قطر الأطراف الداخلة
+  // (الأخاديد بين الرؤوس) = 8.6، وهو تقدير أولي يحتاج تأكيدًا بصريًا
+  // على الجهاز — إن بدت الرؤوس حادة جدًا أو عريضة جدًا مقارنة بالصورة
+  // المرجعية، يمكن تعديل هذه القيمة وحدها دون تغيير نصف القطر الخارجي.
   // -----------------------------------------------------------------
   function ayahMarker(surah, ayah){
     var num = toArabicDigits(ayah);
     var digitClass = ayah >= 100 ? ' three-digit' : '';
     return '<span class="ayah-num' + digitClass + '" aria-hidden="false" data-surah="' + surah + '" data-ayah="' + ayah + '">' +
-      '<svg viewBox="0 0 40 40"><path d="M20 2 L23 10 L31 6 L27 14 L36 15 L28 20 L36 25 L27 26 L31 34 L23 30 L20 38 L17 30 L9 34 L13 26 L4 25 L12 20 L4 15 L13 14 L9 6 L17 10 Z" fill="none" stroke="currentColor" stroke-width="1.7"/></svg>' +
+      '<svg viewBox="0 0 40 40">' +
+      '<path d="M 20.00 6.00 L 23.29 12.05 L 29.90 10.10 L 27.95 16.71 L 34.00 20.00 L 27.95 23.29 L 29.90 29.90 L 23.29 27.95 L 20.00 34.00 L 16.71 27.95 L 10.10 29.90 L 12.05 23.29 L 6.00 20.00 L 12.05 16.71 L 10.10 10.10 L 16.71 12.05 Z" ' +
+      'class="ayah-num-outer" fill="none" stroke="currentColor" stroke-linejoin="round"/>' +
+      '</svg>' +
       '<span>' + num + '</span></span>';
   }
 
@@ -2025,11 +2037,24 @@ var KNOWN_SPLIT_WORD_FRAGMENTS = ["اٰ تُوۡهُمۡ", "اٰ تَيۡتُم�
     return words.map(function(w, idx){
       var key = a.surah + ':' + a.ayah + ':' + idx;
       var extraCls = '';
+      var isKhilafWord = !!(
+        (saktaIdxs && saktaIdxs.indexOf(idx) !== -1) ||
+        (muqattaatIdxs && muqattaatIdxs.indexOf(idx) !== -1) ||
+        (seenSadIdxs && seenSadIdxs.indexOf(idx) !== -1) ||
+        (madFarqIdxs && madFarqIdxs.indexOf(idx) !== -1) ||
+        (tajweedNoteIdxs && tajweedNoteIdxs.indexOf(idx) !== -1)
+      );
       if(saktaIdxs && saktaIdxs.indexOf(idx) !== -1) extraCls += ' sakta-word';
       if(muqattaatIdxs && muqattaatIdxs.indexOf(idx) !== -1) extraCls += ' muqattaat-mad-word';
       if(seenSadIdxs && seenSadIdxs.indexOf(idx) !== -1) extraCls += ' seen-as-sad-word';
       if(madFarqIdxs && madFarqIdxs.indexOf(idx) !== -1) extraCls += ' mad-farq-word';
       if(tajweedNoteIdxs && tajweedNoteIdxs.indexOf(idx) !== -1) extraCls += ' tajweed-note-word';
+      // طلب مباشر 2026-08-01: عند تقاطع كلمة بنفسجية (خلاف الروضة) مع
+      // علامة سجاوندية افتراضية (has-default-*)، تبقى الكلمة بنفسجية
+      // بالكامل دومًا، وتُعرض العلامة كنجمة تذكير عادية بلون الوقف بدل
+      // تلوين نص الكلمة — راجع القواعد المقابلة في style.css التي تستثني
+      // .khilaf-word من تلوين نص has-default-* وتُظهر النجمة بدلاً منه.
+      if(isKhilafWord) extraCls += ' khilaf-word';
       // لا تُوضع عند آخر كلمة في الآية — طلب مباشر من المستخدم: نهاية
       // الآية نفسها علامة وقف بالفعل، فتكرار العلامة الافتراضية هناك
       // زائد. نفس القيد يُطبَّق على ص وز وق (قد قيل) وقف وج أدناه. م
@@ -2141,7 +2166,8 @@ var KNOWN_SPLIT_WORD_FRAGMENTS = ["اٰ تُوۡهُمۡ", "اٰ تَيۡتُم�
       var blocks = p.surahs.map(function(num, si){
         var name = (window.SURAH_NAMES_VOCALIZED && window.SURAH_NAMES_VOCALIZED[num]) || p.surahNames[si];
         var opensHere = p.ayahs.some(function(a){ return a.surah === num && a.ayah === 1; });
-        var html = '<span>سورة ' + name + '</span>';
+        var html = '<span class="surah-name-plain">\u0633\u0648\u0631\u0629 ' + name + '</span>' +
+          '<span class="surah-divider" aria-hidden="true"></span>';
         if(opensHere && num !== 1 && num !== 9){
           html += '<b>' + BASMALA + '</b>';
         }

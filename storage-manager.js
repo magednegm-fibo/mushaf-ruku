@@ -63,7 +63,7 @@
       page:0, fontSizeUthmani:28, fontSizeIndopak:28, night:false,
       furthestUthmani:0, furthestIndopak:0,
       lastPageUthmani:0, lastPageIndopak:0, lastPageShared:0,
-      fontStyle:'uthmani', showWaqfMarksUthmani:true, showWaqfMarksIndopak:true,
+      fontStyle:'uthmani', showWaqfMarksUthmani:false, showWaqfMarksIndopak:false,
       colorCodingEnabled:true,
       pinchZoomEnabled:true, keepScreenAwake:false, reciter:'abdulbasit',
       autoScrollEnabled:true, recitationRepeatCount:1, rukuRepeatCount:1, playbackRate:1,
