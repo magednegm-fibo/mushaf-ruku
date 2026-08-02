@@ -14,7 +14,14 @@
   function readJSON(key, fallback){
     try{
       var raw = localStorage.getItem(key);
-      return raw ? JSON.parse(raw) : fallback;
+      if(!raw) return fallback;
+      var parsed = JSON.parse(raw);
+      // A stored literal "null"/"undefined" is valid JSON — JSON.parse
+      // succeeds and returns null/undefined rather than throwing, so the
+      // catch below never sees it. Treat that the same as a missing/failed
+      // read: fall back, instead of handing callers a null they don't
+      // expect (e.g. Object.keys(null) or null.map(...) further downstream).
+      return (parsed === null || parsed === undefined) ? fallback : parsed;
     }catch(e){ return fallback; }
   }
 

@@ -337,7 +337,13 @@
   // against it. Turning it off hands scroll position entirely to our own
   // JS, which is what every goToPage()/renderPage() reset already assumes.
   if('scrollRestoration' in history) history.scrollRestoration = 'manual';
-  history.replaceState({tag:'home'}, '');
+  // Defensive hardening: history.replaceState() can throw SecurityError in
+  // rare restricted contexts (sandboxed iframes without allow-same-origin,
+  // some locked-down in-app browsers). It previously sat unguarded here,
+  // meaning a throw would silently abort every remaining startup step below
+  // it (popstate wiring, header/about text, Settings.applyAll, progress UI,
+  // and Service Worker registration) since nothing downstream catches it.
+  try{ history.replaceState({tag:'home'}, ''); }catch(e){}
   // btnGoto ("الذهاب إلى ركوع رقم"/"الذهاب إلى منزل رقم") lives INSIDE
   // الفهرس's own header (see index.html), so it always opens gotoModal
   // NESTED on top of an already-open indexPanel — never standalone.
