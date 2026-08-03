@@ -1088,7 +1088,12 @@
       '59:7:33': true, '62:5:11': true, '62:5:18': true, '65:4:14': true,
       '65:4:20': true,
       // WAQF_REVIEW high-confidence (Indopak = source of truth) — 1.0.191
-      '2:72:6': true,
+      // NOTE: '2:72:6' intentionally omitted. Ayah 2:72 has a mid-word thin
+      // space (فَٱدَّـٰرَ ٰٔتُمۡ) that tokenizeAyahWords folds into one token,
+      // shifting every subsequent index by -1. The correct display index for
+      // فِيهَا is therefore produced by the earlier manual '2:72:5' (already
+      // present in the complex-batch list above). Adding :6 would colour
+      // وَٱللَّهُ (the next word) blue by mistake — reported 2026-08-02.
       // Interactive review batch (Host Word chosen visually via the
       // WAQF_REVIEW tool, one entry per approved case) — 1.0.192
       '5:46:26': true, '69:3:4': true, '70:7:2': true, '79:30:4': true,
