@@ -2490,7 +2490,7 @@ body.night .tafsir-head-sub{ color:#9A9A9E; }
 .tafsir-item{ padding: 14px 2px; }
 .tafsir-ayah-head{
   font-family: var(--font-ui);
-  font-size:13.8px;
+  font-size:16px;
   font-weight:700;
   color: var(--gold);
   margin-bottom:8px;
@@ -2499,7 +2499,7 @@ body.night .tafsir-ayah-head{ color:#F2F2F2; }
 .tafsir-text{
   margin:0;
   font-family: var(--font-ui);
-  font-size:17.5px;
+  font-size:19.5px;
   line-height:1.95;
   color: var(--ink);
   text-align:justify;
