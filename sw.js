@@ -19,6 +19,7 @@ const STATIC_ASSETS = [
   './fonts/cairo-arabic-600-normal.woff2',
   './fonts/cairo-arabic-700-normal.woff2',
   './fonts/amiri-quran-arabic-400-normal.woff2',
+  './fonts/qcf-merged.woff2', // QCF Override
   // data.js (النص القرآني الكامل، ~3.3MB) لا يتغيّر أبدًا إلا مع إصدار
   // جديد كامل للتطبيق (نفس ضمان الخطوط بالظبط) — ونظام التحديث هنا أصلًا
   // مبني على تغيير اسم CACHE نفسه (من version.js) + مسح كل الكاش القديم
@@ -58,6 +59,8 @@ const DYNAMIC_ASSETS = [
   './settings.js',
   './navigation.js',
   './app.js',
+  './qcf-override.css', // QCF Override
+  './qcf-override.js',  // QCF Override
   './manifest.json'
 ];
 

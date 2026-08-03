@@ -129,6 +129,41 @@
 
   function normalizeArabicCore(s, daggerAlifTo){
     return toSearchString(s)
+      // -----------------------------------------------------------------
+      // Rasm layout controls — NOT real word separators. The Quranic
+      // orthography occasionally inserts thin/hair/nbsp-class spaces or
+      // format characters *inside* a single orthographic word (canonical
+      // case: U+2009 THIN SPACE in 2:72 فَٱدَّـٰرَ ٰٔتُمۡ between ر and
+      // the following dagger-alif+hamza). JavaScript's \s matches these,
+      // so the later "\s+ → space" step used to turn one word into two
+      // ("فادار اتم"), and a modern-spelling query like "فادارأتم" could
+      // never match. Strip them here so they contribute neither a letter
+      // nor a boundary. Regular U+0020 SPACE is intentionally NOT in this
+      // set — it remains the only word separator. Applies to every
+      // interpretation (including مطابقة تامة): layout is not rasm.
+      // -----------------------------------------------------------------
+      .replace(/[\u00A0\u2000-\u200D\u202F\u205F\u2060\uFEFF\u034F]/g, '')
+      // -----------------------------------------------------------------
+      // Tatweel-borne combining hamza (ـٔ / ـٕ): the Quranic rasm often
+      // parks a hamza *on a tatweel* instead of writing the letter ء.
+      // Classic case: شَيۡـٔٗا (accusative of شيء). U+0654 is stripped as
+      // a haraka below, and the tatweel then vanishes, so the hamza
+      // disappeared entirely ("شيا") while a modern query "شيئا" keeps a
+      // hamza letter ("شيءا" or via ئ "شييا") — zero hits. Promote the
+      // combining mark to a real ء *before* harakat/tatweel stripping so
+      // the letter survives. General rasm rule, not a per-word exception.
+      // -----------------------------------------------------------------
+      .replace(/\u0640[\u0654\u0655]/g, 'ء')
+      // -----------------------------------------------------------------
+      // Modern orthography writes hamza-after-yeh as the single letter ئ
+      // (YEH WITH HAMZA ABOVE) even when a full ي already precedes it:
+      // "شيئًا" = ي + ئ. The existing ئ→ي rule below would then turn that
+      // into يي ("شييا"), which never matches the rasm-derived "شيءا".
+      // Collapse the digraph يئ → يء first so both the modern spelling
+      // and the tatweel-hamza rasm agree on شيءا. Applies only to this
+      // digraph; lone ئ (أولئك، ملائكة…) still follows ئ→ي below.
+      // -----------------------------------------------------------------
+      .replace(/يئ/g, 'يء')
       .replace(/\u0670/g, daggerAlifTo)
       .replace(/[\u064B-\u065F\u0610-\u061A\u06D6-\u06ED\u08F0-\u08FF\u06DF\u06E0-\u06E4\u06E7\u06E8\u06EA-\u06ED]/g, '')
       .replace(/[\u0640]/g, '')            // tatweel
@@ -235,15 +270,33 @@
   function normalizeArabicWawAlifCollapsed(s){
     return normalizeArabicCore(toSearchString(s).replace(/و\u0670(?=ة)/g, 'ا'), 'ا');
   }
+  // Fourth interpretation (tolerant search only): standalone hamza ء
+  // treated as yeh ي, with dagger alif inserted as ا. Needed because a
+  // handful of Quranic spellings write a medial hamza where modern
+  // orthography uses yeh — the canonical example is إسرائيل:
+  //   rasm  إِسْرَـٰٓءِيلَ  → strict اسرءيل / ins اسراءيل
+  //   typed إسرائيل         → اسراييل
+  // Neither of the first three interpretations ever produces اسراييل
+  // from the rasm, so a full-word query for "إسرائيل" returned zero
+  // hits while the partial "اسر" (shared prefix) worked. Mapping ء→ي
+  // is NOT safe as a primary rule (شيء would become شيي and break
+  // itself), so it stays a separate optional interpretation: primary
+  // norms still handle شيء/سماء/… correctly; this one only adds the
+  // Israel-style matches. Same design as the dagger-alif and
+  // waw-alif interpretations above — no exception list, every word
+  // covered by construction.
+  function normalizeArabicHamzaAsYeh(s){
+    return normalizeArabicCore(toSearchString(s).replace(/ء/g, 'ي'), 'ا');
+  }
 
   // -----------------------------------------------------------------
   // Ayah index: flat, search-friendly list of every ayah in the mushaf
   // (both script variants, pre-normalized), built once on first search
   // — not at startup — and kept in memory for the rest of the session.
   // normStrict/normIndopakStrict: dagger alif = no letter (true rasm) —
-  // used for مطابقة تامة. normIns/normIndopakIns and normWaw/
-  // normIndopakWaw are tolerant search's other two interpretations (see
-  // searchAyahs below).
+  // used for مطابقة تامة. normIns/normIndopakIns, normWaw/normIndopakWaw,
+  // and normHamzaYeh/normIndopakHamzaYeh are tolerant search's other
+  // three interpretations (see searchAyahs below).
   // -----------------------------------------------------------------
   var ayahIndex = [];
   var ayahIndexBuilt = false;
@@ -261,7 +314,9 @@
           normIns: normalizeArabicAlifInserted(a.text),
           normIndopakIns: normalizeArabicAlifInserted(indopak),
           normWaw: normalizeArabicWawAlifCollapsed(a.text),
-          normIndopakWaw: normalizeArabicWawAlifCollapsed(indopak)
+          normIndopakWaw: normalizeArabicWawAlifCollapsed(indopak),
+          normHamzaYeh: normalizeArabicHamzaAsYeh(a.text),
+          normIndopakHamzaYeh: normalizeArabicHamzaAsYeh(indopak)
         });
       });
     });
@@ -298,7 +353,8 @@
         ? (findBoundedIndex(e.normStrict, q) !== -1 || findBoundedIndex(e.normIndopakStrict, q) !== -1)
         : (e.normStrict.indexOf(q) !== -1 || e.normIndopakStrict.indexOf(q) !== -1
            || e.normIns.indexOf(q) !== -1 || e.normIndopakIns.indexOf(q) !== -1
-           || e.normWaw.indexOf(q) !== -1 || e.normIndopakWaw.indexOf(q) !== -1);
+           || e.normWaw.indexOf(q) !== -1 || e.normIndopakWaw.indexOf(q) !== -1
+           || e.normHamzaYeh.indexOf(q) !== -1 || e.normIndopakHamzaYeh.indexOf(q) !== -1);
       if(hit) out.push(e);
     }
     return out;
@@ -362,7 +418,9 @@
     }
     var range = tryInterpretation(normalizeArabic);
     if(!range && !exact){
-      range = tryInterpretation(normalizeArabicAlifInserted) || tryInterpretation(normalizeArabicWawAlifCollapsed);
+      range = tryInterpretation(normalizeArabicAlifInserted)
+        || tryInterpretation(normalizeArabicWawAlifCollapsed)
+        || tryInterpretation(normalizeArabicHamzaAsYeh);
     }
     return range || null;
   }
