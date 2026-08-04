@@ -2499,7 +2499,7 @@ body.night .tafsir-ayah-head{ color:#F2F2F2; }
 .tafsir-text{
   margin:0;
   font-family: var(--font-ui);
-  font-size:19.5px;
+  font-size:18.5px;
   line-height:1.95;
   color: var(--ink);
   text-align:justify;
