@@ -286,25 +286,219 @@ main{
   flex-wrap:wrap;
   gap: 10px;
 }
+
+/* Tabs */
+.tabs{
+  display:flex;
+  gap: 6px;
+}
+.tab-btn{
+  background: transparent;
+  color: #D8CFB3;
+  border: 1px solid rgba(216,207,179,.35);
+  border-radius: 999px;
+  padding: 7px 16px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+}
+.tab-btn:hover{ border-color: rgba(216,207,179,.7); }
+.tab-btn.active{
+  background: var(--gold-bright);
+  color: #2B2013;
+  border-color: var(--gold-bright);
+}
+
+/* Audit status tab */
+.audit-summary{
+  display:flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.audit-stat{
+  flex: 1 1 150px;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px 16px;
+  text-align: center;
+}
+.audit-stat .num{ font-size: 26px; font-weight: 700; display:block; }
+.audit-stat .lbl{ font-size: 12px; color: var(--ink-soft); margin-top: 4px; }
+.audit-stat.total .num{ color: var(--ink); }
+.audit-stat.addition .num{ color: var(--emerald-deep); }
+.audit-stat.exclusion .num{ color: #3A5FA0; }
+.audit-stat.unresolved .num{ color: var(--red); }
+.audit-stat.inconsistent .num{ color: var(--amber); }
+
+.audit-filters{
+  display:flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.audit-filter-btn{
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 5px 14px;
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+  color: var(--ink-soft);
+}
+.audit-filter-btn.active{
+  background: var(--emerald);
+  border-color: var(--emerald-deep);
+  color: #fff;
+}
+
+.audit-list{
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+}
+.audit-row{
+  display:flex;
+  align-items:center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+  font-size: 14px;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.audit-row:last-child{ border-bottom: none; }
+.audit-row .ref{ font-weight: 700; min-width: 70px; }
+.audit-row .type{ color: var(--ink-soft); flex: 1 1 auto; }
+.audit-status-pill{
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.audit-status-pill.addition{ background:#DCEEE1; color: var(--emerald-deep); }
+.audit-status-pill.exclusion{ background:#DDE7F5; color: #3A5FA0; }
+.audit-status-pill.unresolved{ background:#F3D9D5; color: var(--red); }
+.audit-status-pill.inconsistent{ background:#F7E6C4; color:#8A5A00; }
+
+.audit-empty{
+  padding: 40px 20px;
+  text-align:center;
+  color: var(--ink-soft);
+  font-size: 14px;
+  line-height: 1.9;
+}
+
+/* Interpretation notice banner */
+.interpretation-notice{
+  max-width: 920px;
+  margin: 16px auto 0;
+  padding: 12px 18px;
+  background: #FFF6DD;
+  border: 1px solid #E8C97A;
+  border-radius: 12px;
+  font-size: 13px;
+  line-height: 1.9;
+  color: #5A4614;
+}
+.interpretation-notice code{
+  background: rgba(0,0,0,.06);
+  border-radius: 4px;
+  padding: 1px 5px;
+  font-size: 12px;
+  font-family: monospace;
+  direction: ltr;
+  display: inline-block;
+}
+.notice-link{
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: #8A5A00;
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.notice-link:hover{ color: #6B4400; }
+
+.audit-tab-note{
+  max-width: 100%;
+  margin-bottom: 14px;
+  padding: 10px 16px;
+  background: #FFF6DD;
+  border: 1px solid #E8C97A;
+  border-radius: 10px;
+  font-size: 12px;
+  line-height: 1.8;
+  color: #5A4614;
+}
 </style>
 </head>
 <body>
 
 <header>
   <h1>مراجعة WAQF_REVIEW</h1>
+  <div class="tabs" id="tabBar">
+    <button class="tab-btn active" data-tab="review" type="button">مراجعة الكلمة المضيفة</button>
+    <button class="tab-btn" data-tab="audit" type="button">حالة التدقيق</button>
+  </div>
   <div class="progress" id="progressText">جارٍ التحميل…</div>
   <button class="export-btn" id="exportBtn">تصدير JSON</button>
 </header>
 
+<div class="interpretation-notice">
+  <strong>تنبيه مهم:</strong> وجود موضع في القائمة أدناه <u>لا يعني</u>
+  أنه ما زال يحتاج مراجعة يدوية. كثير من المواضع محسومة فعليًا عبر
+  <code>DEFAULT_MARK_MANUAL_ADDITIONS</code> أو
+  <code>DEFAULT_MARK_MANUAL_EXCLUSIONS</code> في <code>readerManager.js</code>،
+  رغم بقائها هنا كأرشيف خام. لا تعتمد على هذه الصفحة وحدها لتحديد حالة
+  أي موضع — راجع
+  <button type="button" id="noticeJumpToAudit" class="notice-link">تبويب «حالة التدقيق»</button>
+  للحالة الفعلية، أو <code>docs/waqf-review-interpretation.md</code> للتفاصيل الكاملة.
+</div>
+
 <main>
-  <div id="cardHost"></div>
-  <div class="export-panel">
-    <span id="exportSummary">لا توجد حالات معتمدة بعد.</span>
-    <span>يُحفظ التقدم تلقائيًا في هذا المتصفح.</span>
+  <div id="tab-review" class="tab-panel">
+    <div id="cardHost"></div>
+    <div class="export-panel">
+      <span id="exportSummary">لا توجد حالات معتمدة بعد.</span>
+      <span>يُحفظ التقدم تلقائيًا في هذا المتصفح.</span>
+    </div>
+  </div>
+
+  <div id="tab-audit" class="tab-panel" hidden>
+    <div class="audit-tab-note">
+      كل عنصر أدناه يعكس حالته <strong>الفعلية</strong> بعد قراءة
+      <code>WAQF_POSITIONS</code> و <code>DEFAULT_MARK_MANUAL_ADDITIONS</code>
+      و <code>DEFAULT_MARK_MANUAL_EXCLUSIONS</code> معًا — وليس مجرد وجوده في
+      <code>WAQF_REVIEW</code>. راجع <code>docs/waqf-review-interpretation.md</code>
+      إن أردت تفاصيل هذا الفصل.
+    </div>
+    <div class="audit-summary" id="auditSummary"></div>
+    <div class="audit-filters" id="auditFilters"></div>
+    <div class="audit-list" id="auditList"></div>
   </div>
 </main>
 
+<!-- Raw WAQF_REVIEW review-queue data (per-case host-word review workflow). -->
 <script id="waqf-review-data" type="application/json">[]</script>
+
+<!--
+  Audit-status data — generated by tools/waqf_review_audit.js at
+  v1.0.273 release time. Each entry is {s, a, t, status}, status one
+  of: "addition" | "exclusion" | "unresolved" | "inconsistent".
+  This is a point-in-time snapshot: if WAQF_REVIEW,
+  DEFAULT_MARK_MANUAL_ADDITIONS, or DEFAULT_MARK_MANUAL_EXCLUSIONS
+  ever change, re-run tools/waqf_review_audit.js and paste its fresh
+  waqf_review_status_embed.json output here to keep this tab accurate.
+-->
+<script id="waqf-audit-data" type="application/json">[{"s":2,"a":29,"t":"TA_MUTLAQ","status":"addition"},{"s":2,"a":72,"t":"JEEM","status":"addition"},{"s":2,"a":72,"t":"TA_MUTLAQ","status":"addition"},{"s":2,"a":102,"t":"QIF","status":"addition"},{"s":2,"a":102,"t":"TA_MUTLAQ","status":"addition"},{"s":2,"a":142,"t":"TA_MUTLAQ","status":"addition"},{"s":2,"a":144,"t":"SAD_RUKHSA","status":"addition"},{"s":2,"a":144,"t":"TA_MUTLAQ","status":"addition"},{"s":2,"a":198,"t":"JEEM","status":"addition"},{"s":2,"a":243,"t":"TA_MUTLAQ","status":"addition"},{"s":2,"a":247,"t":"TA_MUTLAQ","status":"addition"},{"s":2,"a":251,"t":"TA_MUTLAQ","status":"addition"},{"s":2,"a":258,"t":"JEEM","status":"addition"},{"s":2,"a":258,"t":"LA","status":"unresolved"},{"s":2,"a":258,"t":"TA_MUTLAQ","status":"addition"},{"s":2,"a":258,"t":"WAQF_LAZIM","status":"addition"},{"s":2,"a":272,"t":"TA_MUTLAQ","status":"addition"},{"s":2,"a":282,"t":"SAD_RUKHSA","status":"addition"},{"s":2,"a":282,"t":"TA_MUTLAQ","status":"addition"},{"s":3,"a":3,"t":"LA","status":"unresolved"},{"s":3,"a":28,"t":"TA_MUTLAQ","status":"addition"},{"s":3,"a":48,"t":"JEEM","status":"addition"},{"s":3,"a":50,"t":"QIF","status":"addition"},{"s":3,"a":65,"t":"TA_MUTLAQ","status":"addition"},{"s":3,"a":93,"t":"TA_MUTLAQ","status":"addition"},{"s":3,"a":144,"t":"TA_MUTLAQ","status":"addition"},{"s":3,"a":148,"t":"TA_MUTLAQ","status":"addition"},{"s":3,"a":150,"t":"JEEM","status":"addition"},{"s":3,"a":151,"t":"TA_MUTLAQ","status":"addition"},{"s":3,"a":152,"t":"JEEM","status":"addition"},{"s":3,"a":152,"t":"TA_MUTLAQ","status":"addition"},{"s":3,"a":153,"t":"TA_MUTLAQ","status":"addition"},{"s":3,"a":162,"t":"TA_MUTLAQ","status":"addition"},{"s":3,"a":170,"t":"LA","status":"unresolved"},{"s":3,"a":170,"t":"WAQF_LAZIM","status":"addition"},{"s":3,"a":180,"t":"TA_MUTLAQ","status":"addition"},{"s":3,"a":197,"t":"TA_MUTLAQ","status":"addition"},{"s":4,"a":20,"t":"TA_MUTLAQ","status":"addition"},{"s":4,"a":37,"t":"JEEM","status":"addition"},{"s":4,"a":37,"t":"TA_MUTLAQ","status":"addition"},{"s":4,"a":54,"t":"JEEM","status":"addition"},{"s":4,"a":84,"t":"TA_MUTLAQ","status":"addition"},{"s":4,"a":97,"t":"LA","status":"unresolved"},{"s":4,"a":97,"t":"TA_MUTLAQ","status":"addition"},{"s":4,"a":105,"t":"LA","status":"unresolved"},{"s":4,"a":105,"t":"TA_MUTLAQ","status":"addition"},{"s":4,"a":114,"t":"TA_MUTLAQ","status":"addition"},{"s":4,"a":121,"t":"ZAY_JAWAZ","status":"addition"},{"s":4,"a":142,"t":"JEEM","status":"addition"},{"s":4,"a":142,"t":"LA","status":"unresolved"},{"s":4,"a":142,"t":"ZAY_JAWAZ","status":"unresolved"},{"s":4,"a":171,"t":"JEEM","status":"addition"},{"s":4,"a":171,"t":"QIF","status":"addition"},{"s":4,"a":171,"t":"TA_MUTLAQ","status":"addition"},{"s":4,"a":171,"t":"WAQF_LAZIM","status":"addition"},{"s":4,"a":171,"t":"ZAY_JAWAZ","status":"addition"},{"s":5,"a":7,"t":"LA","status":"unresolved"},{"s":5,"a":7,"t":"TA_MUTLAQ","status":"addition"},{"s":5,"a":7,"t":"ZAY_JAWAZ","status":"addition"},{"s":5,"a":43,"t":"TA_MUTLAQ","status":"addition"},{"s":5,"a":44,"t":"JEEM","status":"addition"},{"s":5,"a":44,"t":"TA_MUTLAQ","status":"addition"},{"s":5,"a":46,"t":"LA","status":"unresolved"},{"s":5,"a":46,"t":"SAD_RUKHSA","status":"addition"},{"s":5,"a":46,"t":"TA_MUTLAQ","status":"addition"},{"s":5,"a":48,"t":"LA","status":"unresolved"},{"s":5,"a":48,"t":"TA_MUTLAQ","status":"addition"},{"s":5,"a":63,"t":"TA_MUTLAQ","status":"addition"},{"s":5,"a":66,"t":"TA_MUTLAQ","status":"addition"},{"s":5,"a":68,"t":"JEEM","status":"addition"},{"s":5,"a":68,"t":"TA_MUTLAQ","status":"addition"},{"s":5,"a":72,"t":"TA_MUTLAQ","status":"addition"},{"s":5,"a":110,"t":"JEEM","status":"addition"},{"s":6,"a":34,"t":"JEEM","status":"addition"},{"s":6,"a":40,"t":"JEEM","status":"addition"},{"s":6,"a":46,"t":"TA_MUTLAQ","status":"addition"},{"s":6,"a":60,"t":"JEEM","status":"addition"},{"s":6,"a":62,"t":"QIF","status":"addition"},{"s":6,"a":62,"t":"TA_MUTLAQ","status":"addition"},{"s":6,"a":71,"t":"LA","status":"unresolved"},{"s":6,"a":71,"t":"SAD_RUKHSA","status":"addition"},{"s":6,"a":71,"t":"TA_MUTLAQ","status":"addition"},{"s":6,"a":80,"t":"TA_MUTLAQ","status":"addition"},{"s":6,"a":90,"t":"TA_MUTLAQ","status":"addition"},{"s":6,"a":128,"t":"TA_MUTLAQ","status":"addition"},{"s":6,"a":144,"t":"JEEM","status":"addition"},{"s":6,"a":144,"t":"TA_MUTLAQ","status":"addition"},{"s":6,"a":152,"t":"LA","status":"unresolved"},{"s":6,"a":161,"t":"JEEM","status":"addition"},{"s":6,"a":165,"t":"TA_MUTLAQ","status":"addition"},{"s":6,"a":165,"t":"ZAY_JAWAZ","status":"addition"},{"s":7,"a":22,"t":"JEEM","status":"addition"},{"s":7,"a":22,"t":"TA_MUTLAQ","status":"addition"},{"s":7,"a":27,"t":"TA_MUTLAQ","status":"addition"},{"s":7,"a":38,"t":"TA_MUTLAQ","status":"addition"},{"s":7,"a":43,"t":"JEEM","status":"addition"},{"s":7,"a":43,"t":"QIF","status":"addition"},{"s":7,"a":43,"t":"TA_MUTLAQ","status":"addition"},{"s":7,"a":46,"t":"JEEM","status":"addition"},{"s":7,"a":46,"t":"QIF","status":"addition"},{"s":7,"a":51,"t":"LA","status":"unresolved"},{"s":7,"a":89,"t":"TA_MUTLAQ","status":"addition"},{"s":7,"a":103,"t":"JEEM","status":"addition"},{"s":7,"a":111,"t":"LA","status":"unresolved"},{"s":7,"a":143,"t":"JEEM","status":"addition"},{"s":7,"a":157,"t":"LA","status":"unresolved"},{"s":7,"a":157,"t":"TA_MUTLAQ","status":"addition"},{"s":7,"a":157,"t":"ZAY_JAWAZ","status":"addition"},{"s":7,"a":160,"t":"JEEM","status":"addition"},{"s":7,"a":160,"t":"TA_MUTLAQ","status":"addition"},{"s":7,"a":176,"t":"JEEM","status":"addition"},{"s":7,"a":176,"t":"TA_MUTLAQ","status":"addition"},{"s":7,"a":187,"t":"JEEM","status":"addition"},{"s":7,"a":187,"t":"TA_MUTLAQ","status":"addition"},{"s":7,"a":187,"t":"WAQF_LAZIM","status":"addition"},{"s":7,"a":189,"t":"JEEM","status":"addition"},{"s":7,"a":190,"t":"JEEM","status":"addition"},{"s":8,"a":16,"t":"TA_MUTLAQ","status":"addition"},{"s":8,"a":40,"t":"TA_MUTLAQ","status":"addition"},{"s":8,"a":43,"t":"TA_MUTLAQ","status":"addition"},{"s":9,"a":51,"t":"JEEM","status":"addition"},{"s":9,"a":59,"t":"LA","status":"unresolved"},{"s":9,"a":73,"t":"TA_MUTLAQ","status":"addition"},{"s":9,"a":74,"t":"JEEM","status":"addition"},{"s":9,"a":74,"t":"LA","status":"unresolved"},{"s":9,"a":78,"t":"JEEM","status":"addition"},{"s":9,"a":95,"t":"JEEM","status":"addition"},{"s":9,"a":111,"t":"TA_MUTLAQ","status":"addition"},{"s":9,"a":115,"t":"TA_MUTLAQ","status":"addition"},{"s":9,"a":127,"t":"TA_MUTLAQ","status":"addition"},{"s":10,"a":10,"t":"JEEM","status":"addition"},{"s":10,"a":15,"t":"JEEM","status":"addition"},{"s":10,"a":16,"t":"QAD_QILA","status":"unresolved"},{"s":10,"a":16,"t":"TA_MUTLAQ","status":"addition"},{"s":10,"a":16,"t":"ZAY_JAWAZ","status":"unresolved"},{"s":10,"a":23,"t":"LA","status":"unresolved"},{"s":10,"a":23,"t":"TA_MUTLAQ","status":"addition"},{"s":10,"a":23,"t":"ZAY_JAWAZ","status":"addition"},{"s":10,"a":24,"t":"TA_MUTLAQ","status":"addition"},{"s":10,"a":38,"t":"TA_MUTLAQ","status":"addition"},{"s":10,"a":83,"t":"JEEM","status":"addition"},{"s":10,"a":83,"t":"TA_MUTLAQ","status":"addition"},{"s":10,"a":104,"t":"JEEM","status":"addition"},{"s":10,"a":104,"t":"LA","status":"unresolved"},{"s":11,"a":13,"t":"TA_MUTLAQ","status":"addition"},{"s":11,"a":27,"t":"JEEM","status":"addition"},{"s":11,"a":28,"t":"TA_MUTLAQ","status":"addition"},{"s":11,"a":35,"t":"TA_MUTLAQ","status":"addition"},{"s":11,"a":41,"t":"TA_MUTLAQ","status":"addition"},{"s":11,"a":54,"t":"LA","status":"unresolved"},{"s":11,"a":54,"t":"TA_MUTLAQ","status":"addition"},{"s":11,"a":63,"t":"QIF","status":"addition"},{"s":11,"a":88,"t":"TA_MUTLAQ","status":"addition"},{"s":11,"a":91,"t":"JEEM","status":"addition"},{"s":11,"a":91,"t":"ZAY_JAWAZ","status":"addition"},{"s":11,"a":97,"t":"JEEM","status":"addition"},{"s":12,"a":21,"t":"TA_MUTLAQ","status":"addition"},{"s":12,"a":21,"t":"ZAY_JAWAZ","status":"addition"},{"s":12,"a":30,"t":"JEEM","status":"addition"},{"s":12,"a":30,"t":"TA_MUTLAQ","status":"addition"},{"s":12,"a":36,"t":"JEEM","status":"addition"},{"s":12,"a":36,"t":"TA_MUTLAQ","status":"addition"},{"s":12,"a":68,"t":"TA_MUTLAQ","status":"addition"},{"s":12,"a":88,"t":"TA_MUTLAQ","status":"addition"},{"s":12,"a":96,"t":"JEEM","status":"addition"},{"s":12,"a":96,"t":"LA","status":"unresolved"},{"s":12,"a":96,"t":"TA_MUTLAQ","status":"addition"},{"s":13,"a":18,"t":"TA_MUTLAQ","status":"addition"},{"s":14,"a":5,"t":"TA_MUTLAQ","status":"addition"},{"s":14,"a":6,"t":"TA_MUTLAQ","status":"addition"},{"s":14,"a":12,"t":"TA_MUTLAQ","status":"addition"},{"s":14,"a":21,"t":"TA_MUTLAQ","status":"addition"},{"s":14,"a":34,"t":"TA_MUTLAQ","status":"addition"},{"s":16,"a":28,"t":"SAD_RUKHSA","status":"addition"},{"s":16,"a":28,"t":"TA_MUTLAQ","status":"addition"},{"s":16,"a":32,"t":"LA","status":"unresolved"},{"s":16,"a":70,"t":"LA","status":"unresolved"},{"s":16,"a":70,"t":"QIF","status":"exclusion"},{"s":16,"a":70,"t":"TA_MUTLAQ","status":"addition"},{"s":16,"a":76,"t":"LA","status":"unresolved"},{"s":16,"a":76,"t":"TA_MUTLAQ","status":"addition"},{"s":17,"a":5,"t":"TA_MUTLAQ","status":"addition"},{"s":17,"a":40,"t":"TA_MUTLAQ","status":"addition"},{"s":17,"a":67,"t":"TA_MUTLAQ","status":"addition"},{"s":17,"a":97,"t":"TA_MUTLAQ","status":"addition"},{"s":18,"a":37,"t":"TA_MUTLAQ","status":"addition"},{"s":18,"a":49,"t":"JEEM","status":"addition"},{"s":18,"a":49,"t":"TA_MUTLAQ","status":"addition"},{"s":18,"a":62,"t":"ZAY_JAWAZ","status":"addition"},{"s":18,"a":63,"t":"JEEM","status":"addition"},{"s":18,"a":63,"t":"QAD_QILA","status":"unresolved"},{"s":19,"a":30,"t":"LA","status":"unresolved"},{"s":20,"a":9,"t":"WAQF_LAZIM","status":"addition"},{"s":20,"a":11,"t":"TA_MUTLAQ","status":"addition"},{"s":20,"a":121,"t":"SAD_RUKHSA","status":"unresolved"},{"s":20,"a":121,"t":"ZAY_JAWAZ","status":"addition"},{"s":21,"a":2,"t":"LA","status":"unresolved"},{"s":21,"a":5,"t":"JEEM","status":"addition"},{"s":21,"a":65,"t":"JEEM","status":"addition"},{"s":21,"a":103,"t":"TA_MUTLAQ","status":"addition"},{"s":22,"a":37,"t":"TA_MUTLAQ","status":"addition"},{"s":22,"a":78,"t":"JEEM","status":"addition"},{"s":22,"a":78,"t":"LA","status":"unresolved"},{"s":22,"a":78,"t":"TA_MUTLAQ","status":"addition"},{"s":23,"a":46,"t":"JEEM","status":"addition"},{"s":24,"a":11,"t":"JEEM","status":"addition"},{"s":24,"a":33,"t":"TA_MUTLAQ","status":"addition"},{"s":24,"a":39,"t":"LA","status":"unresolved"},{"s":24,"a":39,"t":"TA_MUTLAQ","status":"addition"},{"s":24,"a":40,"t":"TA_MUTLAQ","status":"addition"},{"s":24,"a":57,"t":"TA_MUTLAQ","status":"addition"},{"s":25,"a":4,"t":"JEEM","status":"addition"},{"s":25,"a":4,"t":"MUANAQAH","status":"unresolved"},{"s":25,"a":43,"t":"LA","status":"unresolved"},{"s":25,"a":43,"t":"TA_MUTLAQ","status":"addition"},{"s":25,"a":58,"t":"JEEM","status":"addition"},{"s":25,"a":58,"t":"LA","status":"unresolved"},{"s":25,"a":58,"t":"MUANAQAH","status":"unresolved"},{"s":26,"a":218,"t":"LA","status":"unresolved"},{"s":27,"a":36,"t":"JEEM","status":"addition"},{"s":28,"a":25,"t":"LA","status":"unresolved"},{"s":28,"a":25,"t":"QIF","status":"addition"},{"s":28,"a":25,"t":"TA_MUTLAQ","status":"addition"},{"s":28,"a":25,"t":"WAQFA","status":"unresolved"},{"s":28,"a":25,"t":"ZAY_JAWAZ","status":"addition"},{"s":28,"a":26,"t":"ZAY_JAWAZ","status":"addition"},{"s":28,"a":30,"t":"LA","status":"unresolved"},{"s":28,"a":32,"t":"TA_MUTLAQ","status":"addition"},{"s":28,"a":50,"t":"TA_MUTLAQ","status":"addition"},{"s":28,"a":77,"t":"TA_MUTLAQ","status":"addition"},{"s":29,"a":24,"t":"TA_MUTLAQ","status":"addition"},{"s":29,"a":25,"t":"LA","status":"unresolved"},{"s":29,"a":25,"t":"QAD_QILA","status":"unresolved"},{"s":29,"a":65,"t":"LA","status":"unresolved"},{"s":31,"a":32,"t":"TA_MUTLAQ","status":"addition"},{"s":32,"a":3,"t":"JEEM","status":"addition"},{"s":32,"a":9,"t":"TA_MUTLAQ","status":"addition"},{"s":32,"a":20,"t":"TA_MUTLAQ","status":"addition"},{"s":33,"a":4,"t":"JEEM","status":"addition"},{"s":33,"a":4,"t":"TA_MUTLAQ","status":"addition"},{"s":33,"a":37,"t":"TA_MUTLAQ","status":"addition"},{"s":33,"a":48,"t":"TA_MUTLAQ","status":"addition"},{"s":33,"a":53,"t":"TA_MUTLAQ","status":"addition"},{"s":33,"a":53,"t":"ZAY_JAWAZ","status":"addition"},{"s":35,"a":2,"t":"TA_MUTLAQ","status":"addition"},{"s":35,"a":11,"t":"TA_MUTLAQ","status":"addition"},{"s":35,"a":43,"t":"JEEM","status":"addition"},{"s":35,"a":43,"t":"TA_MUTLAQ","status":"addition"},{"s":37,"a":75,"t":"ZAY_JAWAZ","status":"addition"},{"s":38,"a":21,"t":"LA","status":"unresolved"},{"s":38,"a":21,"t":"WAQF_LAZIM","status":"addition"},{"s":39,"a":21,"t":"TA_MUTLAQ","status":"addition"},{"s":39,"a":57,"t":"LA","status":"unresolved"},{"s":40,"a":35,"t":"TA_MUTLAQ","status":"addition"},{"s":40,"a":45,"t":"JEEM","status":"addition"},{"s":40,"a":56,"t":"LA","status":"unresolved"},{"s":40,"a":56,"t":"TA_MUTLAQ","status":"addition"},{"s":41,"a":12,"t":"QAD_QILA","status":"unresolved"},{"s":41,"a":12,"t":"TA_MUTLAQ","status":"addition"},{"s":41,"a":35,"t":"JEEM","status":"addition"},{"s":42,"a":45,"t":"TA_MUTLAQ","status":"addition"},{"s":42,"a":51,"t":"TA_MUTLAQ","status":"addition"},{"s":43,"a":80,"t":"TA_MUTLAQ","status":"addition"},{"s":44,"a":56,"t":"LA","status":"unresolved"},{"s":45,"a":23,"t":"TA_MUTLAQ","status":"addition"},{"s":46,"a":8,"t":"TA_MUTLAQ","status":"addition"},{"s":46,"a":15,"t":"JEEM","status":"addition"},{"s":46,"a":15,"t":"TA_MUTLAQ","status":"unresolved"},{"s":48,"a":29,"t":"JEEM","status":"addition"},{"s":48,"a":29,"t":"MUANAQAH","status":"unresolved"},{"s":48,"a":29,"t":"QIF","status":"addition"},{"s":48,"a":29,"t":"TA_MUTLAQ","status":"addition"},{"s":48,"a":29,"t":"ZAY_JAWAZ","status":"addition"},{"s":49,"a":9,"t":"JEEM","status":"addition"},{"s":49,"a":9,"t":"TA_MUTLAQ","status":"addition"},{"s":49,"a":13,"t":"TA_MUTLAQ","status":"addition"},{"s":51,"a":16,"t":"TA_MUTLAQ","status":"addition"},{"s":51,"a":24,"t":"WAQF_LAZIM","status":"addition"},{"s":52,"a":18,"t":"JEEM","status":"addition"},{"s":53,"a":41,"t":"LA","status":"unresolved"},{"s":53,"a":54,"t":"JEEM","status":"addition"},{"s":56,"a":23,"t":"JEEM","status":"addition"},{"s":57,"a":12,"t":"JEEM","status":"addition"},{"s":57,"a":12,"t":"TA_MUTLAQ","status":"addition"},{"s":57,"a":15,"t":"TA_MUTLAQ","status":"addition"},{"s":57,"a":20,"t":"LA","status":"unresolved"},{"s":57,"a":20,"t":"TA_MUTLAQ","status":"addition"},{"s":57,"a":23,"t":"LA","status":"unresolved"},{"s":57,"a":23,"t":"TA_MUTLAQ","status":"addition"},{"s":58,"a":6,"t":"TA_MUTLAQ","status":"addition"},{"s":58,"a":12,"t":"TA_MUTLAQ","status":"addition"},{"s":58,"a":13,"t":"TA_MUTLAQ","status":"addition"},{"s":58,"a":19,"t":"TA_MUTLAQ","status":"addition"},{"s":59,"a":2,"t":"QAD_QILA","status":"addition"},{"s":59,"a":7,"t":"JEEM","status":"addition"},{"s":59,"a":7,"t":"QAD_QILA","status":"addition"},{"s":59,"a":7,"t":"TA_MUTLAQ","status":"addition"},{"s":59,"a":7,"t":"WAQF_LAZIM","status":"addition"},{"s":59,"a":9,"t":"JEEM","status":"addition"},{"s":59,"a":9,"t":"QIF","status":"addition"},{"s":59,"a":9,"t":"TA_MUTLAQ","status":"unresolved"},{"s":59,"a":19,"t":"TA_MUTLAQ","status":"addition"},{"s":60,"a":8,"t":"TA_MUTLAQ","status":"addition"},{"s":60,"a":9,"t":"JEEM","status":"addition"},{"s":61,"a":6,"t":"TA_MUTLAQ","status":"addition"},{"s":62,"a":5,"t":"TA_MUTLAQ","status":"addition"},{"s":65,"a":4,"t":"TA_MUTLAQ","status":"addition"},{"s":65,"a":7,"t":"TA_MUTLAQ","status":"addition"},{"s":66,"a":2,"t":"JEEM","status":"addition"},{"s":66,"a":4,"t":"JEEM","status":"addition"},{"s":66,"a":9,"t":"TA_MUTLAQ","status":"addition"},{"s":69,"a":3,"t":"TA_MUTLAQ","status":"addition"},{"s":70,"a":7,"t":"TA_MUTLAQ","status":"addition"},{"s":72,"a":16,"t":"LA","status":"unresolved"},{"s":74,"a":27,"t":"TA_MUTLAQ","status":"addition"},{"s":74,"a":47,"t":"TA_MUTLAQ","status":"addition"},{"s":74,"a":52,"t":"LA","status":"unresolved"},{"s":76,"a":11,"t":"JEEM","status":"addition"},{"s":76,"a":12,"t":"LA","status":"unresolved"},{"s":77,"a":14,"t":"TA_MUTLAQ","status":"addition"},{"s":79,"a":15,"t":"WAQF_LAZIM","status":"addition"},{"s":79,"a":16,"t":"JEEM","status":"addition"},{"s":79,"a":20,"t":"ZAY_JAWAZ","status":"unresolved"},{"s":79,"a":27,"t":"WAQFA","status":"unresolved"},{"s":79,"a":28,"t":"LA","status":"unresolved"},{"s":79,"a":29,"t":"SAD_RUKHSA","status":"addition"},{"s":79,"a":30,"t":"TA_MUTLAQ","status":"addition"},{"s":79,"a":31,"t":"SAD_RUKHSA","status":"addition"},{"s":79,"a":32,"t":"LA","status":"unresolved"},{"s":79,"a":42,"t":"TA_MUTLAQ","status":"addition"},{"s":79,"a":43,"t":"TA_MUTLAQ","status":"addition"},{"s":79,"a":44,"t":"TA_MUTLAQ","status":"addition"},{"s":79,"a":45,"t":"TA_MUTLAQ","status":"addition"},{"s":82,"a":7,"t":"LA","status":"unresolved"},{"s":82,"a":17,"t":"LA","status":"unresolved"},{"s":82,"a":18,"t":"TA_MUTLAQ","status":"addition"},{"s":83,"a":8,"t":"TA_MUTLAQ","status":"addition"},{"s":83,"a":19,"t":"TA_MUTLAQ","status":"addition"},{"s":85,"a":17,"t":"LA","status":"unresolved"},{"s":86,"a":2,"t":"LA","status":"unresolved"},{"s":88,"a":1,"t":"TA_MUTLAQ","status":"addition"},{"s":89,"a":15,"t":"LA","status":"unresolved"},{"s":89,"a":15,"t":"TA_MUTLAQ","status":"addition"},{"s":89,"a":16,"t":"JEEM","status":"addition"},{"s":89,"a":16,"t":"LA","status":"unresolved"},{"s":90,"a":12,"t":"TA_MUTLAQ","status":"addition"},{"s":91,"a":1,"t":"LA","status":"unresolved"},{"s":91,"a":1,"t":"SAD_RUKHSA","status":"unresolved"},{"s":91,"a":2,"t":"LA","status":"unresolved"},{"s":91,"a":2,"t":"SAD_RUKHSA","status":"unresolved"},{"s":91,"a":3,"t":"LA","status":"unresolved"},{"s":91,"a":3,"t":"SAD_RUKHSA","status":"unresolved"},{"s":91,"a":4,"t":"LA","status":"unresolved"},{"s":91,"a":4,"t":"SAD_RUKHSA","status":"unresolved"},{"s":91,"a":5,"t":"LA","status":"unresolved"},{"s":91,"a":5,"t":"SAD_RUKHSA","status":"unresolved"},{"s":91,"a":6,"t":"LA","status":"unresolved"},{"s":91,"a":6,"t":"SAD_RUKHSA","status":"unresolved"},{"s":91,"a":7,"t":"LA","status":"unresolved"},{"s":91,"a":7,"t":"SAD_RUKHSA","status":"unresolved"},{"s":91,"a":8,"t":"LA","status":"unresolved"},{"s":91,"a":8,"t":"SAD_RUKHSA","status":"unresolved"},{"s":91,"a":9,"t":"LA","status":"unresolved"},{"s":91,"a":9,"t":"SAD_RUKHSA","status":"unresolved"},{"s":91,"a":10,"t":"TA_MUTLAQ","status":"addition"},{"s":91,"a":11,"t":"LA","status":"unresolved"},{"s":91,"a":11,"t":"SAD_RUKHSA","status":"unresolved"},{"s":91,"a":12,"t":"LA","status":"unresolved"},{"s":91,"a":12,"t":"SAD_RUKHSA","status":"unresolved"},{"s":91,"a":14,"t":"LA","status":"unresolved"},{"s":91,"a":14,"t":"SAD_RUKHSA","status":"exclusion"},{"s":92,"a":15,"t":"LA","status":"unresolved"},{"s":97,"a":2,"t":"TA_MUTLAQ","status":"addition"},{"s":101,"a":3,"t":"TA_MUTLAQ","status":"addition"},{"s":101,"a":10,"t":"TA_MUTLAQ","status":"addition"},{"s":102,"a":1,"t":"LA","status":"unresolved"},{"s":104,"a":5,"t":"TA_MUTLAQ","status":"addition"}]</script>
 <script>
 (function(){
   'use strict';
@@ -637,6 +831,166 @@ main{
   });
 
   render();
+})();
+</script>
+
+<script>
+(function(){
+  'use strict';
+
+  // --- Tab switching --------------------------------------------------
+  var tabBtns = document.querySelectorAll('.tab-btn');
+  var panels = {
+    review: document.getElementById('tab-review'),
+    audit: document.getElementById('tab-audit')
+  };
+  var progressEl = document.getElementById('progressText');
+  var exportBtnEl = document.getElementById('exportBtn');
+
+  function activateTab(name){
+    tabBtns.forEach(function(b){ b.classList.toggle('active', b.dataset.tab === name); });
+    panels.review.hidden = name !== 'review';
+    panels.audit.hidden = name !== 'audit';
+    // progress text + export button only make sense for the review-queue tab
+    progressEl.style.display = name === 'review' ? '' : 'none';
+    exportBtnEl.style.display = name === 'review' ? '' : 'none';
+    if(name === 'audit') renderAudit();
+  }
+  tabBtns.forEach(function(b){
+    b.addEventListener('click', function(){ activateTab(b.dataset.tab); });
+  });
+
+  var noticeJumpBtn = document.getElementById('noticeJumpToAudit');
+  if(noticeJumpBtn){
+    noticeJumpBtn.addEventListener('click', function(){
+      activateTab('audit');
+      panels.audit.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  }
+
+  // --- Audit status tab -------------------------------------------------
+  // Reads #waqf-audit-data — a flat {s, a, t, status} array produced by
+  // tools/waqf_review_audit.js from the REAL WAQF_REVIEW array compared
+  // against DEFAULT_MARK_MANUAL_ADDITIONS / DEFAULT_MARK_MANUAL_EXCLUSIONS
+  // in readerManager.js. This script never computes that comparison
+  // itself and never touches waqf-positions.js or readerManager.js —
+  // it only renders whatever status data has been pasted into the tag.
+  var AUDIT_RAW = (function(){
+    try{
+      var el = document.getElementById('waqf-audit-data');
+      var parsed = el ? JSON.parse(el.textContent) : [];
+      return Array.isArray(parsed) ? parsed : [];
+    }catch(e){ return []; }
+  })();
+
+  var TYPE_LABELS_AUDIT = {
+    JEEM: 'ج', LA: 'لا', MUANAQAH: 'تعانق', QAD_QILA: 'قد قيل',
+    QIF: 'قف', SAD_RUKHSA: 'ص', TA_MUTLAQ: 'ط', WAQFA: 'وقفة',
+    WAQF_LAZIM: 'م', ZAY_JAWAZ: 'ز'
+  };
+  var STATUS_LABELS = {
+    addition: 'محسوم — إضافة يدوية',
+    exclusion: 'محسوم — استبعاد يدوي',
+    unresolved: 'غير محسوم',
+    inconsistent: 'تعارض — يحتاج مراجعة'
+  };
+
+  var auditFilter = 'all'; // all | addition | exclusion | unresolved | inconsistent
+
+  function auditCounts(){
+    var c = { total: AUDIT_RAW.length, addition: 0, exclusion: 0, unresolved: 0, inconsistent: 0 };
+    AUDIT_RAW.forEach(function(it){ if(c[it.status] !== undefined) c[it.status]++; });
+    return c;
+  }
+
+  function elA(tag, cls, text){
+    var e = document.createElement('div');
+    e = document.createElement(tag);
+    if(cls) e.className = cls;
+    if(text !== undefined) e.textContent = text;
+    return e;
+  }
+
+  function renderAuditSummary(){
+    var counts = auditCounts();
+    var host = document.getElementById('auditSummary');
+    host.innerHTML = '';
+    var specs = [
+      ['total', 'إجمالي عناصر WAQF_REVIEW', counts.total],
+      ['addition', 'محسوم بالإضافة', counts.addition],
+      ['exclusion', 'محسوم بالاستبعاد', counts.exclusion],
+      ['unresolved', 'غير محسوم', counts.unresolved],
+      ['inconsistent', 'تعارض', counts.inconsistent]
+    ];
+    specs.forEach(function(s){
+      if(s[0] === 'inconsistent' && s[2] === 0) return; // hide empty inconsistent stat
+      var box = elA('div', 'audit-stat ' + s[0]);
+      box.appendChild(elA('span', 'num', String(s[2])));
+      box.appendChild(elA('span', 'lbl', s[1]));
+      host.appendChild(box);
+    });
+  }
+
+  function renderAuditFilters(){
+    var host = document.getElementById('auditFilters');
+    host.innerHTML = '';
+    var opts = [
+      ['all', 'الكل'],
+      ['unresolved', 'غير محسوم فقط'],
+      ['addition', 'محسوم بالإضافة'],
+      ['exclusion', 'محسوم بالاستبعاد'],
+      ['inconsistent', 'تعارض']
+    ];
+    opts.forEach(function(o){
+      var btn = elA('button', 'audit-filter-btn' + (auditFilter === o[0] ? ' active' : ''), o[1]);
+      btn.type = 'button';
+      btn.addEventListener('click', function(){ auditFilter = o[0]; renderAudit(); });
+      host.appendChild(btn);
+    });
+  }
+
+  function renderAuditList(){
+    var host = document.getElementById('auditList');
+    host.innerHTML = '';
+
+    if(AUDIT_RAW.length === 0){
+      var empty = elA('div', 'audit-empty');
+      empty.innerHTML =
+        'لا توجد بيانات تدقيق محمَّلة بعد.<br><br>' +
+        'شغّل <code>tools/waqf_review_audit.js</code> ثم الصق محتوى<br>' +
+        '<code>waqf_review_status_embed.json</code> داخل الوسم<br>' +
+        '<code>#waqf-audit-data</code> أعلى هذا الملف.';
+      host.appendChild(empty);
+      return;
+    }
+
+    var list = AUDIT_RAW.filter(function(it){
+      return auditFilter === 'all' || it.status === auditFilter;
+    });
+
+    if(list.length === 0){
+      var noneRow = elA('div', 'audit-empty', 'لا توجد عناصر مطابقة لهذا الفلتر.');
+      host.appendChild(noneRow);
+      return;
+    }
+
+    list.forEach(function(it){
+      var row = elA('div', 'audit-row');
+      row.appendChild(elA('span', 'ref', it.s + ':' + it.a));
+      row.appendChild(elA('span', 'type', TYPE_LABELS_AUDIT[it.t] || it.t));
+      row.appendChild(elA('span', 'audit-status-pill ' + it.status, STATUS_LABELS[it.status] || it.status));
+      host.appendChild(row);
+    });
+  }
+
+  function renderAudit(){
+    renderAuditSummary();
+    renderAuditFilters();
+    renderAuditList();
+  }
+
+  // Initial tab state
+  activateTab('review');
 })();
 </script>
 </body>
