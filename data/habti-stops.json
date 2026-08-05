@@ -1,0 +1,1678 @@
+{
+  "schema_version": 1,
+  "description": "مواضع الوقف الهبطي المعتمدة — مصدر البيانات الوحيد لهذه الميزة داخل التطبيق.",
+  "batches": [
+    {
+      "id": "hebti-1",
+      "date": "2026-08-04",
+      "source_file": "hebti-1.pdf",
+      "count": 23,
+      "notes": "الدفعة الأولى، 23 موضعًا. عند التحقق الأولي اختلفت الكلمة الناتجة عن رقم الآية/الموضع المرفق لرواية حفص لموضع source_id 1564 (سورة الأعراف: 19:10 → \"وَلَا\") عن الكلمة المعروضة في ملف المصدر (\"سَوْءَٰتِهِمَا\"). تحقق ماجد يدويًا من مصحف حفص وأكد أن رقم الآية المرفق كان به خطأ، وأن الموضع الصحيح لرواية حفص هو 20:10 — لا خطأ في الكلمة نفسها. صُحح المرجع وأُضيف السجل بعد التأكيد."
+    },
+    {
+      "id": "hebti-2",
+      "date": "2026-08-04",
+      "source_file": "habti-final-185-review.html",
+      "count": 184,
+      "notes": "الدفعة الثانية من habti-final-185-review.html. أُضيفت 184 موضعًا بعد التحقق الآلي. استُبعد موضع واحد فقط: 7:69:22 (بَصۜۡطَةٗۖ) لتعارضه مع علامة سجاوندي موجودة (SEEN_AS_SAD / ص). أُضيف استثناءً: 2:286:43 (وَٱرۡحَمۡنَآۚ) — تعارض WAQFA يخص مصحف النسخ لا المدينة؛ و68:1:1 (نٓۚ) — استثناء خاص: نجمة صه خضراء مع الإبقاء على البنفسجي (خلاف الروضة). source_id = 100000 + رقم البطاقة في ملف المراجعة."
+    }
+  ],
+  "stops": [
+    {
+      "surah": 2,
+      "ayah": 25,
+      "position": 24,
+      "word": "قَبۡلُۖ",
+      "source_id": 100001,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 2,
+      "ayah": 80,
+      "position": 16,
+      "word": "عَهۡدَهُۥٓۖ",
+      "source_id": 100002,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 2,
+      "ayah": 186,
+      "position": 11,
+      "word": "دَعَانِۖ",
+      "source_id": 100003,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 2,
+      "ayah": 191,
+      "position": 7,
+      "word": "أَخۡرَجُوكُمۡۚ",
+      "source_id": 100004,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 2,
+      "ayah": 233,
+      "position": 5,
+      "word": "كَامِلَيۡنِۖ",
+      "source_id": 100005,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 2,
+      "ayah": 253,
+      "position": 10,
+      "word": "ٱللَّهُۖ",
+      "source_id": 100006,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 2,
+      "ayah": 259,
+      "position": 48,
+      "word": "لِّلنَّاسِۖ",
+      "source_id": 100007,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 2,
+      "ayah": 285,
+      "position": 23,
+      "word": "وَأَطَعۡنَاۖ",
+      "source_id": 100008,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 2,
+      "ayah": 286,
+      "position": 43,
+      "word": "وَٱرۡحَمۡنَآۚ",
+      "source_id": 100009,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 3,
+      "ayah": 50,
+      "position": 12,
+      "word": "عَلَيۡكُمۡۚ",
+      "source_id": 100010,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 4,
+      "ayah": 2,
+      "position": 3,
+      "word": "أَمۡوَٰلَهُمۡۖ",
+      "source_id": 100011,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 4,
+      "ayah": 11,
+      "position": 48,
+      "word": "ٱلسُّدُسُۚ",
+      "source_id": 100012,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 4,
+      "ayah": 23,
+      "position": 11,
+      "word": "ٱلۡأُخۡتِ",
+      "source_id": 855,
+      "batch": "hebti-1"
+    },
+    {
+      "surah": 4,
+      "ayah": 23,
+      "position": 17,
+      "word": "ٱلرَّضَٰعَةِ",
+      "source_id": 856,
+      "batch": "hebti-1"
+    },
+    {
+      "surah": 4,
+      "ayah": 84,
+      "position": 8,
+      "word": "نَفۡسَكَۚ",
+      "source_id": 100013,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 4,
+      "ayah": 89,
+      "position": 7,
+      "word": "سَوَآءٗۖ",
+      "source_id": 100014,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 4,
+      "ayah": 129,
+      "position": 8,
+      "word": "حَرَصۡتُمۡۖ",
+      "source_id": 100015,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 4,
+      "ayah": 153,
+      "position": 9,
+      "word": "ٱلسَّمَآءِۚ",
+      "source_id": 100016,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 4,
+      "ayah": 162,
+      "position": 16,
+      "word": "ٱلصَّلَوٰةَۚ",
+      "source_id": 100017,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 4,
+      "ayah": 166,
+      "position": 6,
+      "word": "إِلَيۡكَۖ",
+      "source_id": 100018,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 5,
+      "ayah": 13,
+      "position": 25,
+      "word": "مِّنۡهُمۡۖ",
+      "source_id": 100019,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 5,
+      "ayah": 25,
+      "position": 8,
+      "word": "وَأَخِيۖ",
+      "source_id": 100020,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 5,
+      "ayah": 33,
+      "position": 29,
+      "word": "ٱلدُّنۡيَاۖ",
+      "source_id": 100021,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 5,
+      "ayah": 48,
+      "position": 12,
+      "word": "عَلَيۡهِۖ",
+      "source_id": 100022,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 5,
+      "ayah": 48,
+      "position": 40,
+      "word": "ءَاتَىٰكُمۡۖ",
+      "source_id": 100023,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 5,
+      "ayah": 77,
+      "position": 9,
+      "word": "ٱلۡحَقِّ",
+      "source_id": 1235,
+      "batch": "hebti-1"
+    },
+    {
+      "surah": 5,
+      "ayah": 110,
+      "position": 38,
+      "word": "بِإِذۡنِيۖ",
+      "source_id": 100024,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 5,
+      "ayah": 110,
+      "position": 42,
+      "word": "بِإِذۡنِيۖ",
+      "source_id": 100025,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 5,
+      "ayah": 110,
+      "position": 46,
+      "word": "بِإِذۡنِيۖ",
+      "source_id": 100026,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 6,
+      "ayah": 2,
+      "position": 11,
+      "word": "عِندَهُۥۖ",
+      "source_id": 100027,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 6,
+      "ayah": 14,
+      "position": 20,
+      "word": "أَسۡلَمَۖ",
+      "source_id": 100028,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 6,
+      "ayah": 33,
+      "position": 6,
+      "word": "يَقُولُونَۖ",
+      "source_id": 100029,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 6,
+      "ayah": 35,
+      "position": 24,
+      "word": "ٱلۡهُدَىٰۚ",
+      "source_id": 100030,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 6,
+      "ayah": 38,
+      "position": 18,
+      "word": "شَيۡءٖۚ",
+      "source_id": 100031,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 6,
+      "ayah": 54,
+      "position": 8,
+      "word": "عَلَيۡكُمۡۖ",
+      "source_id": 100032,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 6,
+      "ayah": 57,
+      "position": 19,
+      "word": "ٱلۡحَقَّۖ",
+      "source_id": 100033,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 6,
+      "ayah": 61,
+      "position": 4,
+      "word": "عِبَادِهِۦۖ",
+      "source_id": 100034,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 6,
+      "ayah": 70,
+      "position": 9,
+      "word": "ٱلدُّنۡيَاۚ",
+      "source_id": 100035,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 6,
+      "ayah": 79,
+      "position": 8,
+      "word": "حَنِيفٗاۖ",
+      "source_id": 100036,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 6,
+      "ayah": 84,
+      "position": 10,
+      "word": "قَبۡلُۖ",
+      "source_id": 100037,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 6,
+      "ayah": 91,
+      "position": 25,
+      "word": "لِّلنَّاسِۖ",
+      "source_id": 100038,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 6,
+      "ayah": 95,
+      "position": 15,
+      "word": "ٱللَّهُۖ",
+      "source_id": 100039,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 6,
+      "ayah": 100,
+      "position": 5,
+      "word": "وَخَلَقَهُمۡۖ",
+      "source_id": 100040,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 6,
+      "ayah": 109,
+      "position": 14,
+      "word": "ٱللَّهِۖ",
+      "source_id": 100041,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 6,
+      "ayah": 112,
+      "position": 20,
+      "word": "فَعَلُوهُۖ",
+      "source_id": 100042,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 6,
+      "ayah": 114,
+      "position": 19,
+      "word": "بِٱلۡحَقِّۖ",
+      "source_id": 100043,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 6,
+      "ayah": 127,
+      "position": 5,
+      "word": "رَبِّهِمۡۖ",
+      "source_id": 100044,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 6,
+      "ayah": 130,
+      "position": 18,
+      "word": "أَنفُسِنَاۖ",
+      "source_id": 100045,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 6,
+      "ayah": 151,
+      "position": 11,
+      "word": "شَيۡـٔٗاۖ",
+      "source_id": 100046,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 7,
+      "ayah": 7,
+      "position": 3,
+      "word": "بِعِلۡمٖۖ",
+      "source_id": 100047,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 7,
+      "ayah": 20,
+      "position": 10,
+      "word": "سَوۡءَٰتِهِمَا",
+      "source_id": 1564,
+      "batch": "hebti-1"
+    },
+    {
+      "surah": 7,
+      "ayah": 73,
+      "position": 23,
+      "word": "ءَايَةٗۖ",
+      "source_id": 100049,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 7,
+      "ayah": 73,
+      "position": 28,
+      "word": "ٱللَّهِۖ",
+      "source_id": 100050,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 7,
+      "ayah": 85,
+      "position": 18,
+      "word": "رَّبِّكُمۡۖ",
+      "source_id": 100051,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 7,
+      "ayah": 184,
+      "position": 2,
+      "word": "يَتَفَكَّرُواْۗ",
+      "source_id": 100052,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 7,
+      "ayah": 194,
+      "position": 8,
+      "word": "أَمۡثَالُكُمۡۖ",
+      "source_id": 100053,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 8,
+      "ayah": 7,
+      "position": 14,
+      "word": "لَكُمۡ",
+      "source_id": 1787,
+      "batch": "hebti-1"
+    },
+    {
+      "surah": 8,
+      "ayah": 46,
+      "position": 8,
+      "word": "رِيحُكُمۡۖ",
+      "source_id": 100054,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 9,
+      "ayah": 74,
+      "position": 29,
+      "word": "لَّهُمۡۖ",
+      "source_id": 100055,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 9,
+      "ayah": 100,
+      "position": 13,
+      "word": "عَنۡهُ",
+      "source_id": 2005,
+      "batch": "hebti-1"
+    },
+    {
+      "surah": 9,
+      "ayah": 111,
+      "position": 28,
+      "word": "ٱللَّهِۚ",
+      "source_id": 100056,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 10,
+      "ayah": 3,
+      "position": 14,
+      "word": "ٱلۡعَرۡشِۖ",
+      "source_id": 100057,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 10,
+      "ayah": 15,
+      "position": 25,
+      "word": "نَفۡسِيٓۖ",
+      "source_id": 100058,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 10,
+      "ayah": 16,
+      "position": 10,
+      "word": "بِهِۦۖ",
+      "source_id": 100059,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 10,
+      "ayah": 23,
+      "position": 15,
+      "word": "أَنفُسِكُمۖ",
+      "source_id": 100060,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 10,
+      "ayah": 28,
+      "position": 12,
+      "word": "بَيۡنَهُمۡۖ",
+      "source_id": 100061,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 10,
+      "ayah": 30,
+      "position": 6,
+      "word": "أَسۡلَفَتۡۚ",
+      "source_id": 100062,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 10,
+      "ayah": 30,
+      "position": 11,
+      "word": "ٱلۡحَقِّۖ",
+      "source_id": 100063,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 10,
+      "ayah": 31,
+      "position": 6,
+      "word": "وَٱلۡأَرۡضِ",
+      "source_id": 2096,
+      "batch": "hebti-1"
+    },
+    {
+      "surah": 10,
+      "ayah": 39,
+      "position": 14,
+      "word": "قَبۡلِهِمۡۖ",
+      "source_id": 100064,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 10,
+      "ayah": 68,
+      "position": 4,
+      "word": "وَلَدٗاۗ",
+      "source_id": 100065,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 10,
+      "ayah": 71,
+      "position": 19,
+      "word": "تَوَكَّلۡتُ",
+      "source_id": 2151,
+      "batch": "hebti-1"
+    },
+    {
+      "surah": 11,
+      "ayah": 29,
+      "position": 10,
+      "word": "ٱللَّهِۚ",
+      "source_id": 100066,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 11,
+      "ayah": 31,
+      "position": 13,
+      "word": "مَلَكٞ",
+      "source_id": 2228,
+      "batch": "hebti-1"
+    },
+    {
+      "surah": 11,
+      "ayah": 44,
+      "position": 13,
+      "word": "ٱلۡجُودِيِّۖ",
+      "source_id": 100067,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 11,
+      "ayah": 55,
+      "position": 2,
+      "word": "دُونِهِۦۖ",
+      "source_id": 100068,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 11,
+      "ayah": 64,
+      "position": 6,
+      "word": "ءَايَةٗۖ",
+      "source_id": 100069,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 11,
+      "ayah": 64,
+      "position": 11,
+      "word": "ٱللَّهِۖ",
+      "source_id": 100070,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 11,
+      "ayah": 69,
+      "position": 9,
+      "word": "سَلَٰمٞۖ",
+      "source_id": 100071,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 11,
+      "ayah": 73,
+      "position": 5,
+      "word": "ٱللَّهِۖ",
+      "source_id": 100072,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 11,
+      "ayah": 81,
+      "position": 8,
+      "word": "إِلَيۡكَۖ",
+      "source_id": 100073,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 11,
+      "ayah": 84,
+      "position": 17,
+      "word": "وَٱلۡمِيزَانَۖ",
+      "source_id": 100074,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 11,
+      "ayah": 85,
+      "position": 5,
+      "word": "بِٱلۡقِسۡطِۖ",
+      "source_id": 100075,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 11,
+      "ayah": 101,
+      "position": 5,
+      "word": "أَنفُسَهُمۡۖ",
+      "source_id": 100076,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 11,
+      "ayah": 118,
+      "position": 7,
+      "word": "وَٰحِدَةٗۖ",
+      "source_id": 100077,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 12,
+      "ayah": 6,
+      "position": 7,
+      "word": "ٱلۡأَحَادِيثِ",
+      "source_id": 2345,
+      "batch": "hebti-1"
+    },
+    {
+      "surah": 12,
+      "ayah": 23,
+      "position": 15,
+      "word": "ٱللَّهِۖ",
+      "source_id": 100078,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 12,
+      "ayah": 26,
+      "position": 5,
+      "word": "نَّفۡسِيۚ",
+      "source_id": 100079,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 12,
+      "ayah": 29,
+      "position": 4,
+      "word": "هَٰذَاۚ",
+      "source_id": 100080,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 12,
+      "ayah": 69,
+      "position": 7,
+      "word": "أَخَاهُۖ",
+      "source_id": 100081,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 13,
+      "ayah": 2,
+      "position": 7,
+      "word": "تَرَوۡنَهَاۖ",
+      "source_id": 100082,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 13,
+      "ayah": 2,
+      "position": 11,
+      "word": "ٱلۡعَرۡشِۖ",
+      "source_id": 100083,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 13,
+      "ayah": 3,
+      "position": 15,
+      "word": "ٱثۡنَيۡنِۖ",
+      "source_id": 100084,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 13,
+      "ayah": 7,
+      "position": 12,
+      "word": "مُنذِرٞۖ",
+      "source_id": 100085,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 13,
+      "ayah": 23,
+      "position": 9,
+      "word": "وَذُرِّيَّـٰتِهِمۡۖ",
+      "source_id": 100086,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 13,
+      "ayah": 24,
+      "position": 4,
+      "word": "صَبَرۡتُمۡۚ",
+      "source_id": 100087,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 13,
+      "ayah": 34,
+      "position": 5,
+      "word": "ٱلدُّنۡيَاۖ",
+      "source_id": 100088,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 13,
+      "ayah": 36,
+      "position": 7,
+      "word": "إِلَيۡكَۖ",
+      "source_id": 100089,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 14,
+      "ayah": 18,
+      "position": 4,
+      "word": "بِرَبِّهِمۡۖ",
+      "source_id": 100090,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 14,
+      "ayah": 48,
+      "position": 6,
+      "word": "وَٱلسَّمَٰوَٰتُۖ",
+      "source_id": 100091,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 15,
+      "ayah": 3,
+      "position": 5,
+      "word": "ٱلۡأَمَلُۖ",
+      "source_id": 100092,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 15,
+      "ayah": 85,
+      "position": 11,
+      "word": "لَأٓتِيَةٞۖ",
+      "source_id": 100093,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 16,
+      "ayah": 28,
+      "position": 13,
+      "word": "بَلَىٰٓۚ",
+      "source_id": 100094,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 16,
+      "ayah": 37,
+      "position": 10,
+      "word": "يُضِلُّۖ",
+      "source_id": 100095,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 16,
+      "ayah": 53,
+      "position": 6,
+      "word": "ٱللَّهِۖ",
+      "source_id": 100096,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 16,
+      "ayah": 62,
+      "position": 4,
+      "word": "يَكۡرَهُونَۚ",
+      "source_id": 100097,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 16,
+      "ayah": 70,
+      "position": 4,
+      "word": "يَتَوَفَّىٰكُمۡۚ",
+      "source_id": 100098,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 16,
+      "ayah": 87,
+      "position": 5,
+      "word": "ٱلسَّلَمَۖ",
+      "source_id": 100099,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 16,
+      "ayah": 127,
+      "position": 5,
+      "word": "بِٱللَّهِۚ",
+      "source_id": 100100,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 17,
+      "ayah": 76,
+      "position": 7,
+      "word": "مِنۡهَاۖ",
+      "source_id": 100101,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 17,
+      "ayah": 77,
+      "position": 7,
+      "word": "رُّسُلِنَاۖ",
+      "source_id": 100102,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 17,
+      "ayah": 101,
+      "position": 6,
+      "word": "بَيِّنَٰتٖۖ",
+      "source_id": 100103,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 17,
+      "ayah": 111,
+      "position": 19,
+      "word": "ٱلذُّلِّۖ",
+      "source_id": 100104,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 18,
+      "ayah": 28,
+      "position": 10,
+      "word": "وَجۡهَهُۥۖ",
+      "source_id": 100105,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 18,
+      "ayah": 56,
+      "position": 13,
+      "word": "ٱلۡحَقَّۖ",
+      "source_id": 100106,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 18,
+      "ayah": 99,
+      "position": 6,
+      "word": "بَعۡضٖۖ",
+      "source_id": 100107,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 20,
+      "ayah": 72,
+      "position": 10,
+      "word": "فَطَرَنَاۖ",
+      "source_id": 100108,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 20,
+      "ayah": 123,
+      "position": 4,
+      "word": "جَمِيعَۢاۖ",
+      "source_id": 100109,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 21,
+      "ayah": 26,
+      "position": 4,
+      "word": "وَلَدٗاۗ",
+      "source_id": 100110,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 21,
+      "ayah": 84,
+      "position": 7,
+      "word": "ضُرّٖۖ",
+      "source_id": 100111,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 22,
+      "ayah": 9,
+      "position": 10,
+      "word": "خِزۡيٞۖ",
+      "source_id": 100112,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 22,
+      "ayah": 30,
+      "position": 17,
+      "word": "عَلَيۡكُمۡۖ",
+      "source_id": 100113,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 22,
+      "ayah": 44,
+      "position": 4,
+      "word": "مُوسَىٰۖ",
+      "source_id": 100114,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 22,
+      "ayah": 67,
+      "position": 6,
+      "word": "نَاسِكُوهُۖ",
+      "source_id": 100115,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 22,
+      "ayah": 67,
+      "position": 10,
+      "word": "ٱلۡأَمۡرِۚ",
+      "source_id": 100116,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 23,
+      "ayah": 27,
+      "position": 7,
+      "word": "وَوَحۡيِنَا",
+      "source_id": 3136,
+      "batch": "hebti-1"
+    },
+    {
+      "surah": 23,
+      "ayah": 44,
+      "position": 10,
+      "word": "كَذَّبُوهُۖ",
+      "source_id": 100117,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 23,
+      "ayah": 62,
+      "position": 5,
+      "word": "وُسۡعَهَاۚ",
+      "source_id": 100118,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 23,
+      "ayah": 91,
+      "position": 10,
+      "word": "إِلَٰهٍۚ",
+      "source_id": 100119,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 24,
+      "ayah": 31,
+      "position": 14,
+      "word": "مِنۡهَاۖ",
+      "source_id": 100120,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 25,
+      "ayah": 32,
+      "position": 13,
+      "word": "فُؤَادَكَۖ",
+      "source_id": 100121,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 27,
+      "ayah": 47,
+      "position": 9,
+      "word": "ٱللَّهِۖ",
+      "source_id": 100122,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 28,
+      "ayah": 32,
+      "position": 14,
+      "word": "ٱلرَّهۡبِۖ",
+      "source_id": 100123,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 28,
+      "ayah": 77,
+      "position": 6,
+      "word": "ٱلۡأٓخِرَةَۖ",
+      "source_id": 100124,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 28,
+      "ayah": 77,
+      "position": 11,
+      "word": "ٱلدُّنۡيَاۖ",
+      "source_id": 100125,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 28,
+      "ayah": 77,
+      "position": 16,
+      "word": "إِلَيۡكَۖ",
+      "source_id": 100126,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 28,
+      "ayah": 86,
+      "position": 11,
+      "word": "رَّبِّكَۖ",
+      "source_id": 100127,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 28,
+      "ayah": 87,
+      "position": 9,
+      "word": "إِلَيۡكَۖ",
+      "source_id": 100128,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 28,
+      "ayah": 87,
+      "position": 12,
+      "word": "رَبِّكَۖ",
+      "source_id": 100129,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 29,
+      "ayah": 3,
+      "position": 5,
+      "word": "قَبۡلِهِمۡۖ",
+      "source_id": 100130,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 29,
+      "ayah": 20,
+      "position": 8,
+      "word": "ٱلۡخَلۡقَۚ",
+      "source_id": 100131,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 29,
+      "ayah": 33,
+      "position": 10,
+      "word": "ذَرۡعٗاۖ",
+      "source_id": 100132,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 29,
+      "ayah": 46,
+      "position": 12,
+      "word": "مِنۡهُمۡۖ",
+      "source_id": 100133,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 29,
+      "ayah": 48,
+      "position": 10,
+      "word": "بِيَمِينِكَۖ",
+      "source_id": 100134,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 30,
+      "ayah": 43,
+      "position": 14,
+      "word": "ٱللَّهِۖ",
+      "source_id": 100135,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 30,
+      "ayah": 60,
+      "position": 5,
+      "word": "حَقّٞۖ",
+      "source_id": 100136,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 31,
+      "ayah": 5,
+      "position": 5,
+      "word": "رَّبِّهِمۡۖ",
+      "source_id": 100137,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 31,
+      "ayah": 10,
+      "position": 5,
+      "word": "تَرَوۡنَهَاۖ",
+      "source_id": 100138,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 31,
+      "ayah": 15,
+      "position": 13,
+      "word": "تُطِعۡهُمَاۖ",
+      "source_id": 100139,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 31,
+      "ayah": 33,
+      "position": 22,
+      "word": "حَقّٞۖ",
+      "source_id": 100140,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 32,
+      "ayah": 9,
+      "position": 6,
+      "word": "رُّوحِهِۦۖ",
+      "source_id": 100141,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 32,
+      "ayah": 14,
+      "position": 8,
+      "word": "نَسِينَٰكُمۡۖ",
+      "source_id": 100142,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 32,
+      "ayah": 23,
+      "position": 10,
+      "word": "لِّقَآئِهِۦۖ",
+      "source_id": 100143,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 33,
+      "ayah": 6,
+      "position": 5,
+      "word": "أَنفُسِهِمۡۖ",
+      "source_id": 100144,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 33,
+      "ayah": 32,
+      "position": 8,
+      "word": "ٱتَّقَيۡتُنَّۚ",
+      "source_id": 100145,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 33,
+      "ayah": 33,
+      "position": 8,
+      "word": "ٱلۡأُولَىٰۖ",
+      "source_id": 100146,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 34,
+      "ayah": 3,
+      "position": 22,
+      "word": "ٱلۡأَرۡضِ",
+      "source_id": 3784,
+      "batch": "hebti-1"
+    },
+    {
+      "surah": 34,
+      "ayah": 11,
+      "position": 6,
+      "word": "ٱلسَّرۡدِۖ",
+      "source_id": 100147,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 34,
+      "ayah": 22,
+      "position": 16,
+      "word": "ٱلۡأَرۡضِ",
+      "source_id": 3808,
+      "batch": "hebti-1"
+    },
+    {
+      "surah": 34,
+      "ayah": 44,
+      "position": 5,
+      "word": "يَدۡرُسُونَهَاۖ",
+      "source_id": 100148,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 35,
+      "ayah": 5,
+      "position": 6,
+      "word": "حَقّٞۖ",
+      "source_id": 100149,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 35,
+      "ayah": 26,
+      "position": 4,
+      "word": "كَفَرُواْۖ",
+      "source_id": 100150,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 37,
+      "ayah": 170,
+      "position": 2,
+      "word": "بِهِۦۖ",
+      "source_id": 100151,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 38,
+      "ayah": 1,
+      "position": 1,
+      "word": "صٓۚ",
+      "source_id": 100152,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 39,
+      "ayah": 5,
+      "position": 12,
+      "word": "ٱلَّيۡلِۖ",
+      "source_id": 100153,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 39,
+      "ayah": 8,
+      "position": 8,
+      "word": "إِلَيۡهِ",
+      "source_id": 3993,
+      "batch": "hebti-1"
+    },
+    {
+      "surah": 39,
+      "ayah": 18,
+      "position": 9,
+      "word": "ٱللَّهُۖ",
+      "source_id": 100154,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 39,
+      "ayah": 75,
+      "position": 12,
+      "word": "بِٱلۡحَقِّۚ",
+      "source_id": 100155,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 40,
+      "ayah": 45,
+      "position": 5,
+      "word": "مَكَرُواْۖ",
+      "source_id": 100156,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 41,
+      "ayah": 21,
+      "position": 12,
+      "word": "شَيۡءٖۚ",
+      "source_id": 100157,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 41,
+      "ayah": 25,
+      "position": 10,
+      "word": "خَلۡفَهُمۡ",
+      "source_id": 4145,
+      "batch": "hebti-1"
+    },
+    {
+      "surah": 41,
+      "ayah": 46,
+      "position": 4,
+      "word": "فَلِنَفۡسِهِۦۖ",
+      "source_id": 100158,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 42,
+      "ayah": 5,
+      "position": 5,
+      "word": "فَوۡقِهِنَّۚ",
+      "source_id": 100159,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 43,
+      "ayah": 87,
+      "position": 6,
+      "word": "ٱللَّهُۖ",
+      "source_id": 100160,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 44,
+      "ayah": 15,
+      "position": 4,
+      "word": "قَلِيلًاۚ",
+      "source_id": 100161,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 46,
+      "ayah": 33,
+      "position": 17,
+      "word": "بَلَىٰٓۚ",
+      "source_id": 100162,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 48,
+      "ayah": 26,
+      "position": 9,
+      "word": "ٱلۡجَٰهِلِيَّةِ",
+      "source_id": 4433,
+      "batch": "hebti-1"
+    },
+    {
+      "surah": 48,
+      "ayah": 29,
+      "position": 10,
+      "word": "بَيۡنَهُمۡۖ",
+      "source_id": 100163,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 49,
+      "ayah": 1,
+      "position": 9,
+      "word": "وَرَسُولِهِۦۖ",
+      "source_id": 100164,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 49,
+      "ayah": 10,
+      "position": 6,
+      "word": "أَخَوَيۡكُمۡۚ",
+      "source_id": 100165,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 49,
+      "ayah": 12,
+      "position": 11,
+      "word": "إِثۡمٞۖ",
+      "source_id": 100166,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 50,
+      "ayah": 45,
+      "position": 4,
+      "word": "يَقُولُونَۖ",
+      "source_id": 100167,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 52,
+      "ayah": 48,
+      "position": 5,
+      "word": "بِأَعۡيُنِنَاۖ",
+      "source_id": 100168,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 54,
+      "ayah": 3,
+      "position": 3,
+      "word": "أَهۡوَآءَهُمۡۚ",
+      "source_id": 100169,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 54,
+      "ayah": 5,
+      "position": 2,
+      "word": "بَٰلِغَةٞۖ",
+      "source_id": 100170,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 57,
+      "ayah": 12,
+      "position": 9,
+      "word": "وَبِأَيۡمَٰنِهِمۖ",
+      "source_id": 100171,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 57,
+      "ayah": 25,
+      "position": 18,
+      "word": "لِلنَّاسِ",
+      "source_id": 4570,
+      "batch": "hebti-1"
+    },
+    {
+      "surah": 57,
+      "ayah": 26,
+      "position": 9,
+      "word": "وَٱلۡكِتَٰبَۖ",
+      "source_id": 100172,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 58,
+      "ayah": 5,
+      "position": 11,
+      "word": "قَبۡلِهِمۡۚ",
+      "source_id": 100173,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 59,
+      "ayah": 2,
+      "position": 16,
+      "word": "يَخۡرُجُواْۖ",
+      "source_id": 100174,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 59,
+      "ayah": 2,
+      "position": 32,
+      "word": "ٱلرُّعۡبَۚ",
+      "source_id": 100175,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 59,
+      "ayah": 10,
+      "position": 19,
+      "word": "ءَامَنُواْ",
+      "source_id": 4638,
+      "batch": "hebti-1"
+    },
+    {
+      "surah": 59,
+      "ayah": 15,
+      "position": 5,
+      "word": "قَرِيبٗاۖ",
+      "source_id": 100176,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 59,
+      "ayah": 24,
+      "position": 5,
+      "word": "ٱلۡمُصَوِّرُۖ",
+      "source_id": 100177,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 60,
+      "ayah": 1,
+      "position": 8,
+      "word": "أَوۡلِيَآءَ",
+      "source_id": 4660,
+      "batch": "hebti-1"
+    },
+    {
+      "surah": 60,
+      "ayah": 2,
+      "position": 10,
+      "word": "بِٱلسُّوٓءِ",
+      "source_id": 4664,
+      "batch": "hebti-1"
+    },
+    {
+      "surah": 60,
+      "ayah": 10,
+      "position": 41,
+      "word": "ٱلۡكَوَافِرِ",
+      "source_id": 4681,
+      "batch": "hebti-1"
+    },
+    {
+      "surah": 61,
+      "ayah": 14,
+      "position": 21,
+      "word": "ٱللَّهِۖ",
+      "source_id": 100178,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 65,
+      "ayah": 2,
+      "position": 8,
+      "word": "بِمَعۡرُوفٖ",
+      "source_id": 4749,
+      "batch": "hebti-1"
+    },
+    {
+      "surah": 66,
+      "ayah": 10,
+      "position": 22,
+      "word": "شَيۡـٔٗا",
+      "source_id": 4783,
+      "batch": "hebti-1"
+    },
+    {
+      "surah": 68,
+      "ayah": 1,
+      "position": 1,
+      "word": "نٓۚ",
+      "source_id": 100179,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 68,
+      "ayah": 43,
+      "position": 4,
+      "word": "ذِلَّةٞۖ",
+      "source_id": 100180,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 73,
+      "ayah": 20,
+      "position": 25,
+      "word": "عَلَيۡكُمۡۖ",
+      "source_id": 100181,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 89,
+      "ayah": 17,
+      "position": 1,
+      "word": "كَلَّاۖ",
+      "source_id": 100182,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 89,
+      "ayah": 21,
+      "position": 1,
+      "word": "كَلَّآۖ",
+      "source_id": 100183,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 98,
+      "ayah": 5,
+      "position": 13,
+      "word": "ٱلزَّكَوٰةَۚ",
+      "source_id": 100184,
+      "batch": "hebti-2"
+    },
+    {
+      "surah": 104,
+      "ayah": 4,
+      "position": 1,
+      "word": "كَلَّاۖ",
+      "source_id": 100185,
+      "batch": "hebti-2"
+    }
+  ]
+}

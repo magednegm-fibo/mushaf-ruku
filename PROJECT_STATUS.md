@@ -1,7 +1,7 @@
 # Project Status
 
-**الإصدار الحالي:** 1.0.253  
-**آخر تحديث:** 2026-08-03
+**الإصدار الحالي:** 1.0.272  
+**آخر تحديث:** 2026-08-05
 
 هذا الملف يُحدَّث مع كل إصدار ويُضمَّن دائمًا داخل الـ ZIP.  
 الغرض: حالة واضحة في بداية أي Session جديدة — ما اكتمل، وما هو معلَّق، وما يُفترض ألا يُمس.
@@ -20,6 +20,100 @@
 ---
 
 ## Completed
+
+### 1.0.272 — إضافة بُرَءَٰٓؤُا۟ (60:4) إلى QCF Override
+
+- أُضيف الموضع `60:4:14` (مفتاح الجدول `60:4:13`) إلى `tools/qcf-words.json`
+  برمز QCF `FC9F` من صفحة 549، والتسمية `بُرَءَٰٓؤُا۟`.
+- أُعيد بناء `fonts/qcf-merged.woff2` وتحديث جدول `QCF_OVERRIDE_TABLE` في
+  `qcf-override.js` تلقائيًا عبر `tools/build_qcf_font.py` — التحقق من
+  مطابقة الموضع في `data.js` نجح (48/48).
+- **بلا Manual Override** (لا `scale` ولا `marginFactor`) — يخضع لـ Auto
+  Scale مثل بقية المواضع الافتراضية.
+- لم يُمس أي ملف منطق عرض آخر.
+
+### 1.0.271 — صه: رفع الموضع المرجعي إلى −40%
+
+
+- فقط `style.css`: محور نجمة صه من −30% إلى −40%.
+
+### 1.0.270 — تموضع CSS لنجمة صه فوق علامة المدينة
+
+- `body.uthmani-font .has-default-habti:not(.has-waqf) .waqf-mark`
+  محوره الرأسي −30% بدل 12% (رفع ~0.18em).
+- لا تعديل على MarkPlacementEngine ولا نجوم التذكير الشخصية.
+
+### 1.0.269 — MarkPlacement: مرشّحات أدق (4px) مع تفضيل الأعلى
+
+- إضافة STEP_FINE=4 وترتيب يبدأ بـ up 4 ثم up 8 قبل المحاور الأفقية.
+- CLEARANCE يبقى 3px. بلا تداخل → pixel-identical.
+
+### 1.0.268 — MarkPlacement: خلوص بصري 3px
+
+- `CLEARANCE = 3` في فحص التداخل فقط: يُضخَّم مستطيل العائق 3px
+  حتى لا تلتصق النجمة بعلامة المدينة حافةً بحافة.
+- المواضع ذات الفراغ > 3px تبقى pixel-identical.
+
+### 1.0.267 — MarkPlacement: `.waqf-sign` ضمن عوائق التداخل
+
+- السبب الجذري: نجمة صه (وأي `.waqf-mark`) لم تكن ترى علامة المدينة
+  المغلّفة في `.waqf-sign` لأن هذا الصنف لم يكن في `OBSTACLE_SELECTOR`،
+  والكلمة المضيفة مستبعدة بالتصميم.
+- الإصلاح الأدنى: إضافة `.waqf-sign` فقط إلى قائمة العوائق في
+  `mark-placement-engine.js` — بلا استثناء موضعي، بلا تغيير CSS افتراضي.
+- لا يُحرَّك أي نجم إلا عند تداخل هندسي فعلي (المرشّح 0 يبقى إن كان صافيًا).
+
+### 1.0.266 — إكمال دفعة hebti-2 (استثناءات + تحقق مدينة)
+
+- أُضيف `2:286:43` و`68:1:1` بعد قرار مباشر؛ بقي `7:69:22` مستبعدًا.
+- `68:1:1`: نجمة صه خضراء + بنفسجي؛ النافذة «خلاف مع روضة الحفاظ [صه]».
+- تحقق: كل مواضع hebti-2 تحمل رمز وقف مدمج في نص المدينة.
+- الإجمالي 207. Regression PASS 432/432.
+
+### 1.0.265 — دفعة الوقف الهبطي hebti-2 (182 موضعًا)
+
+- أُضيفت 182 موضعًا من `habti-final-185-review.html` إلى `data/habti-stops.json`
+  (دفعة `hebti-2`) بعد تحقق آلي كامل عبر `tokenize.js`.
+- استُبعدت 3 مواضع لتعارضها مع أنظمة أخرى (تقرير: `docs/habti-batch-hebti-2-report.md`).
+- أُعيد توليد `habti-waqf-data.js` (205 إجماليًا). Regression: PASS 427/427.
+- الملفات: `data/habti-stops.json`, `habti-waqf-data.js`, `tests/habti-waqf-regression.js`,
+  `docs/habti-batch-hebti-2-report.md`, `version.js`, `manifest.json`.
+
+### 1.0.264 — دليل القارئ + نص نافذة الوقف الهبطي (صه)
+
+- دليل القارئ (علامات الوقف): أُضيف بند **صه — صالح للوقف** بعد علامة
+  انتهاء الركوع في `index.html`.
+- الضغط المطوّل على كلمة الوقف الهبطي: نص النافذة أصبح **صه / صالح للوقف**
+  بدل «وقف هبطي» (`reader-reminders.js`).
+- الملفات: `index.html`, `reader-reminders.js`, `version.js`, `manifest.json`.
+
+### 1.0.263 — margin_factor 1.02 لكلمة ٱلدَّٰخِلِينَ (66:10)
+
+- الإبقاء على scale = **0.80**.
+- عند margin_factor 1.00 ظهر تداخل بصري بين رسم ﴿ٱلدَّٰخِلِينَ﴾ وكلمة ﴿مَعَ﴾.
+- رُفع `margin_factor` إلى **1.02** لهذه الكلمة فقط (بين 1.00 و1.06).
+- الملفات: `tools/qcf-words.json`, `qcf-override.js`, `version.js`, `manifest.json`.
+
+### 1.0.262 — margin_factor موضعي لكلمة ٱلدَّٰخِلِينَ (66:10)
+
+- الإبقاء على Manual Scale = **0.80** (الرسم أفضل بصريًا).
+- scale 0.80 > Auto ≈0.765 فعّل Auto Margin بالعامل العام 1.06 فوسّع
+  صندوق الكلمة وظهر فراغ كبير حولها.
+- أُضيف `margin_factor: 1.00` **لهذه الكلمة فقط** لتقليل التوسيع إلى عرض
+  الرسم المحجَّم بالضبط، دون المساس بـ Auto Margin لبقية الكلمات.
+- `margin_factor` قابل للتخصيص لكل Override أصلًا عبر `qcf-words.json`.
+- الملفات: `tools/qcf-words.json`, `qcf-override.js`,
+  `docs/qcf-auto-scale-regression.md`, `version.js`, `manifest.json`.
+
+### 1.0.261 — Manual Scale لكلمة ٱلدَّٰخِلِينَ (66:10)
+
+- مراجعة بصرية: Auto Scale (≈0.765) لكلمة ﴿ٱلدَّٰخِلِينَ﴾ في التحريم 10
+  لا يعطي المظهر المطلوب.
+- أُضيف Manual Scale = **0.80** لهذه الكلمة وحدها في `tools/qcf-words.json`
+  و`qcf-override.js` — لا يؤثر على آلية Auto Scale لبقية الكلمات.
+- بلا `margin_factor` إضافي؛ Auto Margin يبقى شبكة أمان تلقائية.
+- الملفات المعدَّلة: `tools/qcf-words.json`, `qcf-override.js`,
+  `docs/qcf-auto-scale-regression.md`, `version.js`, `manifest.json`.
 
 ### 1.0.253 — تحسينات SEO في index.html فقط
 

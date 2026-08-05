@@ -692,7 +692,7 @@ body.hide-waqf-marks .non-kufi-mark{ display:none !important; }
 .quran-word.has-non-kufi-head.has-non-kufi-la .waqf-mark{
   display: none !important;
 }
-.quran-word.has-non-kufi-head:not(.has-non-kufi-la):not(.has-default-waqf):not(.has-default-sad-rukhsa):not(.has-default-waqf-lazim):not(.has-default-zay-jawaz):not(.has-default-qad-qila):not(.has-default-qif):not(.has-default-jeem):not(.has-waqf) .waqf-mark{
+.quran-word.has-non-kufi-head:not(.has-non-kufi-la):not(.has-default-waqf):not(.has-default-sad-rukhsa):not(.has-default-waqf-lazim):not(.has-default-zay-jawaz):not(.has-default-qad-qila):not(.has-default-qif):not(.has-default-jeem):not(.has-default-habti):not(.has-waqf) .waqf-mark{
   /* عارٍ بلا سجاوندي ولا تذكير شخصي — لا نجمة وقف فارغة */
   display: none !important;
 }
@@ -720,7 +720,8 @@ body.hide-waqf-marks .quran-word.has-waqf .waqf-mark{
 .quran-word.has-default-zay-jawaz:not(.has-waqf):not(.khilaf-word) .waqf-mark,
 .quran-word.has-default-qad-qila:not(.has-waqf):not(.khilaf-word) .waqf-mark,
 .quran-word.has-default-qif:not(.has-waqf):not(.khilaf-word) .waqf-mark,
-.quran-word.has-default-jeem:not(.has-waqf):not(.khilaf-word) .waqf-mark{
+.quran-word.has-default-jeem:not(.has-waqf):not(.khilaf-word) .waqf-mark,
+.quran-word.has-default-habti:not(.has-waqf):not(.khilaf-word) .waqf-mark{
   display:none !important;
 }
 
@@ -733,10 +734,14 @@ body.hide-waqf-marks .quran-word.has-waqf .waqf-mark{
   color:#1565C0;
 }
 
-/* ص + ز + ق → أخضر (#2E7D32 = .waqf-mark.mark-green) */
+/* ص + ز + ق + صه (وقف هبطي) → أخضر (#2E7D32 = .waqf-mark.mark-green).
+   صه أُضيفت لهذه المجموعة بطلب مباشر: "نفس اللون الأخضر لأن الوصل
+   فيها أولى" — راجع buildHabtiWordMap في readerManager.js ونظام
+   الوقف الهبطي المستقل في docs/habti-waqf-store.md. */
 .quran-word.has-default-sad-rukhsa:not(.has-waqf):not(.khilaf-word),
 .quran-word.has-default-zay-jawaz:not(.has-waqf):not(.khilaf-word),
-.quran-word.has-default-qad-qila:not(.has-waqf):not(.khilaf-word){
+.quran-word.has-default-qad-qila:not(.has-waqf):not(.khilaf-word),
+.quran-word.has-default-habti:not(.has-waqf):not(.khilaf-word){
   color:#2E7D32;
 }
 
@@ -760,7 +765,8 @@ body.night .quran-word.has-default-waqf-lazim:not(.has-waqf):not(.khilaf-word){
 body.night .waqf-mark.mark-green{ color:#43A047; }
 body.night .quran-word.has-default-sad-rukhsa:not(.has-waqf):not(.khilaf-word),
 body.night .quran-word.has-default-zay-jawaz:not(.has-waqf):not(.khilaf-word),
-body.night .quran-word.has-default-qad-qila:not(.has-waqf):not(.khilaf-word){
+body.night .quran-word.has-default-qad-qila:not(.has-waqf):not(.khilaf-word),
+body.night .quran-word.has-default-habti:not(.has-waqf):not(.khilaf-word){
   color:#43A047;
 }
 body.night .waqf-mark.mark-blue{ color:#1E88E5; }
@@ -783,7 +789,8 @@ body.hide-waqf-marks .quran-word.has-default-waqf-lazim:not(.has-waqf):not(.khil
 body.hide-waqf-marks .quran-word.has-default-zay-jawaz:not(.has-waqf):not(.khilaf-word),
 body.hide-waqf-marks .quran-word.has-default-qad-qila:not(.has-waqf):not(.khilaf-word),
 body.hide-waqf-marks .quran-word.has-default-qif:not(.has-waqf):not(.khilaf-word),
-body.hide-waqf-marks .quran-word.has-default-jeem:not(.has-waqf):not(.khilaf-word){
+body.hide-waqf-marks .quran-word.has-default-jeem:not(.has-waqf):not(.khilaf-word),
+body.hide-waqf-marks .quran-word.has-default-habti:not(.has-waqf):not(.khilaf-word){
   color: inherit !important;
 }
 
@@ -802,7 +809,8 @@ body.uthmani-font .quran-word.has-default-waqf-lazim:not(.has-waqf),
 body.uthmani-font .quran-word.has-default-zay-jawaz:not(.has-waqf),
 body.uthmani-font .quran-word.has-default-qad-qila:not(.has-waqf),
 body.uthmani-font .quran-word.has-default-qif:not(.has-waqf),
-body.uthmani-font .quran-word.has-default-jeem:not(.has-waqf){
+body.uthmani-font .quran-word.has-default-jeem:not(.has-waqf),
+body.uthmani-font .quran-word.has-default-habti:not(.has-waqf){
   font-size: 1.1em;
 }
 /* "إظهار علامات التذكير والوقف" مطفأ → رجوع أيضًا للحجم العادي، ليس
@@ -813,7 +821,8 @@ body.hide-waqf-marks.uthmani-font .quran-word.has-default-waqf-lazim:not(.has-wa
 body.hide-waqf-marks.uthmani-font .quran-word.has-default-zay-jawaz:not(.has-waqf),
 body.hide-waqf-marks.uthmani-font .quran-word.has-default-qad-qila:not(.has-waqf),
 body.hide-waqf-marks.uthmani-font .quran-word.has-default-qif:not(.has-waqf),
-body.hide-waqf-marks.uthmani-font .quran-word.has-default-jeem:not(.has-waqf){
+body.hide-waqf-marks.uthmani-font .quran-word.has-default-jeem:not(.has-waqf),
+body.hide-waqf-marks.uthmani-font .quran-word.has-default-habti:not(.has-waqf){
   font-size: 1em;
 }
 
@@ -833,9 +842,18 @@ body.hide-waqf-marks.uthmani-font .quran-word.has-default-jeem:not(.has-waqf){
 }
 .quran-word.khilaf-word.has-default-sad-rukhsa:not(.has-waqf) .waqf-mark,
 .quran-word.khilaf-word.has-default-zay-jawaz:not(.has-waqf) .waqf-mark,
-.quran-word.khilaf-word.has-default-qad-qila:not(.has-waqf) .waqf-mark{
+.quran-word.khilaf-word.has-default-qad-qila:not(.has-waqf) .waqf-mark,
+.quran-word.khilaf-word.has-default-habti:not(.has-waqf) .waqf-mark{
   display:inline-block;
   color:#2E7D32;
+}
+/* صه (وقف هبطي): موضع مرجعي أعلى قليلًا من نجمة التذكير العامة في
+   مصحف المدينة، ليفتح فراغًا بصريًا طبيعيًا فوق علامة المدينة (ۚ/ج)
+   عندما تُعرض النجمة (خصوصًا مع .khilaf-word). لا يمسّ
+   MarkPlacementEngine ولا نجوم التذكير الشخصية (.has-waqf).
+   المحور الرأسي الافتراضي للمدينة 12%؛ هنا −40% ≈ رفع ~0.23em عن خط 12% العام. */
+body.uthmani-font .quran-word.has-default-habti:not(.has-waqf) .waqf-mark{
+  transform: translate(calc(-50% + var(--mark-dx, 0px)), calc(-40% + var(--mark-dy, 0px)));
 }
 .quran-word.khilaf-word.has-default-waqf-lazim:not(.has-waqf) .waqf-mark{
   display:inline-block;
@@ -851,7 +869,8 @@ body.night .quran-word.khilaf-word.has-default-qif:not(.has-waqf) .waqf-mark{
 }
 body.night .quran-word.khilaf-word.has-default-sad-rukhsa:not(.has-waqf) .waqf-mark,
 body.night .quran-word.khilaf-word.has-default-zay-jawaz:not(.has-waqf) .waqf-mark,
-body.night .quran-word.khilaf-word.has-default-qad-qila:not(.has-waqf) .waqf-mark{
+body.night .quran-word.khilaf-word.has-default-qad-qila:not(.has-waqf) .waqf-mark,
+body.night .quran-word.khilaf-word.has-default-habti:not(.has-waqf) .waqf-mark{
   color:#43A047;
 }
 body.night .quran-word.khilaf-word.has-default-waqf-lazim:not(.has-waqf) .waqf-mark{
@@ -869,7 +888,8 @@ body.hide-waqf-marks .quran-word.khilaf-word.has-default-waqf-lazim:not(.has-waq
 body.hide-waqf-marks .quran-word.khilaf-word.has-default-zay-jawaz:not(.has-waqf) .waqf-mark,
 body.hide-waqf-marks .quran-word.khilaf-word.has-default-qad-qila:not(.has-waqf) .waqf-mark,
 body.hide-waqf-marks .quran-word.khilaf-word.has-default-qif:not(.has-waqf) .waqf-mark,
-body.hide-waqf-marks .quran-word.khilaf-word.has-default-jeem:not(.has-waqf) .waqf-mark{
+body.hide-waqf-marks .quran-word.khilaf-word.has-default-jeem:not(.has-waqf) .waqf-mark,
+body.hide-waqf-marks .quran-word.khilaf-word.has-default-habti:not(.has-waqf) .waqf-mark{
   display:none !important;
 }
 

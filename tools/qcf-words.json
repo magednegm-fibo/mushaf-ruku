@@ -352,6 +352,14 @@
     "label": "إسرائيل"
   },
   {
+    "surah": 60,
+    "ayah": 4,
+    "position": 14,
+    "page": 549,
+    "codepoint": "FC9F",
+    "label": "بُرَءَٰٓؤُا۟"
+  },
+  {
     "surah": 61,
     "ayah": 6,
     "position": 7,
@@ -373,6 +381,8 @@
     "position": 27,
     "page": 561,
     "codepoint": "FC9A",
-    "label": "ٱلدَّٰخِلِينَ"
+    "label": "ٱلدَّٰخِلِينَ",
+    "scale": 0.8,
+    "margin_factor": 1.02
   }
 ]

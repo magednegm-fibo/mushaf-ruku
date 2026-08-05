@@ -19,36 +19,43 @@
 // regardless of its position in the DOM — and tested for actual pixel
 // overlap. This is real visual proximity, not document order.
 //
-//   • Qur'an letters + all tashkeel + the original Madinah-mushaf
-//     Sajawandi glyphs embedded directly in the ayah text — a single
-//     word's bounding rect (.quran-word) already covers its own
-//     letters+tashkeel; the original Sajawandi glyphs that DO get their
-//     own dedicated span (see readerManager.js's WAQF_SILA_LIFT/
-//     WAQF_SAKTA_LIFT/WAQF_MARK_LOWER/WAQF_MARK_LOWER_MUTLAQ/
-//     sajdah-mark/waqf-ruku-mark-noon-lift) are checked individually
-//     too, since a few of these float slightly outside their host
-//     word's own box.
+//   • Qur'an letters + all tashkeel — a single word's bounding rect
+//     (.quran-word) covers its own letters+tashkeel, but the HOST word
+//     itself is excluded from the obstacle set (see below).
+//   • Madinah Sajawandi stop glyphs that live in their own span:
+//       - .waqf-sign — the normal wrap from wrapWaqfSigns() for
+//         ۖۗۘۙۚۛۜ etc. These sit *inside* the host .quran-word, so they
+//         would be invisible to the engine if we only checked sibling
+//         words; they MUST be listed here so a star on the same word
+//         (e.g. صه on khilaf نٓۚ) can collide-avoid against the
+//         Madinah mark without any per-position special case.
+//       - dedicated lifts that can float slightly outside the host box:
+//         .waqf-sila-lift / .waqf-sakta-lift / .waqf-mark-lower /
+//         .waqf-mark-lower-mutlaq / .sajdah-mark /
+//         .waqf-ruku-mark-noon-lift (see readerManager.js).
 //   • ayah-number badges (.ayah-num)
 //   • the page's ruku-mark badge (.ruku-mark)
-//   • the ۩ sajdah glyph (.sajdah-mark) and the other original
-//     Sajawandi combining-mark spans listed above
 //   • other visible star marks (.waqf-mark / .non-kufi-mark) so two
 //     stars never land on top of each other
 //
 // The host word itself is EXCLUDED from the obstacle set (طلب مباشر —
 // "استبعاد الكلمة المضيفة نفسها لأنها معروفة"): the mark is expected to
 // sit close to it by design, so proximity to its own word is never
-// treated as a collision.
+// treated as a collision. Child spans inside the host (.waqf-sign and
+// the lift classes above) are still obstacles — collectNearby only
+// skips the host element by identity, not its descendants.
 //
 // Candidate positions tried in order, first collision-free one wins,
 // current/default position always tried first, nothing changes if it's
 // already clear:
 //   0) current position (no offset)
-//   1) +8px right   2) -8px left   3) -8px up   4) +8px down
-//   5) diagonals: top-right, top-left, bottom-right, bottom-left
-// Every candidate stays within a 12px displacement cap (the diagonals
-// are 8,8 ≈ 11.3px, under the cap) so a nudged mark never reads as
-// detached from its word.
+//   1) fine up 4px, then up 8px (prefer vertical separation from
+//      Madinah marks that sit above the letter)
+//   2) other fine axes ±4px, then coarse ±8px
+//   3) fine then coarse diagonals
+// Cap stays ~11px (diagonal 8,8 ≈ 11.3px) so a nudged mark never reads
+// as detached from its word. CLEARANCE (3px) is applied only in the
+// overlap test — not as a blanket extra offset.
 //
 // POSITION CACHE (طلب مباشر 2026-07-31): once a mark's placement is
 // resolved, its chosen offset is cached per word (keyed by the word's
@@ -66,17 +73,39 @@ window.MarkPlacementEngine = (function(){
   'use strict';
 
   var SEARCH_RADIUS = 50;   // px — proximity box half-margin around the mark's default position (within the requested 40–60px range)
-  var STEP = 8;              // px — displacement step per candidate
+  var STEP_FINE = 4;         // px — small nudge (comfortable gap without a large jump)
+  var STEP = 8;              // px — coarse displacement
+  // Minimum visual gap between a star and any obstacle (including
+  // .waqf-sign on the same word). Applied only in the collision test:
+  // positions already farther apart than CLEARANCE stay pixel-identical.
+  // Kept modest on purpose — visual comfort comes from finer candidates
+  // (STEP_FINE / preferring "up") rather than a larger clearance that
+  // would re-nudge already-good placements across the mushaf.
+  var CLEARANCE = 3;         // px
+  // Order matters: first collision-free candidate wins.
+  //   • 0 always first → pixel-identical when already clear
+  //   • fine "up" next → natural separation from Madinah marks that
+  //     sit above the letter (ۚۗۖ…) without a large horizontal jump
+  //   • then other fine axes, then the original 8px set + diagonals
+  // Cap stays ~11px (diagonal 8,8); fine diagonals are ~5.7px.
   var CANDIDATES = [
-    { dx: 0,     dy: 0    },  // 1) current position
-    { dx: STEP,  dy: 0    },  // 2) right
-    { dx: -STEP, dy: 0    },  // 3) left
-    { dx: 0,     dy: -STEP},  // 4) up
-    { dx: 0,     dy: STEP },  // 5) down
-    { dx: STEP,  dy: -STEP},  // 6a) top-right
-    { dx: -STEP, dy: -STEP},  // 6b) top-left
-    { dx: STEP,  dy: STEP },  // 6c) bottom-right
-    { dx: -STEP, dy: STEP }   // 6d) bottom-left
+    { dx: 0,          dy: 0           },  // current — no move if clear
+    { dx: 0,          dy: -STEP_FINE  },  // up 4
+    { dx: 0,          dy: -STEP       },  // up 8
+    { dx: STEP_FINE,  dy: 0           },  // right 4
+    { dx: -STEP_FINE, dy: 0           },  // left 4
+    { dx: 0,          dy: STEP_FINE   },  // down 4
+    { dx: STEP,       dy: 0           },  // right 8
+    { dx: -STEP,      dy: 0           },  // left 8
+    { dx: 0,          dy: STEP        },  // down 8
+    { dx: STEP_FINE,  dy: -STEP_FINE  },  // fine top-right
+    { dx: -STEP_FINE, dy: -STEP_FINE  },  // fine top-left
+    { dx: STEP,       dy: -STEP       },  // top-right 8
+    { dx: -STEP,      dy: -STEP       },  // top-left 8
+    { dx: STEP_FINE,  dy: STEP_FINE   },  // fine bottom-right
+    { dx: -STEP_FINE, dy: STEP_FINE   },  // fine bottom-left
+    { dx: STEP,       dy: STEP        },  // bottom-right 8
+    { dx: -STEP,      dy: STEP        }   // bottom-left 8
   ];
 
   // Every element type that can legitimately collide with a star mark.
@@ -86,6 +115,7 @@ window.MarkPlacementEngine = (function(){
     '.ayah-num',
     '.ruku-mark',
     '.sajdah-mark',
+    '.waqf-sign',
     '.waqf-sila-lift',
     '.waqf-sakta-lift',
     '.waqf-mark-lower',
@@ -168,7 +198,9 @@ window.MarkPlacementEngine = (function(){
       var markRect = markEl.getBoundingClientRect();
       var collision = false;
       for(var j = 0; j < obstacles.length; j++){
-        if(overlaps(markRect, obstacles[j])){ collision = true; break; }
+        // Inflate the obstacle by CLEARANCE so a "clear" placement keeps
+        // a small visual margin — not edge-to-edge contact.
+        if(overlaps(markRect, inflate(obstacles[j], CLEARANCE))){ collision = true; break; }
       }
       if(!collision){ chosen = c; break; }
     }

@@ -1445,6 +1445,35 @@
   //     أعلاه للتفصيل الكامل لكل فئة.
   var DEFAULT_JEEM_WORDS = buildDefaultWordMap('JEEM');
 
+  // صه (الوقف الهبطي) — نظام مستقل تمامًا عن buildDefaultWordMap/
+  // WAQF_POSITIONS أعلاه بقرار تصميمي صريح (راجع "Design Principles"
+  // في docs/habti-waqf-store.md): مصدره الوحيد data/habti-stops.json
+  // (عبر habti-waqf-data.js المولَّد منه بـ tools/build_habti_words.py)،
+  // بيانات معتمدة بمراجعة يدوية بحتة، لا تُدمج أبدًا داخل WAQF_POSITIONS
+  // العام. نفس القيود المطبَّقة على ص/ز/ق بالضبط: لا تُوضع عند آخر كلمة
+  // في الآية، مقصورة على مصحف المدينة (Uthmani) فقط — رقم `position` في
+  // habti-stops.json محسوب على نص هذا الرسم تحديدًا. راجع قاعدة
+  // .quran-word.has-default-habti في style.css للون (نفس أخضر
+  // #2E7D32 نهاري / #43A047 ليلي المستخدم لـ ص ز ق بالضبط — طلب مباشر:
+  // "لأن الوصل فيها أولى"). تحقَّق (2026-08-04) من عدم وجود أي تقاطع بين
+  // الـ23 موضعًا الحالية وبين WAQF_POSITIONS أو جداول كلمات الخلاف
+  // البنفسجية (SAKTA/MUQATTAAT/SEEN_AS_SAD/MAD_FARQ/TAJWEED_NOTE) أو
+  // NON_KUFI_HEADS_SYM_UTHMANI — صفر تعارضات، فلا حاجة حاليًا لمنطق حسم
+  // تعارض مماثل لـ DEFAULT_MARK_CONFLICT_RESOLUTIONS أعلاه.
+  function buildHabtiWordMap(){
+    var map = {};
+    var stops = (typeof window !== 'undefined' && window.HABTI_WAQF_STOPS) || [];
+    for(var i = 0; i < stops.length; i++){
+      var s = stops[i];
+      var key = s.surah + ':' + s.ayah;
+      var idx = s.position - 1;
+      if(!map[key]) map[key] = [];
+      if(map[key].indexOf(idx) === -1) map[key].push(idx);
+    }
+    return map;
+  }
+  var DEFAULT_HABTI_WORDS = buildHabtiWordMap();
+
   // Reported (device screenshots, Naskh/Indopak mode, two rounds): the
   // خ in نَخۡشٰٓى (5:52) sits too low relative to the ش that follows it
   // -- described directly by the user as "the kha is dropping down, not
@@ -1956,6 +1985,8 @@ var KNOWN_SPLIT_WORD_FRAGMENTS = ["اٰ تُوۡهُمۡ", "اٰ تَيۡتُم�
       (DEFAULT_QIF_WORDS[ayahKey] || null) : null;
     var defaultJeemIdxs = (state.fontStyle === 'uthmani') ?
       (DEFAULT_JEEM_WORDS[ayahKey] || null) : null;
+    var defaultHabtiIdxs = (state.fontStyle === 'uthmani') ?
+      (DEFAULT_HABTI_WORDS[ayahKey] || null) : null;
     // نجمة السجاوندي المرتبطة برأس غير الكوفيين (ما عدا «لا»):
     // تُعرض على **الكلمة المضيفة نفسها** (كلمة رأس الآية — مثل يسقون
     // في 28:23)، لا على الفهرس السابق. الفهرس في الخريطة قد ينزاح؛
@@ -2097,6 +2128,9 @@ var KNOWN_SPLIT_WORD_FRAGMENTS = ["اٰ تُوۡهُمۡ", "اٰ تَيۡتُم�
       var isDefaultJeem = ((!!(defaultJeemIdxs && defaultJeemIdxs.indexOf(idx) !== -1) &&
         idx !== words.length - 1) || shiftedJeemIdxs.indexOf(idx) !== -1);
       if(isDefaultJeem) extraCls += ' has-default-jeem';
+      var isDefaultHabti = !!(defaultHabtiIdxs && defaultHabtiIdxs.indexOf(idx) !== -1) &&
+        idx !== words.length - 1;
+      if(isDefaultHabti) extraCls += ' has-default-habti';
       // رأس آية لغير الكوفيين — نجمة في مصحف المدينة فقط.
       // المضيف يُحدَّد بمطابقة حروف الأساس (أعلاه) لا بالفهرس وحده.
       // «لا»: رأس أخضر. غير «لا»: رأس بلون المصحف + نجمة سجاوندي على نفس الكلمة.
