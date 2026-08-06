@@ -757,15 +757,24 @@
     // (بنفس بطاقة فهرس السور عبر renderSurahList، بدون تصميم جديد) ثم آيات
     // مطابقة (بنفس شكل نتائج البحث النصي القديم). كل قسم يظهر/يختفي حسب
     // وجود نتائج فيه فعليًا.
+    // الحروف المقطَّعة التي هي آية مستقلة بحرف واحد في القرآن
+    // (صٓ / قٓ / نٓ). يُستثنى طولها من حدّ الحرفين الأدنى فقط — بلا
+    // أي تغيير على خوارزمية البحث أو التطبيع. عند البحث بحرف واحد منها
+    // تُفعَّل المطابقة التامة تلقائيًا حتى لا تُغرق النتائج بمطابقات
+    // جزئية داخل كلمات أخرى (ن في «إنّ»، ص في «الصراط»، …).
+    var MUQATTAAT_SINGLE_LETTERS = { 'ن': 1, 'ص': 1, 'ق': 1 };
+    function isMuqattaatSingleLetter(q){
+      return q.length === 1 && MUQATTAAT_SINGLE_LETTERS[q] === 1;
+    }
     function runSearch(){
       var q = els.searchInput.value.trim();
-      if(q.length < 2){
+      if(q.length < 2 && !isMuqattaatSingleLetter(q)){
         els.searchValidationMsg.classList.remove('hidden');
         els.searchInput.focus();
         return;
       }
       els.searchValidationMsg.classList.add('hidden');
-      var exact = els.exactSearchToggle.checked;
+      var exact = els.exactSearchToggle.checked || isMuqattaatSingleLetter(q);
       var result = SearchManager.searchUnified(q, exact);
       var surahs = result.surahs, ayahs = result.ayahs;
       var totalCount = surahs.length + ayahs.length;
@@ -824,7 +833,8 @@
     // — it shouldn't linger once the condition it's warning about is
     // already satisfied, per direct request.
     els.searchInput.addEventListener('input', function(){
-      if(els.searchInput.value.trim().length >= 2){
+      var v = els.searchInput.value.trim();
+      if(v.length >= 2 || isMuqattaatSingleLetter(v)){
         els.searchValidationMsg.classList.add('hidden');
       }
     });

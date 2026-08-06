@@ -137,6 +137,13 @@ def verify_words_against_real_app(words):
 
 
 def build_font(words):
+    """يبني qcf-merged.woff2 من خطوط المصدر.
+
+    يُفضَّل مصدر QCF v4 غير الملوّن (بدون COLR) — جليف واحد مكتمل
+    بوزن مطابق لرسم المصحف. مصادر التجويد الملوّنة (COLR/CPAL) تُسبّب
+    سمكًا زائدًا عند فرض لون موحّد عبر font-palette لأن طبقات الألوان
+    تُرسَم فوق بعضها بالأسود.
+    """
     pages_needed = sorted(set(w["page"] for w in words))
     for p in pages_needed:
         src = SOURCE_FONTS_DIR / f"p{p}.ttf"
@@ -157,10 +164,8 @@ def build_font(words):
     glyph_order = [".notdef"]
     new_glyf_entries = {}
     new_hmtx = {}
-    new_cpal_colors = []
-    color_to_index = {}
-    new_colr_layers = {}
     new_cmap = {}
+    used_colr = False  # يُفعَّل فقط إن وُجدت مصادر COLR
 
     src_cache = {}
     def get_src(page):
@@ -177,8 +182,6 @@ def build_font(words):
         src_cmap = src.getBestCmap()
         src_glyf = src["glyf"]
         src_hmtx = src["hmtx"]
-        src_colr = src["COLR"].ColorLayers
-        src_cpal = src["CPAL"].palettes[0]
 
         cp = int(w["codepoint"], 16)
         if cp not in src_cmap:
@@ -187,33 +190,38 @@ def build_font(words):
                 f"(كلمة '{w['label']}' عند {w['surah']}:{w['ayah']}:{w['position']})"
             )
         base_gname_src = src_cmap[cp]
-        layers_src = src_colr[base_gname_src]
-
         prefix = f"p{w['page']}_{base_gname_src}"
         new_base_name = f"base_{prefix}"
-        layer_defs = []
-        for L in layers_src:
-            new_layer_name = f"lyr_{prefix}_{L.name}"
-            if new_layer_name not in new_glyf_entries:
-                new_glyf_entries[new_layer_name] = src_glyf[L.name]
-                new_hmtx[new_layer_name] = src_hmtx[L.name]
-                glyph_order.append(new_layer_name)
-            if L.colorID == 0xFFFF:
-                cidx = 0xFFFF
-            else:
+
+        # مصدر غير ملوّن (v4): انسخ الجليف كما هو — وزن مطابق 100%.
+        # مصدر COLR (تجويد): انسخ الطبقة السوداء فقط إن وُجدت، وإلا كل
+        # الطبقات تُدمَج لاحقًا عبر palette (السلوك القديم، مع خطر السمك).
+        if "COLR" not in src:
+            new_glyf_entries[new_base_name] = src_glyf[base_gname_src]
+            new_hmtx[new_base_name] = src_hmtx[base_gname_src]
+            glyph_order.append(new_base_name)
+        else:
+            used_colr = True
+            src_colr = src["COLR"].ColorLayers
+            src_cpal = src["CPAL"].palettes[0]
+            layers_src = src_colr[base_gname_src]
+            # اختر الطبقة السوداء (rgba≈0,0,0) إن وُجدت، وإلا الأولى.
+            black_layer = None
+            for L in layers_src:
+                if L.colorID == 0xFFFF:
+                    continue
                 c = src_cpal[L.colorID]
-                key_c = (c.red, c.green, c.blue, c.alpha)
-                if key_c not in color_to_index:
-                    color_to_index[key_c] = len(new_cpal_colors)
-                    new_cpal_colors.append(Color(c.blue, c.green, c.red, c.alpha))
-                cidx = color_to_index[key_c]
-            layer_defs.append(LayerRecord(new_layer_name, cidx))
+                if c.red == 0 and c.green == 0 and c.blue == 0 and c.alpha == 255:
+                    black_layer = L
+                    break
+            if black_layer is None:
+                black_layer = layers_src[0]
+            # ملاحظة: الطبقة السوداء وحدها قد تكون ناقصة في خطوط التجويد
+            # (الأحرف الملوّنة خارجها). يُفضَّل دائمًا مصدر v4 غير الملوّن.
+            new_glyf_entries[new_base_name] = src_glyf[black_layer.name]
+            new_hmtx[new_base_name] = src_hmtx[black_layer.name]
+            glyph_order.append(new_base_name)
 
-        new_glyf_entries[new_base_name] = src_glyf[base_gname_src]
-        new_hmtx[new_base_name] = src_hmtx[base_gname_src]
-        glyph_order.append(new_base_name)
-
-        new_colr_layers[new_base_name] = layer_defs
         new_cmap[next_cp] = new_base_name
         w["_assigned_codepoint"] = next_cp
         next_cp += 1
@@ -227,15 +235,12 @@ def build_font(words):
         new["hmtx"][name] = val
     for st in list(new["cmap"].tables):
         st.cmap = dict(new_cmap)
-    cpal = table_C_P_A_L_()
-    cpal.version = 0
-    cpal.numPaletteEntries = len(new_cpal_colors)
-    cpal.palettes = [new_cpal_colors]
-    new["CPAL"] = cpal
-    colr = table_C_O_L_R_()
-    colr.version = 0
-    colr.ColorLayers = new_colr_layers
-    new["COLR"] = colr
+
+    # لا COLR/CPAL عند المصادر غير الملوّنة — اللون من CSS (color / night).
+    for tag in ("COLR", "CPAL"):
+        if tag in new:
+            del new[tag]
+
     new["maxp"].numGlyphs = len(glyph_order)
     new["post"].formatType = 3.0
     if hasattr(new["post"], "extraNames"):
@@ -246,7 +251,8 @@ def build_font(words):
     new.flavor = "woff2"
     OUTPUT_FONT.parent.mkdir(parents=True, exist_ok=True)
     new.save(str(OUTPUT_FONT))
-    print(f"تم بناء {OUTPUT_FONT} — {len(glyph_order)} glyph، {len(new_cpal_colors)} لون.")
+    mode = "ملوّن→طبقة سوداء فقط" if used_colr else "جليف أحادي (v4 غير ملوّن)"
+    print(f"تم بناء {OUTPUT_FONT} — {len(glyph_order)} glyph — {mode}.")
 
 
 def update_override_js(words):

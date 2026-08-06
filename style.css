@@ -2453,8 +2453,8 @@ body.night .reminder-color-legend{ color:#9A9A9E; }
   font-size:21px;
 }
 /* نفس مسار SVG المستخدم في .non-kufi-mark داخل صفحات المصحف —
-   لا Unicode بديل. اللون = أخضر «لا» كما في الفاتحة 7 (عليهم الأولى):
-   نفس .non-kufi-mark.mark-green (#2E7D32 / ليلي #43A047). */
+   لا Unicode بديل. اللون نهاريًا = أخضر «لا» (#2E7D32).
+   ليليًا: نفس لون باقي رموز الدليل (#F2F2F2) لتوحيد المظهر مع ع والسجدة. */
 .waqf-guide-symbol.waqf-symbol-non-kufi{
   color: #2E7D32;
   padding: 0;
@@ -2469,7 +2469,7 @@ body.night .reminder-color-legend{ color:#9A9A9E; }
   stroke: none;
 }
 body.night .waqf-guide-symbol.waqf-symbol-non-kufi{
-  color: #43A047;
+  color: #F2F2F2;
 }
 .waqf-guide-text b{
   display:block;

@@ -9,8 +9,9 @@
    إضافة كلمة جديدة: أضفها إلى tools/qcf-words.json ثم شغّل
    tools/build_qcf_font.py — راجع tools/README.md.
 
-   الألوان: QCF يحمل ألوان تجويد مدمجة (COLR/CPAL، 8 مداخل 0–7).
-   تُفرض كلها إلى الأسود الخالص عبر font-palette (نفس الـ outline).
+   المصدر: QCF v4 غير الملوّن (جليف أحادي، بلا COLR) — وزن مطابق
+   لرسم المصحف. اللون من CSS: نهاري var(--ink)، ليلي #F2F0EA.
+   (font-palette يبقى احتياطيًا إن وُجد COLR قديم؛ لا يُستخدم مع المصدر الحالي.)
 
    الحجم: Auto Scale → Auto Margin → Manual Override عند الحاجة فقط
    (راجع tools/README.md و qcf-override.js).
@@ -29,6 +30,14 @@
 @font-palette-values --qcf-mono-black {
   font-family: 'QCF-Merged';
   override-colors: 0 black, 1 black, 2 black, 3 black, 4 black, 5 black, 6 black, 7 black;
+}
+
+/* مطابق لـ body.night .ayah-flow { color:#F2F0EA } — كل مداخل CPAL */
+@font-palette-values --qcf-mono-night {
+  font-family: 'QCF-Merged';
+  override-colors:
+    0 #F2F0EA, 1 #F2F0EA, 2 #F2F0EA, 3 #F2F0EA,
+    4 #F2F0EA, 5 #F2F0EA, 6 #F2F0EA, 7 #F2F0EA;
 }
 
 /* الطبقة الأولى: النص العربي الحقيقي كما كان قبل التعديل تمامًا (نفس
@@ -59,8 +68,15 @@
   white-space: nowrap;
   font-family: 'QCF-Merged', 'UthmanicHafs', serif;
   font-palette: --qcf-mono-black;
+  color: var(--ink); /* احتياطي لغير COLR */
   pointer-events: none;
   user-select: none;
+}
+
+/* كل مواضع QCF_OVERRIDE_TABLE: نفس لون بقية كلمات الآية ليلًا */
+body.night .qcf-override-glyph {
+  font-palette: --qcf-mono-night;
+  color: #F2F0EA;
 }
 
 /* مسافة إضافية بسيطة قبل علامة رأس الآية لغير الكوفيين (.non-kufi-mark)

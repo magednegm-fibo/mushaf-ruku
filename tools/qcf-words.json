@@ -13,7 +13,9 @@
     "position": 7,
     "page": 7,
     "codepoint": "FC91",
-    "label": "الراكعين"
+    "label": "الراكعين",
+    "scale": 0.85,
+    "margin_factor": 1.02
   },
   {
     "surah": 2,
@@ -65,6 +67,14 @@
   },
   {
     "surah": 3,
+    "ayah": 7,
+    "position": 32,
+    "page": 50,
+    "codepoint": "FCA9",
+    "label": "وَٱلرَّٰسِخُونَ"
+  },
+  {
+    "surah": 3,
     "ayah": 43,
     "position": 7,
     "page": 55,
@@ -94,6 +104,14 @@
     "page": 62,
     "codepoint": "FC5C",
     "label": "إسرائيل"
+  },
+  {
+    "surah": 4,
+    "ayah": 162,
+    "position": 2,
+    "page": 103,
+    "codepoint": "FCC0",
+    "label": "ٱلرَّٰسِخُونَ"
   },
   {
     "surah": 5,

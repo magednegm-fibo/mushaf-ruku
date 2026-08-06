@@ -11,7 +11,8 @@
 - جدول المواضع: يُولَّد من `tools/qcf-words.json` عبر `tools/build_qcf_font.py`
 - التشغيل: `qcf-override.js` + `qcf-override.css`
 - الحجم: Auto Scale → Auto Margin → Manual Override عند الحاجة فقط
-- الألوان: كل مداخل CPAL (0–7) تُفرَض أسودًا عبر `font-palette`
+- المصدر: QCF v4 غير الملوّن (جليف أحادي) — اللون من CSS (`color` / night)
+- ملاحظة: مصادر التجويد الملوّنة (COLR) كانت تُظهر سمكًا زائدًا عند mono palette
 
 ## مسار العمل من الآن
 

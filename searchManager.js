@@ -342,20 +342,74 @@
   }
 
   var AYAH_SEARCH_LIMIT = 80; // keep the result list scrollable, not a full concordance
+
+  // مطابقة حقول التطبيع لمدخل فهرس واحد — نفس الشروط السابقة حرفيًا
+  // (exact عبر الحدود، وtolerant عبر كل تفسيرات التطبيع).
+  function entryMatchesQuery(e, q, exact){
+    if(exact){
+      return findBoundedIndex(e.normStrict, q) !== -1
+          || findBoundedIndex(e.normIndopakStrict, q) !== -1;
+    }
+    return e.normStrict.indexOf(q) !== -1 || e.normIndopakStrict.indexOf(q) !== -1
+        || e.normIns.indexOf(q) !== -1 || e.normIndopakIns.indexOf(q) !== -1
+        || e.normWaw.indexOf(q) !== -1 || e.normIndopakWaw.indexOf(q) !== -1
+        || e.normHamzaYeh.indexOf(q) !== -1 || e.normIndopakHamzaYeh.indexOf(q) !== -1;
+  }
+
+  // يبني مدخلًا مؤقتًا لنص آيتين متجاورتين (نفس السورة، n ثم n+1) بكل
+  // حقول التطبيع الثمانية موصولة بمسافة — لإيجاد عبارات تعبر حدّ الآية
+  // مثل «عوجا قيما» بين 18:1 و 18:2. المرجع المعروض = الآية الأولى.
+  function buildPairEntry(a, b){
+    return {
+      surah: a.surah,
+      surahName: a.surahName,
+      ayah: a.ayah,
+      page: a.page,
+      text: a.text + ' ' + b.text,
+      textIndopak: a.textIndopak + ' ' + b.textIndopak,
+      normStrict: a.normStrict + ' ' + b.normStrict,
+      normIndopakStrict: a.normIndopakStrict + ' ' + b.normIndopakStrict,
+      normIns: a.normIns + ' ' + b.normIns,
+      normIndopakIns: a.normIndopakIns + ' ' + b.normIndopakIns,
+      normWaw: a.normWaw + ' ' + b.normWaw,
+      normIndopakWaw: a.normIndopakWaw + ' ' + b.normIndopakWaw,
+      normHamzaYeh: a.normHamzaYeh + ' ' + b.normHamzaYeh,
+      normIndopakHamzaYeh: a.normIndopakHamzaYeh + ' ' + b.normIndopakHamzaYeh,
+      crossBoundary: true,
+      endAyah: b.ayah
+    };
+  }
+
   function searchAyahs(query, exact){
     ensureAyahIndexBuilt();
     var q = normalizeArabic(query);
     if(!q) return [];
     var out = [];
+    var seen = {};
     for(var i = 0; i < ayahIndex.length && out.length < AYAH_SEARCH_LIMIT; i++){
       var e = ayahIndex[i];
-      var hit = exact
-        ? (findBoundedIndex(e.normStrict, q) !== -1 || findBoundedIndex(e.normIndopakStrict, q) !== -1)
-        : (e.normStrict.indexOf(q) !== -1 || e.normIndopakStrict.indexOf(q) !== -1
-           || e.normIns.indexOf(q) !== -1 || e.normIndopakIns.indexOf(q) !== -1
-           || e.normWaw.indexOf(q) !== -1 || e.normIndopakWaw.indexOf(q) !== -1
-           || e.normHamzaYeh.indexOf(q) !== -1 || e.normIndopakHamzaYeh.indexOf(q) !== -1);
-      if(hit) out.push(e);
+      var key = e.surah + ':' + e.ayah;
+      // 1) مطابقة داخل الآية — السلوك السابق دون تغيير
+      if(entryMatchesQuery(e, q, exact)){
+        if(!seen[key]){
+          seen[key] = 1;
+          out.push(e);
+        }
+        continue;
+      }
+      // 2) مطابقة عابرة للحدّ مع الآية التالية في نفس السورة فقط.
+      //    تُقبل فقط إن طابقت الزوج ولم تطابق أيًا من الآيتين منفردة
+      //    (وإلا فالمطابقة داخل الآية التالية ستُلتقط في دورتها، أو
+      //    كانت داخل الآية الحالية وقد عُولجت أعلاه).
+      var next = ayahIndex[i + 1];
+      if(!next || next.surah !== e.surah || next.ayah !== e.ayah + 1) continue;
+      if(seen[key]) continue;
+      if(entryMatchesQuery(next, q, exact)) continue;
+      var pair = buildPairEntry(e, next);
+      if(entryMatchesQuery(pair, q, exact)){
+        seen[key] = 1;
+        out.push(pair);
+      }
     }
     return out;
   }
