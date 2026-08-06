@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://magednegm-fibo.github.io/mushaf-ruku/sitemap.xml

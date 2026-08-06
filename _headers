@@ -1,0 +1,26 @@
+# Cloudflare Pages reads this file automatically and applies these
+# headers at the edge, on top of whatever the browser itself does.
+#
+# Why this file exists: sw.js already bumps its CACHE version and uses
+# skipWaiting()/clients.claim() (see sw.js) so the browser SHOULD always
+# pick up a new release. But that only works if the browser's check for
+# "did sw.js change?" actually reaches a fresh copy of sw.js. If
+# Cloudflare's CDN is caching sw.js at the edge with its default/long
+# caching rules, the browser's update check can get served that same
+# stale cached copy of sw.js indefinitely — no byte difference is ever
+# seen, so no update is ever detected, no matter how many times the
+# CACHE constant inside it gets bumped. This forces the CDN itself to
+# never cache sw.js, so every check reaches the real, current file.
+#
+# index.html is included for the same reason: it's the very first thing
+# loaded, and if the CDN serves an old cached copy of it, the browser
+# never even sees the updated <script> tags referencing newer files.
+
+/sw.js
+  Cache-Control: no-cache, no-store, must-revalidate
+
+/index.html
+  Cache-Control: no-cache, no-store, must-revalidate
+
+/
+  Cache-Control: no-cache, no-store, must-revalidate
