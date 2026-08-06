@@ -41,15 +41,62 @@
   // على الجهاز — إن بدت الرؤوس حادة جدًا أو عريضة جدًا مقارنة بالصورة
   // المرجعية، يمكن تعديل هذه القيمة وحدها دون تغيير نصف القطر الخارجي.
   // -----------------------------------------------------------------
+  // طلب مباشر: الآيات التي آخر كلمة فيها لا تحمل أي علامة وقف سجاوندي
+  // إطلاقًا (Single Source of Truth: data/no-sajawandi-heads.json، عبر
+  // no-sajawandi-heads.js) تُرسَم بدائرة بدل النجمة الثمانية. القطر مطابق
+  // تمامًا لأقصى امتداد النجمة (نصف قطر 14 من مركز 20,20 داخل نفس
+  // viewBox)، وموضع الرقم غير متأثر (نفس <span> خارج الـsvg تمامًا في
+  // الحالتين). سمك خط الدائرة مضبوط بـ vector-effect="non-scaling-stroke"
+  // كي يبقى 2px فعليًا على الشاشة بصرف النظر عن حجم .ayah-num المتغيّر
+  // (clamp)، مطابقًا تمامًا لسمك حدّ دائرة "ع" في تذييل الركوع (.ruku-mark،
+  // border: 2px solid) — طلب مباشر ومؤكَّد بصورة مرجعية.
+  var AYAH_NUM_STAR_PATH =
+    '<path d="M 20.00 6.00 L 23.29 12.05 L 29.90 10.10 L 27.95 16.71 L 34.00 20.00 L 27.95 23.29 L 29.90 29.90 L 23.29 27.95 L 20.00 34.00 L 16.71 27.95 L 10.10 29.90 L 12.05 23.29 L 6.00 20.00 L 12.05 16.71 L 10.10 10.10 L 16.71 12.05 Z" ' +
+    'class="ayah-num-outer" fill="none" stroke="currentColor" stroke-linejoin="round"/>';
+  var AYAH_NUM_CIRCLE_PATH =
+    '<circle cx="20" cy="20" r="14" class="ayah-num-outer-circle" fill="none" stroke="currentColor" vector-effect="non-scaling-stroke"/>';
+
+  function ayahMarkerShapeSvg(surah, ayah){
+    var isNoSajawandiHead = window.NoSajawandiHeads && window.NoSajawandiHeads.has(surah, ayah);
+    return isNoSajawandiHead ? AYAH_NUM_CIRCLE_PATH : AYAH_NUM_STAR_PATH;
+  }
+
   function ayahMarker(surah, ayah){
     var num = toArabicDigits(ayah);
     var digitClass = ayah >= 100 ? ' three-digit' : '';
-    return '<span class="ayah-num' + digitClass + '" aria-hidden="false" data-surah="' + surah + '" data-ayah="' + ayah + '">' +
+    var isCircle = !!(window.NoSajawandiHeads && window.NoSajawandiHeads.has(surah, ayah));
+    var circleClass = isCircle ? ' ayah-num-circle' : '';
+    return '<span class="ayah-num' + digitClass + circleClass + '" aria-hidden="false" data-surah="' + surah + '" data-ayah="' + ayah + '">' +
       '<svg viewBox="0 0 40 40">' +
-      '<path d="M 20.00 6.00 L 23.29 12.05 L 29.90 10.10 L 27.95 16.71 L 34.00 20.00 L 27.95 23.29 L 29.90 29.90 L 23.29 27.95 L 20.00 34.00 L 16.71 27.95 L 10.10 29.90 L 12.05 23.29 L 6.00 20.00 L 12.05 16.71 L 10.10 10.10 L 16.71 12.05 Z" ' +
-      'class="ayah-num-outer" fill="none" stroke="currentColor" stroke-linejoin="round"/>' +
+      ayahMarkerShapeSvg(surah, ayah) +
       '</svg>' +
       '<span>' + num + '</span></span>';
+  }
+
+  // معالجة نفس فئة السباق الموثَّقة سابقًا مع نظام QCF Override (v1.0.235):
+  // no-sajawandi-heads.js يُحمَّل بـfetch غير متزامن، وأول رسم للصفحة عند
+  // إقلاع التطبيق يحدث غالبًا قبل اكتمال هذا التحميل (ayahMarkerShapeSvg
+  // ترجع النجمة افتراضيًا وقتها). هذه الدالة تُستدعى من app.js فور اكتمال
+  // NoSajawandiHeads.load() لتصحيح رؤوس الآيات المرسومة فعلًا على الصفحة
+  // الحالية فقط دون إعادة رسم الصفحة كاملة.
+  function refreshAyahMarkerShapes(){
+    if(!els.ayahFlow) return;
+    var nums = els.ayahFlow.querySelectorAll('.ayah-num[data-surah][data-ayah]');
+    for(var i=0; i<nums.length; i++){
+      var el = nums[i];
+      var svg = el.querySelector('svg');
+      if(!svg) continue;
+      var s = parseInt(el.getAttribute('data-surah'), 10);
+      var a = parseInt(el.getAttribute('data-ayah'), 10);
+      var shouldBeCircle = !!(window.NoSajawandiHeads && window.NoSajawandiHeads.has(s, a));
+      var isCircleNow = !!svg.querySelector('.ayah-num-outer-circle');
+      if(shouldBeCircle !== isCircleNow){
+        svg.innerHTML = shouldBeCircle ? AYAH_NUM_CIRCLE_PATH : AYAH_NUM_STAR_PATH;
+      }
+      // مزامنة فئة التكديس: دائرة → إطار فوق الرقم؛ نجمة → الرقم فوق الإطار
+      if(shouldBeCircle) el.classList.add('ayah-num-circle');
+      else el.classList.remove('ayah-num-circle');
+    }
   }
 
   // U+06ED (ARABIC SMALL LOW MEEM) is NOT decorative — it is the classical
@@ -1445,34 +1492,6 @@
   //     أعلاه للتفصيل الكامل لكل فئة.
   var DEFAULT_JEEM_WORDS = buildDefaultWordMap('JEEM');
 
-  // صه (الوقف الهبطي) — نظام مستقل تمامًا عن buildDefaultWordMap/
-  // WAQF_POSITIONS أعلاه بقرار تصميمي صريح (راجع "Design Principles"
-  // في docs/habti-waqf-store.md): مصدره الوحيد data/habti-stops.json
-  // (عبر habti-waqf-data.js المولَّد منه بـ tools/build_habti_words.py)،
-  // بيانات معتمدة بمراجعة يدوية بحتة، لا تُدمج أبدًا داخل WAQF_POSITIONS
-  // العام. نفس القيود المطبَّقة على ص/ز/ق بالضبط: لا تُوضع عند آخر كلمة
-  // في الآية، مقصورة على مصحف المدينة (Uthmani) فقط — رقم `position` في
-  // habti-stops.json محسوب على نص هذا الرسم تحديدًا. راجع قاعدة
-  // .quran-word.has-default-habti في style.css للون (نفس أخضر
-  // #2E7D32 نهاري / #43A047 ليلي المستخدم لـ ص ز ق بالضبط — طلب مباشر:
-  // "لأن الوصل فيها أولى"). تحقَّق (2026-08-04) من عدم وجود أي تقاطع بين
-  // الـ23 موضعًا الحالية وبين WAQF_POSITIONS أو جداول كلمات الخلاف
-  // البنفسجية (SAKTA/MUQATTAAT/SEEN_AS_SAD/MAD_FARQ/TAJWEED_NOTE) أو
-  // NON_KUFI_HEADS_SYM_UTHMANI — صفر تعارضات، فلا حاجة حاليًا لمنطق حسم
-  // تعارض مماثل لـ DEFAULT_MARK_CONFLICT_RESOLUTIONS أعلاه.
-  function buildHabtiWordMap(){
-    var map = {};
-    var stops = (typeof window !== 'undefined' && window.HABTI_WAQF_STOPS) || [];
-    for(var i = 0; i < stops.length; i++){
-      var s = stops[i];
-      var key = s.surah + ':' + s.ayah;
-      var idx = s.position - 1;
-      if(!map[key]) map[key] = [];
-      if(map[key].indexOf(idx) === -1) map[key].push(idx);
-    }
-    return map;
-  }
-  var DEFAULT_HABTI_WORDS = buildHabtiWordMap();
 
   // Reported (device screenshots, Naskh/Indopak mode, two rounds): the
   // خ in نَخۡشٰٓى (5:52) sits too low relative to the ش that follows it
@@ -1985,8 +2004,6 @@ var KNOWN_SPLIT_WORD_FRAGMENTS = ["اٰ تُوۡهُمۡ", "اٰ تَيۡتُم�
       (DEFAULT_QIF_WORDS[ayahKey] || null) : null;
     var defaultJeemIdxs = (state.fontStyle === 'uthmani') ?
       (DEFAULT_JEEM_WORDS[ayahKey] || null) : null;
-    var defaultHabtiIdxs = (state.fontStyle === 'uthmani') ?
-      (DEFAULT_HABTI_WORDS[ayahKey] || null) : null;
     // نجمة السجاوندي المرتبطة برأس غير الكوفيين (ما عدا «لا»):
     // تُعرض على **الكلمة المضيفة نفسها** (كلمة رأس الآية — مثل يسقون
     // في 28:23)، لا على الفهرس السابق. الفهرس في الخريطة قد ينزاح؛
@@ -2128,9 +2145,6 @@ var KNOWN_SPLIT_WORD_FRAGMENTS = ["اٰ تُوۡهُمۡ", "اٰ تَيۡتُم�
       var isDefaultJeem = ((!!(defaultJeemIdxs && defaultJeemIdxs.indexOf(idx) !== -1) &&
         idx !== words.length - 1) || shiftedJeemIdxs.indexOf(idx) !== -1);
       if(isDefaultJeem) extraCls += ' has-default-jeem';
-      var isDefaultHabti = !!(defaultHabtiIdxs && defaultHabtiIdxs.indexOf(idx) !== -1) &&
-        idx !== words.length - 1;
-      if(isDefaultHabti) extraCls += ' has-default-habti';
       // رأس آية لغير الكوفيين — نجمة في مصحف المدينة فقط.
       // المضيف يُحدَّد بمطابقة حروف الأساس (أعلاه) لا بالفهرس وحده.
       // «لا»: رأس أخضر. غير «لا»: رأس بلون المصحف + نجمة سجاوندي على نفس الكلمة.
@@ -2552,6 +2566,7 @@ var KNOWN_SPLIT_WORD_FRAGMENTS = ["اٰ تُوۡهُمۡ", "اٰ تَيۡتُم�
     tokenizeAyahWords: tokenizeAyahWords,
     resolveAyahSourceText: resolveAyahSourceText,
     renderAyahWords: renderAyahWords,
-    renderAyahTextWithHighlight: renderAyahTextWithHighlight
+    renderAyahTextWithHighlight: renderAyahTextWithHighlight,
+    refreshAyahMarkerShapes: refreshAyahMarkerShapes
   };
 })();

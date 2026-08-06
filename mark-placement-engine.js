@@ -27,7 +27,7 @@
 //         ۖۗۘۙۚۛۜ etc. These sit *inside* the host .quran-word, so they
 //         would be invisible to the engine if we only checked sibling
 //         words; they MUST be listed here so a star on the same word
-//         (e.g. صه on khilaf نٓۚ) can collide-avoid against the
+//         (e.g. on khilaf نٓۚ) can collide-avoid against the
 //         Madinah mark without any per-position special case.
 //       - dedicated lifts that can float slightly outside the host box:
 //         .waqf-sila-lift / .waqf-sakta-lift / .waqf-mark-lower /

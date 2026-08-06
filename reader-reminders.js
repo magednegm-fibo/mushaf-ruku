@@ -34,12 +34,7 @@
     {cls: 'has-default-jeem', symbol: 'ج', label: 'وقف جائز', color: 'brown'},
     {cls: 'has-default-zay-jawaz', symbol: 'ز', label: 'وقف مجوز لوجه', color: 'green'},
     {cls: 'has-default-qad-qila', symbol: 'ق', label: 'قد قيل عليه الوقف', color: 'green'},
-    {cls: 'has-default-sad-rukhsa', symbol: 'ص', label: 'وقف مرخص للضرورة', color: 'green'},
-    // صه (الوقف الهبطي) — نظام مستقل بمصدر بيانات خاص به
-    // (data/habti-stops.json عبر habti-waqf-data.js)، غير مرتبط بجدول
-    // WAQF_POSITIONS العام. راجع docs/habti-waqf-store.md. نفس الأخضر
-    // المستخدم لص/ز/ق بالضبط — طلب مباشر.
-    {cls: 'has-default-habti', symbol: 'صه', label: 'صالح للوقف', color: 'green'}
+    {cls: 'has-default-sad-rukhsa', symbol: 'ص', label: 'وقف مرخص للضرورة', color: 'green'}
   ];
   function resolveDefaultMarkInfo(wordEl){
     for(var i = 0; i < DEFAULT_MARK_INFO.length; i++){

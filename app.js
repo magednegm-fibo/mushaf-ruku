@@ -31,6 +31,19 @@
     }
   }
 
+  // يبدأ التحميل بأسرع وقت ممكن (بالتوازي مع كل التهيئة أدناه)، لأن أول
+  // رسم فعلي للصفحة يحدث لاحقًا ضمن ReaderManager.init(). لو اكتمل
+  // fetch بعد أن رُسمت الصفحة الأولى بالفعل (الحالة المتوقَّعة غالبًا)،
+  // refreshAyahMarkerShapes() تصحّح رؤوس الآيات المرسومة فعلًا فقط، دون
+  // إعادة رسم الصفحة كاملة — نفس نمط معالجة سباق QCF Override الموثَّق.
+  if (window.NoSajawandiHeads) {
+    window.NoSajawandiHeads.load().then(function(){
+      if (window.ReaderManager && ReaderManager.refreshAyahMarkerShapes) {
+        ReaderManager.refreshAyahMarkerShapes();
+      }
+    });
+  }
+
   safeInit('SearchManager', function(){ SearchManager.init(PAGES); });
   var JUZ_INFO = window.JUZ_INFO || {name: 'جزء عمّ', shortName: 'جزء عمّ', rukuCount: PAGES.length, ayahCount: 0};
 

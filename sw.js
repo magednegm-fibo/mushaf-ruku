@@ -55,7 +55,8 @@ const DYNAMIC_ASSETS = [
   './reader-guide.js',
   './reader-tafsir.js',
   './non-kufi-heads.js',
-  './habti-waqf-data.js', // نظام الوقف الهبطي — راجع docs/habti-waqf-store.md
+  './no-sajawandi-heads.js',
+  './data/no-sajawandi-heads.json', // Single Source of Truth — يُحمَّل بـfetch عند الإقلاع
   './home.js',
   './settings.js',
   './navigation.js',
