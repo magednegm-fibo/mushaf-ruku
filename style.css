@@ -2452,12 +2452,10 @@ body.night .reminder-color-legend{ color:#9A9A9E; }
 .waqf-symbol-sajdah{
   font-size:21px;
 }
-/* نفس مسار SVG المستخدم في .non-kufi-mark داخل صفحات المصحف (مصحف المدينة) —
-   لا Unicode بديل — ليطابق دليل القارئ الرسم الفعلي. اللون الأخضر = مثال
-   «الوصل أولى» كما في الصفحة. */
-/* لون حبر المصحف (نهاري --ink) — مطابق لرأس غير الكوفيين العاري في الصفحة */
+/* نفس مسار SVG المستخدم في .non-kufi-mark داخل صفحات المصحف —
+   لا Unicode بديل. اللون = var(--emerald) مثل بقية رموز دليل علامات الوقف. */
 .waqf-guide-symbol.waqf-symbol-non-kufi{
-  color: var(--ink);
+  color: var(--emerald);
   padding: 0;
 }
 .waqf-guide-symbol.waqf-symbol-non-kufi svg{
@@ -2470,7 +2468,7 @@ body.night .reminder-color-legend{ color:#9A9A9E; }
   stroke: none;
 }
 body.night .waqf-guide-symbol.waqf-symbol-non-kufi{
-  color: #F2F0EA;
+  color: #F2F2F2;
 }
 .waqf-guide-text b{
   display:block;
