@@ -1041,7 +1041,7 @@ body.night .waqf-info-popup.info-khilaf .waqf-info-label .khilaf-inline-symbol-b
    لكن vector-effect="non-scaling-stroke" على العنصر نفسه (في readerManager.js)
    يجعل القيمة تُفسَّر كبكسل شاشة فعلي ثابت (2px) بصرف النظر عن حجم
    .ayah-num المتغيّر — مطابقة مقصودة لسمك حد دائرة "ع" في .ruku-mark. */
-.ayah-num svg .ayah-num-outer-circle{ stroke-width: 2; }
+.ayah-num svg .ayah-num-outer-circle{ stroke-width: 1.8; /* −10% عن 2px */ }
 .ayah-num span{
   position:relative;
   z-index:1;
@@ -2453,9 +2453,10 @@ body.night .reminder-color-legend{ color:#9A9A9E; }
   font-size:21px;
 }
 /* نفس مسار SVG المستخدم في .non-kufi-mark داخل صفحات المصحف —
-   لا Unicode بديل. اللون = var(--emerald) مثل بقية رموز دليل علامات الوقف. */
+   لا Unicode بديل. اللون = أخضر «لا» كما في الفاتحة 7 (عليهم الأولى):
+   نفس .non-kufi-mark.mark-green (#2E7D32 / ليلي #43A047). */
 .waqf-guide-symbol.waqf-symbol-non-kufi{
-  color: var(--emerald);
+  color: #2E7D32;
   padding: 0;
 }
 .waqf-guide-symbol.waqf-symbol-non-kufi svg{
@@ -2468,7 +2469,7 @@ body.night .reminder-color-legend{ color:#9A9A9E; }
   stroke: none;
 }
 body.night .waqf-guide-symbol.waqf-symbol-non-kufi{
-  color: #F2F2F2;
+  color: #43A047;
 }
 .waqf-guide-text b{
   display:block;

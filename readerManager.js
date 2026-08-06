@@ -43,18 +43,18 @@
   // -----------------------------------------------------------------
   // طلب مباشر: الآيات التي آخر كلمة فيها لا تحمل أي علامة وقف سجاوندي
   // إطلاقًا (Single Source of Truth: data/no-sajawandi-heads.json، عبر
-  // no-sajawandi-heads.js) تُرسَم بدائرة بدل النجمة الثمانية. القطر مطابق
-  // تمامًا لأقصى امتداد النجمة (نصف قطر 14 من مركز 20,20 داخل نفس
-  // viewBox)، وموضع الرقم غير متأثر (نفس <span> خارج الـsvg تمامًا في
-  // الحالتين). سمك خط الدائرة مضبوط بـ vector-effect="non-scaling-stroke"
-  // كي يبقى 2px فعليًا على الشاشة بصرف النظر عن حجم .ayah-num المتغيّر
-  // (clamp)، مطابقًا تمامًا لسمك حدّ دائرة "ع" في تذييل الركوع (.ruku-mark،
-  // border: 2px solid) — طلب مباشر ومؤكَّد بصورة مرجعية.
+  // no-sajawandi-heads.js) تُرسَم بدائرة بدل النجمة الثمانية.
+  // أقصى امتداد هندسي لرؤوس مسار النجمة = 14 من المركز (20,20)، لكن
+  // بروز الرؤوس + stroke-width للنجمة يجعلها تبدو أكبر بصريًا. رُفع نصف
+  // قطر الدائرة إلى 15 لتحقيق توازن بصري مع الامتداد الخارجي للنجمة
+  // (وليس مساواة القطر الرياضي فقط) — طلب مباشر 1.0.286؛ ضُبط إلى 15 في 1.0.287.
+  // موضع الرقم غير متأثر (نفس <span> خارج الـsvg). سمك خط الدائرة
+  // vector-effect="non-scaling-stroke" = 1.8px شاشة (−10% عن 2px) في style.css.
   var AYAH_NUM_STAR_PATH =
     '<path d="M 20.00 6.00 L 23.29 12.05 L 29.90 10.10 L 27.95 16.71 L 34.00 20.00 L 27.95 23.29 L 29.90 29.90 L 23.29 27.95 L 20.00 34.00 L 16.71 27.95 L 10.10 29.90 L 12.05 23.29 L 6.00 20.00 L 12.05 16.71 L 10.10 10.10 L 16.71 12.05 Z" ' +
     'class="ayah-num-outer" fill="none" stroke="currentColor" stroke-linejoin="round"/>';
   var AYAH_NUM_CIRCLE_PATH =
-    '<circle cx="20" cy="20" r="14" class="ayah-num-outer-circle" fill="none" stroke="currentColor" vector-effect="non-scaling-stroke"/>';
+    '<circle cx="20" cy="20" r="15" class="ayah-num-outer-circle" fill="none" stroke="currentColor" vector-effect="non-scaling-stroke"/>';
 
   function ayahMarkerShapeSvg(surah, ayah){
     var isNoSajawandiHead = window.NoSajawandiHeads && window.NoSajawandiHeads.has(surah, ayah);
