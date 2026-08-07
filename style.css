@@ -1084,15 +1084,21 @@ body.night .ayah-num span{ background:#1c1c1e; }
 /* Small meem mark for إقلاب (iqlab): drawn manually at reduced size and
    nudged below the baseline, since the bundled font's own glyph for the
    proper Unicode mark (U+06ED) is broken. Kept in the same ink color as the
-   rest of the ayah — it's part of the text, not a decorative annotation. */
+   rest of the ayah — it's part of the text, not a decorative annotation.
+   UPDATE 1: كُبِّرت بنسبة ~14% (0.42 → 0.48em) مع الإبقاء على الموضع.
+   UPDATE 2: وزن أوضح قليلًا (~5–10%) عبر text-stroke رفيع بلون الحبر
+   نفسه — بلا تغيير حجم أو موضع أو لون. */
 .iqlab-mark{
   display:inline-block;
-  font-size:0.42em;
+  font-size:0.48em;
   line-height:1;
   vertical-align:sub;
   position:relative;
   top:0.2em;
   margin:0 -0.02em;
+  /* خط عثماني لا يملك وزنًا أثقل؛ stroke رفيع يعطي بروزًا بصريًا خفيفًا */
+  -webkit-text-stroke: 0.028em currentColor;
+  paint-order: stroke fill;
 }
 
 /* علامة السجدة (۩): رسمها في هذا الخط (قبة/مئذنة صغيرة زخرفية) له صندوق
