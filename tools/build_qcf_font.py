@@ -202,24 +202,13 @@ def build_font(words):
             glyph_order.append(new_base_name)
         else:
             used_colr = True
-            src_colr = src["COLR"].ColorLayers
-            src_cpal = src["CPAL"].palettes[0]
-            layers_src = src_colr[base_gname_src]
-            # اختر الطبقة السوداء (rgba≈0,0,0) إن وُجدت، وإلا الأولى.
-            black_layer = None
-            for L in layers_src:
-                if L.colorID == 0xFFFF:
-                    continue
-                c = src_cpal[L.colorID]
-                if c.red == 0 and c.green == 0 and c.blue == 0 and c.alpha == 255:
-                    black_layer = L
-                    break
-            if black_layer is None:
-                black_layer = layers_src[0]
-            # ملاحظة: الطبقة السوداء وحدها قد تكون ناقصة في خطوط التجويد
-            # (الأحرف الملوّنة خارجها). يُفضَّل دائمًا مصدر v4 غير الملوّن.
-            new_glyf_entries[new_base_name] = src_glyf[black_layer.name]
-            new_hmtx[new_base_name] = src_hmtx[black_layer.name]
+            # مصدر COLR (تجويد): استخدم الجليف الأساسي (outline الكامل)
+            # الموجود تحت اسم الـcmap نفسه. الطبقات الملوّنة قد تقسّم
+            # أجزاء الحرف على أكثر من طبقة، فأخذ طبقة واحدة (أو حتى
+            # الطبقات الداكنة فقط) يُنتج رسماً ناقصاً. الجليف الأساسي
+            # يحتوي الشكل الكامل أحادي اللون.
+            new_glyf_entries[new_base_name] = src_glyf[base_gname_src]
+            new_hmtx[new_base_name] = src_hmtx[base_gname_src]
             glyph_order.append(new_base_name)
 
         new_cmap[next_cp] = new_base_name

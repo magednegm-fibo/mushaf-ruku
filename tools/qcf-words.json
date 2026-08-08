@@ -18,6 +18,14 @@
     "margin_factor": 1.02
   },
   {
+    "surah": 4,
+    "ayah": 34,
+    "position": 2,
+    "page": 84,
+    "codepoint": "FC42",
+    "label": "قوامون"
+  },
+  {
     "surah": 2,
     "ayah": 47,
     "position": 2,
@@ -410,5 +418,316 @@
     "label": "ٱلدَّٰخِلِينَ",
     "scale": 0.8,
     "margin_factor": 1.02
+  },
+  {
+    "surah": 24,
+    "ayah": 58,
+    "position": 14,
+    "page": 357,
+    "codepoint": "FCA9",
+    "label": "مرات"
+  },
+  {
+    "surah": 12,
+    "ayah": 75,
+    "position": 8,
+    "page": 244,
+    "codepoint": "FC7F",
+    "label": "جَزَـٰٓؤُهُۥۚ"
+  },
+  {
+    "surah": 51,
+    "ayah": 10,
+    "position": 2,
+    "page": 521,
+    "codepoint": "FC50",
+    "label": "ٱلۡخَرَّـٰصُونَ"
+  },
+  {
+    "surah": 7,
+    "ayah": 151,
+    "position": 11,
+    "page": 169,
+    "codepoint": "FC77",
+    "label": "ٱلرَّـٰحِمِينَ"
+  },
+  {
+    "surah": 12,
+    "ayah": 64,
+    "position": 17,
+    "page": 243,
+    "codepoint": "FC52",
+    "label": "ٱلرَّـٰحِمِينَ"
+  },
+  {
+    "surah": 12,
+    "ayah": 92,
+    "position": 11,
+    "page": 246,
+    "codepoint": "FCAA",
+    "label": "ٱلرَّـٰحِمِينَ"
+  },
+  {
+    "surah": 21,
+    "ayah": 83,
+    "position": 10,
+    "page": 329,
+    "codepoint": "FC59",
+    "label": "ٱلرَّـٰحِمِينَ",
+    "scale": 0.8,
+    "margin_factor": 1.02
+  },
+  {
+    "surah": 23,
+    "ayah": 109,
+    "position": 14,
+    "page": 349,
+    "codepoint": "FC6E",
+    "label": "ٱلرَّـٰحِمِينَ"
+  },
+  {
+    "surah": 23,
+    "ayah": 118,
+    "position": 7,
+    "page": 349,
+    "codepoint": "FCCE",
+    "label": "ٱلرَّـٰحِمِينَ",
+    "scale": 0.8,
+    "margin_factor": 1.02
+  },
+  {
+    "surah": 5,
+    "ayah": 114,
+    "position": 22,
+    "page": 127,
+    "codepoint": "FC57",
+    "label": "ٱلرَّـٰزِقِينَ",
+    "scale": 0.9
+  },
+  {
+    "surah": 22,
+    "ayah": 58,
+    "position": 18,
+    "page": 339,
+    "codepoint": "FC6A",
+    "label": "ٱلرَّـٰزِقِينَ"
+  },
+  {
+    "surah": 23,
+    "ayah": 72,
+    "position": 9,
+    "page": 346,
+    "codepoint": "FCCC",
+    "label": "ٱلرَّـٰزِقِينَ"
+  },
+  {
+    "surah": 34,
+    "ayah": 39,
+    "position": 20,
+    "page": 432,
+    "codepoint": "FCD5",
+    "label": "ٱلرَّـٰزِقِينَ"
+  },
+  {
+    "surah": 62,
+    "ayah": 11,
+    "position": 21,
+    "page": 554,
+    "codepoint": "FC7E",
+    "label": "ٱلرَّـٰزِقِينَ"
+  },
+  {
+    "surah": 49,
+    "ayah": 7,
+    "position": 28,
+    "page": 516,
+    "codepoint": "FC7E",
+    "label": "ٱلرَّـٰشِدُونَ"
+  },
+  {
+    "surah": 9,
+    "ayah": 112,
+    "position": 5,
+    "page": 205,
+    "codepoint": "FC45",
+    "label": "ٱلرَّـٰكِعُونَ",
+    "scale": 0.85,
+    "margin_factor": 1.0
+  },
+  {
+    "surah": 56,
+    "ayah": 64,
+    "position": 5,
+    "page": 536,
+    "codepoint": "FC8F",
+    "label": "ٱلزَّـٰرِعُونَ"
+  },
+  {
+    "surah": 12,
+    "ayah": 20,
+    "position": 9,
+    "page": 237,
+    "codepoint": "FC9F",
+    "label": "ٱلزَّـٰهِدِينَ",
+    "scale": 0.85,
+    "margin_factor": 1.0
+  },
+  {
+    "surah": 11,
+    "ayah": 75,
+    "position": 4,
+    "page": 230,
+    "codepoint": "FC6F",
+    "label": "أَوَّـٰهٞ"
+  },
+  {
+    "surah": 26,
+    "ayah": 61,
+    "position": 2,
+    "page": 370,
+    "codepoint": "FC42",
+    "label": "تَرَـٰٓءَا"
+  },
+  {
+    "surah": 5,
+    "ayah": 29,
+    "position": 12,
+    "page": 112,
+    "codepoint": "FCAC",
+    "label": "جَزَـٰٓؤُاْ"
+  },
+  {
+    "surah": 5,
+    "ayah": 33,
+    "position": 2,
+    "page": 113,
+    "codepoint": "FC6C",
+    "label": "جَزَـٰٓؤُاْ"
+  },
+  {
+    "surah": 59,
+    "ayah": 17,
+    "position": 9,
+    "page": 548,
+    "codepoint": "FC4A",
+    "label": "جَزَـٰٓؤُاْ"
+  },
+  {
+    "surah": 12,
+    "ayah": 74,
+    "position": 3,
+    "page": 244,
+    "codepoint": "FC73",
+    "label": "جَزَـٰٓؤُهُۥٓ"
+  },
+  {
+    "surah": 12,
+    "ayah": 75,
+    "position": 2,
+    "page": 244,
+    "codepoint": "FC79",
+    "label": "جَزَـٰٓؤُهُۥ"
+  },
+  {
+    "surah": 7,
+    "ayah": 176,
+    "position": 21,
+    "page": 173,
+    "codepoint": "FCAE",
+    "label": "ذَّـٰلِكَ"
+  },
+  {
+    "surah": 24,
+    "ayah": 58,
+    "position": 37,
+    "page": 357,
+    "codepoint": "FCC4",
+    "label": "طَوَّـٰفُونَ"
+  },
+  {
+    "surah": 37,
+    "ayah": 2,
+    "position": 1,
+    "page": 446,
+    "codepoint": "FC44",
+    "label": "فَٱلزَّـٰجِرَٰتِ"
+  },
+  {
+    "surah": 4,
+    "ayah": 135,
+    "position": 5,
+    "page": 100,
+    "codepoint": "FC46",
+    "label": "قَوَّـٰمِينَ"
+  },
+  {
+    "surah": 5,
+    "ayah": 8,
+    "position": 5,
+    "page": 108,
+    "codepoint": "FC9C",
+    "label": "قَوَّـٰمِينَ"
+  },
+  {
+    "surah": 9,
+    "ayah": 114,
+    "position": 21,
+    "page": 205,
+    "codepoint": "FC7D",
+    "label": "لَأَوَّـٰهٌ",
+    "scale": 0.9
+  },
+  {
+    "surah": 17,
+    "ayah": 25,
+    "position": 11,
+    "page": 284,
+    "codepoint": "FCBA",
+    "label": "لِلۡأَوَّـٰبِينَ"
+  },
+  {
+    "surah": 11,
+    "ayah": 114,
+    "position": 14,
+    "page": 234,
+    "codepoint": "FCA8",
+    "label": "لِلذَّـٰكِرِينَ",
+    "scale": 0.9
+  },
+  {
+    "surah": 51,
+    "ayah": 1,
+    "position": 1,
+    "page": 520,
+    "codepoint": "FCB3",
+    "label": "وَٱلذَّـٰرِيَٰتِ",
+    "scale": 0.9
+  },
+  {
+    "surah": 33,
+    "ayah": 35,
+    "position": 21,
+    "page": 422,
+    "codepoint": "FCA6",
+    "label": "وَٱلذَّـٰكِرِينَ",
+    "scale": 0.85
+  },
+  {
+    "surah": 33,
+    "ayah": 35,
+    "position": 24,
+    "page": 422,
+    "codepoint": "FCA9",
+    "label": "وَٱلذَّـٰكِرَٰتِ",
+    "scale": 0.85
+  },
+  {
+    "surah": 42,
+    "ayah": 40,
+    "position": 1,
+    "page": 487,
+    "codepoint": "FC9C",
+    "label": "وَجَزَـٰٓؤُاْ",
+    "scale": 0.9
   }
 ]

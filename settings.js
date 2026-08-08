@@ -26,13 +26,16 @@
     var size = state[currentFontSizeKey()];
     document.documentElement.style.setProperty('--ayah-size', size + 'px');
     els.fontSizeLabel.textContent = size;
-    // Star marks are sized in em relative to the word, so any font-size
-    // change (the +/- buttons, or every tick of a live pinch-zoom) can
-    // change what collides with what — re-check once layout settles.
-    // scheduleResolveAll() coalesces rapid repeated calls into at most
-    // one measurement pass per animation frame, so this stays cheap even
-    // while pinch-zoom fires it continuously.
-    if(window.MarkPlacementEngine && els.ayahFlow) window.MarkPlacementEngine.scheduleResolveAll(els.ayahFlow);
+    // بعد تغيير الحجم: انتظر استقرار الـ layout ثم أعد قياس كلمات QCF
+    // (عروض .qcf-real-text و scale) — وإلا تبقى قيم البكسل القديمة وتختل
+    // محاذاة أول/آخر السطر. scheduleFitAllGlyphs يدمج أحداث الـ pinch
+    // في قياس واحد (double-rAF + coalesce) ثم يستدعي scheduleResolveAll
+    // للعلامات على الأبعاد النهائية. إن لم يكن QCF محمّلاً نكتفي بالعلامات.
+    if(window.QCFOverride && typeof window.QCFOverride.scheduleFitAllGlyphs === 'function'){
+      window.QCFOverride.scheduleFitAllGlyphs();
+    } else if(window.MarkPlacementEngine && els.ayahFlow){
+      window.MarkPlacementEngine.scheduleResolveAll(els.ayahFlow);
+    }
   }
 
   // -----------------------------------------------------------------

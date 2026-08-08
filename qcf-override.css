@@ -68,14 +68,20 @@
   white-space: nowrap;
   font-family: 'QCF-Merged', 'UthmanicHafs', serif;
   font-palette: --qcf-mono-black;
-  color: var(--ink); /* احتياطي لغير COLR */
+  /* inherit حتى يرث لون السجاوندي الافتراضي (has-default-jeem وغيرها)
+     من .quran-word الأب. للكلمات العادية يرث حبر المصحف من التدفق. */
+  color: inherit;
   pointer-events: none;
   user-select: none;
 }
 
-/* كل مواضع QCF_OVERRIDE_TABLE: نفس لون بقية كلمات الآية ليلًا */
+/* ليلاً: فقط إن لم يكن للأب لون سجاوندي خاص — الكلمات ذات
+   has-default-* لها قواعد لون ليلية في style.css فيرثها الجليف.
+   للكلمات العادية نفرض لون الليل. */
 body.night .qcf-override-glyph {
   font-palette: --qcf-mono-night;
+}
+body.night .quran-word[data-qcf-applied="1"]:not(.has-default-waqf):not(.has-default-sad-rukhsa):not(.has-default-waqf-lazim):not(.has-default-zay-jawaz):not(.has-default-qad-qila):not(.has-default-qif):not(.has-default-jeem) > .qcf-override-glyph {
   color: #F2F0EA;
 }
 

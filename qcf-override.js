@@ -29,55 +29,93 @@
   var QCF_OVERRIDE_TABLE = {
     '2:40:1': { glyph: '\uE000' }, // إسرائيل
     '2:43:6': { glyph: '\uE001', scale: 0.85, marginFactor: 1.02 }, // الراكعين
-    '2:47:1': { glyph: '\uE002' }, // إسرائيل
-    '2:72:3': { glyph: '\uE003' }, // فَٱدَّـٰرَ⁠ٰٔتُمۡ
-    '2:83:4': { glyph: '\uE004' }, // إسرائيل
-    '2:122:1': { glyph: '\uE005' }, // إسرائيل
-    '2:211:2': { glyph: '\uE006' }, // إسرائيل
-    '2:222:24': { glyph: '\uE007' }, // ٱلتَّوَّٰبِينَ
-    '2:246:6': { glyph: '\uE008' }, // إسرائيل
-    '3:7:31': { glyph: '\uE009' }, // وَٱلرَّٰسِخُونَ
-    '3:43:6': { glyph: '\uE00A' }, // الراكعين
-    '3:49:3': { glyph: '\uE00B' }, // إسرائيل
-    '3:93:5': { glyph: '\uE00C' }, // إسرائيل
-    '3:93:9': { glyph: '\uE00D' }, // إسرائيل
-    '4:162:1': { glyph: '\uE00E' }, // ٱلرَّٰسِخُونَ
-    '5:12:5': { glyph: '\uE00F' }, // إسرائيل
-    '5:32:6': { glyph: '\uE010' }, // إسرائيل
-    '5:70:4': { glyph: '\uE011' }, // إسرائيل
-    '5:72:13': { glyph: '\uE012' }, // إسرائيل
-    '5:78:5': { glyph: '\uE013' }, // إسرائيل
-    '5:110:49': { glyph: '\uE014' }, // إسرائيل
-    '7:105:17': { glyph: '\uE015' }, // إسرائيل
-    '7:134:21': { glyph: '\uE016' }, // إسرائيل
-    '7:137:17': { glyph: '\uE017' }, // إسرائيل
-    '7:138:2': { glyph: '\uE018' }, // إسرائيل
-    '10:90:2': { glyph: '\uE019' }, // إسرائيل
-    '10:90:23': { glyph: '\uE01A' }, // إسرائيل
-    '10:93:3': { glyph: '\uE01B' }, // إسرائيل
-    '17:2:6': { glyph: '\uE01C' }, // إسرائيل
-    '17:4:3': { glyph: '\uE01D' }, // إسرائيل
-    '17:101:8': { glyph: '\uE01E' }, // إسرائيل
-    '17:104:4': { glyph: '\uE01F' }, // إسرائيل
-    '19:58:17': { glyph: '\uE020' }, // وإسرائيل
-    '20:47:8': { glyph: '\uE021' }, // إسرائيل
-    '20:80:1': { glyph: '\uE022' }, // إسرائيل
-    '20:94:14': { glyph: '\uE023' }, // إسرائيل
-    '26:17:4': { glyph: '\uE024' }, // إسرائيل
-    '26:22:7': { glyph: '\uE025' }, // إسرائيل
-    '26:59:3': { glyph: '\uE026' }, // إسرائيل
-    '26:197:8': { glyph: '\uE027' }, // إسرائيل
-    '27:76:6': { glyph: '\uE028' }, // إسرائيل
-    '32:23:13': { glyph: '\uE029' }, // إسرائيل
-    '40:53:6': { glyph: '\uE02A' }, // إسرائيل
-    '43:59:9': { glyph: '\uE02B' }, // إسرائيل
-    '44:30:3': { glyph: '\uE02C' }, // إسرائيل
-    '45:16:3': { glyph: '\uE02D' }, // إسرائيل
-    '46:10:13': { glyph: '\uE02E' }, // إسرائيل
-    '60:4:13': { glyph: '\uE02F' }, // بُرَءَٰٓؤُا۟
-    '61:6:6': { glyph: '\uE030' }, // إسرائيل
-    '61:14:25': { glyph: '\uE031' }, // إسرائيل
-    '66:10:26': { glyph: '\uE032', scale: 0.8, marginFactor: 1.02 }, // ٱلدَّٰخِلِينَ
+    '2:47:1': { glyph: '\uE003' }, // إسرائيل
+    '2:72:3': { glyph: '\uE004' }, // فَٱدَّـٰرَ⁠ٰٔتُمۡ
+    '2:83:4': { glyph: '\uE005' }, // إسرائيل
+    '2:122:1': { glyph: '\uE006' }, // إسرائيل
+    '2:211:2': { glyph: '\uE007' }, // إسرائيل
+    '2:222:24': { glyph: '\uE008' }, // ٱلتَّوَّٰبِينَ
+    '2:246:6': { glyph: '\uE009' }, // إسرائيل
+    '3:7:31': { glyph: '\uE00A' }, // وَٱلرَّٰسِخُونَ
+    '3:43:6': { glyph: '\uE00B' }, // الراكعين
+    '3:49:3': { glyph: '\uE00C' }, // إسرائيل
+    '3:93:5': { glyph: '\uE00D' }, // إسرائيل
+    '3:93:9': { glyph: '\uE00E' }, // إسرائيل
+    '4:34:1': { glyph: '\uE002' }, // قوامون
+    '4:135:4': { glyph: '\uE050' }, // قَوَّـٰمِينَ
+    '4:162:1': { glyph: '\uE00F' }, // ٱلرَّٰسِخُونَ
+    '5:8:4': { glyph: '\uE051' }, // قَوَّـٰمِينَ
+    '5:12:5': { glyph: '\uE010' }, // إسرائيل
+    '5:29:11': { glyph: '\uE048' }, // جَزَـٰٓؤُاْ
+    '5:32:6': { glyph: '\uE011' }, // إسرائيل
+    '5:33:1': { glyph: '\uE049' }, // جَزَـٰٓؤُاْ
+    '5:70:4': { glyph: '\uE012' }, // إسرائيل
+    '5:72:13': { glyph: '\uE013' }, // إسرائيل
+    '5:78:5': { glyph: '\uE014' }, // إسرائيل
+    '5:110:49': { glyph: '\uE015' }, // إسرائيل
+    '5:114:21': { glyph: '\uE03D', scale: 0.9 }, // ٱلرَّـٰزِقِينَ
+    '7:105:17': { glyph: '\uE016' }, // إسرائيل
+    '7:134:21': { glyph: '\uE017' }, // إسرائيل
+    '7:137:17': { glyph: '\uE018' }, // إسرائيل
+    '7:138:2': { glyph: '\uE019' }, // إسرائيل
+    '7:151:10': { glyph: '\uE037' }, // ٱلرَّـٰحِمِينَ
+    '7:176:20': { glyph: '\uE04D' }, // ذَّـٰلِكَ
+    '9:112:4': { glyph: '\uE043', scale: 0.85, marginFactor: 1.0 }, // ٱلرَّـٰكِعُونَ
+    '9:114:20': { glyph: '\uE052', scale: 0.9 }, // لَأَوَّـٰهٌ
+    '10:90:2': { glyph: '\uE01A' }, // إسرائيل
+    '10:90:23': { glyph: '\uE01B' }, // إسرائيل
+    '10:93:3': { glyph: '\uE01C' }, // إسرائيل
+    '11:75:3': { glyph: '\uE046' }, // أَوَّـٰهٞ
+    '11:114:13': { glyph: '\uE054', scale: 0.9 }, // لِلذَّـٰكِرِينَ
+    '12:20:8': { glyph: '\uE045', scale: 0.85, marginFactor: 1.0 }, // ٱلزَّـٰهِدِينَ
+    '12:64:16': { glyph: '\uE038' }, // ٱلرَّـٰحِمِينَ
+    '12:74:2': { glyph: '\uE04B' }, // جَزَـٰٓؤُهُۥٓ
+    '12:75:1': { glyph: '\uE04C' }, // جَزَـٰٓؤُهُۥ
+    '12:75:7': { glyph: '\uE035' }, // جَزَـٰٓؤُهُۥۚ
+    '12:92:10': { glyph: '\uE039' }, // ٱلرَّـٰحِمِينَ
+    '17:2:6': { glyph: '\uE01D' }, // إسرائيل
+    '17:4:3': { glyph: '\uE01E' }, // إسرائيل
+    '17:25:10': { glyph: '\uE053' }, // لِلۡأَوَّـٰبِينَ
+    '17:101:8': { glyph: '\uE01F' }, // إسرائيل
+    '17:104:4': { glyph: '\uE020' }, // إسرائيل
+    '19:58:17': { glyph: '\uE021' }, // وإسرائيل
+    '20:47:8': { glyph: '\uE022' }, // إسرائيل
+    '20:80:1': { glyph: '\uE023' }, // إسرائيل
+    '20:94:14': { glyph: '\uE024' }, // إسرائيل
+    '21:83:9': { glyph: '\uE03A', scale: 0.8, marginFactor: 1.02 }, // ٱلرَّـٰحِمِينَ
+    '22:58:17': { glyph: '\uE03E' }, // ٱلرَّـٰزِقِينَ
+    '23:72:8': { glyph: '\uE03F' }, // ٱلرَّـٰزِقِينَ
+    '23:109:13': { glyph: '\uE03B' }, // ٱلرَّـٰحِمِينَ
+    '23:118:6': { glyph: '\uE03C', scale: 0.8, marginFactor: 1.02 }, // ٱلرَّـٰحِمِينَ
+    '24:58:13': { glyph: '\uE034' }, // مرات
+    '24:58:36': { glyph: '\uE04E' }, // طَوَّـٰفُونَ
+    '26:17:4': { glyph: '\uE025' }, // إسرائيل
+    '26:22:7': { glyph: '\uE026' }, // إسرائيل
+    '26:59:3': { glyph: '\uE027' }, // إسرائيل
+    '26:61:1': { glyph: '\uE047' }, // تَرَـٰٓءَا
+    '26:197:8': { glyph: '\uE028' }, // إسرائيل
+    '27:76:6': { glyph: '\uE029' }, // إسرائيل
+    '32:23:13': { glyph: '\uE02A' }, // إسرائيل
+    '33:35:20': { glyph: '\uE056', scale: 0.85 }, // وَٱلذَّـٰكِرِينَ
+    '33:35:23': { glyph: '\uE057', scale: 0.85 }, // وَٱلذَّـٰكِرَٰتِ
+    '34:39:19': { glyph: '\uE040' }, // ٱلرَّـٰزِقِينَ
+    '37:2:0': { glyph: '\uE04F' }, // فَٱلزَّـٰجِرَٰتِ
+    '40:53:6': { glyph: '\uE02B' }, // إسرائيل
+    '42:40:0': { glyph: '\uE058', scale: 0.9 }, // وَجَزَـٰٓؤُاْ
+    '43:59:9': { glyph: '\uE02C' }, // إسرائيل
+    '44:30:3': { glyph: '\uE02D' }, // إسرائيل
+    '45:16:3': { glyph: '\uE02E' }, // إسرائيل
+    '46:10:13': { glyph: '\uE02F' }, // إسرائيل
+    '49:7:27': { glyph: '\uE042' }, // ٱلرَّـٰشِدُونَ
+    '51:1:0': { glyph: '\uE055', scale: 0.9 }, // وَٱلذَّـٰرِيَٰتِ
+    '51:10:1': { glyph: '\uE036' }, // ٱلۡخَرَّـٰصُونَ
+    '56:64:4': { glyph: '\uE044' }, // ٱلزَّـٰرِعُونَ
+    '59:17:8': { glyph: '\uE04A' }, // جَزَـٰٓؤُاْ
+    '60:4:13': { glyph: '\uE030' }, // بُرَءَٰٓؤُا۟
+    '61:6:6': { glyph: '\uE031' }, // إسرائيل
+    '61:14:25': { glyph: '\uE032' }, // إسرائيل
+    '62:11:20': { glyph: '\uE041' }, // ٱلرَّـٰزِقِينَ
+    '66:10:26': { glyph: '\uE033', scale: 0.8, marginFactor: 1.02 }, // ٱلدَّٰخِلِينَ
   };
 
   function applyOverrides(root) {
@@ -101,12 +139,51 @@
       // الحقيقي بعينه — يُنقَل بالكامل دون تغيير إلى طبقة .qcf-real-text
       // المخفية بصريًا فقط (opacity:0)، فتبقى هي المصدر الحقيقي للنسخ
       // ولقارئات الشاشة، ولمقاييس السطر أيضًا.
+      // علامات الوقف السجاوندية الأصلية (.waqf-sign) غالباً تحتوي
+      // الحرف الأخير + العلامة معاً (سلوك wrapWaqfSigns). مع جليف QCF
+      // الذي يرسم الكلمة كاملة، يجب الإبقاء على العلامة فقط وإلا يُرسم
+      // الحرف مرتين فيظهر الشكل مشوّهاً.
+      var PURE_WAQF_MARKS = {
+        0x0615:1, 0x06D6:1, 0x06D7:1, 0x06D8:1, 0x06D9:1,
+        0x06DA:1, 0x06DB:1, 0x06DC:1, 0xE004:1, 0xE021:1, 0xE022:1,
+        0xE01A:1, 0xE01B:1, 0xE01C:1, 0xE01E:1, 0xE01F:1
+      };
       var preservedMarks = [];
       var realTextNodes = [];
       Array.prototype.forEach.call(el.childNodes, function (node) {
         if (node.nodeType === 1 &&
           (node.classList.contains('waqf-mark') || node.classList.contains('non-kufi-mark'))) {
           preservedMarks.push(node);
+        } else if (node.nodeType === 1 && node.classList.contains('waqf-sign')) {
+          // استخرج العلامات النقية فقط؛ أي حروف قاعدة تذهب للطبقة المخفية
+          var markChars = '';
+          var letterContent = '';
+          var raw = node.textContent || '';
+          for (var i = 0; i < raw.length; ) {
+            var cp = raw.codePointAt(i);
+            var ch = String.fromCodePoint(cp);
+            if (PURE_WAQF_MARKS[cp]) {
+              markChars += ch;
+            } else {
+              letterContent += ch;
+            }
+            i += ch.length;
+          }
+          if (letterContent) {
+            realTextNodes.push(document.createTextNode(letterContent));
+          }
+          if (markChars) {
+            var cleanMark = document.createElement('span');
+            cleanMark.className = 'waqf-sign';
+            // انسخ الأصناف الإضافية إن وُجدت (لون/تمييز)
+            if (node.classList.length > 1) {
+              Array.prototype.forEach.call(node.classList, function (c) {
+                if (c !== 'waqf-sign') cleanMark.classList.add(c);
+              });
+            }
+            cleanMark.textContent = markChars;
+            preservedMarks.push(cleanMark);
+          }
         } else {
           realTextNodes.push(node);
         }
@@ -227,6 +304,36 @@
     });
   }
 
+  // ---------------------------------------------------------------------------
+  // scheduleFitAllGlyphs — إعادة قياس بعد استقرار التخطيط (مثل تغيير
+  // --ayah-size). لا تُستدعى fitAllGlyphs مباشرة بعد تغيير الحجم لأن
+  // المتصفح قد لا يكون أنهى الـ reflow. double-rAF + coalescing:
+  // استدعاءات متكررة (pinch) تُدمج في قياس واحد بعد آخر تغيير.
+  // ---------------------------------------------------------------------------
+  var pendingFitSchedule = false;
+  function scheduleFitAllGlyphs() {
+    if (pendingFitSchedule) return;
+    pendingFitSchedule = true;
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () {
+        pendingFitSchedule = false;
+        fitAllGlyphs();
+        // بعد تثبيت عروض QCF: إعادة مواضع العلامات على الأبعاد النهائية
+        var flow = document.getElementById('ayahFlow');
+        if (window.MarkPlacementEngine && flow) {
+          window.MarkPlacementEngine.scheduleResolveAll(flow);
+        }
+      });
+    });
+  }
+
+  // واجهة عامة لـ settings.js / أي مستدعٍ بعد تغيير حجم الخط
+  window.QCFOverride = {
+    applyOverrides: applyOverrides,
+    fitAllGlyphs: fitAllGlyphs,
+    scheduleFitAllGlyphs: scheduleFitAllGlyphs
+  };
+
   if (document.fonts && document.fonts.ready) {
     document.fonts.ready.then(fitAllGlyphs);
   }
@@ -251,9 +358,10 @@
 
   applyOverrides(ayahFlowEl);
 
-  // إعادة التطبيق تلقائيًا في كل مرة يُعاد فيها بناء محتوى الصفحة.
+  // بعد renderPage: onAfterRender يطبّق applyOverrides متزامنًا قبل paint.
+  // هذا المراقب مسؤول فقط عن fitAllGlyphs بعد اكتمال DOM الجديد
+  // (لا مسار يغيّر ayahFlow.innerHTML خارج renderPage).
   var observer = new MutationObserver(function () {
-    applyOverrides(ayahFlowEl);
     fitAllGlyphs();
   });
   observer.observe(ayahFlowEl, { childList: true });

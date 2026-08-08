@@ -307,6 +307,14 @@
         Home.updateProgressUI();
         saveState();
         ReaderTafsir.prefetchCurrentRuku();
+        // QCF Override يجب أن يُطبَّق متزامنًا هنا (نفس دورة renderPage،
+        // قبل أول paint). الاعتماد على MutationObserver وحده يؤجّل
+        // applyOverrides لما بعد الرسم فيظهر النص الأصلي لحظة (flicker)
+        // عند العودة من الشاشة الرئيسية. fitAllGlyphs يبقى عبر المراقب
+        // وscheduleFitAllGlyphs (تغيير الحجم فقط) — لا يؤجَّل الـ Override.
+        if(window.QCFOverride && typeof window.QCFOverride.applyOverrides === 'function'){
+          window.QCFOverride.applyOverrides(els.ayahFlow);
+        }
         // Smart Placement Engine: re-check every reminder/Sajawandi star
         // on the freshly-rendered page for collisions once layout has
         // actually settled (double-rAF, wrapped inside scheduleResolveAll).
