@@ -113,7 +113,8 @@
    browser's native Copy/Share/Select-all bubble instead of just
    registering the tap — inputs/textareas are deliberately left out so
    typing (search box, "go to page" box) still works normally. */
-button, .index-item, .fav-item, .modal-btn, .surah-cartouche, .ruku-end, .page-indicator, .topbar-title{
+button, .index-item, .fav-item, .modal-btn, .surah-cartouche, .ruku-end, .page-indicator, .topbar-title,
+.index-juz-header, .juz-header, .manzil-header, .manzil-title, .manzil-sub{
   user-select: none;
   -webkit-user-select: none;
   -webkit-touch-callout: none;
@@ -330,9 +331,17 @@ body.night .surah-cartouche .surah-divider::after{ background:#F2F2F2; }
      mark, not for the browser's native text selection. Without this, Chrome
      on Android shows its own Copy/Share/Select-all bar on long-press, which
      blocks the waqf popup underneath it. */
-  user-select: none;
-  -webkit-user-select: none;
-  -webkit-touch-callout: none;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  -webkit-touch-callout: none !important;
+  /* Allow vertical pan (page scroll) but disable double-tap zoom and some
+     browser text-selection affordances that feed Google Dictionary. */
+  touch-action: pan-y;
+}
+.ayah-flow::selection,
+.ayah-flow *::selection{
+  background: transparent !important;
+  color: inherit !important;
 }
 /* The Indopak/Sajawandi script stacks up to 2-3 combining waqf marks above
    a single letter, which needs noticeably more headroom than the Uthmani
@@ -612,6 +621,23 @@ body.show-khilaf-highlight .tajweed-note-word{
 .quran-word{
   position: relative;
   display: inline-block;
+  /* Hard block against Google Dictionary / Smart Text Selection on tap or
+     long-press of colored Sajawandi words (has-default-*). user-select on
+     .ayah-flow alone is not always enough on some Android Chrome builds. */
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  -webkit-touch-callout: none !important;
+  -webkit-user-drag: none;
+}
+.quran-word *,
+.waqf-sign,
+.waqf-sign *,
+.ayah-block,
+.ayah-block *{
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  -webkit-touch-callout: none !important;
+  -webkit-user-drag: none;
 }
 .waqf-mark{
   display:none;
@@ -628,8 +654,9 @@ body.show-khilaf-highlight .tajweed-note-word{
   line-height:1;
   color:#C62828; /* overridden per-mark by .mark-red/.mark-green/.mark-blue/.mark-brown */
   pointer-events:auto;
-  user-select:none;
-  -webkit-user-select:none;
+  user-select:none !important;
+  -webkit-user-select:none !important;
+  -webkit-touch-callout: none !important;
 }
 /* مصحف المدينة فقط: إنزال نجوم التذكير + السجاوندي سنة صغيرة لتحت
    (مع بقائها فوق الكلمة — لا bottom-based). الحجم رُفع شوية صغيرة
@@ -735,13 +762,18 @@ body.hide-waqf-marks .quran-word.has-waqf .waqf-mark{
   display:none !important;
 }
 
-/* ط + قف → أزرق (#1565C0 = .waqf-mark.mark-blue). :not(.khilaf-word)
+/* ط → أزرق (#1565C0 = .waqf-mark.mark-blue). :not(.khilaf-word)
    طلب مباشر 2026-08-01: كلمات الخلاف البنفسجية تبقى بنفسجية دومًا،
    ولا يُلوَّن نصها بلون السجاوندي — راجع كتلة "تقاطع البنفسجي مع
    السجاوندي الافتراضي" أسفل هذا الملف للنجمة البديلة. */
-.quran-word.has-default-waqf:not(.has-waqf):not(.khilaf-word),
-.quran-word.has-default-qif:not(.has-waqf):not(.khilaf-word){
+.quran-word.has-default-waqf:not(.has-waqf):not(.khilaf-word){
   color:#1565C0;
+}
+
+/* قف → بني (#A9793B = .waqf-mark.mark-brown) — طلب مباشر 2026-08-09
+   (كان أزرق مثل ط؛ فُصل ليتميّز في مصحف المدينة). */
+.quran-word.has-default-qif:not(.has-waqf):not(.khilaf-word){
+  color:#A9793B;
 }
 
 /* ص + ز + ق → أخضر (#2E7D32 = .waqf-mark.mark-green). */
@@ -775,11 +807,11 @@ body.night .quran-word.has-default-qad-qila:not(.has-waqf):not(.khilaf-word){
   color:#43A047;
 }
 body.night .waqf-mark.mark-blue{ color:#1E88E5; }
-body.night .quran-word.has-default-waqf:not(.has-waqf):not(.khilaf-word),
-body.night .quran-word.has-default-qif:not(.has-waqf):not(.khilaf-word){
+body.night .quran-word.has-default-waqf:not(.has-waqf):not(.khilaf-word){
   color:#1E88E5;
 }
 body.night .waqf-mark.mark-brown{ color:#C9A06A; }
+body.night .quran-word.has-default-qif:not(.has-waqf):not(.khilaf-word),
 body.night .quran-word.has-default-jeem:not(.has-waqf):not(.khilaf-word){
   color:#C9A06A;
 }
@@ -837,10 +869,13 @@ body.hide-waqf-marks.uthmani-font .quran-word.has-default-jeem:not(.has-waqf){
    المواضع المعروفة حاليًا: 36:52 (سكتة + وقف لازم)، 2:245 (سين كصاد +
    وقف رخصة). القاعدة عامة فتشمل أي تقاطع مستقبلي تلقائيًا.
    ------------------------------------------------------------------ */
-.quran-word.khilaf-word.has-default-waqf:not(.has-waqf) .waqf-mark,
-.quran-word.khilaf-word.has-default-qif:not(.has-waqf) .waqf-mark{
+.quran-word.khilaf-word.has-default-waqf:not(.has-waqf) .waqf-mark{
   display:inline-block;
   color:#1565C0;
+}
+.quran-word.khilaf-word.has-default-qif:not(.has-waqf) .waqf-mark{
+  display:inline-block;
+  color:#A9793B;
 }
 .quran-word.khilaf-word.has-default-sad-rukhsa:not(.has-waqf) .waqf-mark,
 .quran-word.khilaf-word.has-default-zay-jawaz:not(.has-waqf) .waqf-mark,
@@ -856,9 +891,11 @@ body.hide-waqf-marks.uthmani-font .quran-word.has-default-jeem:not(.has-waqf){
   display:inline-block;
   color:#A9793B;
 }
-body.night .quran-word.khilaf-word.has-default-waqf:not(.has-waqf) .waqf-mark,
-body.night .quran-word.khilaf-word.has-default-qif:not(.has-waqf) .waqf-mark{
+body.night .quran-word.khilaf-word.has-default-waqf:not(.has-waqf) .waqf-mark{
   color:#1E88E5;
+}
+body.night .quran-word.khilaf-word.has-default-qif:not(.has-waqf) .waqf-mark{
+  color:#C9A06A;
 }
 body.night .quran-word.khilaf-word.has-default-sad-rukhsa:not(.has-waqf) .waqf-mark,
 body.night .quran-word.khilaf-word.has-default-zay-jawaz:not(.has-waqf) .waqf-mark,
@@ -898,6 +935,10 @@ body.hide-waqf-marks .quran-word.khilaf-word.has-default-jeem:not(.has-waqf) .wa
   border-radius: 11px;
   box-shadow: var(--shadow);
   overflow:hidden;
+  /* Popup text must never become a Google Dictionary target. */
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  -webkit-touch-callout: none !important;
 }
 .waqf-menu-item{
   display:flex;
@@ -945,6 +986,15 @@ body.night .waqf-color-btn:active{ background: rgba(255,255,255,.08); }
   padding: 10px 14px;
   font-family: var(--font-ui);
   white-space: nowrap;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  -webkit-touch-callout: none !important;
+}
+.waqf-info-popup *,
+.waqf-menu *{
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  -webkit-touch-callout: none !important;
 }
 .waqf-info-symbol{
   font-family: var(--font-quran, var(--font-ui));
@@ -1255,6 +1305,33 @@ body.night .ruku-label{ color:#9A9A9E; }
 .panel-head .icon-btn{ color: var(--emerald); border-color: rgba(22,73,58,.25); }
 .panel-head-actions{ display:flex; align-items:center; gap:8px; }
 .panel-body{ flex:1; overflow-y:auto; overscroll-behavior-y: none; padding: 10px 16px 30px; }
+/* Static panel chrome: block Google Dictionary / Copy-Share on long-press.
+   IMPORTANT: do NOT put user-select:none on .panel / .panel-body themselves —
+   on Chrome Android that prevents focusing/typing in child <input>/<textarea>
+   even when the input sets user-select:text (confirmed 1.0.348 regression
+   on صندوق البحث). JS selectstart guards still cover panel text. */
+.empty-state,
+.fav-item,
+.fav-title,
+.fav-sub{
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  -webkit-touch-callout: none !important;
+}
+/* Inputs must always accept focus + typing (search, goto, ayah-jump, …). */
+input[type="text"],
+input[type="number"],
+input[type="search"],
+input:not([type]),
+textarea,
+.search-input,
+#searchInput{
+  user-select: text !important;
+  -webkit-user-select: text !important;
+  -webkit-touch-callout: default !important;
+  pointer-events: auto !important;
+  touch-action: auto !important;
+}
 
 .index-juz-header{
   position: sticky;
@@ -1267,6 +1344,11 @@ body.night .ruku-label{ color:#9A9A9E; }
   padding: 10px 4px 8px;
   border-bottom: 1px solid var(--gold);
   z-index: 2;
+  /* Decorative sticky label — long-press must not open Google Dictionary /
+     Copy-Share-Select-all (confirmed on Chrome Android 16, فهرس السور). */
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  -webkit-touch-callout: none !important;
 }
 body.night .index-juz-header{ background:#242426; color:#F2F2F2; border-color:rgba(255,255,255,.14); }
 
@@ -1602,6 +1684,10 @@ body.night .juz-marker{ color:#9A9A9E; background: rgba(255,255,255,.04); border
   padding: 10px 12px;
   border-bottom: 1px solid var(--gold);
   z-index: 2;
+  /* Same as .index-juz-header — decorative, nothing useful to select. */
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  -webkit-touch-callout: none !important;
 }
 body.night .juz-header{ background:#242426; color:#F2F2F2; border-color:rgba(255,255,255,.14); }
 
@@ -2161,7 +2247,7 @@ body.night #ayahJumpModal .ayah-jump-surah-row b{ color:#D8B662; }
 }
 .fav-item .fav-info{ flex:1; cursor:pointer; }
 .fav-item .fav-title{ font-family: var(--font-ui); font-weight:700; color: var(--emerald); font-size:14px; }
-.fav-item .fav-sub{ font-family: var(--font-quran); font-size:15px; color: var(--ink); margin-top:2px; }
+.fav-item .fav-sub{ font-family: var(--font-quran); font-size:18px; color: var(--ink); margin-top:2px; }
 .fav-item .fav-remove{
   color:#b5493f; padding:6px;
   /* Plain <button> elements get no global reset in this app (only
@@ -2175,7 +2261,15 @@ body.night #ayahJumpModal .ayah-jump-surah-row b{ color:#D8B662; }
   border: none;
   cursor: pointer;
 }
-.empty-state{ text-align:center; color: var(--ink-soft); font-size:13px; padding: 30px 10px; }
+.empty-state{
+  text-align:center;
+  color: var(--ink-soft);
+  font-size:13px;
+  padding: 30px 10px;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  -webkit-touch-callout: none !important;
+}
 body.night .fav-item{ border-color:rgba(255,255,255,.14); }
 body.night .fav-item .fav-title{ color:#F2F2F2; }
 body.night .fav-item .fav-sub{ color:#9A9A9E; }
@@ -2538,6 +2632,10 @@ body.night .tafsir-head-sub{ color:#9A9A9E; }
   font-weight:700;
   color: var(--gold);
   margin-bottom:8px;
+  /* Block Google Dictionary / Copy-Share on long-press (Chrome Android 16). */
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  -webkit-touch-callout: none !important;
 }
 body.night .tafsir-ayah-head{ color:#F2F2F2; }
 .tafsir-text{
@@ -2547,6 +2645,17 @@ body.night .tafsir-ayah-head{ color:#F2F2F2; }
   line-height:1.95;
   color: var(--ink);
   text-align:justify;
+  /* Same Smart Text Selection / Google Dictionary bug as the mushaf page.
+     Long-press must not open Copy/Share/Select-all or Touch-to-Search. */
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  -webkit-touch-callout: none !important;
+}
+#tafsirPanel .panel-body,
+#tafsirList{
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  -webkit-touch-callout: none !important;
 }
 body.night .tafsir-text{ color:#F2F2F2; }
 .tafsir-text-pending{ opacity:.45; }

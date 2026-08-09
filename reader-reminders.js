@@ -30,7 +30,7 @@
     // الشكل القرآني يأتي من font-family (Uthmanic Hafs / Saleem) في CSS.
     {cls: 'has-default-waqf-lazim', symbol: '\u0645', label: 'وقف لازم', color: 'red'},
     {cls: 'has-default-waqf', symbol: 'ط', label: 'وقف مطلق', color: 'blue'},
-    {cls: 'has-default-qif', symbol: 'قف', label: 'وقف مستحب', color: 'blue'},
+    {cls: 'has-default-qif', symbol: 'قف', label: 'وقف مستحب', color: 'brown'},
     {cls: 'has-default-jeem', symbol: 'ج', label: 'وقف جائز', color: 'brown'},
     {cls: 'has-default-zay-jawaz', symbol: 'ز', label: 'وقف مجوز لوجه', color: 'green'},
     {cls: 'has-default-qad-qila', symbol: 'ق', label: 'قد قيل عليه الوقف', color: 'green'},
@@ -274,6 +274,12 @@
     // immediately on an outside tap like the other popups.
     function openInfoPopup(info, x, y){
       if(!els.waqfInfoPopup) return;
+      // Kill any native selection so Google Dictionary cannot latch onto
+      // the popup label or the mushaf word under the finger (Android 16 Chrome).
+      try{
+        var sel = window.getSelection && window.getSelection();
+        if(sel && sel.rangeCount) sel.removeAllRanges();
+      }catch(_e){}
       els.waqfMenu.classList.add('hidden');
       els.waqfColorMenu.classList.add('hidden');
       els.waqfDeleteMenu.classList.add('hidden');
@@ -286,6 +292,18 @@
       positionMenu(els.waqfInfoPopup, x, y);
       if(infoPopupTimer) clearTimeout(infoPopupTimer);
       infoPopupTimer = setTimeout(closeMenus, 2600);
+      setTimeout(function(){
+        try{
+          var s = window.getSelection && window.getSelection();
+          if(s && s.rangeCount) s.removeAllRanges();
+        }catch(_e2){}
+      }, 0);
+      setTimeout(function(){
+        try{
+          var s2 = window.getSelection && window.getSelection();
+          if(s2 && s2.rangeCount) s2.removeAllRanges();
+        }catch(_e3){}
+      }, 80);
     }
     function openColorMenu(wordEl, x, y){
       pendingKey = wordEl.getAttribute('data-key');
@@ -338,7 +356,11 @@
       },
       // Some Android WebViews fall back to a native long-press context menu
       // even with user-select:none; make sure it never appears here.
-      suppressContextMenu: true
+      suppressContextMenu: true,
+      // Chrome on Android 16 starts Smart Text Selection / Google Dictionary
+      // mid-press on colored Sajawandi words; clear selection every frame
+      // while the finger is down so the dictionary sheet never opens.
+      killSelectionDuringPress: true
     });
 
     els.waqfColorMenu.querySelectorAll('.waqf-color-btn').forEach(function(btn){

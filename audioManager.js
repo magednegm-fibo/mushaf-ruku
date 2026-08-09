@@ -1109,6 +1109,7 @@
   function setupReciterSelect(){
     if(!els.reciterSelect) return;
     els.reciterSelect.addEventListener('change', function(){
+      if(window.UI && UI.haptic) UI.haptic();
       var val = RECITER_FOLDERS[els.reciterSelect.value] ? els.reciterSelect.value : 'abdulbasit';
       if(state.reciter === val) return;
       stopListening();
@@ -1130,6 +1131,7 @@
   function setupRecitationScopeSelect(){
     if(!els.recitationScopeSelect) return;
     els.recitationScopeSelect.addEventListener('change', function(){
+      if(window.UI && UI.haptic) UI.haptic();
       var val = els.recitationScopeSelect.value;
       if(RECITATION_SCOPES.indexOf(val) === -1) val = 'ruku';
       state.recitationScope = val;
@@ -1206,6 +1208,7 @@
     els.autoScrollToggle.checked = state.autoScrollEnabled !== false;
     els.autoScrollToggle.addEventListener('change', function(){
       state.autoScrollEnabled = els.autoScrollToggle.checked;
+      if(window.UI && UI.haptic) UI.haptic();
       saveState();
       if(!state.autoScrollEnabled) disableAutoScrollSync();
     });
@@ -1227,6 +1230,7 @@
   function setupRecitationRepeatSelect(){
     if(!els.recitationRepeatSelect) return;
     els.recitationRepeatSelect.addEventListener('change', function(){
+      if(window.UI && UI.haptic) UI.haptic();
       var val = els.recitationRepeatSelect.value;
       if(RECITATION_REPEAT_COUNTS.indexOf(val) === -1) val = '1';
       state.recitationRepeatCount = parseInt(val, 10);
@@ -1253,6 +1257,7 @@
   function setupRukuRepeatSelect(){
     if(!els.rukuRepeatSelect) return;
     els.rukuRepeatSelect.addEventListener('change', function(){
+      if(window.UI && UI.haptic) UI.haptic();
       var val = els.rukuRepeatSelect.value;
       if(RUKU_REPEAT_COUNTS.indexOf(val) === -1) val = '1';
       state.rukuRepeatCount = parseInt(val, 10);
@@ -1277,6 +1282,7 @@
   function setupPlaybackSpeedSelect(){
     if(!els.playbackSpeedSelect) return;
     els.playbackSpeedSelect.addEventListener('change', function(){
+      if(window.UI && UI.haptic) UI.haptic();
       var val = els.playbackSpeedSelect.value;
       if(PLAYBACK_SPEEDS.indexOf(val) === -1) val = '1';
       state.playbackRate = parseFloat(val);

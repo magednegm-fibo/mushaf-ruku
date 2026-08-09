@@ -51,8 +51,36 @@
     var startPos = null;
     var cancelled = false;
     var activeTarget = null;
+    // Android Chrome (esp. 16+) starts Smart Text Selection / Google
+    // Dictionary mid-press even with user-select:none. While a long-press
+    // is active on mushaf text, hammer-clear the selection every frame so
+    // the dictionary sheet never gets a stable range. Opt-in via
+    // killSelectionDuringPress (used by the waqf long-press only).
+    var killSelInterval = null;
+    var killSelection = !!options.killSelectionDuringPress;
+
+    function clearSelNow(){
+      try{
+        var sel = window.getSelection && window.getSelection();
+        if(sel && sel.rangeCount) sel.removeAllRanges();
+      }catch(_e){}
+    }
+    function startKillSel(){
+      if(!killSelection) return;
+      clearSelNow();
+      if(killSelInterval) clearInterval(killSelInterval);
+      killSelInterval = setInterval(clearSelNow, 16);
+    }
+    function stopKillSel(){
+      if(killSelInterval){ clearInterval(killSelInterval); killSelInterval = null; }
+      clearSelNow();
+      setTimeout(clearSelNow, 0);
+      setTimeout(clearSelNow, 50);
+      setTimeout(clearSelNow, 150);
+    }
 
     function firePressEnd(){
+      stopKillSel();
       if(activeTarget && options.onPressEnd) options.onPressEnd(activeTarget);
       activeTarget = null;
     }
@@ -63,11 +91,14 @@
       cancelled = false;
       startPos = {x: x, y: y};
       activeTarget = resolved;
+      startKillSel();
       if(options.onPressStart) options.onPressStart(resolved, x, y);
       clearTimeout(timer);
       timer = setTimeout(function(){
         if(cancelled) return;
+        clearSelNow();
         if(options.onFire) options.onFire(resolved, x, y);
+        clearSelNow();
       }, LONG_PRESS_MS);
     }
     function onMove(x, y){
@@ -329,13 +360,49 @@
   // Dictionary on some Android devices even with .ayah-flow alone guarded.
   // Covering the whole page container stops the sheet regardless of which
   // child (ayah-block, quran-word, surah-cartouche, ruku-end, etc.) is hit.
-  document.addEventListener('selectstart', function(e){
-    if(e.target && e.target.closest && e.target.closest(
-      '.ayah-flow, .page-scroll, .page-frame, .manzil-header, .panel-head h2, #mushafSourceText'
-    )){
-      e.preventDefault();
+  // Decorative / non-copyable UI chrome where long-press must never open
+  // Google Dictionary, Touch-to-Search, or the Copy/Share/Select-all bar.
+  // Includes mushaf page text AND index sticky headers (الجزء N) which
+  // were reported on Chrome Android 16 in فهرس السور.
+  function isMushafPageTarget(el){
+    if(!el || !el.closest) return false;
+    // Never block selection / focus inside form fields (search box, goto, …).
+    // Checking the element itself AND ancestors covers text nodes inside inputs.
+    if(el.closest && el.closest(
+      'input, textarea, [contenteditable="true"], .search-input, #searchInput, #searchInputRow'
+    )) return false;
+    // Do NOT use bare .panel / .panel-body / #searchPanel here — that blocked
+    // focusing the search box on Chrome Android (parent user-select/selectstart).
+    // Cover static panel chrome by specific classes instead.
+    return !!(el.closest(
+      '.ayah-flow, .page-scroll, .page-frame, .quran-word, .waqf-sign, .waqf-mark, ' +
+      '.manzil-header, .panel-head h2, #mushafSourceText, ' +
+      '.index-juz-header, .juz-header, .index-item, .waqf-menu, .waqf-info-popup, ' +
+      '.tafsir-text, .tafsir-item, .tafsir-ayah-head, #tafsirList, ' +
+      '.empty-state, .fav-item, .fav-title, .fav-sub, ' +
+      '.search-result-item, .search-result-text, .setting-row, .home-tile'
+    ));
+  }
+
+  function clearMushafSelection(){
+    var sel = window.getSelection && window.getSelection();
+    if(!sel || sel.rangeCount === 0) return;
+    var node = sel.anchorNode;
+    if(!node) return;
+    var el = node.nodeType === 1 ? node : node.parentElement;
+    if(isMushafPageTarget(el)){
+      try{ sel.removeAllRanges(); }catch(_e){}
     }
-  });
+  }
+
+  // Capture-phase so we run before any browser default that might start
+  // a selection on the colored Sajawandi words.
+  document.addEventListener('selectstart', function(e){
+    if(isMushafPageTarget(e.target)){
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  }, true);
 
   // Belt-and-suspenders for Android WebViews / Chrome that initiate Smart
   // Text Selection without a reliable selectstart (or after a selection
@@ -343,16 +410,33 @@
   // mushaf page, clear it immediately so the dictionary bottom-sheet never
   // opens. Scoped only to the page area so selection in tafsir, search,
   // settings, etc. remains usable.
-  document.addEventListener('selectionchange', function(){
-    var sel = window.getSelection && window.getSelection();
-    if(!sel || sel.rangeCount === 0 || sel.isCollapsed) return;
-    var node = sel.anchorNode;
-    if(!node) return;
-    var el = node.nodeType === 1 ? node : node.parentElement;
-    if(el && el.closest && el.closest('.page-scroll, .page-frame, .ayah-flow')){
-      sel.removeAllRanges();
+  document.addEventListener('selectionchange', clearMushafSelection);
+
+  // Extra: some Android Chrome builds start selection on touchend/mouseup
+  // (or briefly after a short tap on colored text) even when selectstart
+  // was blocked. Clear again on these events so Google Dictionary never
+  // gets a stable selection range to show.
+  function clearOnPointerEnd(e){
+    if(isMushafPageTarget(e.target)){
+      clearMushafSelection();
+      // Defer one frame — some WebViews apply the selection after the
+      // touchend handler returns.
+      setTimeout(clearMushafSelection, 0);
+      setTimeout(clearMushafSelection, 50);
     }
-  });
+  }
+  document.addEventListener('touchend', clearOnPointerEnd, true);
+  document.addEventListener('mouseup', clearOnPointerEnd, true);
+  document.addEventListener('click', clearOnPointerEnd, true);
+
+  // Block the native context menu on the mushaf page (dictionary / share /
+  // select-all). Long-press for waqf info still works via Gestures.longPress.
+  document.addEventListener('contextmenu', function(e){
+    if(isMushafPageTarget(e.target)){
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  }, true);
 
   window.Gestures = {
     longPress: longPress,

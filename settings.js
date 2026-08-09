@@ -186,28 +186,34 @@
       var key = currentFontSizeKey();
       state[key] = Math.max(18, state[key] - 2);
       applyFontSize(); saveState();
+      UI.haptic && UI.haptic();
     });
     els.fontPlus.addEventListener('click', function(){
       var key = currentFontSizeKey();
       state[key] = Math.min(44, state[key] + 2);
       applyFontSize(); saveState();
+      UI.haptic && UI.haptic();
     });
 
     if(els.btnFontAmiri) els.btnFontAmiri.addEventListener('click', function(){
       state.fontStyle = 'amiri'; applyFontStyle(); saveState();
+      UI.haptic && UI.haptic();
     });
     if(els.btnFontUthmani) els.btnFontUthmani.addEventListener('click', function(){
       state.fontStyle = 'uthmani'; applyFontStyle(); saveState();
+      UI.haptic && UI.haptic();
     });
 
     els.nightToggle.addEventListener('change', function(){
       state.night = els.nightToggle.checked;
       applyNight(); saveState();
+      UI.haptic && UI.haptic();
     });
 
     els.waqfToggle && els.waqfToggle.addEventListener('change', function(){
       state[currentWaqfVisibilityKey()] = els.waqfToggle.checked;
       applyWaqfVisibility(); saveState();
+      UI.haptic && UI.haptic();
     });
 
     
@@ -223,6 +229,7 @@
     els.pinchZoomToggle && els.pinchZoomToggle.addEventListener('change', function(){
       state.pinchZoomEnabled = els.pinchZoomToggle.checked;
       saveState();
+      UI.haptic && UI.haptic();
     });
 
     els.wakeLockToggle && els.wakeLockToggle.addEventListener('change', function(){
@@ -230,6 +237,7 @@
       saveState();
       if(state.keepScreenAwake) requestWakeLock();
       else releaseWakeLock();
+      UI.haptic && UI.haptic();
     });
     document.addEventListener('visibilitychange', function(){
       if(document.visibilityState === 'visible') requestWakeLock();

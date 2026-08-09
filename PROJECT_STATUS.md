@@ -1,6 +1,6 @@
 # Project Status
 
-**الإصدار الحالي:** 1.0.340  
+**الإصدار الحالي:** 1.0.354  
 **آخر تحديث:** 2026-08-09
 
 هذا الملف يُحدَّث مع كل إصدار ويُضمَّن دائمًا داخل الـ ZIP.  
@@ -20,6 +20,85 @@
 ---
 
 ## Completed
+
+### 1.0.354 — لون علامة قف السجاوندي بني في مصحف المدينة
+
+- `has-default-qif`: من الأزرق (#1565C0) إلى البني (#A9793B)، وليليًا #C9A06A.
+- ط يبقى أزرقًا. Popup الضغط المطوّل لـ«قف» يعرض بنيًا أيضًا.
+
+### 1.0.353 — تخفيف إضافي لـ Haptic feedback
+
+- مدة الاهتزاز الافتراضية من 5ms إلى 3ms.
+
+### 1.0.352 — تخفيف إضافي لـ Haptic feedback
+
+- مدة الاهتزاز الافتراضية من 8ms إلى 5ms.
+
+### 1.0.351 — Haptic على نتائج البحث وصفوف الفهرس وزر مسح
+
+- توسيع `isInteractive` ليشمل `.index-item` و `.search-result-item` و `.fav-item` وبطاقة علامة القراءة.
+- مستمع النقر في مرحلة capture حتى يعمل حتى مع `stopPropagation`.
+
+### 1.0.350 — تخفيف شدة Haptic feedback
+
+- مدة الاهتزاز الافتراضية من 12ms إلى 8ms.
+
+### 1.0.349 — إصلاح صندوق البحث بعد Haptic / user-select
+
+- إزالة `user-select:none` عن `.panel` و `.panel-body` (كانت تمنع التركيز على حقول الإدخال في Chrome Android).
+- تأكيد `user-select:text` + `pointer-events:auto` على كل حقول النص.
+- مستمع Haptic لا يمس حقول الإدخال؛ يعمل في مرحلة bubble وليس capture.
+- `isMushafPageTarget` يستثني `#searchInput` / `#searchInputRow` ولا يغطي `.panel` بشكل أعمى.
+
+### 1.0.348 — تعميم Haptic feedback على الأزرار والقوائم
+
+- `wireGlobalHaptics()` في `UI.init`: اهتزاز عند النقر على أي زر (الرئيسية، حفظ/استعادة، تنقّل، …) وعند تغيير `select` أو مفتاح تبديل.
+- Debounce 40ms حتى لا يتكرر الاهتزاز مع الاستدعاءات الفردية السابقة.
+
+### 1.0.347 — Haptic feedback في الإعدادات
+
+- `UI.haptic()` عبر Vibration API (نبضة ~12ms).
+- يعمل عند أزرار حجم الخط (+/−)، اختيار رسم المصحف، ومفاتيح التبديل (ليل، علامات تذكير، تكبير، إبقاء الشاشة).
+- كذلك عند تغيير القارئ / نطاق التلاوة / التمرير التلقائي / السرعة / التكرار.
+
+### 1.0.346 — تكبير سطر المرجع في المفضلة (سورة • آية)
+
+- `.fav-item .fav-sub`: من 15px إلى 18px (مثل «البقرة • آية ٨٣»).
+
+### 1.0.345 — منع التحديد وGoogle Dictionary في كل اللوحات (شامل المفضلة)
+
+- حماية عامة على `.panel` / `.panel-body` / `.empty-state` / `.fav-item`.
+- الإبقاء على التحديد داخل `input` و `textarea` فقط.
+- توسيع `isMushafPageTarget` ليشمل المفضلة والبحث والإعدادات والدليل والفهرس.
+- يغطي نص «لا توجد عناصر في المفضلة بعد» وكل النصوص الثابتة داخل اللوحات.
+
+### 1.0.344 — منع التحديد وGoogle Dictionary في لوحة التفسير
+
+- `user-select: none` على `.tafsir-text` و `.tafsir-ayah-head` و `#tafsirPanel .panel-body`.
+- توسيع `isMushafPageTarget` ليشمل `#tafsirPanel` ومحتوى التفسير.
+- يمنع Copy/Share/Select-all و Touch-to-Search عند الضغط المطوّل على نص التفسير (Chrome Android 16).
+
+### 1.0.343 — منع التحديد وGoogle Dictionary على عناوين الأجزاء في الفهرس
+
+- `user-select: none` على `.index-juz-header` و `.juz-header` (الجزء N في فهرس السور/الأجزاء).
+- توسيع `isMushafPageTarget` في `gestures.js` ليشمل عناوين الأجزاء وصفوف الفهرس وقوائم الوقف.
+- إضافة العناوين للقائمة العامة المانعة للتحديد في `style.css`.
+
+### 1.0.342 — منع Google Dictionary أثناء الضغط المطوّل (Chrome Android 16)
+
+- `killSelectionDuringPress` في `Gestures.longPress`: مسح التحديد كل 16ms طوال مدة الضغط على كلمة مصحف.
+- مسح التحديد عند فتح نافذة نوع الوقف وبعدها (0ms / 80ms).
+- `user-select: none` على `.waqf-menu` و`.waqf-info-popup` وكل الأبناء.
+- `touch-action: pan-y` على `.ayah-flow` + إخفاء `::selection`.
+- الضغط المطوّل لعرض نوع الوقف يبقى يعمل.
+
+### 1.0.341 — تقوية منع التحديد وGoogle Dictionary على علامات السجاوندي
+
+- فرض `user-select: none !important` على `.quran-word` وكل الأبناء و`.waqf-sign` و`.ayah-block` (الكلمات الملوّنة بعلامات الوقف الافتراضية كانت لا تزال تفتح القاموس عند النقر).
+- `selectstart` في مرحلة capture + إيقاف الانتشار.
+- مسح التحديد عند `touchend` / `mouseup` / `click` مع تأخير إطارين (0ms و 50ms) لأن بعض إصدارات Chrome على أندرويد تُنشئ التحديد بعد انتهاء المعالج.
+- منع `contextmenu` على منطقة المصحف في مرحلة capture.
+- الضغط المطوّل لعرض نوع الوقف (ج وقف جائز، …) يبقى يعمل عبر `Gestures.longPress`.
 
 ### 1.0.340 — منع Google Dictionary عند النقر على صفحة المصحف
 

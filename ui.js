@@ -242,8 +242,69 @@
   function registerOverlayModals(list){ OVERLAY_MODALS = OVERLAY_MODALS.concat(list); }
   function registerOverlayPanels(list){ OVERLAY_PANELS = OVERLAY_PANELS.concat(list); }
 
+  // Light haptic feedback. Uses the Vibration API when available; silently
+  // no-ops on desktop / unsupported browsers. Short pulse (~3ms) so it
+  // feels like a tick, not a buzz. Debounced so explicit per-handler calls
+  // plus the global delegated listeners below don't double-fire.
+  var _hapticLast = 0;
+  function haptic(ms){
+    try{
+      var now = Date.now();
+      if(now - _hapticLast < 40) return;
+      _hapticLast = now;
+      if(typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function'){
+        navigator.vibrate(typeof ms === 'number' ? ms : 3);
+      }
+    }catch(_e){}
+  }
+
+  // App-wide: every button / select / checkbox toggle gets a light tick.
+  // Covers الصفحة الرئيسية tiles, حفظ/استعادة, combo boxes, switches, etc.
+  // Wired once in init(); individual handlers may still call UI.haptic()
+  // — the debounce above collapses duplicates into one pulse.
+  function wireGlobalHaptics(){
+    function isTextField(el){
+      if(!el || !el.closest) return false;
+      return !!el.closest(
+        'input[type="text"], input[type="number"], input[type="search"], ' +
+        'input:not([type]), textarea, [contenteditable="true"]'
+      );
+    }
+    function isInteractive(el){
+      if(!el || !el.closest) return null;
+      if(isTextField(el)) return null;
+      // Buttons, switches, selects, AND list rows that act as navigation
+      // targets (فهرس السور/الأجزاء، نتائج البحث، المفضلة، بطاقة علامة القراءة).
+      return el.closest(
+        'button, select, input[type="checkbox"], input[type="radio"], ' +
+        '.home-tile, .modal-btn, .reset-btn, .font-choice-btn, ' +
+        '.icon-btn, .nav-btn, .search-run-btn, .tafsir-nav-btn, ' +
+        '.fav-btn, .listen-btn, .tafsir-btn, .bookmark-btn, ' +
+        '#btnImportWaqf, label.modal-btn, ' +
+        '.index-item, .index-item-goto-ayah, .search-result-item, ' +
+        '.fav-item, .fav-info, .fav-remove, .status-row, ' +
+        '.surah-result-item, .search-surah-item'
+      );
+    }
+    document.addEventListener('click', function(e){
+      // Never interfere with typing / focusing text fields.
+      if(isTextField(e.target)) return;
+      var t = isInteractive(e.target);
+      if(!t) return;
+      haptic();
+    }, true); // capture: still fires if a row handler calls stopPropagation
+    document.addEventListener('change', function(e){
+      var t = e.target;
+      if(!t || isTextField(t)) return;
+      if(t.matches && t.matches('select, input[type="checkbox"], input[type="radio"]')){
+        haptic();
+      }
+    }, true);
+  }
+
   function init(deps){
     els = deps.els;
+    wireGlobalHaptics();
   }
 
   window.UI = {
@@ -252,6 +313,7 @@
     fromArabicDigits: fromArabicDigits,
     escapeHtml: escapeHtml,
     showToast: showToast,
+    haptic: haptic,
     openPanel: openPanel,
     closePanel: closePanel,
     pushHistoryState: pushHistoryState,
