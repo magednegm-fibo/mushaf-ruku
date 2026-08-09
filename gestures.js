@@ -324,9 +324,33 @@
   // الإعدادات (عن التطبيق). Scoped to this one id only, not the general
   // .about-text class, so other about-text paragraphs elsewhere in the
   // app keep normal copy/selection.
+  // NOTE: extended to .page-scroll / .page-frame -- user reports that a
+  // plain click/tap anywhere on the mushaf page still opens Google
+  // Dictionary on some Android devices even with .ayah-flow alone guarded.
+  // Covering the whole page container stops the sheet regardless of which
+  // child (ayah-block, quran-word, surah-cartouche, ruku-end, etc.) is hit.
   document.addEventListener('selectstart', function(e){
-    if(e.target && e.target.closest && e.target.closest('.ayah-flow, .manzil-header, .panel-head h2, #mushafSourceText')){
+    if(e.target && e.target.closest && e.target.closest(
+      '.ayah-flow, .page-scroll, .page-frame, .manzil-header, .panel-head h2, #mushafSourceText'
+    )){
       e.preventDefault();
+    }
+  });
+
+  // Belt-and-suspenders for Android WebViews / Chrome that initiate Smart
+  // Text Selection without a reliable selectstart (or after a selection
+  // range has already been created). If any selection appears inside the
+  // mushaf page, clear it immediately so the dictionary bottom-sheet never
+  // opens. Scoped only to the page area so selection in tafsir, search,
+  // settings, etc. remains usable.
+  document.addEventListener('selectionchange', function(){
+    var sel = window.getSelection && window.getSelection();
+    if(!sel || sel.rangeCount === 0 || sel.isCollapsed) return;
+    var node = sel.anchorNode;
+    if(!node) return;
+    var el = node.nodeType === 1 ? node : node.parentElement;
+    if(el && el.closest && el.closest('.page-scroll, .page-frame, .ayah-flow')){
+      sel.removeAllRanges();
     }
   });
 

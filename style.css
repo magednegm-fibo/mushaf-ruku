@@ -199,6 +199,11 @@ body{
   outline: 1px solid rgba(169,121,59,.25);
   outline-offset: 4px;
   overflow:hidden;
+  /* Extra guard against Google Dictionary / Smart Text Selection on tap
+     or long-press anywhere on the mushaf page surface. */
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 
 .page-scroll{
@@ -207,6 +212,12 @@ body{
   overflow-anchor: none;
   padding: 30px 13px 26px;
   -webkit-overflow-scrolling: touch;
+  /* Block native text selection / Google Dictionary / Smart Text Selection
+     on the entire mushaf page area (not just .ayah-flow). A simple tap or
+     long-press must never open the system dictionary sheet. */
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 
 .surah-cartouche{
