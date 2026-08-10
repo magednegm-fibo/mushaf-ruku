@@ -380,7 +380,8 @@
       '.index-juz-header, .juz-header, .index-item, .waqf-menu, .waqf-info-popup, ' +
       '.tafsir-text, .tafsir-item, .tafsir-ayah-head, #tafsirList, ' +
       '.empty-state, .fav-item, .fav-title, .fav-sub, ' +
-      '.search-result-item, .search-result-text, .setting-row, .home-tile'
+      '.search-result-item, .search-result-text, .setting-row, .home-tile, ' +
+      '.home-brand, .home-brand h1, .home-brand p, .home-logo, #homeScreen'
     ));
   }
 

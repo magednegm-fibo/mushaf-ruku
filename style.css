@@ -1699,7 +1699,21 @@ body.night .juz-header{ background:#242426; color:#F2F2F2; border-color:rgba(255
   padding: max(32px, env(safe-area-inset-top)) 20px 24px;
   gap: 22px;
 }
-.home-brand{ text-align:center; color:#F6EFDD; margin-bottom: 4px; }
+.home-brand{ text-align:center; color:#F6EFDD; margin-bottom: 4px;
+  /* Decorative title + tagline — long-press must not open Copy/Share/
+     Select-all or Google Dictionary (Chrome Android, confirmed 1.0.354). */
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  -webkit-touch-callout: none !important;
+}
+.home-brand h1,
+.home-brand p,
+.home-logo,
+.home-logo span{
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  -webkit-touch-callout: none !important;
+}
 .home-logo{
   width:64px; height:64px; margin:0 auto 12px;
   border-radius:50%;

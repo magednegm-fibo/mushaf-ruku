@@ -1335,8 +1335,9 @@
   // ط (الوقف المطلق) — طُبِّق أول مرة كرمز ط عائم فوق الكلمة، ثم — طلب
   // مباشر لاحق — استُبدل بتلوين نص الكلمة نفسها مباشرة (بلا رمز عائم
   // إطلاقًا)، بنفس أسلوب تلوين الكلمات الآخر في هذا الملف (راجع
-  // body.show-khilaf-highlight في style.css كمثال على نفس النمط). لا تُوضع
-  // عند آخر كلمة في الآية (طلب مباشر: نهاية الآية علامة وقف بالفعل).
+  // body.show-khilaf-highlight في style.css كمثال على نفس النمط).
+  // تُلوَّن حتى على آخر كلمة في الآية ليتوافق مع ظهور ط في مصحف النسخ
+  // (طلب 2026-08-10؛ أُلغي استثناء «آخر كلمة» لـ ط فقط، لا لباقي العلامات).
   //
   // طبقة مستقلة تمامًا عن نظام "علامات التذكير الشخصية"
   // (ReaderReminders/StorageManager.loadReminder): لا تُخزَّن في
@@ -2120,12 +2121,12 @@ var KNOWN_SPLIT_WORD_FRAGMENTS = ["اٰ تُوۡهُمۡ", "اٰ تَيۡتُم�
       // تلوين نص الكلمة — راجع القواعد المقابلة في style.css التي تستثني
       // .khilaf-word من تلوين نص has-default-* وتُظهر النجمة بدلاً منه.
       if(isKhilafWord) extraCls += ' khilaf-word';
-      // لا تُوضع عند آخر كلمة في الآية — طلب مباشر من المستخدم: نهاية
-      // الآية نفسها علامة وقف بالفعل، فتكرار العلامة الافتراضية هناك
-      // زائد. نفس القيد يُطبَّق على ص وز وق (قد قيل) وقف وج أدناه. م
-      // (الوقف اللازم) أدناه مستثناة عمدًا من هذا القيد — طلب مباشر صريح.
-      var isDefaultWaqfMutlaq = ((!!(defaultWaqfMutlaqIdxs && defaultWaqfMutlaqIdxs.indexOf(idx) !== -1) &&
-        idx !== words.length - 1) || shiftedMutlaqIdxs.indexOf(idx) !== -1);
+      // ط فقط: تُلوَّن حتى على آخر كلمة في الآية ليتوافق مع ظهورها في
+      // مصحف النسخ (مثل «الدين» و«نستعين» في الفاتحة — طلب 2026-08-10).
+      // باقي العلامات (ص/ز/ق/قف/ج) تبقى على قاعدة «لا تُلوَّن آخر كلمة»
+      // لأن نهاية الآية وقف بالفعل. م (الوقف اللازم) بلا هذا الاستثناء أصلًا.
+      var isDefaultWaqfMutlaq = !!(defaultWaqfMutlaqIdxs && defaultWaqfMutlaqIdxs.indexOf(idx) !== -1) ||
+        shiftedMutlaqIdxs.indexOf(idx) !== -1;
       if(isDefaultWaqfMutlaq) extraCls += ' has-default-waqf';
       var isDefaultSadRukhsa = ((!!(defaultSadRukhsaIdxs && defaultSadRukhsaIdxs.indexOf(idx) !== -1) &&
         idx !== words.length - 1) || shiftedSadIdxs.indexOf(idx) !== -1);
