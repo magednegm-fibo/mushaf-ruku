@@ -48,17 +48,19 @@
   // بروز الرؤوس + stroke-width للنجمة يجعلها تبدو أكبر بصريًا. رُفع نصف
   // قطر الدائرة إلى 15 لتحقيق توازن بصري مع الامتداد الخارجي للنجمة
   // (وليس مساواة القطر الرياضي فقط) — طلب مباشر 1.0.286؛ ضُبط إلى 15 في 1.0.287.
-  // موضع الرقم غير متأثر (نفس <span> خارج الـsvg). سمك خط الدائرة
-  // vector-effect="non-scaling-stroke" = 1.8px شاشة (−10% عن 2px) في style.css.
+  // موضع الرقم غير متأثر (نفس <span> خارج الـsvg).
+  // دائرة رقم الآية (no-sajawandi) تُرسَم الآن بـ CSS border على
+  // .ayah-num-circle::before بدل SVG <circle> stroke — لتجنب تأثر
+  // سماكة الـstroke بتحديثات Chrome/Android. السمك 1.8px؛ القطر ~75%
+  // من الحاوية (مكافئ r=15 في viewBox 40×40).
   var AYAH_NUM_STAR_PATH =
     '<path d="M 20.00 6.00 L 23.29 12.05 L 29.90 10.10 L 27.95 16.71 L 34.00 20.00 L 27.95 23.29 L 29.90 29.90 L 23.29 27.95 L 20.00 34.00 L 16.71 27.95 L 10.10 29.90 L 12.05 23.29 L 6.00 20.00 L 12.05 16.71 L 10.10 10.10 L 16.71 12.05 Z" ' +
     'class="ayah-num-outer" fill="none" stroke="currentColor" stroke-linejoin="round"/>';
-  var AYAH_NUM_CIRCLE_PATH =
-    '<circle cx="20" cy="20" r="15" class="ayah-num-outer-circle" fill="none" stroke="currentColor" vector-effect="non-scaling-stroke"/>';
 
   function ayahMarkerShapeSvg(surah, ayah){
     var isNoSajawandiHead = window.NoSajawandiHeads && window.NoSajawandiHeads.has(surah, ayah);
-    return isNoSajawandiHead ? AYAH_NUM_CIRCLE_PATH : AYAH_NUM_STAR_PATH;
+    // الدائرة: لا محتوى SVG — الحلقة تُرسَم بـ CSS ::before على .ayah-num-circle
+    return isNoSajawandiHead ? '' : AYAH_NUM_STAR_PATH;
   }
 
   function ayahMarker(surah, ayah){
@@ -89,13 +91,15 @@
       var s = parseInt(el.getAttribute('data-surah'), 10);
       var a = parseInt(el.getAttribute('data-ayah'), 10);
       var shouldBeCircle = !!(window.NoSajawandiHeads && window.NoSajawandiHeads.has(s, a));
-      var isCircleNow = !!svg.querySelector('.ayah-num-outer-circle');
-      if(shouldBeCircle !== isCircleNow){
-        svg.innerHTML = shouldBeCircle ? AYAH_NUM_CIRCLE_PATH : AYAH_NUM_STAR_PATH;
+      // الدائرة: SVG فارغ + فئة CSS (::before يرسم الحلقة). النجمة: مسار النجمة بدون الفئة.
+      var hasStarNow = !!svg.querySelector('.ayah-num-outer');
+      if(shouldBeCircle){
+        if(hasStarNow) svg.innerHTML = '';
+        el.classList.add('ayah-num-circle');
+      } else {
+        if(!hasStarNow) svg.innerHTML = AYAH_NUM_STAR_PATH;
+        el.classList.remove('ayah-num-circle');
       }
-      // مزامنة فئة التكديس: دائرة → إطار فوق الرقم؛ نجمة → الرقم فوق الإطار
-      if(shouldBeCircle) el.classList.add('ayah-num-circle');
-      else el.classList.remove('ayah-num-circle');
     }
   }
 
