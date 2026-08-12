@@ -178,7 +178,7 @@ body{
   display:flex; align-items:center; justify-content:center;
   cursor:pointer;
 }
-.icon-btn svg{ width:20px; height:20px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; }
+.icon-btn svg{ width:22px; height:22px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; }
 .icon-btn:active{ background: rgba(255,255,255,.12); }
 
 /* ---------- Reader ---------- */
@@ -1860,7 +1860,7 @@ body.night .read-progress-strip-fill{ background:#4CAF50; }
   color: var(--emerald);
   display:flex; align-items:center; justify-content:center;
 }
-.fav-btn svg{ width:17px; height:17px; fill:none; stroke:currentColor; stroke-width:1.6; }
+.fav-btn svg{ width:19px; height:19px; fill:none; stroke:currentColor; stroke-width:1.6; }
 .fav-btn.active{ color:#fff; background: var(--emerald); border-color: var(--emerald); }
 .fav-btn.active svg{ fill:currentColor; }
 body.night .fav-btn{ background: rgba(28,28,30,.75); color:#F2F2F2; border-color:rgba(255,255,255,.14); }
@@ -1883,7 +1883,7 @@ body.night .fav-btn.active{ color:#fff; background: var(--emerald-light); border
   color: var(--emerald);
   display:flex; align-items:center; justify-content:center;
 }
-.bookmark-btn svg{ width:17px; height:17px; fill:none; stroke:currentColor; stroke-width:1.6; }
+.bookmark-btn svg{ width:19px; height:19px; fill:none; stroke:currentColor; stroke-width:1.6; }
 .bookmark-btn.active{ color:#fff; background: var(--emerald); border-color: var(--emerald); }
 .bookmark-btn.active svg{ fill:currentColor; }
 body.night .bookmark-btn{ background: rgba(28,28,30,.75); color:#F2F2F2; border-color:rgba(255,255,255,.14); }
@@ -1898,7 +1898,7 @@ body.night .bookmark-btn.active{ background:#4CAF50; border-color:#4CAF50; color
   color: var(--emerald);
   display:flex; align-items:center; justify-content:center;
 }
-.listen-btn svg{ width:17px; height:17px; fill:currentColor; }
+.listen-btn svg{ width:19px; height:19px; fill:currentColor; }
 .listen-btn.active{ color:#fff; background: var(--emerald); border-color: var(--emerald); }
 .listen-btn svg.hidden{ display:none; }
 .listen-spin{ fill:none !important; stroke:currentColor; animation: listen-spin-rotate .8s linear infinite; }
@@ -1919,7 +1919,7 @@ body.night .listen-btn.active{ background:#4CAF50; border-color:#4CAF50; color:#
   color: var(--emerald);
   display:flex; align-items:center; justify-content:center;
 }
-.tafsir-btn svg{ width:17px; height:17px; fill:none; stroke:currentColor; stroke-width:1.6; }
+.tafsir-btn svg{ width:19px; height:19px; fill:none; stroke:currentColor; stroke-width:1.6; }
 .tafsir-btn.active{ color:#fff; background: var(--emerald); border-color: var(--emerald); }
 body.night .tafsir-btn{ background: rgba(28,28,30,.75); color:#F2F2F2; border-color:rgba(255,255,255,.14); }
 
@@ -2276,11 +2276,34 @@ body.night #ayahJumpModal .ayah-jump-surah-row b{ color:#D8B662; }
 /* ---------- Favorites list ---------- */
 .fav-item{
   display:flex; align-items:center; justify-content:space-between;
-  padding: 14px 12px; border-bottom:1px solid var(--paper-edge);
+  padding: 12px 12px; border-bottom:1px solid var(--paper-edge);
 }
 .fav-item .fav-info{ flex:1; cursor:pointer; }
 .fav-item .fav-title{ font-family: var(--font-ui); font-weight:700; color: var(--emerald); font-size:14px; }
-.fav-item .fav-sub{ font-family: var(--font-quran); font-size:18px; color: var(--ink); margin-top:2px; }
+.fav-item .fav-sub{ font-family: var(--font-quran); font-size:20px; color: var(--ink); margin-top:2px; }
+/* رقم الآية في المفضلة: نص عادي 16px بوزن طبيعي.
+   مهم: لا نستخدم font-quran هنا لأن Uthmanic Hafs يرسم دائرة زخرفية
+   مدمجة حول الأرقام الهندية — فتظهر دائرتان (خط + border).
+   دائرة CSS واحدة فقط (border)، مفرغة من الداخل. */
+.fav-item .fav-ayah-num{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-ui);
+  font-size: 16px;
+  font-weight: normal;
+  line-height: 1;
+  min-width: 1.5em;
+  height: 1.5em;
+  padding: 0 0.2em;
+  border: 1.5px solid currentColor;
+  border-radius: 999px;
+  box-sizing: border-box;
+  vertical-align: -0.08em;
+  color: var(--ink-soft);
+  background: transparent;
+}
+body.night .fav-item .fav-ayah-num{ color: #9A9A9E; }
 .fav-item .fav-remove{
   color:#b5493f; padding:6px;
   /* Plain <button> elements get no global reset in this app (only

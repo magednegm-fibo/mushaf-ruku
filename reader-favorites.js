@@ -50,10 +50,10 @@
       return '<div class="fav-item" data-page="'+f.page+'">' +
         '<div class="fav-info">' +
           '<div class="fav-title">' + UI.escapeHtml(f.label || surahName) + '</div>' +
-          '<div class="fav-sub">' + surahName + ' \u2022 آية ' + UI.toArabicDigits(ayahNum) + '</div>' +
+          '<div class="fav-sub">' + surahName + ' \u2022 آية <span class="fav-ayah-num">' + UI.toArabicDigits(ayahNum) + '</span></div>' +
         '</div>' +
         '<button class="fav-remove" data-remove="'+f.page+'" aria-label="حذف من المفضلة" title="حذف من المفضلة">' +
-          '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 6l12 12M18 6l-12 12"/></svg>' +
+          '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 6l12 12M18 6l-12 12"/></svg>' +
         '</button>' +
       '</div>';
     }).join('');
