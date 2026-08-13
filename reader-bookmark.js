@@ -61,9 +61,15 @@
     });
   }
 
+  function reloadFromStorage(){
+    bookmark = loadBookmark();
+    updateBookmarkButton();
+  }
+
   window.ReaderBookmark = {
     init: init,
     updateBookmarkButton: updateBookmarkButton,
-    getBookmarkInfo: getBookmarkInfo
+    getBookmarkInfo: getBookmarkInfo,
+    reloadFromStorage: reloadFromStorage
   };
 })();

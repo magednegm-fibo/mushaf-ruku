@@ -88,8 +88,6 @@
     homeProgressPercent: document.getElementById('homeProgressPercent'),
     homeProgressText: document.getElementById('homeProgressText'),
     stripFill: document.getElementById('stripFill'),
-    settingsProgress: document.getElementById('settingsProgress'),
-    btnResetProgress: document.getElementById('btnResetProgress'),
     displayScopeSelect: document.getElementById('displayScopeSelect'),
 
     tileSurah: document.getElementById('tileSurah'),
@@ -186,7 +184,7 @@
     waqfInfoSymbol: document.getElementById('waqfInfoSymbol'),
     waqfInfoLabel: document.getElementById('waqfInfoLabel'),
     waqfToggle: document.getElementById('waqfToggle'),
-    btnClearAllReminders: document.getElementById('btnClearAllReminders'),
+    btnFactoryReset: document.getElementById('btnFactoryReset'),
     clearRemindersModal: document.getElementById('clearRemindersModal'),
     clearRemindersModalText: document.getElementById('clearRemindersModalText'),
     clearRemindersModalCancel: document.getElementById('clearRemindersModalCancel'),
@@ -272,6 +270,7 @@
       els: els, state: state, UI: UI, PAGES: PAGES,
       AudioManager: AudioManager, ReaderManager: ReaderManager,
       ReaderBookmark: ReaderBookmark, ReaderReminders: ReaderReminders,
+      ReaderFavorites: ReaderFavorites,
       Home: Home, saveState: saveState
     });
   });

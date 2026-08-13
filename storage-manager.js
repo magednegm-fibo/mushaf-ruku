@@ -116,6 +116,11 @@
       result.showWaqfMarksIndopak = result.showWaqfMarks;
       delete result.showWaqfMarks;
     }
+    // Unify: font size and waqf-mark visibility are shared across both
+    // script modes again (1.0.385+). Prefer the Uthmani-stored values as
+    // canonical when the pair differs (legacy per-mode divergence).
+    result.fontSizeIndopak = result.fontSizeUthmani;
+    result.showWaqfMarksIndopak = result.showWaqfMarksUthmani;
     // Migration: the مواضع اختلاف روضة الحفاظ toggle (old keys
     // `showMadMunfasil` / `showMadMunfasilUthmani`) was removed — the
     // coloring is now always on, unconditionally, in both script modes.
@@ -226,12 +231,267 @@
   function saveReminder(style, marks){
     return writeJSON(KEYS.waqfKeyForStyle(style), marks);
   }
-  // "حذف جميع علامات التذكير" (الإعدادات): wipes reminder marks for ONLY
-  // the given script mode — the two mushafs (Uthmani/Madinah vs.
-  // Indopak/Naskh) keep fully independent reminder sets, so clearing one
-  // must never touch the other's marks.
+  // Wipe reminder marks for one script mode only (low-level helper).
   function clearRemindersForStyle(style){
     try{ localStorage.removeItem(KEYS.waqfKeyForStyle(style)); }catch(e){}
+  }
+
+  // User-data keys managed by this module (inventory for factory reset /
+  // backup). Does NOT include Service Worker Cache or app static assets.
+  //   KEYS.STORAGE_KEY          — settings + reading position/progress
+  //   KEYS.FAV_KEY              — favorites list
+  //   KEYS.BOOKMARK_KEY         — reading bookmark
+  //   KEYS.waqfKeyForStyle(*)   — reminder marks per script
+  //   KEYS.WAQF_KEY_LEGACY      — pre-split reminder marks (migration only)
+  function allUserDataKeys(){
+    return [
+      KEYS.STORAGE_KEY,
+      KEYS.FAV_KEY,
+      KEYS.BOOKMARK_KEY,
+      KEYS.waqfKeyForStyle('uthmani'),
+      KEYS.waqfKeyForStyle('indopak'),
+      KEYS.WAQF_KEY_LEGACY
+    ];
+  }
+
+  // Factory reset: clear every user-data key so the next load* call
+  // returns defaults / empty. Atomic via snapshot + rollback on failure.
+  // Does not touch Cache Storage, SW, or static app files.
+  function factoryReset(){
+    var snap = snapshotAllUserData();
+    // Also capture legacy key if present (not part of snapshotAllUserData).
+    var legacyRaw = null;
+    try{ legacyRaw = localStorage.getItem(KEYS.WAQF_KEY_LEGACY); }catch(e){}
+    try{
+      var keys = allUserDataKeys();
+      for(var i = 0; i < keys.length; i++){
+        try{ localStorage.removeItem(keys[i]); }
+        catch(e){ throw e; }
+      }
+      // Verify reads come back empty/default-shaped.
+      if(loadFavorites().length !== 0) throw new Error('favorites not cleared');
+      if(loadBookmarks().shared) throw new Error('bookmark not cleared');
+      return { ok: true };
+    }catch(e){
+      restoreSnapshot(snap);
+      try{
+        if(legacyRaw === null || legacyRaw === undefined){
+          localStorage.removeItem(KEYS.WAQF_KEY_LEGACY);
+        }else{
+          localStorage.setItem(KEYS.WAQF_KEY_LEGACY, legacyRaw);
+        }
+      }catch(e2){ /* best-effort */ }
+      return { ok: false, error: (e && e.message) ? e.message : 'factory reset failed' };
+    }
+  }
+
+  // ---------------------------------------------------------------------
+  // Full backup / restore (ملف JSON مستقل عن Browser Storage)
+  // ---------------------------------------------------------------------
+  // schemaVersion 1: settings + favorites + bookmark + reminders (both
+  // script modes). Cache / SW / runtime state are intentionally excluded.
+  // Restore policy: only sections present in the file replace current
+  // data; missing sections leave existing data untouched.
+  var BACKUP_SCHEMA_VERSION = 1;
+  var BACKUP_APP_NAME = 'مصحف الركوع';
+
+  function buildFullBackup(){
+    // Read raw keys (not loadSettings) so we export exactly what is stored,
+    // without re-applying migration defaults into the file.
+    return {
+      app: BACKUP_APP_NAME,
+      type: 'full-backup',
+      schemaVersion: BACKUP_SCHEMA_VERSION,
+      exportedAt: new Date().toISOString(),
+      settings: readJSON(KEYS.STORAGE_KEY, {}),
+      favorites: readJSON(KEYS.FAV_KEY, []),
+      bookmark: readJSON(KEYS.BOOKMARK_KEY, null),
+      reminders: {
+        uthmani: readJSON(KEYS.waqfKeyForStyle('uthmani'), {}),
+        indopak: readJSON(KEYS.waqfKeyForStyle('indopak'), {})
+      }
+    };
+  }
+
+  // Validate a parsed JSON object. Returns
+  //   { ok:true, kind:'full'|'reminders', data }
+  // or { ok:false, error:'...' }
+  function validateBackupPayload(data){
+    if(!data || typeof data !== 'object'){
+      return { ok:false, error:'bad format' };
+    }
+    var type = data.type;
+    // Legacy reminder-only exports (before full-backup) — no schemaVersion.
+    if(type === 'reminder-marks' || (!type && data.marks)){
+      var marks = data.marks || data;
+      if(!marks || typeof marks !== 'object'){
+        return { ok:false, error:'bad format' };
+      }
+      return { ok:true, kind:'reminders', data: data };
+    }
+    if(type === 'full-backup'){
+      if(data.app && data.app !== BACKUP_APP_NAME){
+        return { ok:false, error:'unknown app' };
+      }
+      if(typeof data.schemaVersion !== 'number'){
+        return { ok:false, error:'missing schemaVersion' };
+      }
+      if(data.schemaVersion > BACKUP_SCHEMA_VERSION || data.schemaVersion < 1){
+        return { ok:false, error:'unsupported schemaVersion' };
+      }
+      if(data.settings !== undefined && (typeof data.settings !== 'object' || data.settings === null || Array.isArray(data.settings))){
+        return { ok:false, error:'invalid settings' };
+      }
+      if(data.favorites !== undefined && !Array.isArray(data.favorites)){
+        return { ok:false, error:'invalid favorites' };
+      }
+      if(data.bookmark !== undefined && data.bookmark !== null && typeof data.bookmark !== 'object'){
+        return { ok:false, error:'invalid bookmark' };
+      }
+      if(data.reminders !== undefined){
+        if(typeof data.reminders !== 'object' || data.reminders === null || Array.isArray(data.reminders)){
+          return { ok:false, error:'invalid reminders' };
+        }
+        if(data.reminders.uthmani !== undefined && (typeof data.reminders.uthmani !== 'object' || data.reminders.uthmani === null || Array.isArray(data.reminders.uthmani))){
+          return { ok:false, error:'invalid reminders.uthmani' };
+        }
+        if(data.reminders.indopak !== undefined && (typeof data.reminders.indopak !== 'object' || data.reminders.indopak === null || Array.isArray(data.reminders.indopak))){
+          return { ok:false, error:'invalid reminders.indopak' };
+        }
+      }
+      return { ok:true, kind:'full', data: data };
+    }
+    // Unrecognised top-level shape: treat flat mark map as legacy reminders
+    // only when it looks like { "2:1:0": {c,t} | number, ... }.
+    if(!type){
+      var keys = Object.keys(data);
+      if(keys.length && keys.every(function(k){
+        return k.indexOf(':') !== -1 || k === 'uthmani' || k === 'indopak';
+      })){
+        return { ok:true, kind:'reminders', data: { marks: data } };
+      }
+    }
+    return { ok:false, error:'unsupported type' };
+  }
+
+  function snapshotAllUserData(){
+    return {
+      settings: readJSON(KEYS.STORAGE_KEY, {}),
+      favorites: readJSON(KEYS.FAV_KEY, []),
+      bookmarkRaw: localStorage.getItem(KEYS.BOOKMARK_KEY),
+      remindersUthmani: readJSON(KEYS.waqfKeyForStyle('uthmani'), {}),
+      remindersIndopak: readJSON(KEYS.waqfKeyForStyle('indopak'), {})
+    };
+  }
+
+  function restoreSnapshot(snap){
+    writeJSON(KEYS.STORAGE_KEY, snap.settings);
+    writeJSON(KEYS.FAV_KEY, snap.favorites);
+    try{
+      if(snap.bookmarkRaw === null || snap.bookmarkRaw === undefined){
+        localStorage.removeItem(KEYS.BOOKMARK_KEY);
+      }else{
+        localStorage.setItem(KEYS.BOOKMARK_KEY, snap.bookmarkRaw);
+      }
+    }catch(e){ /* best-effort rollback */ }
+    writeJSON(KEYS.waqfKeyForStyle('uthmani'), snap.remindersUthmani);
+    writeJSON(KEYS.waqfKeyForStyle('indopak'), snap.remindersIndopak);
+  }
+
+  // Apply a validated full-backup payload. Replace-if-present only.
+  // On any write failure, rolls back to the pre-apply snapshot.
+  function applyFullBackup(data){
+    var validation = validateBackupPayload(data);
+    if(!validation.ok || validation.kind !== 'full'){
+      return { ok:false, error: validation.error || 'not a full backup' };
+    }
+    var src = validation.data;
+    var plan = {};
+    if(src.settings !== undefined) plan.settings = src.settings;
+    if(src.favorites !== undefined) plan.favorites = src.favorites;
+    if(src.bookmark !== undefined) plan.bookmark = src.bookmark;
+    if(src.reminders !== undefined){
+      plan.reminders = {
+        uthmani: (src.reminders.uthmani !== undefined) ? src.reminders.uthmani : undefined,
+        indopak: (src.reminders.indopak !== undefined) ? src.reminders.indopak : undefined
+      };
+    }
+
+    var snap = snapshotAllUserData();
+    try{
+      if(plan.settings !== undefined){
+        if(!writeJSON(KEYS.STORAGE_KEY, plan.settings)) throw new Error('settings write failed');
+      }
+      if(plan.favorites !== undefined){
+        if(!writeJSON(KEYS.FAV_KEY, plan.favorites)) throw new Error('favorites write failed');
+      }
+      if(plan.bookmark !== undefined){
+        if(plan.bookmark === null){
+          try{ localStorage.removeItem(KEYS.BOOKMARK_KEY); }catch(e){ throw e; }
+        }else{
+          if(!writeJSON(KEYS.BOOKMARK_KEY, plan.bookmark)) throw new Error('bookmark write failed');
+        }
+      }
+      if(plan.reminders){
+        if(plan.reminders.uthmani !== undefined){
+          if(!writeJSON(KEYS.waqfKeyForStyle('uthmani'), plan.reminders.uthmani)) throw new Error('reminders.uthmani write failed');
+        }
+        if(plan.reminders.indopak !== undefined){
+          if(!writeJSON(KEYS.waqfKeyForStyle('indopak'), plan.reminders.indopak)) throw new Error('reminders.indopak write failed');
+        }
+      }
+      return { ok:true, applied: plan };
+    }catch(e){
+      restoreSnapshot(snap);
+      return { ok:false, error: (e && e.message) ? e.message : 'apply failed' };
+    }
+  }
+
+  // Apply legacy reminder-marks (merge into each present mode), same
+  // semantics as the old importMarksFromFile path.
+  function applyReminderMarksBackup(data){
+    var validation = validateBackupPayload(data);
+    if(!validation.ok || validation.kind !== 'reminders'){
+      return { ok:false, error: validation.error || 'not a reminders backup' };
+    }
+    var incoming = (validation.data.marks) ? validation.data.marks : validation.data;
+    if(!incoming || typeof incoming !== 'object'){
+      return { ok:false, error:'bad format' };
+    }
+    var snap = snapshotAllUserData();
+    try{
+      var isPerMode = ('uthmani' in incoming) || ('indopak' in incoming);
+      function mergeInto(style, src){
+        if(!src || typeof src !== 'object') return;
+        var current = readJSON(KEYS.waqfKeyForStyle(style), {});
+        Object.keys(src).forEach(function(k){
+          var v = src[k];
+          current[k] = (typeof v === 'number') ? {c: 'red', t: v} : v;
+        });
+        if(!writeJSON(KEYS.waqfKeyForStyle(style), current)) throw new Error('reminder write failed');
+      }
+      if(isPerMode){
+        mergeInto('uthmani', incoming.uthmani || {});
+        mergeInto('indopak', incoming.indopak || {});
+      }else{
+        // Flat legacy map: merge into both modes so nothing is silently
+        // lost when the active mode is unknown at the storage layer.
+        mergeInto('uthmani', incoming);
+        mergeInto('indopak', incoming);
+      }
+      return { ok:true, applied: { reminders: true } };
+    }catch(e){
+      restoreSnapshot(snap);
+      return { ok:false, error: (e && e.message) ? e.message : 'apply failed' };
+    }
+  }
+
+  function applyBackupPayload(data){
+    var validation = validateBackupPayload(data);
+    if(!validation.ok) return validation;
+    if(validation.kind === 'full') return applyFullBackup(data);
+    if(validation.kind === 'reminders') return applyReminderMarksBackup(data);
+    return { ok:false, error:'unsupported type' };
   }
 
   window.StorageManager = {
@@ -245,6 +505,14 @@
     saveBookmark: saveBookmark,
     loadReminder: loadReminder,
     saveReminder: saveReminder,
-    clearRemindersForStyle: clearRemindersForStyle
+    clearRemindersForStyle: clearRemindersForStyle,
+    factoryReset: factoryReset,
+    allUserDataKeys: allUserDataKeys,
+    buildFullBackup: buildFullBackup,
+    validateBackupPayload: validateBackupPayload,
+    applyFullBackup: applyFullBackup,
+    applyReminderMarksBackup: applyReminderMarksBackup,
+    applyBackupPayload: applyBackupPayload,
+    BACKUP_SCHEMA_VERSION: BACKUP_SCHEMA_VERSION
   };
 })();

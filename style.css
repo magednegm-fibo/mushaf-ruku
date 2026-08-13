@@ -600,10 +600,9 @@ body.uthmani-font .waqf-sign{
 }
 
 /* مواضع اختلاف روضة الحفاظ / قصر المنفصل (settings.js:
-   applyKhilafHighlightVisibility). التلوين مفعّل دائمًا في كلا الخطين —
-   لا يوجد مفتاح تشغيل/إيقاف في الإعدادات. فئة body.show-khilaf-highlight
-   تُضاف دون شرط عند كل تحميل؛ شكل الـselector بقي كما هو لتفادي إعادة
-   هيكلة غير ضرورية. الفئات الخمس أدناه (الجداول في readerManager.js فوق
+   applyKhilafHighlightVisibility). التلوين مربوط بمفتاح «علامات تذكير الوقف»
+   (طلب مباشر 2026-08-13): body.show-khilaf-highlight تُضاف فقط عند تفعيل
+   الإعداد. الفئات الخمس أدناه (الجداول في readerManager.js فوق
    SAKTA_HIGHLIGHT_WORDS) بلا لون/وزن في تعريفها الأصلي أعلاه؛ هذا هو
    المكان الوحيد الذي يُطبَّق منه اللون والوزن فعليًا عبر --khilaf-highlight. */
 body.show-khilaf-highlight .sakta-word,
@@ -908,9 +907,9 @@ body.night .quran-word.khilaf-word.has-default-waqf-lazim:not(.has-waqf) .waqf-m
 body.night .quran-word.khilaf-word.has-default-jeem:not(.has-waqf) .waqf-mark{
   color:#C9A06A;
 }
-/* "إظهار علامات التذكير والوقف" مطفأ → إخفاء هذه النجمة أيضًا، بنفس
-   سلوك نجمة التذكير الشخصي — البنفسجي وحده يبقى ظاهرًا دومًا (مستقل
-   عن هذا المفتاح، كما في القاعدة أسفل هذا التعليق). */
+/* "إظهار علامات التذكير والوقف" مطفأ → إخفاء نجمة التقاطع على .khilaf-word
+   أيضًا، بنفس سلوك نجمة التذكير الشخصي. التلوين البنفسجي يُطفأ عبر إزالة
+   body.show-khilaf-highlight من settings.js (طلب مباشر 2026-08-13). */
 body.hide-waqf-marks .quran-word.khilaf-word.has-default-waqf:not(.has-waqf) .waqf-mark,
 body.hide-waqf-marks .quran-word.khilaf-word.has-default-sad-rukhsa:not(.has-waqf) .waqf-mark,
 body.hide-waqf-marks .quran-word.khilaf-word.has-default-waqf-lazim:not(.has-waqf) .waqf-mark,
@@ -921,10 +920,9 @@ body.hide-waqf-marks .quran-word.khilaf-word.has-default-jeem:not(.has-waqf) .wa
   display:none !important;
 }
 
-/* مواضع خلاف قصر المنفصل (البنفسجي) لم تعد مرتبطة إطلاقًا بمفتاح
-   "إظهار علامات التذكير" (body.hide-waqf-marks) — تبقى ملونة دائمًا
-   بصرف النظر عن حالته (طلب صريح 2026-07-30). فحُذف حزام الأمان الذي
-   كان يُلغي اللون هنا سابقًا، وحُذف تصفير --khilaf-highlight أيضًا. */
+/* التلوين البنفسجي لمواضع الخلاف مربوط بمفتاح «علامات تذكير الوقف»
+   عبر body.show-khilaf-highlight (settings.js applyKhilafHighlightVisibility).
+   عند إطفاء المفتاح تُزال الفئة فيختفي اللون تلقائيًا. */
 
 /* ---------- Long-press reminder-mark popups (add / pick color / delete) ---------- */
 .waqf-menu{
@@ -1519,7 +1517,7 @@ body.night .quran-word.search-hit-flash{
 .settings-divider{
   border: none;
   border-top: 1px solid rgba(169,121,59,.42);
-  margin: 18px 10px;
+  margin: 12px 10px;
 }
 body.night .settings-divider{ border-top-color: rgba(255,255,255,.14); }
 /* Thinner, lower-contrast variant used around #appVersionText — same
@@ -1620,9 +1618,9 @@ body.night .panel .modal-btn.ghost{ color:#9A9A9E; border-color:rgba(255,255,255
    gotoModal) now that modal-box itself goes dark in night mode too. */
 body.night .modal-box .modal-btn.ghost{ color:#9A9A9E; border-color:rgba(255,255,255,.14); }
 
-/* "إعادة ضبط تقدّم القراءة" / "حذف جميع علامات التذكير": always inside
-   .panel (never inside a modal-box), so no scoping needed here — just
-   brighten the warning red enough to read against the dark panel bg. */
+/* "حذف جميع علامات التذكير": always inside .panel (never inside a
+   modal-box), so no scoping needed here — just brighten the warning red
+   enough to read against the dark panel bg. */
 body.night .reset-btn{ color:#D2857E; border-color:#D2857E; }
 
 /* ---------- Night mode ---------- */
@@ -2290,12 +2288,13 @@ body.night #ayahJumpModal .ayah-jump-surah-row b{ color:#D8B662; }
   align-items: center;
   justify-content: center;
   font-family: var(--font-ui);
-  font-size: 16px;
+  font-size: 15px;
   font-weight: normal;
   line-height: 1;
   min-width: 1.5em;
   height: 1.5em;
   padding: 0 0.2em;
+  margin-inline-start: 0.25em;
   border: 1.5px solid currentColor;
   border-radius: 999px;
   box-sizing: border-box;

@@ -509,31 +509,28 @@
     // in an Arabic book), dragging left goes back. This must stay in
     // sync with ReaderManager's ArrowLeft/ArrowRight handling.
     //
-    // Two-finger pinch zoom: reuses the exact same per-script-mode font
-    // size (via Settings.currentFontSizeKey) used by the "+"/"−" buttons
-    // in الإعدادات, so pinching and those buttons always agree, each
-    // script mode keeps its own remembered size, and switching mode never
-    // carries a pinched size over to the other script. Can be turned off
-    // from الإعدادات (state.pinchZoomEnabled) for readers who trigger it
-    // by accident while turning pages with two fingers.
+    // Two-finger pinch zoom: same shared font size as the "+"/"−" buttons
+    // in الإعدادات (one size for both Uthmani and Indopak). Can be turned
+    // off from الإعدادات (state.pinchZoomEnabled) for readers who trigger
+    // it by accident while turning pages with two fingers.
     var FONT_MIN = 18, FONT_MAX = 44;
 
     Gestures.swipeAndPinch({
       root: els.pageFrame,
       isPinchEnabled: function(){ return state.pinchZoomEnabled !== false; },
-      getPinchValue: function(){ return state[Settings.currentFontSizeKey()]; },
+      getPinchValue: function(){ return state.fontSizeUthmani; },
       pinchMin: FONT_MIN,
       pinchMax: FONT_MAX,
       onPinchChange: function(newSize){
-        var key = Settings.currentFontSizeKey();
-        if(newSize !== state[key]){
-          state[key] = newSize;
+        if(newSize !== state.fontSizeUthmani){
+          state.fontSizeUthmani = newSize;
+          state.fontSizeIndopak = newSize;
           Settings.applyFontSize();
         }
       },
       onPinchEnd: function(){
         saveState();
-        UI.showToast('حجم الخط: ' + UI.toArabicDigits(state[Settings.currentFontSizeKey()]));
+        UI.showToast('حجم الخط: ' + UI.toArabicDigits(state.fontSizeUthmani));
       },
       onSwipe: function(dx){
         if(dx > 0) ReaderManager.goToRelativePage(1);

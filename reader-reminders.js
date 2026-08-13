@@ -155,23 +155,8 @@
   }
   function getWaqfMarks(){ return waqfMarks; }
 
-  // "حذف جميع علامات التذكير" (الإعدادات): clears reminder marks for only
-  // the currently active script mode (state.fontStyle) — the other
-  // script's marks are left untouched, since the two are independent
-  // reading positions. Resets the in-memory map and strips the
-  // "has-waqf" state off every word currently on screen so the change is
-  // visible immediately without requiring a full page re-render.
-  function clearAllMarks(){
-    StorageManager.clearRemindersForStyle(state.fontStyle);
-    waqfMarks = {};
-    els.pageScroll.querySelectorAll('.quran-word.has-waqf').forEach(function(wordEl){
-      wordEl.classList.remove('has-waqf');
-      var markSpan = wordEl.querySelector('.waqf-mark');
-      if(markSpan) markSpan.classList.remove('mark-red', 'mark-green', 'mark-blue', 'mark-brown');
-    });
-  }
-
-  // ---- تصدير/استيراد علامات التذكير (JSON) ----
+  // ---- تصدير/استيراد علامات التذكير (JSON) — legacy helpers; full
+  // backup/restore is in StorageManager + settings.js ----
   function exportMarks(){
     // Export both script modes together, each under its own key, since a
     // reader may have separate marks on the Madinah and Naskh Ta'liq
@@ -407,7 +392,6 @@
   window.ReaderReminders = {
     init: init,
     getWaqfMarks: getWaqfMarks,
-    clearAllMarks: clearAllMarks,
     reloadWaqfMarksForCurrentStyle: reloadWaqfMarksForCurrentStyle,
     exportMarks: exportMarks,
     importMarksFromFile: importMarksFromFile,

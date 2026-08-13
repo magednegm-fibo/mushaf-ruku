@@ -31,7 +31,6 @@
     if(els.homeProgressPercent) els.homeProgressPercent.textContent = UI.toArabicDigits(pct) + '٪';
     if(els.homeProgressText) els.homeProgressText.textContent = 'قرأ ' + UI.toArabicDigits(reachedCount) + ' من ' + UI.toArabicDigits(PAGES.length) + ' ركوعًا';
     if(els.stripFill) els.stripFill.style.width = (((state.page||0)+1)/PAGES.length*100) + '%';
-    if(els.settingsProgress) els.settingsProgress.textContent = UI.toArabicDigits(pct) + '٪';
   }
   function markPageVisited(i){
     // The per-script resume point/progress is only updated here, on real
@@ -39,13 +38,6 @@
     // switching الرسم on the same page and must not credit that page as
     // "read" in the newly-selected script.
     state[currentLastPageKey()] = i;
-  }
-  function resetProgress(){
-    // Progress mirrors the last-visited position directly, so "reset"
-    // means starting over from the beginning — for both script modes at
-    // once, since the two mushafs share a single progress value.
-    state[currentLastPageKey()] = 0;
-    updateProgressUI();
   }
 
   function updateBookmarkCard(){
@@ -155,7 +147,6 @@
     updateProgressUI: updateProgressUI,
     updateBookmarkCard: updateBookmarkCard,
     markPageVisited: markPageVisited,
-    resetProgress: resetProgress,
     currentLastPageKey: currentLastPageKey,
     maybeGoHomeOnPopstate: maybeGoHomeOnPopstate
   };

@@ -1,31 +1,40 @@
 // Settings: everything under الإعدادات — font size, font/script style
 // (Uthmani vs Indopak), night mode, the waqf-marks visibility toggle,
 // pinch-zoom enable flag, keep-screen-awake (Wake Lock), reset progress,
-// and reminder-marks export/import (the file-picker wiring; the actual
-// data work is ReaderReminders').
+// and full backup/restore (file-picker wiring; payload work is StorageManager).
 // Loaded before app.js (see index.html). Call Settings.init(deps) once;
 // deps: els, state, UI, PAGES, AudioManager, ReaderManager,
-//       ReaderBookmark, ReaderReminders, Home, saveState
+//       ReaderBookmark, ReaderReminders, ReaderFavorites, Home, saveState
 // Exposed as window.Settings.
 (function(){
   'use strict';
 
-  var els, state, UI, PAGES, AudioManager, ReaderManager, ReaderBookmark, ReaderReminders, Home, saveState;
+  var els, state, UI, PAGES, AudioManager, ReaderManager, ReaderBookmark, ReaderReminders, ReaderFavorites, Home, saveState;
 
   // -----------------------------------------------------------------
-  // Font size — stored independently per script mode (Uthmani vs
-  // Indopak), since the two scripts read comfortably at different sizes.
-  // This key picks which stored size applies to whatever script is on
-  // screen right now, so the +/-، pinch-zoom، and settings label all
-  // always agree.
+  // Font size — shared across both script modes (Uthmani + Indopak).
+  // Both storage keys are kept in sync for backup compatibility with
+  // older per-mode payloads; the canonical read key is fontSizeUthmani.
   // -----------------------------------------------------------------
   function currentFontSizeKey(){
-    return state.fontStyle === 'uthmani' ? 'fontSizeUthmani' : 'fontSizeIndopak';
+    return 'fontSizeUthmani';
   }
-  function applyFontSize(){
-    var size = state[currentFontSizeKey()];
+  function setSharedFontSize(size){
+    state.fontSizeUthmani = size;
+    state.fontSizeIndopak = size;
+  }
+  // opts.skipQcfFit: when true, only updates --ayah-size / label — used by
+  // rehydrate so we never schedule QCF measurement against a stale DOM.
+  function applyFontSize(opts){
+    opts = opts || {};
+    // Keep the pair in sync in case an older backup left them different.
+    if(state.fontSizeIndopak !== state.fontSizeUthmani){
+      state.fontSizeIndopak = state.fontSizeUthmani;
+    }
+    var size = state.fontSizeUthmani;
     document.documentElement.style.setProperty('--ayah-size', size + 'px');
-    els.fontSizeLabel.textContent = size;
+    if(els.fontSizeLabel) els.fontSizeLabel.textContent = size;
+    if(opts.skipQcfFit) return;
     // بعد تغيير الحجم: انتظر استقرار الـ layout ثم أعد قياس كلمات QCF
     // (عروض .qcf-real-text و scale) — وإلا تبقى قيم البكسل القديمة وتختل
     // محاذاة أول/آخر السطر. scheduleFitAllGlyphs يدمج أحداث الـ pinch
@@ -38,15 +47,15 @@
     }
   }
 
-  // -----------------------------------------------------------------
-  // Font/script style (Uthmani/Madinah vs Indopak/Naskh Ta'liq)
-  // -----------------------------------------------------------------
-  function applyFontStyle(){
-    // Switching script rebuilds the ayah HTML via renderPage() below,
-    // which would wipe out the "ayah-playing" highlight span; simplest
-    // and safest is to stop playback rather than try to re-anchor it
-    // after rebuild.
-    AudioManager.stopListening();
+  // Exact @font-face family names from style.css (must stay in sync).
+  function currentQuranFontFamilyName(){
+    return state.fontStyle === 'uthmani' ? 'Uthmanic Hafs' : 'PDMS Saleem QuranFont';
+  }
+
+  // Font/script chrome only — no renderPage, no Home/Fav/Bookmark UI.
+  // opts.skipQcfFit: pass through to applyFontSize for rehydrate path.
+  function applyFontChrome(opts){
+    opts = opts || {};
     var family = state.fontStyle === 'uthmani'
       ? "'Uthmanic Hafs', 'Amiri Quran', 'Noto Naskh Arabic', serif"
       : "'PDMS Saleem QuranFont', 'Amiri Quran', 'Noto Naskh Arabic', serif";
@@ -55,35 +64,65 @@
     document.body.classList.toggle('indopak-font', state.fontStyle !== 'uthmani');
     if(els.btnFontAmiri) els.btnFontAmiri.classList.toggle('active', state.fontStyle !== 'uthmani');
     if(els.btnFontUthmani) els.btnFontUthmani.classList.toggle('active', state.fontStyle === 'uthmani');
-    // Reminder marks are stored per script mode, so switching mode must
-    // reload the in-memory map before re-rendering — otherwise the
-    // previous mode's marks would keep showing on the new one.
-    ReaderReminders.reloadWaqfMarksForCurrentStyle();
-    // Each script mode has its own independent font size — re-apply it
-    // now so the page and the settings-panel label switch over to
-    // whichever size was last set for this mode, instead of keeping the
-    // other mode's.
-    applyFontSize();
-    // Whether marks are shown is also independent per script mode —
-    // refresh the toggle switch and the hide/show class to match this
-    // mode's value.
+    // Reminder marks are stored per script mode — swap in-memory map
+    // before any subsequent render uses getWaqfMarks().
+    if(ReaderReminders && typeof ReaderReminders.reloadWaqfMarksForCurrentStyle === 'function'){
+      ReaderReminders.reloadWaqfMarksForCurrentStyle();
+    }
+    applyFontSize({ skipQcfFit: !!opts.skipQcfFit });
     applyWaqfVisibility();
-    // Mad-munfasil visibility now applies in both script modes — see
-    // renderAyahWords()/the comment above SAKTA_HIGHLIGHT_WORDS in
-    // readerManager.js for why this is safe (verified word-index
-    // alignment, with 2:245/30:54 excluded there specifically). Still
-    // refreshed here on every script-mode switch so the toggle's
-    // checked state re-syncs immediately either way.
     applyKhilafHighlightVisibility();
-    // Reading progress (percentage / reached count) is shared between
-    // both script modes, but re-rendered here anyway since the settings
-    // panel/home screen may currently be visible.
-    Home.updateProgressUI();
-    // The saved reading bookmark is shared between both scripts now, but
-    // still needs a refresh here since its button/card reflect state.page.
-    ReaderBookmark.updateBookmarkButton();
-    Home.updateBookmarkCard();
+  }
+
+  // -----------------------------------------------------------------
+  // Font/script style (Uthmani/Madinah vs Indopak/Naskh Ta'liq)
+  // Manual toggle path only — not used by Restore / Factory Reset.
+  // -----------------------------------------------------------------
+  function applyFontStyle(){
+    // Switching script rebuilds the ayah HTML via renderPage() below,
+    // which would wipe out the "ayah-playing" highlight span; simplest
+    // and safest is to stop playback rather than try to re-anchor it
+    // after rebuild.
+    if(AudioManager && typeof AudioManager.stopListening === 'function'){
+      AudioManager.stopListening();
+    }
+    applyFontChrome();
+    // Home/bookmark chrome still refreshed on manual switch (pre-existing).
+    if(Home && typeof Home.updateProgressUI === 'function') Home.updateProgressUI();
+    if(ReaderBookmark && typeof ReaderBookmark.updateBookmarkButton === 'function'){
+      ReaderBookmark.updateBookmarkButton();
+    }
+    if(Home && typeof Home.updateBookmarkCard === 'function') Home.updateBookmarkCard();
     if(typeof ReaderManager !== 'undefined' && PAGES[state.page]) ReaderManager.renderPage();
+  }
+
+  // Wait for the active mushaf face (exact @font-face name) before the
+  // single rehydrate render. Timeout is a safety net only — not proof the
+  // font is ready. No Font Loading API → resolve immediately.
+  var FONT_LOAD_TIMEOUT_MS = 1000;
+  function waitForCurrentQuranFont(){
+    var familyName = currentQuranFontFamilyName();
+    if(typeof document === 'undefined' || !document.fonts || typeof document.fonts.load !== 'function'){
+      return Promise.resolve({ family: familyName, loaded: false, reason: 'no-api' });
+    }
+    return new Promise(function(resolve){
+      var settled = false;
+      function finish(info){
+        if(settled) return;
+        settled = true;
+        resolve(info);
+      }
+      var timer = setTimeout(function(){
+        finish({ family: familyName, loaded: false, reason: 'timeout' });
+      }, FONT_LOAD_TIMEOUT_MS);
+      document.fonts.load('1em "' + familyName + '"').then(function(){
+        clearTimeout(timer);
+        finish({ family: familyName, loaded: true, reason: 'loaded' });
+      }).catch(function(){
+        clearTimeout(timer);
+        finish({ family: familyName, loaded: false, reason: 'error' });
+      });
+    });
   }
 
   // -----------------------------------------------------------------
@@ -95,35 +134,42 @@
   }
 
   // -----------------------------------------------------------------
-  // Waqf-marks visibility — remembered independently per script mode
-  // too, matching how the marks themselves are already stored per mode
-  // (see StorageManager.loadReminder/saveReminder) — hiding marks in one
-  // script shouldn't hide them in the other.
+  // Waqf-marks visibility — shared across both script modes. Both storage
+  // keys stay in sync (backup-compatible with older per-mode payloads).
+  // Reminder *data* remains per-script; only the show/hide toggle is shared.
   // -----------------------------------------------------------------
   function currentWaqfVisibilityKey(){
-    return state.fontStyle === 'uthmani' ? 'showWaqfMarksUthmani' : 'showWaqfMarksIndopak';
+    return 'showWaqfMarksUthmani';
+  }
+  function setSharedWaqfVisibility(show){
+    state.showWaqfMarksUthmani = !!show;
+    state.showWaqfMarksIndopak = !!show;
   }
   // "إظهار علامات التذكير" — يخفي/يظهر معًا:
   //   • علامات التذكير الشخصية (نجمة فوق الكلمة)
   //   • تلوين نص الكلمات لعلامات الوقف السجاوندي الافتراضية (طلب مباشر
   //     2026-07-31 — لم تعد نجمة، بل تلوين مباشر لنص الكلمة نفسها)
-  // (عبر body.hide-waqf-marks في style.css). لا علاقة له باللون
-  // البنفسجي لمواضع خلاف قصر المنفصل — ذاك مربوط بمفتاحه المستقل في
-  // applyKhilafHighlightVisibility أدناه (طلب صريح: يبقى ملونًا دائمًا).
+  //   • تلوين مواضع الخلاف مع روضة الحفاظ (البنفسجي) — طلب مباشر 2026-08-13:
+  //     كان البنفسجي دائمًا؛ أصبح مربوطًا بنفس المفتاح.
+  // (عبر body.hide-waqf-marks + body.show-khilaf-highlight في style.css).
   function applyWaqfVisibility(){
-    var show = state[currentWaqfVisibilityKey()] !== false;
+    // Keep the pair in sync in case an older backup left them different.
+    if(state.showWaqfMarksIndopak !== state.showWaqfMarksUthmani){
+      state.showWaqfMarksIndopak = state.showWaqfMarksUthmani;
+    }
+    var show = state.showWaqfMarksUthmani !== false;
     document.body.classList.toggle('hide-waqf-marks', !show);
     if(els.waqfToggle) els.waqfToggle.checked = show;
+    applyKhilafHighlightVisibility();
   }
 
-
   // -----------------------------------------------------------------
-  // مواضع خلاف قصر المنفصل (بنفسجي) — مفعّلة دائمًا بلا أي شرط، ولا
-  // علاقة لها بمفتاح "إظهار علامات التذكير" أو أي إعداد آخر (طلب صريح
-  // 2026-07-30: يجب أن تبقى ملونة دائمًا).
+  // مواضع خلاف قصر المنفصل (بنفسجي) — مربوطة بمفتاح "علامات تذكير الوقف"
+  // (طلب مباشر 2026-08-13: تظهر فقط عند تفعيل الإعداد).
   // -----------------------------------------------------------------
   function applyKhilafHighlightVisibility(){
-    document.body.classList.add('show-khilaf-highlight');
+    var show = state[currentWaqfVisibilityKey()] !== false;
+    document.body.classList.toggle('show-khilaf-highlight', show);
   }
 
   // -----------------------------------------------------------------
@@ -153,20 +199,137 @@
   }
 
   // -----------------------------------------------------------------
-  // Reminder-marks export/import (file-picker wiring only — the data
-  // work is ReaderReminders.exportMarks()/ReaderReminders.importMarksFromFile()).
+  // Full backup / restore (settings + favorites + bookmark + reminders).
+  // File I/O wiring here; payload build/validate/apply live in StorageManager.
   // -----------------------------------------------------------------
+  // Unique download name so repeated backups don't overwrite each other
+  // in the browser Downloads folder. Browser still owns the save UI.
+  function makeBackupFilename(){
+    var d = new Date();
+    function pad(n){ return (n < 10 ? '0' : '') + n; }
+    return 'Mushaf_Al-Ruku_Backup_' +
+      d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + '_' +
+      pad(d.getHours()) + '-' + pad(d.getMinutes()) + '-' + pad(d.getSeconds()) +
+      '.json';
+  }
+
+  function downloadBackupJson(payload, filename){
+    var blob = new Blob([JSON.stringify(payload, null, 2)], {type: 'application/json'});
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 2000);
+  }
+
+  // Sync non-font settings controls from state (night, pinch, wake, audio).
+  // Used by rehydrate — not a full applyAll (no render / no applyFontStyle).
+  function applyNonFontSettingsUI(){
+    applyNight();
+    if(els.pinchZoomToggle) els.pinchZoomToggle.checked = state.pinchZoomEnabled !== false;
+    if(els.wakeLockToggle){
+      els.wakeLockToggle.checked = !!state.keepScreenAwake && WAKE_LOCK_SUPPORTED;
+      if(typeof requestWakeLock === 'function') requestWakeLock();
+    }
+    if(els.reciterSelect && state.reciter) els.reciterSelect.value = state.reciter;
+    if(els.autoScrollToggle) els.autoScrollToggle.checked = state.autoScrollEnabled !== false;
+    if(els.recitationScopeSelect && state.recitationScope) els.recitationScopeSelect.value = state.recitationScope;
+    if(els.playbackSpeedSelect) els.playbackSpeedSelect.value = String(state.playbackRate || 1);
+    if(els.recitationRepeatSelect && state.recitationRepeatCount != null){
+      els.recitationRepeatSelect.value = String(state.recitationRepeatCount);
+    }
+    if(els.rukuRepeatSelect && state.rukuRepeatCount != null){
+      els.rukuRepeatSelect.value = String(state.rukuRepeatCount);
+    }
+    if(els.displayScopeSelect && state.displayScope) els.displayScopeSelect.value = state.displayScope;
+  }
+
+  function finalUISyncAfterRehydrate(){
+    if(Home && typeof Home.updateProgressUI === 'function') Home.updateProgressUI();
+    if(Home && typeof Home.updateBookmarkCard === 'function') Home.updateBookmarkCard();
+    if(ReaderFavorites && typeof ReaderFavorites.updateFavButton === 'function'){
+      ReaderFavorites.updateFavButton();
+    }
+    if(ReaderBookmark && typeof ReaderBookmark.updateBookmarkButton === 'function'){
+      ReaderBookmark.updateBookmarkButton();
+    }
+  }
+
+  // Restore / Factory Reset only. Single render after font readiness.
+  // Does NOT call applyAll() or applyFontStyle(). No location.reload().
+  function rehydrateFromStorage(){
+    var loaded = StorageManager.loadSettings();
+    Object.keys(loaded).forEach(function(k){ state[k] = loaded[k]; });
+
+    if(ReaderFavorites && typeof ReaderFavorites.reloadFromStorage === 'function'){
+      ReaderFavorites.reloadFromStorage();
+    }
+    if(ReaderBookmark && typeof ReaderBookmark.reloadFromStorage === 'function'){
+      ReaderBookmark.reloadFromStorage();
+    }
+    if(ReaderReminders && typeof ReaderReminders.reloadWaqfMarksForCurrentStyle === 'function'){
+      ReaderReminders.reloadWaqfMarksForCurrentStyle();
+    }
+
+    // Font chrome without measuring the previous page's QCF glyphs.
+    applyFontChrome({ skipQcfFit: true });
+    applyNonFontSettingsUI();
+
+    return waitForCurrentQuranFont().then(function(){
+      if(ReaderManager && typeof ReaderManager.renderPage === 'function' && PAGES[state.page]){
+        ReaderManager.renderPage();
+      }
+      finalUISyncAfterRehydrate();
+    });
+  }
+
   function wireExportImport(){
     els.btnExportWaqf && els.btnExportWaqf.addEventListener('click', function(){
-      ReaderReminders.exportMarks();
+      try{
+        var payload = StorageManager.buildFullBackup();
+        var filename = makeBackupFilename();
+        downloadBackupJson(payload, filename);
+        UI.showToast('تم الحفظ في مجلد التنزيلات');
+      }catch(e){
+        UI.showToast('تعذّر إنشاء النسخة الاحتياطية');
+      }
     });
     els.importWaqfInput && els.importWaqfInput.addEventListener('change', function(){
       var file = els.importWaqfInput.files && els.importWaqfInput.files[0];
       if(!file) return;
-      ReaderReminders.importMarksFromFile(file, function(ok){
-        if(ok) ReaderManager.renderPage(); // refresh the currently open page so imported marks show immediately
+      var reader = new FileReader();
+      reader.onload = function(){
+        try{
+          var data = JSON.parse(reader.result);
+          // End any live playback session before applying restored user
+          // state — same rule as Factory Reset. Does not auto-start the
+          // restored reciter; playback ends stopped.
+          if(AudioManager && typeof AudioManager.stopListening === 'function'){
+            AudioManager.stopListening();
+          }
+          var result = StorageManager.applyBackupPayload(data);
+          if(!result.ok){
+            UI.showToast('ملف غير صالح');
+          }else{
+            rehydrateFromStorage().then(function(){
+              UI.showToast('تم استعادة النسخة الاحتياطية');
+            }).catch(function(){
+              UI.showToast('تعذّرت استعادة النسخة الاحتياطية');
+            });
+          }
+        }catch(err){
+          UI.showToast('ملف غير صالح');
+        }
         els.importWaqfInput.value = '';
-      });
+      };
+      reader.onerror = function(){
+        UI.showToast('ملف غير صالح');
+        els.importWaqfInput.value = '';
+      };
+      reader.readAsText(file);
     });
   }
 
@@ -179,18 +342,17 @@
     ReaderManager = deps.ReaderManager;
     ReaderBookmark = deps.ReaderBookmark;
     ReaderReminders = deps.ReaderReminders;
+    ReaderFavorites = deps.ReaderFavorites;
     Home = deps.Home;
     saveState = deps.saveState;
 
     els.fontMinus.addEventListener('click', function(){
-      var key = currentFontSizeKey();
-      state[key] = Math.max(18, state[key] - 2);
+      setSharedFontSize(Math.max(18, (state.fontSizeUthmani || 28) - 2));
       applyFontSize(); saveState();
       UI.haptic && UI.haptic();
     });
     els.fontPlus.addEventListener('click', function(){
-      var key = currentFontSizeKey();
-      state[key] = Math.min(44, state[key] + 2);
+      setSharedFontSize(Math.min(44, (state.fontSizeUthmani || 28) + 2));
       applyFontSize(); saveState();
       UI.haptic && UI.haptic();
     });
@@ -211,19 +373,32 @@
     });
 
     els.waqfToggle && els.waqfToggle.addEventListener('change', function(){
-      state[currentWaqfVisibilityKey()] = els.waqfToggle.checked;
+      setSharedWaqfVisibility(els.waqfToggle.checked);
       applyWaqfVisibility(); saveState();
       UI.haptic && UI.haptic();
     });
 
     
-    els.btnClearAllReminders && els.btnClearAllReminders.addEventListener('click', function(){
-      var scriptName = state.fontStyle === 'uthmani' ? 'مصحف المدينة' : 'مصحف النسخ';
-      var message = 'سيتم حذف جميع علامات التذكير في ' + scriptName + '، ولا يمكن التراجع عن هذا الإجراء.';
+    els.btnFactoryReset && els.btnFactoryReset.addEventListener('click', function(){
       Dialogs.openClearRemindersModal(function(){
-        ReaderReminders.clearAllMarks();
-        UI.showToast('تم حذف علامات التذكير في ' + scriptName);
-      }, message);
+        // Factory Reset must clear live audio runtime before storage
+        // defaults + rehydrate — otherwise UI shows default reciter while
+        // the previous reciter's session keeps playing. Public API only;
+        // does not auto-start the default reciter. Restore path untouched.
+        if(AudioManager && typeof AudioManager.stopListening === 'function'){
+          AudioManager.stopListening();
+        }
+        var result = StorageManager.factoryReset();
+        if(!result.ok){
+          UI.showToast('تعذّر إعادة الضبط');
+          return;
+        }
+        rehydrateFromStorage().then(function(){
+          UI.showToast('تمت إعادة ضبط التطبيق');
+        }).catch(function(){
+          UI.showToast('تعذّرت إعادة ضبط التطبيق');
+        });
+      });
     });
 
     els.pinchZoomToggle && els.pinchZoomToggle.addEventListener('change', function(){
@@ -248,11 +423,6 @@
       els.wakeLockToggle.disabled = true;
       if(els.wakeLockRow) els.wakeLockRow.title = 'غير مدعوم في هذا المتصفح';
     }
-
-    els.btnResetProgress.addEventListener('click', function(){
-      Home.resetProgress();
-      saveState();
-    });
 
     wireExportImport();
 
@@ -283,6 +453,10 @@
     applyAll: applyAll,
     currentFontSizeKey: currentFontSizeKey,
     currentWaqfVisibilityKey: currentWaqfVisibilityKey,
-    applyFontSize: applyFontSize
+    applyFontSize: applyFontSize,
+    applyFontChrome: applyFontChrome,
+    rehydrateFromStorage: rehydrateFromStorage,
+    waitForCurrentQuranFont: waitForCurrentQuranFont,
+    currentQuranFontFamilyName: currentQuranFontFamilyName
   };
 })();

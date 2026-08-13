@@ -128,29 +128,18 @@
   }
 
   // -----------------------------------------------------------------
-  // "حذف جميع علامات التذكير" confirm modal — a plain Cancel/Delete
-  // confirmation, same one-shot-callback shape as the modals above.
-  //
-  // Unlike favModal/gotoModal (always opened directly over the reader or
-  // home screen), this one opens ON TOP of an already-open panel
-  // (settingsPanel). It used to defer hiding itself to
-  // UI.closeTopmostOverlay() (running off the resulting popstate) instead
-  // of hiding synchronously like UI.closePanel(), to avoid cascading into
-  // settingsPanel underneath it. That's no longer how it avoids that bug:
-  // app.js's master popstate listener now skips closeTopmostOverlay()
-  // entirely for any self-initiated back (isSelfInitiatedBackPending()),
-  // so hiding synchronously here (see backOutOfClearRemindersModal below)
-  // is both safe and required — closeTopmostOverlay() never runs to do it
-  // for us anymore.
+  // Factory-reset confirm modal — Cancel / إعادة الضبط.
+  // Opens ON TOP of settingsPanel. Hides synchronously on close (see
+  // backOutOfClearRemindersModal): app.js skips closeTopmostOverlay() for
+  // self-initiated backs, so sync hide is both safe and required.
+  // DOM ids remain clearRemindersModal* for minimal wiring churn.
   // -----------------------------------------------------------------
   var clearRemindersOnConfirm = null;
-  function openClearRemindersModal(onConfirm, message){
+  function openClearRemindersModal(onConfirm){
     if(!els.clearRemindersModal) return;
     clearRemindersOnConfirm = onConfirm;
-    if(els.clearRemindersModalText && message) els.clearRemindersModalText.textContent = message;
     UI.openPanel(els.clearRemindersModal);
-    // Default focus on "إلغاء" (Cancel), not "حذف" (Delete) — a
-    // destructive action should never be the one-tap default.
+    // Default focus on "إلغاء" — destructive action must not be one-tap default.
     setTimeout(function(){
       if(els.clearRemindersModalCancel) els.clearRemindersModalCancel.focus();
     }, 150);

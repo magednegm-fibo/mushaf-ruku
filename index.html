@@ -687,14 +687,14 @@
     </div>
   </div>
 
-  <!-- ============ CLEAR ALL REMINDER MARKS CONFIRM MODAL ============ -->
+  <!-- ============ FACTORY RESET CONFIRM MODAL ============ -->
   <div id="clearRemindersModal" class="modal-overlay hidden">
     <div class="modal-box">
-      <h3>حذف جميع علامات التذكير</h3>
-      <p class="about-text" id="clearRemindersModalText" style="margin:0 0 24px;">سيتم حذف جميع علامات التذكير في المصحف الحالي، ولا يمكن التراجع عن هذا الإجراء.</p>
+      <h3>إعادة ضبط التطبيق؟</h3>
+      <p class="about-text" id="clearRemindersModalText" style="margin:0 0 24px;">سيتم إرجاع التطبيق إلى حالته الافتراضية وحذف جميع بياناتك المحفوظة على هذا الجهاز.</p>
       <div class="modal-actions" style="gap:18px; padding:0 14px;">
         <button id="clearRemindersModalCancel" class="modal-btn primary modal-btn-cancel" style="font-weight:700;">إلغاء</button>
-        <button id="clearRemindersModalConfirm" class="modal-btn primary modal-btn-danger" style="font-weight:700;">حذف</button>
+        <button id="clearRemindersModalConfirm" class="modal-btn primary modal-btn-danger" style="font-weight:700;">إعادة الضبط</button>
       </div>
     </div>
   </div>
@@ -840,13 +840,6 @@
         يتم تشغيل التلاوة للركوع الحالي أو حتى نهاية نطاق العرض.
       </p>
       <hr class="settings-divider">
-      <div class="setting-row static">
-        <span>نسبة القراءة</span>
-        <b id="settingsProgress">٠٪</b>
-      </div>
-      <button class="reset-btn" id="btnResetProgress">إعادة ضبط تقدّم القراءة</button>
-
-      <hr class="settings-divider">
       <div class="setting-row">
         <span>التكبير بإصبعين (Pinch Zoom)</span>
         <label class="switch">
@@ -870,14 +863,14 @@
       </div>
       <hr class="settings-divider">
       <div class="setting-row static">
-        <span>علامات التذكير</span>
+        <span>النسخ الاحتياطي والاستعادة</span>
       </div>
       <div class="waqf-io-row">
         <button class="modal-btn ghost" id="btnExportWaqf">حفظ نسخة احتياطية</button>
         <label class="modal-btn ghost" id="btnImportWaqf" for="importWaqfInput" style="cursor:pointer;">استعادة من ملف</label>
         <input type="file" id="importWaqfInput" accept="application/json" class="hidden">
       </div>
-      <button class="reset-btn" id="btnClearAllReminders">حذف جميع علامات التذكير (الرسم الحالي)</button>
+      <button class="reset-btn" id="btnFactoryReset">إعادة ضبط التطبيق</button>
       <hr class="settings-divider">
       <h3 class="tajweed-guide-section settings-app-info-title">عن التطبيق</h3>
       <hr class="settings-divider-thin">

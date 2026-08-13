@@ -108,9 +108,16 @@
     UI.registerOverlayPanels([els.favoritesPanel].filter(Boolean));
   }
 
+  function reloadFromStorage(){
+    favorites = loadFavorites();
+    favoritePages = new Set(favorites.map(function(f){ return f.page; }));
+    updateFavButton();
+  }
+
   window.ReaderFavorites = {
     init: init,
     isFavorited: isFavorited,
-    updateFavButton: updateFavButton
+    updateFavButton: updateFavButton,
+    reloadFromStorage: reloadFromStorage
   };
 })();
