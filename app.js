@@ -136,6 +136,9 @@
     tafsirList: document.getElementById('tafsirList'),
     btnTafsirPrev: document.getElementById('btnTafsirPrev'),
     btnTafsirNext: document.getElementById('btnTafsirNext'),
+    btnTafsirTts: document.getElementById('btnTafsirTts'),
+    tafsirTtsIconPlay: document.getElementById('tafsirTtsIconPlay'),
+    tafsirTtsIconStop: document.getElementById('tafsirTtsIconStop'),
 
     btnFavorite: document.getElementById('btnFavorite'),
     btnListen: document.getElementById('btnListen'),

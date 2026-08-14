@@ -629,9 +629,15 @@
   <div id="tafsirPanel" class="panel hidden">
     <div class="panel-head">
       <h2>المختصر في تفسير القرآن</h2>
-      <button class="icon-btn" id="btnCloseTafsir" aria-label="إغلاق">
-        <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6l-12 12"/></svg>
-      </button>
+      <div class="panel-head-actions">
+        <button class="icon-btn tafsir-tts-btn hidden" id="btnTafsirTts" aria-label="استمع للتفسير" title="استمع للتفسير">
+          <svg id="tafsirTtsIconPlay" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+          <svg id="tafsirTtsIconStop" viewBox="0 0 24 24" class="hidden"><path d="M6 6h12v12H6z"/></svg>
+        </button>
+        <button class="icon-btn" id="btnCloseTafsir" aria-label="إغلاق">
+          <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6l-12 12"/></svg>
+        </button>
+      </div>
     </div>
     <div class="panel-body">
       <div id="tafsirList"></div>

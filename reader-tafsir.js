@@ -71,12 +71,360 @@
 
   function entryId(surah, ayah){ return 'tafsir-entry-' + surah + '-' + ayah; }
 
+  // -----------------------------------------------------------------
+  // Arabic TTS (Web Speech API).
+  //
+  // Visibility: show Play controls whenever speechSynthesis exists.
+  // Many Android/iOS WebViews speak Arabic correctly via utterance.lang
+  // = 'ar-SA' even when getVoices() never lists an ar-* entry (this is
+  // why 1.0.389 worked on devices that later hid the button under a
+  // strict getVoices()-only gate).
+  //
+  // Speaking: prefer a listed Arabic voice when one exists; otherwise
+  // set lang='ar-SA' only and do NOT assign a non-Arabic voice object.
+  // -----------------------------------------------------------------
+  var ttsSpeaking = false;
+  var ttsQueue = [];       // remaining texts when reading the whole ruku
+  var ttsCurrentKey = null; // 'surah:ayah' currently being spoken (for highlight)
+  var preferredVoice = null;
+  // true when the Web Speech API itself exists (buttons may be shown).
+  var ttsApiAvailable = (typeof speechSynthesis !== 'undefined');
+  // Bumped on every stop/restart so a cancelled utterance's late onend/onerror
+  // cannot clear the highlight or advance a newer playback session.
+  var ttsGeneration = 0;
+
+  function isArabicVoice(v){
+    if(!v) return false;
+    var lang = (v.lang || '').trim();
+    if(/^ar([-_]|$)/i.test(lang)) return true;
+    var name = (v.name || '');
+    if(/arabic|عربي|عربى/i.test(name)) return true;
+    return false;
+  }
+
+  // Prefer a male Arabic voice for tafsir playback. SpeechSynthesisVoice.gender
+  // is NOT universally available, so name heuristics are the primary signal;
+  // gender is only a bonus when the engine exposes it.
+  var MALE_AR_NAME_RE = /\b(maged|majid|majed|naayf|nayef|hamed|hamid|omar|umar|abdullah|fahad|khaled|khalid|saleh|salih|rami|tariq|tarek|tarik|ali|youssef|yousef|yusuf|hassan|hussein|mohammad|mohammed|muhammad|ahmed|ahmad|nasser|saul|talel)\b/i;
+  var FEMALE_AR_NAME_RE = /\b(zira|salma|laila|layla|hoda|huda|amina|amira|sara|sarah|nora|norah|fatima|aisha|maryam|helen|hela|omani)\b|female|woman/i;
+
+  function scoreArabicVoice(v){
+    if(!isArabicVoice(v)) return -1;
+    var score = 0;
+    var name = (v.name || '');
+    var lang = (v.lang || '');
+    // Locale preference
+    if(/^ar[-_]SA/i.test(lang)) score += 30;
+    else if(/^ar([-_]|$)/i.test(lang)) score += 20;
+    // Explicit gender when present (optional field — never required)
+    try{
+      var g = (v.gender || '').toString().toLowerCase();
+      if(g === 'male') score += 50;
+      else if(g === 'female') score -= 50;
+    }catch(e){}
+    // Name heuristics (works on Microsoft / Apple / Google voice labels)
+    if(MALE_AR_NAME_RE.test(name)) score += 40;
+    if(FEMALE_AR_NAME_RE.test(name)) score -= 40;
+    if(/\bmale\b/i.test(name)) score += 25;
+    // Prefer local/offline voices when tagged
+    if(v.localService === true) score += 5;
+    return score;
+  }
+
+  function pickArabicVoice(){
+    if(typeof speechSynthesis === 'undefined') return null;
+    var voices = speechSynthesis.getVoices() || [];
+    if(!voices.length) return null;
+    var best = null;
+    var bestScore = -1;
+    for(var i = 0; i < voices.length; i++){
+      var v = voices[i];
+      var s = scoreArabicVoice(v);
+      if(s < 0) continue;
+      // Skip clearly female voices when any non-female Arabic alternative exists;
+      // still allow them only if they are the sole Arabic option (handled below).
+      if(s > bestScore){
+        bestScore = s;
+        best = v;
+      }
+    }
+    // If the only Arabic voices scored as female (bestScore still low / negative
+    // gender), prefer the highest-scoring Arabic voice rather than silence —
+    // visibility/playback already gates on speechSynthesis; voice pick is best-effort.
+    if(best) return best;
+    // Last resort: first Arabic voice regardless of score edge cases
+    for(var j = 0; j < voices.length; j++){
+      if(isArabicVoice(voices[j])) return voices[j];
+    }
+    return null;
+  }
+
+  var AYAH_TTS_BTN_HTML =
+    '<button type="button" class="tafsir-ayah-tts" data-surah="__S__" data-ayah="__A__" ' +
+      'aria-label="استمع لتفسير هذه الآية" title="استمع">' +
+      '<svg viewBox="0 0 24 24"><path d="M11 5L6 9H2v6h4l5 4V5z"/>' +
+      '<path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>' +
+      '<path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>' +
+    '</button>';
+
+  function ayahTtsBtnHtml(surah, ayah){
+    return AYAH_TTS_BTN_HTML
+      .replace('__S__', String(surah))
+      .replace('__A__', String(ayah));
+  }
+
+  // Show / hide the header Play button and inject/strip per-ayah buttons.
+  function applyTtsAvailability(){
+    if(els && els.btnTafsirTts){
+      if(ttsApiAvailable){
+        els.btnTafsirTts.classList.remove('hidden');
+      } else {
+        els.btnTafsirTts.classList.add('hidden');
+        if(ttsSpeaking) stopTts();
+      }
+    }
+    if(!els || !els.tafsirList) return;
+    var items = els.tafsirList.querySelectorAll('.tafsir-item');
+    for(var i = 0; i < items.length; i++){
+      var item = items[i];
+      var head = item.querySelector('.tafsir-ayah-head');
+      if(!head) continue;
+      var existing = head.querySelector('.tafsir-ayah-tts');
+      if(ttsApiAvailable){
+        if(existing) continue;
+        var id = item.id || '';
+        var m = id.match(/^tafsir-entry-(\d+)-(\d+)$/);
+        if(!m) continue;
+        head.insertAdjacentHTML('beforeend', ayahTtsBtnHtml(m[1], m[2]));
+      } else if(existing){
+        existing.parentNode.removeChild(existing);
+      }
+    }
+    updateTtsButton();
+  }
+
+  // Best-effort: refresh preferredVoice when the engine publishes voices.
+  // Never hides the buttons just because the list is empty or non-Arabic
+  // — utterance.lang='ar-SA' still works on those devices.
+  function refreshArabicVoiceFromSystem(){
+    if(typeof speechSynthesis === 'undefined'){
+      preferredVoice = null;
+      ttsApiAvailable = false;
+      applyTtsAvailability();
+      return;
+    }
+    ttsApiAvailable = true;
+    preferredVoice = pickArabicVoice();
+    applyTtsAvailability();
+  }
+
+  function startVoicesProbe(){
+    if(typeof speechSynthesis === 'undefined'){
+      preferredVoice = null;
+      ttsApiAvailable = false;
+      applyTtsAvailability();
+      return;
+    }
+    ttsApiAvailable = true;
+    // Show controls immediately — do not wait for getVoices().
+    applyTtsAvailability();
+    refreshArabicVoiceFromSystem();
+    try{
+      speechSynthesis.addEventListener('voiceschanged', function(){
+        refreshArabicVoiceFromSystem();
+      });
+    }catch(e){}
+    try{
+      speechSynthesis.onvoiceschanged = function(){
+        refreshArabicVoiceFromSystem();
+      };
+    }catch(e){}
+    var polls = [100, 400, 1000, 3000];
+    for(var i = 0; i < polls.length; i++){
+      (function(ms){
+        setTimeout(function(){ refreshArabicVoiceFromSystem(); }, ms);
+      })(polls[i]);
+    }
+  }
+
+  function reprobeOnPanelOpen(){
+    if(typeof speechSynthesis === 'undefined') return;
+    refreshArabicVoiceFromSystem();
+  }
+
+  function updateTtsButton(){
+    if(!els || !els.btnTafsirTts) return;
+    var playing = ttsSpeaking;
+    if(els.tafsirTtsIconPlay) els.tafsirTtsIconPlay.classList.toggle('hidden', playing);
+    if(els.tafsirTtsIconStop) els.tafsirTtsIconStop.classList.toggle('hidden', !playing);
+    els.btnTafsirTts.classList.toggle('active', playing);
+    els.btnTafsirTts.setAttribute('aria-label', playing ? 'إيقاف القراءة' : 'استمع للتفسير');
+    els.btnTafsirTts.setAttribute('title', playing ? 'إيقاف القراءة' : 'استمع للتفسير');
+  }
+
+  function clearTtsHighlight(){
+    if(!els || !els.tafsirList) return;
+    var prev = els.tafsirList.querySelectorAll('.tafsir-item.tts-speaking');
+    for(var i = 0; i < prev.length; i++) prev[i].classList.remove('tts-speaking');
+    ttsCurrentKey = null;
+  }
+
+  function setTtsHighlight(surah, ayah){
+    clearTtsHighlight();
+    if(surah == null) return;
+    var el = document.getElementById(entryId(surah, ayah));
+    if(el){
+      el.classList.add('tts-speaking');
+      ttsCurrentKey = cacheKey(surah, ayah);
+      try{ el.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }catch(e){}
+    }
+  }
+
+  function stopTts(){
+    ttsGeneration++; // invalidate in-flight utterance callbacks
+    ttsQueue = [];
+    ttsSpeaking = false;
+    clearTtsHighlight();
+    if(typeof speechSynthesis !== 'undefined'){
+      try{ speechSynthesis.cancel(); }catch(e){}
+    }
+    updateTtsButton();
+  }
+
+  function speakText(text, meta, gen){
+    if(!ttsApiAvailable || typeof speechSynthesis === 'undefined' || !text){
+      return Promise.resolve();
+    }
+    // Refresh voice pick right before speaking (list may have filled in).
+    if(!preferredVoice) preferredVoice = pickArabicVoice();
+    return new Promise(function(resolve){
+      // Stale session (user already switched/stopped) — do nothing.
+      if(gen !== ttsGeneration){ resolve(); return; }
+      var u = new SpeechSynthesisUtterance(text);
+      u.rate = 0.95;
+      u.pitch = 1;
+      u.volume = 1;
+      if(preferredVoice){
+        u.voice = preferredVoice;
+        u.lang = preferredVoice.lang || 'ar-SA';
+      } else {
+        // No listed Arabic voice — ask the engine for Arabic via lang only.
+        // Do NOT assign a non-Arabic voice object.
+        u.lang = 'ar-SA';
+      }
+      if(meta && meta.surah != null) setTtsHighlight(meta.surah, meta.ayah);
+      u.onend = function(){ resolve(); };
+      u.onerror = function(){ resolve(); };
+      try{
+        speechSynthesis.speak(u);
+      }catch(e){
+        resolve();
+      }
+    });
+  }
+
+  function playQueue(){
+    var gen = ttsGeneration;
+    if(!ttsQueue.length){
+      // Only the active session may clear UI when the queue drains.
+      if(gen !== ttsGeneration) return;
+      ttsSpeaking = false;
+      clearTtsHighlight();
+      updateTtsButton();
+      return;
+    }
+    if(!ttsApiAvailable){
+      stopTts();
+      return;
+    }
+    ttsSpeaking = true;
+    updateTtsButton();
+    var item = ttsQueue.shift();
+    speakText(item.text, item, gen).then(function(){
+      // Cancelled utterance from a previous session, or user stopped: ignore.
+      if(gen !== ttsGeneration || !ttsSpeaking) return;
+      playQueue();
+    });
+  }
+
+  function startTtsForRuku(){
+    if(!ttsApiAvailable) return;
+    if(ttsSpeaking){
+      stopTts();
+      return;
+    }
+    var items = [];
+    if(els.tafsirList){
+      var nodes = els.tafsirList.querySelectorAll('.tafsir-item');
+      for(var i = 0; i < nodes.length; i++){
+        var node = nodes[i];
+        var p = node.querySelector('.tafsir-text');
+        if(!p || !p.textContent || p.classList.contains('tafsir-text-pending')) continue;
+        var id = node.id || '';
+        var m = id.match(/^tafsir-entry-(\d+)-(\d+)$/);
+        items.push({
+          text: p.textContent.trim(),
+          surah: m ? parseInt(m[1], 10) : null,
+          ayah: m ? parseInt(m[2], 10) : null
+        });
+      }
+    }
+    if(!items.length){
+      if(UI && UI.showToast) UI.showToast('لا يوجد تفسير جاهز للقراءة بعد');
+      return;
+    }
+    ttsQueue = items;
+    playQueue();
+  }
+
+  function speakSingleAyah(surah, ayah){
+    if(!ttsApiAvailable) return;
+    var key = cacheKey(surah, ayah);
+    if(ttsSpeaking && ttsCurrentKey === key){
+      stopTts();
+      return;
+    }
+    stopTts();
+    var text = cache[key];
+    if(!text){
+      var el = document.getElementById(entryId(surah, ayah));
+      var p = el && el.querySelector('.tafsir-text');
+      text = p ? p.textContent.trim() : '';
+    }
+    if(!text){
+      if(UI && UI.showToast) UI.showToast('تفسير هذه الآية غير جاهز بعد');
+      return;
+    }
+    ttsQueue = [{ text: text, surah: surah, ayah: ayah }];
+    playQueue();
+  }
+
+  function wirePerAyahTtsButtons(){
+    if(!els.tafsirList) return;
+    els.tafsirList.addEventListener('click', function(ev){
+      var btn = ev.target.closest && ev.target.closest('.tafsir-ayah-tts');
+      if(!btn) return;
+      ev.preventDefault();
+      ev.stopPropagation();
+      var surah = parseInt(btn.getAttribute('data-surah'), 10);
+      var ayah = parseInt(btn.getAttribute('data-ayah'), 10);
+      if(!surah || !ayah) return;
+      speakSingleAyah(surah, ayah);
+    });
+  }
+
   function renderSkeleton(ayahs){
+    stopTts(); // navigating / reloading the list cancels any ongoing speech
     isOffline = false;
     var html = ayahs.map(function(a, i){
+      // Per-ayah Play when Web Speech API exists on this device.
+      var ttsBtn = ttsApiAvailable ? ayahTtsBtnHtml(a.surah, a.ayah) : '';
       var head = '<div class="tafsir-ayah-head">' +
-          (a.surahName ? 'سورة ' + UI.escapeHtml(a.surahName) + ' — ' : '') +
-          'الآية ' + UI.toArabicDigits(a.ayah) +
+          '<span class="tafsir-ayah-label">' +
+            (a.surahName ? 'سورة ' + UI.escapeHtml(a.surahName) + ' — ' : '') +
+            'الآية ' + UI.toArabicDigits(a.ayah) +
+          '</span>' +
+          ttsBtn +
         '</div>';
       var divider = i > 0 ? '<hr class="tafsir-divider">' : '';
       return divider + '<div class="tafsir-item" id="' + entryId(a.surah, a.ayah) + '">' + head +
@@ -107,6 +455,7 @@
   }
 
   function renderOffline(){
+    stopTts();
     isOffline = true;
     els.tafsirList.innerHTML = '<div class="tafsir-loading">' +
       'تعذّر تحميل التفسير. تأكّد من اتصالك بالإنترنت ثم أعد المحاولة.' +
@@ -246,6 +595,7 @@
       UI.showToast(delta > 0 ? 'هذا آخر ركوع' : 'هذا أول ركوع');
       return;
     }
+    stopTts();
     loadCurrentRuku();
     var body = els.tafsirPanel.querySelector('.panel-body');
     if(body) body.scrollTop = 0;
@@ -291,21 +641,45 @@
 
     if(!els.btnTafsir || !els.tafsirPanel) return;
 
+    // Header TTS button starts hidden; startVoicesProbe() reveals it only
+    // after a real Arabic voice is confirmed on this device.
+    if(els.btnTafsirTts) els.btnTafsirTts.classList.add('hidden');
+
     els.btnTafsir.addEventListener('click', function(){
+      reprobeOnPanelOpen();
       UI.openPanel(els.tafsirPanel);
       loadCurrentRuku();
     });
     els.btnCloseTafsir && els.btnCloseTafsir.addEventListener('click', function(){
+      stopTts();
       UI.closePanel(els.tafsirPanel);
     });
+    if(els.btnTafsirTts){
+      els.btnTafsirTts.addEventListener('click', function(){
+        startTtsForRuku();
+      });
+    }
     wireSwipe();
     wireNavButtons();
+    wirePerAyahTtsButtons();
+    startVoicesProbe();
+
+    // Stop speech if the panel is closed by any other path (backdrop,
+    // escape, overlay manager, etc.).
+    if(typeof MutationObserver !== 'undefined' && els.tafsirPanel){
+      var mo = new MutationObserver(function(){
+        if(els.tafsirPanel.classList.contains('hidden')) stopTts();
+      });
+      mo.observe(els.tafsirPanel, { attributes: true, attributeFilter: ['class'] });
+    }
 
     UI.registerOverlayPanels([els.tafsirPanel].filter(Boolean));
+    updateTtsButton();
   }
 
   window.ReaderTafsir = {
     init: init,
-    prefetchCurrentRuku: prefetchCurrentRuku
+    prefetchCurrentRuku: prefetchCurrentRuku,
+    stopTts: stopTts
   };
 })();

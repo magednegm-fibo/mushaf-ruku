@@ -860,6 +860,44 @@ body.hide-waqf-marks.uthmani-font .quran-word.has-default-jeem:not(.has-waqf){
 }
 
 /* ------------------------------------------------------------------
+   iOS / WebKit only (prototype-validated on real iPhone with Uthmanic Hafs):
+   avoid font-size: 1.1em on Uthmani default-Sajawandi words — WebKit splits
+   shaping runs and breaks letter joining. Visual ~1.1 via transform; layout
+   nudge via margin-inline. Android / Blink keeps the 1.1em rules above
+   unchanged. Gate matches iOS Safari & iOS Chrome; desktop Safari may match.
+   ------------------------------------------------------------------ */
+@supports (-webkit-touch-callout: none) {
+  body.uthmani-font .quran-word.has-default-waqf:not(.has-waqf),
+  body.uthmani-font .quran-word.has-default-sad-rukhsa:not(.has-waqf),
+  body.uthmani-font .quran-word.has-default-waqf-lazim:not(.has-waqf),
+  body.uthmani-font .quran-word.has-default-zay-jawaz:not(.has-waqf),
+  body.uthmani-font .quran-word.has-default-qad-qila:not(.has-waqf),
+  body.uthmani-font .quran-word.has-default-qif:not(.has-waqf),
+  body.uthmani-font .quran-word.has-default-jeem:not(.has-waqf){
+    font-size: 1em;
+    display: inline-block;
+    transform: scale(1.1);
+    transform-origin: center center;
+    margin-inline: 0.05em;
+    vertical-align: baseline;
+  }
+
+  /* Marks hidden: no size emphasis — clear prototype scale/margin. */
+  body.hide-waqf-marks.uthmani-font .quran-word.has-default-waqf:not(.has-waqf),
+  body.hide-waqf-marks.uthmani-font .quran-word.has-default-sad-rukhsa:not(.has-waqf),
+  body.hide-waqf-marks.uthmani-font .quran-word.has-default-waqf-lazim:not(.has-waqf),
+  body.hide-waqf-marks.uthmani-font .quran-word.has-default-zay-jawaz:not(.has-waqf),
+  body.hide-waqf-marks.uthmani-font .quran-word.has-default-qad-qila:not(.has-waqf),
+  body.hide-waqf-marks.uthmani-font .quran-word.has-default-qif:not(.has-waqf),
+  body.hide-waqf-marks.uthmani-font .quran-word.has-default-jeem:not(.has-waqf){
+    font-size: 1em;
+    transform: none;
+    margin-inline: 0;
+    display: inline;
+  }
+}
+
+/* ------------------------------------------------------------------
    تقاطع البنفسجي (خلاف الروضة/قصر المنفصل) مع السجاوندي الافتراضي —
    طلب مباشر 2026-08-01: إذا كانت الكلمة بنفسجية، لا يُلوَّن نصها بلون
    علامة الوقف (استُثنيت .khilaf-word من كل قواعد التلوين والإخفاء
@@ -2377,7 +2415,7 @@ body.night .guide-tab-btn.active{ background:#2c2c2e; border-color:rgba(255,255,
    text correctly. */
 .khatm-dua-text{
   font-family: 'Amiri', 'Traditional Arabic', serif;
-  font-size: 20px;
+  font-size: 20.5px;
   line-height: 2.3;
   color: var(--ink);
   text-align: justify;
@@ -2687,12 +2725,85 @@ body.night .tafsir-head-sub{ color:#9A9A9E; }
   font-weight:700;
   color: var(--gold);
   margin-bottom:8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
   /* Block Google Dictionary / Copy-Share on long-press (Chrome Android 16). */
   user-select: none !important;
   -webkit-user-select: none !important;
   -webkit-touch-callout: none !important;
 }
+.tafsir-ayah-label{ flex: 1 1 auto; min-width: 0; }
 body.night .tafsir-ayah-head{ color:#F2F2F2; }
+
+/* Tafsir TTS header button */
+.tafsir-tts-btn svg{
+  width: 18px;
+  height: 18px;
+  fill: currentColor;
+  stroke: none;
+}
+.tafsir-tts-btn.active{
+  color: #fff;
+  background: var(--emerald);
+  border-color: var(--emerald);
+}
+body.night .tafsir-tts-btn.active{
+  background: #4CAF50;
+  border-color: #4CAF50;
+}
+
+/* Per-ayah speaker button */
+.tafsir-ayah-tts{
+  flex: 0 0 auto;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  margin: 0;
+  border: none;
+  background: transparent;
+  color: var(--gold);
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.tafsir-ayah-tts svg{
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.tafsir-ayah-tts:active{
+  background: rgba(169,121,59,.16);
+}
+body.night .tafsir-ayah-tts{ color: #F2F2F2; }
+body.night .tafsir-ayah-tts:active{ background: rgba(76,175,80,.18); }
+
+/* Highlight the ayah currently being spoken */
+.tafsir-item.tts-speaking{
+  background: rgba(169,121,59,.10);
+  border-radius: 10px;
+  padding-right: 6px;
+  padding-left: 6px;
+  margin-right: -6px;
+  margin-left: -6px;
+}
+body.night .tafsir-item.tts-speaking{
+  background: rgba(76,175,80,.14);
+}
+.tafsir-item.tts-speaking .tafsir-ayah-tts{
+  color: var(--emerald);
+}
+body.night .tafsir-item.tts-speaking .tafsir-ayah-tts{
+  color: #4CAF50;
+}
 .tafsir-text{
   margin:0;
   font-family: var(--font-ui);
