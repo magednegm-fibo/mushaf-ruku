@@ -291,6 +291,344 @@
     updateTtsButton();
   }
 
+
+  // -----------------------------------------------------------------
+  // Quran Tashkeel for TTS only (v1.0.413).
+  //
+  // Applies stem-level diacritics from QURAN_TASHKEEL_DICT (built offline
+  // from the Uthmani text in data.js) to a *copy* of the tafsir string
+  // immediately before SpeechSynthesisUtterance. Displayed text is never
+  // touched. Ambiguous function words are excluded from the dictionary.
+  // Any miss or error falls back to the original word/text.
+  // -----------------------------------------------------------------
+  // Same-Ayah Exact Match for TTS only (v1.0.415).
+  //
+  // When speaking tafsir for a known (surah, ayah), content words that
+  // match the vocalized Quran ayah *exactly* after safe orthographic
+  // normalization take the ayah's diacritics. Function words are never
+  // taken from the ayah (ambiguous). No stem/root matching.
+  // Falls through to Quran dictionary for non-matches.
+  var TTS_FUNCTION_WORDS = {
+    // v1.0.415: restored كان/بين/كل/بعض/غير/مع for Same-Ayah exact match (safe).
+    // كنت stays excluded (كُنتَ vs كُنتُ same surface form).
+    'من':1,'ما':1,'ان':1,'أن':1,'إن':1,'في':1,'على':1,'الي':1,'إلى':1,
+    'عن':1,'لا':1,'لم':1,'لن':1,'هل':1,'هو':1,'هي':1,'هم':1,'هن':1,
+    'نحن':1,'انت':1,'أنت':1,'انتم':1,'أنتم':1,'هذا':1,'هذه':1,'ذلك':1,
+    'التي':1,'الذي':1,'الذين':1,'الى':1,'كنت':1,'قد':1,'ثم':1,
+    'او':1,'أو':1,'ام':1,'أم':1,'اذا':1,'إذا':1,'لو':1,'كي':1,'حتي':1,'حتى':1,
+    'سوى':1,'لدى':1,'منذ':1
+  };
+  var _ayahTashkeelCache = {}; // 's:a' -> { plain: vocalized }
+
+  function _ttsPlainKey(w){
+    return String(w)
+      .replace(/[\u064B-\u065F\u0670\u06D6-\u06ED\u0640]/g, '')
+      .replace(/[آأإٱ]/g, 'ا')
+      .replace(/ء/g, '');
+  }
+
+  function _normalizeAyahToken(w){
+    var v = String(w);
+    v = v.replace(/\u0671/g, '\u0627');
+    v = v.replace(/\u0640/g, '');
+    v = v.replace(/\u0670/g, '');
+    v = v.replace(/\u0657/g, '\u064B');
+    v = v.replace(/\u06E1/g, '\u0652');
+    v = v.replace(/[\u06D6-\u06ED]/g, '');
+    return v;
+  }
+
+  function _getAyahWordMap(surah, ayah){
+    var key = String(surah) + ':' + String(ayah);
+    if(_ayahTashkeelCache[key]) return _ayahTashkeelCache[key];
+    var map = {};
+    try{
+      var pages = (typeof window !== 'undefined') && window.JUZ_PAGES;
+      if(!pages || !pages.length){ _ayahTashkeelCache[key] = map; return map; }
+      for(var pi = 0; pi < pages.length; pi++){
+        var ayahs = pages[pi].ayahs || [];
+        for(var ai = 0; ai < ayahs.length; ai++){
+          var a = ayahs[ai];
+          if(a.surah === surah && a.ayah === ayah){
+            var toks = String(a.text || '').match(/[\u0600-\u06FF]+/g) || [];
+            for(var ti = 0; ti < toks.length; ti++){
+              var tok = toks[ti];
+              var pk = _ttsPlainKey(tok);
+              if(!pk || TTS_FUNCTION_WORDS[pk]) continue;
+              map[pk] = _normalizeAyahToken(tok);
+            }
+            _ayahTashkeelCache[key] = map;
+            return map;
+          }
+        }
+      }
+    }catch(e){}
+    _ayahTashkeelCache[key] = map;
+    return map;
+  }
+
+  function applySameAyahTashkeel(text, surah, ayah){
+    try{
+      if(!text || typeof text !== 'string') return text;
+      if(surah == null || ayah == null) return text;
+      var map = _getAyahWordMap(surah, ayah);
+      if(!map) return text;
+      var AR_PUNCT = '،؛؟٪ـ';
+      return text.replace(/[\u0600-\u06FF]+/g, function(run){
+        var start = 0, end = run.length;
+        while(start < end && AR_PUNCT.indexOf(run[start]) !== -1) start++;
+        while(end > start && AR_PUNCT.indexOf(run[end - 1]) !== -1) end--;
+        if(end <= start) return run;
+        var core = run.slice(start, end);
+        var pk = _ttsPlainKey(core);
+        if(!pk || TTS_FUNCTION_WORDS[pk]) return run;
+        var repl = map[pk];
+        if(!repl) return run;
+        return run.slice(0, start) + repl + run.slice(end);
+      });
+    }catch(e){
+      return text;
+    }
+  }
+
+  function applyQuranTashkeel(text){
+    try{
+      if(!text || typeof text !== 'string') return text;
+      var dict = (typeof window !== 'undefined') && window.QURAN_TASHKEEL_DICT;
+      if(!dict) return text;
+      var AR_PUNCT = '،؛؟٪ـ';
+      return text.replace(/[\u0600-\u06FF]+/g, function(run){
+        var start = 0, end = run.length;
+        while(start < end && AR_PUNCT.indexOf(run[start]) !== -1) start++;
+        while(end > start && AR_PUNCT.indexOf(run[end - 1]) !== -1) end--;
+        if(end <= start) return run;
+        var core = run.slice(start, end);
+        // Strip existing diacritics + alef variants for lookup
+        var key = core
+          .replace(/[\u064B-\u065F\u0670\u06D6-\u06ED\u0640]/g, '')
+          .replace(/[آأإٱ]/g, 'ا');
+        if(!key) return run;
+        var repl = dict[key];
+        if(!repl) return run;
+        return run.slice(0, start) + repl + run.slice(end);
+      });
+    }catch(e){
+      return text; // never break TTS
+    }
+  }
+
+
+  // -----------------------------------------------------------------
+  // Surah muqatta'at (فواتح السور) for TTS only (v1.0.413).
+  //
+  // Expands disconnected letters to their spoken letter-names so Web
+  // Speech does not read "الم" as a single word. Applied only when the
+  // utterance is tied to a known (surah, ayah) that is itself a
+  // muqatta'at ayah — never a global string replace, so ordinary words
+  // in tafsir are untouched. Display text is never modified.
+  // form may be a string or array of plain forms for the same ayah.
+  var MUQATTAAT_BY_AYAH = {
+    '2:1':  { form: 'الم', spoken: 'أَلِف لَامْ مِيمْ' },
+    '3:1':  { form: 'الم', spoken: 'أَلِف لَامْ مِيمْ' },
+    '7:1':  { form: 'المص', spoken: 'أَلِف لَامْ مِيمْ صَادْ' },
+    '10:1': { form: 'الر', spoken: 'أَلِف لَامْ رَا' },
+    '11:1': { form: 'الر', spoken: 'أَلِف لَامْ رَا' },
+    '12:1': { form: 'الر', spoken: 'أَلِف لَامْ رَا' },
+    '13:1': { form: 'المر', spoken: 'أَلِف لَامْ مِيمْ رَا' },
+    '14:1': { form: 'الر', spoken: 'أَلِف لَامْ رَا' },
+    '15:1': { form: 'الر', spoken: 'أَلِف لَامْ رَا' },
+    '19:1': { form: 'كهيعص', spoken: 'كَافْ هَا يَا عَيْنْ صَادْ' },
+    '20:1': { form: 'طه', spoken: 'طَا هَا' },
+    '26:1': { form: 'طسم', spoken: 'طَا سِينْ مِيمْ' },
+    '27:1': { form: 'طس', spoken: 'طَا سِينْ' },
+    '28:1': { form: 'طسم', spoken: 'طَا سِينْ مِيمْ' },
+    '36:1': { form: 'يس', spoken: 'يَا سِينْ' },
+    '38:1': { form: 'ص', spoken: 'صَادْ' },
+    '40:1': { form: 'حم', spoken: 'حَا مِيمْ' },
+    '41:1': { form: 'حم', spoken: 'حَا مِيمْ' },
+    // الشورى: الآية 1 حم، الآية 2 عسق — وقد يظهران معاً في نص التفسير
+    '42:1': { form: ['حم', 'عسق'], spoken: { 'حم': 'حَا مِيمْ', 'عسق': 'عَيْنْ سِينْ قَافْ' } },
+    '42:2': { form: ['عسق', 'حم'], spoken: { 'عسق': 'عَيْنْ سِينْ قَافْ', 'حم': 'حَا مِيمْ' } },
+    '43:1': { form: 'حم', spoken: 'حَا مِيمْ' },
+    '44:1': { form: 'حم', spoken: 'حَا مِيمْ' },
+    '45:1': { form: 'حم', spoken: 'حَا مِيمْ' },
+    '46:1': { form: 'حم', spoken: 'حَا مِيمْ' },
+    '50:1': { form: 'ق', spoken: 'قَافْ' },
+    '68:1': { form: 'ن', spoken: 'نُونْ' }
+  };
+
+  function expandMuqattaatForTts(text, surah, ayah){
+    try{
+      if(!text || typeof text !== 'string') return text;
+      if(surah == null || ayah == null) return text;
+      var entry = MUQATTAAT_BY_AYAH[String(surah) + ':' + String(ayah)];
+      if(!entry) return text;
+      var forms = entry.form;
+      if(typeof forms === 'string') forms = [forms];
+      var spokenMap = entry.spoken;
+      // spoken may be a single string (one form) or map form->spoken
+      function spokenFor(form){
+        if(typeof spokenMap === 'string') return spokenMap;
+        return spokenMap[form] || form;
+      }
+      return text.replace(/[\u0600-\u06FF]+/g, function(run){
+        var plain = run.replace(/[\u064B-\u065F\u0670\u06D6-\u06ED\u0640]/g, '');
+        var norm = plain.replace(/[آأإٱ]/g, 'ا');
+        for(var i = 0; i < forms.length; i++){
+          var form = forms[i];
+          var formNorm = form.replace(/[آأإٱ]/g, 'ا');
+          if(norm === formNorm || plain === form){
+            return spokenFor(form);
+          }
+        }
+        return run;
+      });
+    }catch(e){
+      return text;
+    }
+  }
+
+
+  // -----------------------------------------------------------------
+  // TTS pronunciation fixes: قرآن، النبي، لغة (لُغَة). (v1.0.413)
+  //
+  // Tafsir often writes القرآن / قرآن with modern orthography (ا not ء)
+  // and without damma; Web Speech then may read the qaf with fatha.
+  // Force ضم القاف (قُرْآن) on whole-token matches only. Display unchanged.
+  var QURAN_WORD_TTS_FIX = {
+    // قرآن — ضم القاف
+    'القرآن': 'القُرْآن',
+    'قرآن': 'قُرْآن',
+    'بقرآن': 'بِقُرْآن',
+    'بالقرآن': 'بِالقُرْآن',
+    'والقرآن': 'وَالقُرْآن',
+    'للقرآن': 'لِلقُرْآن',
+    'قرآنا': 'قُرْآنًا',
+    'قرآني': 'قُرْآنِي',
+    'القرءان': 'القُرْآن',
+    'قرءان': 'قُرْآن',
+    'بقرءان': 'بِقُرْآن',
+    'بالقرءان': 'بِالقُرْآن',
+    'والقرءان': 'وَالقُرْآن',
+    // النبي — تشديد الياء دائماً
+    'النبي': 'النَّبِيّ',
+    'نبي': 'نَبِيّ',
+    'نبيا': 'نَبِيًّا',
+    'النبيين': 'النَّبِيِّينَ',
+    'النبيون': 'النَّبِيُّونَ',
+    'للنبي': 'لِلنَّبِيّ',
+    'والنبي': 'وَالنَّبِيّ',
+    'بالنبي': 'بِالنَّبِيّ',
+    // لغة — لُغَة (غين مفتوحة دائماً). أهم من قاموس القرآن الذي قد
+    // يخلطها بجذر "بلغ" (بَلِغَة). حركة التاء حسب سياق شائع في التفسير.
+    'لغة': 'لُغَة',
+    'بلغة': 'بِلُغَةِ',
+    'ولغة': 'وَلُغَة',
+    'للغة': 'لِلُغَةِ',
+    'لغةً': 'لُغَةً',
+    'لغته': 'لُغَتَه',
+    'لغتهم': 'لُغَتَهُم',
+    'بلغتهم': 'بِلُغَتِهِم',
+    'العرب': 'الْعَرَب',
+    // حين — فتح النون دائماً (ظرف)
+    'حين': 'حِينَ',
+    'وحين': 'وَحِينَ',
+    'فحين': 'فَحِينَ',
+    // كوكب — تشكيل قياسي بدون علامات مصحفية تقطع النطق
+    'كوكب': 'كَوْكَب',
+    'كوكبا': 'كَوْكَبًا',
+    'كوكبًا': 'كَوْكَبًا',
+    'الكواكب': 'الْكَوَاكِب'
+  };
+
+
+  // Normalize Quranic presentation marks that break Web Speech joining
+  // (e.g. ٗ on كَوكَبٗا makes the engine split the word). TTS only.
+  function normalizeTtsMarks(text){
+    try{
+      if(!text || typeof text !== 'string') return text;
+      return text
+        // Quranic tanween / vowel marks → standard Arabic
+        .replace(/\u0657/g, '\u064B')  // ٗ → ً (fathatan)
+        .replace(/\u0658/g, '\u064C')  // ٘ → ٌ approx
+        .replace(/\u06E1/g, '\u0652')  // ۡ → ْ (sukun)
+        .replace(/\u06EA/g, '')        // ۪ remove
+        .replace(/\u06EB/g, '')
+        .replace(/\u06EC/g, '')
+        .replace(/\u06ED/g, '')
+        .replace(/\u06D6/g, '')        // small high ligatures / stops
+        .replace(/\u06D7/g, '')
+        .replace(/\u06D8/g, '')
+        .replace(/\u06D9/g, '')
+        .replace(/\u06DA/g, '')
+        .replace(/\u06DB/g, '')
+        .replace(/\u06DC/g, '')
+        .replace(/\u06DD/g, '')
+        .replace(/\u06DE/g, '')
+        .replace(/\u06DF/g, '')
+        .replace(/\u06E0/g, '')
+        .replace(/\u06E2/g, '')
+        .replace(/\u06E3/g, '')
+        .replace(/\u06E4/g, '')
+        .replace(/\u06E5/g, '')
+        .replace(/\u06E6/g, '')
+        .replace(/\u06E7/g, '')
+        .replace(/\u06E8/g, '')
+        .replace(/\u06E9/g, '')
+        .replace(/\u0670/g, '')        // dagger alef (letter usually present)
+        .replace(/\u0640/g, '');       // tatweel
+    }catch(e){
+      return text;
+    }
+  }
+
+  function fixQuranWordPronunciation(text){
+    try{
+      if(!text || typeof text !== 'string') return text;
+      var AR_PUNCT = '،؛؟٪ـ';
+      return text.replace(/[\u0600-\u06FF]+/g, function(run){
+        // Peel Arabic punctuation so "كوكبًا،" still matches "كوكبا"
+        var start = 0, end = run.length;
+        while(start < end && AR_PUNCT.indexOf(run[start]) !== -1) start++;
+        while(end > start && AR_PUNCT.indexOf(run[end - 1]) !== -1) end--;
+        if(end <= start) return run;
+        var core = run.slice(start, end);
+        var prefix = run.slice(0, start);
+        var suffix = run.slice(end);
+        var plain = core.replace(/[\u064B-\u065F\u0670\u06D6-\u06ED\u0640]/g, '');
+        var repl = null;
+        if(QURAN_WORD_TTS_FIX[plain]) repl = QURAN_WORD_TTS_FIX[plain];
+        else if(QURAN_WORD_TTS_FIX[core]) repl = QURAN_WORD_TTS_FIX[core];
+        else {
+          var norm = plain.replace(/ء/g, 'ا');
+          if(norm !== plain && QURAN_WORD_TTS_FIX[norm]) repl = QURAN_WORD_TTS_FIX[norm];
+        }
+        if(!repl){
+          var m = plain.match(/^([وفبكل]{0,2})(ال)?قر[ءا]ان$/);
+          if(m){
+            var pfx = m[1] || '';
+            var hasAl = !!m[2];
+            if(pfx === 'ب' && hasAl) repl = 'بِالقُرْآن';
+            else if(pfx === 'و' && hasAl) repl = 'وَالقُرْآن';
+            else if(pfx === 'ل' && hasAl) repl = 'لِلقُرْآن';
+            else if(pfx === 'ف' && hasAl) repl = 'فَالقُرْآن';
+            else if(pfx === 'ك' && hasAl) repl = 'كَالقُرْآن';
+            else if(pfx === 'ب' && !hasAl) repl = 'بِقُرْآن';
+            else if(pfx === 'و' && !hasAl) repl = 'وَقُرْآن';
+            else if(pfx === 'ل' && !hasAl) repl = 'لِقُرْآن';
+            else if(pfx === 'ف' && !hasAl) repl = 'فَقُرْآن';
+            else if(hasAl) repl = 'القُرْآن';
+            else repl = 'قُرْآن';
+          }
+        }
+        if(!repl) return run;
+        return prefix + repl + suffix;
+      });
+    }catch(e){
+      return text;
+    }
+  }
+
   function speakText(text, meta, gen){
     if(!ttsApiAvailable || typeof speechSynthesis === 'undefined' || !text){
       return Promise.resolve();
@@ -300,7 +638,21 @@
     return new Promise(function(resolve){
       // Stale session (user already switched/stopped) — do nothing.
       if(gen !== ttsGeneration){ resolve(); return; }
-      var u = new SpeechSynthesisUtterance(text);
+      // TTS-only: Quran stem diacritics, then muqatta'at expansion for
+      // the current ayah when applicable. Display text unchanged.
+      // Order: Same-Ayah exact → Quran dict → muqatta'at → mark normalize → fixed overrides.
+      // Overrides always last so قرآن/النبي/لغة cannot be undone by dict/ayah.
+      var speakable = text;
+      if(meta && meta.surah != null && meta.ayah != null){
+        speakable = applySameAyahTashkeel(speakable, meta.surah, meta.ayah);
+      }
+      speakable = applyQuranTashkeel(speakable);
+      if(meta && meta.surah != null && meta.ayah != null){
+        speakable = expandMuqattaatForTts(speakable, meta.surah, meta.ayah);
+      }
+      speakable = normalizeTtsMarks(speakable);
+      speakable = fixQuranWordPronunciation(speakable);
+      var u = new SpeechSynthesisUtterance(speakable);
       u.rate = 0.95;
       u.pitch = 1;
       u.volume = 1;

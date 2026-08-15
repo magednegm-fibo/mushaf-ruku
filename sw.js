@@ -54,6 +54,7 @@ const DYNAMIC_ASSETS = [
   './reader-reminders.js',
   './reader-guide.js',
   './reader-tafsir.js',
+  './quran-tashkeel-dictionary.js',
   './non-kufi-heads.js',
   './no-sajawandi-heads.js',
   './data/no-sajawandi-heads.json', // Single Source of Truth — يُحمَّل بـfetch عند الإقلاع
