@@ -1,7 +1,7 @@
 # Project Status
 
-**الإصدار الحالي:** 1.0.399  
-**آخر تحديث:** 2026-08-14
+**الإصدار الحالي:** 1.0.421  
+**آخر تحديث:** 2026-08-15
 
 هذا الملف يُحدَّث مع كل إصدار ويُضمَّن دائمًا داخل الـ ZIP.  
 الغرض: حالة واضحة في بداية أي Session جديدة — ما اكتمل، وما هو معلَّق، وما يُفترض ألا يُمس.
@@ -20,6 +20,17 @@
 ---
 
 ## Completed
+
+### 1.0.421 — iOS-only tatweel-seat identity (WebKit joining)
+
+- Baseline: v1.0.420 (includes word-level `wrapWaqfSigns`).
+- On iPhone / iPad / iPadOS only: `tatweelSeatHtml` returns the seat cluster unchanged (no mid-word `.tatweel-seat` span) so Arabic shaping stays one run.
+- Android and Desktop keep v1.0.420 behavior: mid-word span + CSS `scaleX(0.55)` and margins.
+- Detection: iPhone/iPod/iPad UA, or MacIntel + maxTouchPoints > 1; Android UA explicitly excluded.
+- No QCF overrides, no CSS/Android/Desktop/TTS changes.
+- Confirmed on-device: iPhone Safari PASS, iPhone Chrome PASS.
+- Regression: tatweel-seat 23/23, waqf-word-shaping 20/20, muqattaat-tts 39/39.
+
 
 ### 1.0.399 — دعاء الختم: لون أصلي + حجم 20.5px
 

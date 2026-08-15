@@ -158,7 +158,27 @@
   //   case gets a much smaller one.
   var TATWEEL_BIG_GAP_AFTER = {0x0627:1, 0x062F:1, 0x0630:1, 0x0631:1, 0x0632:1, 0x0648:1, 0x0629:1};
   var TATWEEL_SEAT_REGEX = /\u0640\u0670[\u0653\u0654\u0655]?(?=([\s\S])|$)/g;
+  // iPhone / iPad / iPadOS only: mid-word .tatweel-seat spans break Arabic
+  // letter joining on WebKit even without transform (confirmed on-device for
+  // أُوْلَـٰٓئِكَ, يَـٰٓأَيُّهَا, …). Use identity there so the word stays
+  // one shaping run. Android and desktop keep the v1.0.420 span + CSS
+  // (scaleX + margin) unchanged. Detection avoids Android UAs.
+  var IS_IOS_IPADOS = (function(){
+    try{
+      if(typeof navigator === 'undefined') return false;
+      var ua = navigator.userAgent || '';
+      if(/Android/i.test(ua)) return false;
+      if(/iPhone|iPod/i.test(ua)) return true;
+      if(/iPad/i.test(ua)) return true;
+      // iPadOS 13+ may report as Macintosh with touch
+      if(navigator.platform === 'MacIntel' && (navigator.maxTouchPoints || 0) > 1) return true;
+      return false;
+    }catch(e){
+      return false;
+    }
+  })();
   function tatweelSeatHtml(match, nextChar){
+    if(IS_IOS_IPADOS) return match;
     var nextCp = nextChar ? nextChar.codePointAt(0) : null;
     var bigGap = !!(nextCp && TATWEEL_BIG_GAP_AFTER[nextCp]);
     var cls = bigGap ? 'tatweel-seat' : 'tatweel-seat tatweel-seat-tight';
@@ -244,47 +264,22 @@
       '<span class="kalla-madda-glyph" aria-hidden="true">\u0653</span>' +
     '</span>';
 
-  // Follow-up fix (reported directly, screenshot, 70:15, Uthmani mode):
-  // the SAME misplaced-madda glyph bug as KALLA_MADDA_REGEX above, but
-  // for the 6 occurrences that regex explicitly could NOT reach yet (see
-  // the SCOPE NOTE in the long comment above): 23:100, 26:62, 70:15,
-  // 70:39, 74:16, 89:21. All 6 are كَلَّآ immediately followed by a waqf
-  // mark with no space in between, and wrapWaqfSigns() runs BEFORE this
-  // point in cleanAyahText -- for exactly these 6 words (and only these,
-  // confirmed against data.js), it treats the لام as a fresh "new base
-  // letter", flushing the preceding ك+fatha as bare plain text and
-  // opening a *separate* <span class="waqf-sign"> starting at the لام.
-  // That tag sitting between ك and ل is why the plain 7-codepoint
-  // KALLA_MADDA_REGEX above never matches these 6: the sequence is no
-  // longer textually contiguous.
-  //
-  // Rather than touch wrapWaqfSigns()'s general-purpose letter-flushing
-  // logic (risking every other already-confirmed collision fix that
-  // depends on it), this matches the exact resulting shape instead: ك+
-  // fatha, then the waqf-sign span's opening tag, then ل+shadda+fatha+
-  // alef+maddah, then the waqf mark character(s) (deliberately requiring
-  // NO further nested tag before the closing </span> -- confirmed all 6
-  // occurrences are a single plain mark here with no sila/sakta-lift
-  // collision, so this stays narrowly scoped to the confirmed shape
-  // rather than guessing at cases that don't exist in the data).
-  //
-  // Output nests .kalla-cluster OUTSIDE the original .waqf-sign span
-  // (rather than duplicating or reordering it), so the waqf mark keeps
-  // rendering through the exact same .waqf-sign sizing/positioning rules
-  // as every other waqf mark in the mushaf -- this fix only changes
-  // where the madda glyph is drawn, same as KALLA_MADDA_REGEX above.
-  // UNCONFIRMED ON DEVICE -- reuses .kalla-cluster/.kalla-madda-glyph
-  // as-is (no new CSS), same offset already tuned for the plain case;
-  // open 70:15 after this build and confirm it looks right, since the
-  // madda glyph here sits inside the enlarged .waqf-sign font-size
-  // context (1.2em/1.3em) rather than ambient size, which may need its
-  // own nudge.
+  // Follow-up fix for كَلَّآ + waqf mark (23:100, 26:62, 70:15, 70:39,
+  // 74:16, 89:21). After the v1.0.420 word-level buffering change,
+  // wrapWaqfSigns() puts the WHOLE word inside one .waqf-sign span:
+  //   <span class="waqf-sign">كَلَّآۘ</span>
+  // (Previously it split as كَ<span>لَّآۘ</span>, which is what the
+  // old regex matched.) The plain KALLA_MADDA_REGEX cannot see inside
+  // the span tags, so this companion regex rewrites the whole-word
+  // form: suppress the native madda and draw .kalla-madda-glyph instead,
+  // while keeping the surrounding .waqf-sign so mark sizing/positioning
+  // stays identical to every other waqf mark.
   var KALLA_MADDA_WAQF_REGEX =
-    /\u0643\u064E(<span class="waqf-sign">)\u0644\u0651\u064E\u0627\u0653([^<]*)(<\/span>)/g;
+    /(<span class="waqf-sign">)\u0643\u064E\u0644\u0651\u064E\u0627\u0653([^<]*)(<\/span>)/g;
   function kallaMaddaWaqfHtml(match, waqfSignOpen, markChars, waqfSignClose){
     return '<span class="kalla-cluster">' +
-      '\u0643\u064E' + waqfSignOpen +
-      '\u0644\u0651\u064E\u0627' +
+      waqfSignOpen +
+      '\u0643\u064E\u0644\u0651\u064E\u0627' +
       '<span class="kalla-madda-glyph" aria-hidden="true">\u0653</span>' +
       markChars + waqfSignClose +
     '</span>';
@@ -1661,12 +1656,23 @@
   // the noon's bowl with a small visible gap, then update the number.
   var WAQF_RUKU_MARK_NOON_LIFT_HTML = '<span class="waqf-ruku-mark-noon-lift" aria-hidden="true">\uE022</span>';
   function wrapWaqfSigns(text){
+    // Word-level buffering (v1.0.420): keep the entire current word in
+    // `buffer` until a word boundary or a waqf mark. Previously the
+    // function flushed on every new base letter, so a trailing combining
+    // waqf mark produced e.g. رَّبِّهِ<span class="waqf-sign">مۡۖ</span>
+    // — the final letter sat in a separate DOM node from the rest of the
+    // word. WebKit/iOS treats that span boundary as a shaping-run break
+    // and the Arabic join between ه and م collapses (confirmed on-device
+    // for 2:5 رَّبِّهِمۡۖ and 2:7 سَمۡعِهِمۡۖ, with and without the
+    // hide-waqf-marks toggle). Putting the whole word + mark inside one
+    // .waqf-sign span keeps a single shaping run; display text and
+    // show/hide of Sajawandi colouring are unchanged.
     var out = '', buffer = '';
     for(var i=0; i<text.length; i++){
       var ch = text[i], cp = text.codePointAt(i);
       if(WAQF_COMBINING[cp]){
         // Stacked waqf marks (e.g. jaiz immediately followed by muanaqah)
-        // all belong in the same span as the base letter they sit above.
+        // all belong in the same span as the word they sit on.
         var runCps = [cp];
         var run = ch;
         while(i+1 < text.length && WAQF_COMBINING[text.codePointAt(i+1)]){
@@ -1706,24 +1712,10 @@
             run = WAQF_RUKU_MARK_NOON_LIFT_HTML;
           }
         }
-        // The source text (textIndopak, from the QUL dataset) frequently
-        // inserts a zero-width format character (U+200B–U+200F — most
-        // often U+200B ZERO WIDTH SPACE) between the base letter and the
-        // waqf mark that follows it. It was already being kept in the
-        // same buffer/span as the base letter (see isWaqfMarkAttachable),
-        // which fixed accidental line-wrapping there, but a second,
-        // separate problem remained: this font's OpenType shaper (verified
-        // by testing with/without it — the mark only anchors correctly
-        // once it's gone) treats a zero-width format character as a
-        // shaping-cluster break, the same way it's used elsewhere in text
-        // processing to prevent letters from joining. That splits the
-        // base letter and the mark into two separate shaping clusters, so
-        // the font's GPOS mark-to-base lookup — which only fires within a
-        // single cluster — never applies, and the mark falls back to its
-        // own unanchored, full-size default glyph instead of the small
-        // combining form. Dropping it here only affects the rendered
-        // HTML string built at display time; data.js keeps the character
-        // exactly as-is.
+        // Drop zero-width format chars (U+200B–U+200F) that sit between
+        // the base letter and the waqf mark in textIndopak. The font's
+        // OpenType shaper treats them as cluster breaks, so GPOS
+        // mark-to-base never fires. Stripped at display time only.
         var cleanBuffer = buffer.replace(/[\u200B-\u200F]/g, '');
         out += '<span class="waqf-sign">' + cleanBuffer + run + '</span>';
         buffer = '';
@@ -1738,29 +1730,21 @@
         buffer += ch;
         continue;
       }
-      // A new base letter (or any other character): flush whatever was
-      // pending — it was never followed by a waqf mark — then start a
-      // fresh pending cluster with this character.
-      // EXCEPTION: if the pending cluster's base letter is a LAM and this
-      // new character is one of the ALEF forms it mandatorily ligates
-      // with ("لا"/"لأ"/"لإ"/"لآ"/"لٱ"), don't flush — keep them in the
-      // same buffer instead. Splitting a LAM from the ALEF right after it
-      // across two separate DOM nodes (plain text before vs. inside the
-      // next waqf-sign span) breaks that mandatory ligature (a GSUB
-      // feature) the exact same way splitting a mark from its base letter
-      // breaks GPOS mark anchoring elsewhere in this function — confirmed
-      // on-device on مَثَلٗاۘ (2:26), where the trailing "لا" before the
-      // waqf-lazim mark rendered as two disconnected letters instead of
-      // the correct single ligature shape. buffer[0] is always this
-      // cluster's base letter (only combining marks get appended after
-      // it), so checking it is enough regardless of any tanween/harakat
-      // sitting on the LAM in between.
-      if(buffer.codePointAt(0) === 0x0644 && LAM_ALEF_PARTNERS[cp]){
-        buffer += ch;
+      // Word boundary (whitespace): flush the completed word as plain
+      // text, then emit the boundary character itself.
+      if(ch === ' ' || ch === '\t' || ch === '\n' || ch === '\r' || ch === '\u00A0'){
+        out += buffer;
+        buffer = '';
+        out += ch;
         continue;
       }
-      out += buffer;
-      buffer = ch;
+      // Any other character (new base letter, punctuation, etc.): stay
+      // inside the current word buffer. This is what keeps ر + ب + ه + م
+      // in one continuous run so a later waqf mark can wrap the whole
+      // word without a mid-word span boundary. The former LAM+ALEF
+      // special-case is no longer needed — both letters remain in the
+      // same buffer by default and form their ligature inside the span.
+      buffer += ch;
     }
     out += buffer;
     return out;

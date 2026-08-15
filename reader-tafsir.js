@@ -301,7 +301,7 @@
   // touched. Ambiguous function words are excluded from the dictionary.
   // Any miss or error falls back to the original word/text.
   // -----------------------------------------------------------------
-  // Same-Ayah Exact Match for TTS only (v1.0.415).
+  // Same-Ayah Exact Match for TTS only (v1.0.418).
   //
   // When speaking tafsir for a known (surah, ayah), content words that
   // match the vocalized Quran ayah *exactly* after safe orthographic
@@ -309,7 +309,7 @@
   // taken from the ayah (ambiguous). No stem/root matching.
   // Falls through to Quran dictionary for non-matches.
   var TTS_FUNCTION_WORDS = {
-    // v1.0.415: restored كان/بين/كل/بعض/غير/مع for Same-Ayah exact match (safe).
+    // v1.0.418: restored كان/بين/كل/بعض/غير/مع for Same-Ayah exact match (safe).
     // كنت stays excluded (كُنتَ vs كُنتُ same surface form).
     'من':1,'ما':1,'ان':1,'أن':1,'إن':1,'في':1,'على':1,'الي':1,'إلى':1,
     'عن':1,'لا':1,'لم':1,'لن':1,'هل':1,'هو':1,'هي':1,'هم':1,'هن':1,
@@ -391,6 +391,73 @@
     }
   }
 
+
+  // -----------------------------------------------------------------
+  // Static Quran phrase overrides for TTS only (v1.0.418).
+  // Built offline from Cross-Ayah PoC (n>=4, exact, cross-only, denylist).
+  // Whole-phrase replacement only — never word-level split of these entries.
+  // "من قبل ومن بعد" intentionally omitted (denylist).
+  var QURAN_PHRASE_TTS_OVERRIDES = {
+    "ان الله على كل شيء": "إِنَّ اللَّهَ عَلَى كُلِّ شَيْءٍ",
+    "على كل شيء قدير": "عَلَى كُلِّ شَيْءٍ قَدِيرٌ",
+    "ان الله بكل شيء": "إِنَّ اللَّهَ بِكُلِّ شَيْءٍ",
+    "ان الله كان عليما": "إِنَّ اللَّهَ كَانَ عَلِيمًا",
+    "والله بكل شيء عليم": "وَاللَّهُ بِكُلِّ شَيْءٍ عَلِيمٌ",
+    "ان الله كان بكم": "إِنَّ اللَّهَ كَانَ بِكُمْ",
+    "كان الله بكل شيء": "كَانَ اللَّهُ بِكُلِّ شَيْءٍ",
+    "ما كان الله ليذر": "مَا كَانَ اللَّهُ لِيَذَرَ",
+    "والله على كل شيء": "وَاللَّهُ عَلَى كُلِّ شَيْءٍ",
+    "على كل شيء وكيلا": "عَلَى كُلِّ شَيْءٍ وَكِيلًا",
+    "ان الله لا يضيع": "إِنَّ اللَّهَ لَا يُضِيعُ",
+    "والله بما تعملون خبير": "وَاللَّهُ بِمَا تَعْمَلُونَ خَبِيرٌ",
+    "ان الله كان غفورا": "إِنَّ اللَّهَ كَانَ غَفُورًا",
+    "والله بما تعملون بصير": "وَاللَّهُ بِمَا تَعْمَلُونَ بَصِيرٌ"
+  };
+  // Longest phrases first (object key order is insertion order in modern JS)
+  var QURAN_PHRASE_TTS_KEYS = Object.keys(QURAN_PHRASE_TTS_OVERRIDES);
+
+  function applyStaticQuranPhrases(text){
+    try{
+      if(!text || typeof text !== 'string') return text;
+      if(!QURAN_PHRASE_TTS_KEYS || !QURAN_PHRASE_TTS_KEYS.length) return text;
+      function plainKey(w){
+        return String(w)
+          .replace(/[\u064B-\u065F\u0670\u06D6-\u06ED\u0640]/g, '')
+          .replace(/[آأإٱ]/g, 'ا');
+      }
+      // Match only consecutive Arabic words separated by whitespace (spaces,
+      // tabs, newlines). Do NOT cross punctuation: ، ؛ : ؟ ! . ( ) [ ] etc.
+      var out = text;
+      for(var ki = 0; ki < QURAN_PHRASE_TTS_KEYS.length; ki++){
+        var phrase = QURAN_PHRASE_TTS_KEYS[ki];
+        var pwords = phrase.split(/\s+/);
+        var n = pwords.length;
+        if(n < 2) continue;
+        // Build regex: word1 + whitespace + word2 + ... allowing optional
+        // diacritics on each letter of each word.
+        var parts = [];
+        for(var wi = 0; wi < n; wi++){
+          var pw = pwords[wi];
+          var wordRe = '';
+          for(var ci = 0; ci < pw.length; ci++){
+            var ch = pw.charAt(ci);
+            // alef variants
+            if(ch === 'ا') wordRe += '[اآأإٱ]';
+            else wordRe += ch.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            wordRe += '[\\u064B-\\u065F\\u0670\\u06D6-\\u06ED\\u0640]*';
+          }
+          parts.push(wordRe);
+        }
+        var re = new RegExp(parts.join('[\\s\\u00A0]+'), 'g');
+        var repl = QURAN_PHRASE_TTS_OVERRIDES[phrase];
+        out = out.replace(re, repl);
+      }
+      return out;
+    }catch(e){
+      return text;
+    }
+  }
+
   function applyQuranTashkeel(text){
     try{
       if(!text || typeof text !== 'string') return text;
@@ -442,6 +509,10 @@
     '26:1': { form: 'طسم', spoken: 'طَا سِينْ مِيمْ' },
     '27:1': { form: 'طس', spoken: 'طَا سِينْ' },
     '28:1': { form: 'طسم', spoken: 'طَا سِينْ مِيمْ' },
+    '29:1': { form: 'الم', spoken: 'أَلِف لَامْ مِيمْ' },
+    '30:1': { form: 'الم', spoken: 'أَلِف لَامْ مِيمْ' },
+    '31:1': { form: 'الم', spoken: 'أَلِف لَامْ مِيمْ' },
+    '32:1': { form: 'الم', spoken: 'أَلِف لَامْ مِيمْ' },
     '36:1': { form: 'يس', spoken: 'يَا سِينْ' },
     '38:1': { form: 'ص', spoken: 'صَادْ' },
     '40:1': { form: 'حم', spoken: 'حَا مِيمْ' },
@@ -642,11 +713,14 @@
       // the current ayah when applicable. Display text unchanged.
       // Order: Same-Ayah exact → Quran dict → muqatta'at → mark normalize → fixed overrides.
       // Overrides always last so قرآن/النبي/لغة cannot be undone by dict/ayah.
+      // Order (v1.0.418): Same-Ayah → Quran Dict → Static Phrases (wins over dict)
+      // → Muqatta'at → normalize marks → fixed word overrides → speak.
       var speakable = text;
       if(meta && meta.surah != null && meta.ayah != null){
         speakable = applySameAyahTashkeel(speakable, meta.surah, meta.ayah);
       }
       speakable = applyQuranTashkeel(speakable);
+      speakable = applyStaticQuranPhrases(speakable);
       if(meta && meta.surah != null && meta.ayah != null){
         speakable = expandMuqattaatForTts(speakable, meta.surah, meta.ayah);
       }
