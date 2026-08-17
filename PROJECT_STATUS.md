@@ -1,7 +1,7 @@
 # Project Status
 
-**الإصدار الحالي:** 1.0.421  
-**آخر تحديث:** 2026-08-15
+**الإصدار الحالي:** 1.0.474  
+**آخر تحديث:** 2026-08-16
 
 هذا الملف يُحدَّث مع كل إصدار ويُضمَّن دائمًا داخل الـ ZIP.  
 الغرض: حالة واضحة في بداية أي Session جديدة — ما اكتمل، وما هو معلَّق، وما يُفترض ألا يُمس.
@@ -21,7 +21,64 @@
 
 ## Completed
 
-### 1.0.421 — iOS-only tatweel-seat identity (WebKit joining)
+### 1.0.471 — Context correction: وأقسم بالخيل → وَأَقْسَمَ بِالْخَيْلِ
+
+- Extends aqsama chain for العاديات tafsir (2–3): continuation of divine oath, not 1st person.
+- Phrase-guarded (`اقسم بالخيل`); `وأقسم بالرياح` and bare `أقسم` unchanged.
+- Keeps أقسم الله → أَقْسَمَ اللَّهُ from 1.0.470.
+
+### 1.0.470 — Context correction: أقسم الله → أَقْسَمَ اللَّهُ
+
+- Phrase-guarded only (`اقسم الله`); bare `أقسم` / `وأقسم بالرياح` unchanged.
+- Fixes CATT choosing 1st-person imperfect (أُقْسِمُ) instead of past (أَقْسَمَ).
+- No changes to CATT / buildInput / restoreSkeleton / Preserve / Smart Wait / IDB.
+
+### 1.0.469 — Production: disable TTS pipeline debug overlay
+
+- `TTS_PIPELINE_DEBUG = false` (no on-screen SOURCE/CATT/FINAL panel).
+- Keeps: Smart Wait, IndexedDB, pausable warm-up, AR_WORD_RE word boundaries, Preserve SOURCE tashkeel over CATT.
+
+### 1.0.468 — Preserve SOURCE tashkeel over CATT
+
+- `restoreSkeleton`: if a SOURCE word already has linguistic tashkeel (`\u064B-\u065F`, `\u0670`), keep SOURCE; otherwise use CATT.
+- Applied on fresh CATT results and on memory/IDB cache hits via `preserveSourceTashkeel` (heals stale bad cache without clearing IDB).
+- CATT still receives full-sentence context; only the merge policy changed.
+- No global override for سحب; no changes to buildInput / Smart Wait / IDB architecture.
+
+### 1.0.467 — Contextual TTS correction: السُّحُب (clouds) vs السَّحْب
+
+- Debug proved CATT returns `وَبِالسَّحْبِ` for 51:2 tafsir while SOURCE has damma.
+- Added `TTS_CONTEXT_CORRECTIONS` + `applyTtsContextCorrections` after CATT/dict layers.
+- Guarded by (surah:ayah = 51:2) OR phrase context (سحب…تحمل…الماء / الغزير) — not a global word map.
+- Ambiguous root سحب elsewhere is left unchanged.
+- TTS pipeline debug overlay still enabled for verification.
+
+### 1.0.466 — TTS pipeline debug overlay (diagnosis only)
+
+- Mobile-visible panel on Play: SOURCE / CATT (status) / FINAL TTS.
+- Does not change pronunciation, CATT, or local post-processing.
+- Toggle: `TTS_PIPELINE_DEBUG` in `reader-tafsir.js` (true in this build).
+- Closes on Stop or via إغلاق button.
+- Purpose: diagnose السُّحب and similar without desktop console.
+
+### 1.0.465 — CATT buildInput: word boundary includes diacritics
+
+- Root cause: `AR_WORD_RE` matched base letters only, so diacritized words split into single letters (`مُحِيَ` → `م ح ي`) before CATT.
+- Fix: expand `AR_WORD_RE` so a word is base letter + optional letters/tatweel/diacritics. Shared by `buildInput` and `restoreSkeleton` (count invariant preserved).
+- `stripArabicMarks`, Smart Wait, IndexedDB, warm-up pause unchanged.
+- New regression: `tests/catt-buildinput-word-boundary-regression.js`.
+
+### 1.0.464 — CATT TTS: Smart Wait + Persistent Cache + Pausable Warm-up
+
+- **Smart Wait (1.8s):** On Play, if CATT is not cached, wait up to 1.8s for an in-flight or new CATT result before local fallback. Shared `pending[key]` avoids duplicate requests.
+- **IndexedDB persistent cache:** Last 400 CATT results survive refresh/tab close. Memory → IDB (≤120ms probe) → CATT. Never blocks CATT start beyond the probe budget.
+- **Warm-up order:** connection → current ruku → next → previous.
+- **Pause during TTS:** ALL background CATT warm-up (including current ruku) pauses while the user is listening, so the connection stays free for the current ayah Smart Wait. Resumes when the queue drains or Stop is pressed.
+- **Panel open:** `warmConnection()` fired immediately on tafsir open.
+- Display text never modified; local TTS pipeline unchanged for Mushaf rendering.
+- Regression: same-ayah 66, muqattaat 39, phrase-override 14, tatweel-seat 23, waqf-word-shaping 20 — all PASS.
+
+### 1.0.446 — iOS-only tatweel-seat identity (WebKit joining)
 
 - Baseline: v1.0.420 (includes word-level `wrapWaqfSigns`).
 - On iPhone / iPad / iPadOS only: `tatweelSeatHtml` returns the seat cluster unchanged (no mid-word `.tatweel-seat` span) so Arabic shaping stays one run.

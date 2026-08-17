@@ -289,6 +289,32 @@
       try{ speechSynthesis.cancel(); }catch(e){}
     }
     updateTtsButton();
+    // Free CATT connection for neighbor warm-up again
+    resumeCattWarm();
+    hideTtsPipelineDebug();
+  }
+
+  // Startup watchdog: if onstart never fires after speak(), treat as silent
+  // failure (e.g. some Android WebViews queue the utterance but never start).
+  // Do NOT hard-gate on getVoices()/preferredVoice — many devices speak
+  // Arabic correctly via utterance.lang='ar-SA' even when no ar-* voice is listed.
+  var TTS_SILENT_FAIL_MSG = 'لا يتوفر صوت بالعربي';
+  var TTS_STARTUP_WATCHDOG_MS = 3500;
+
+  // Abort the active TTS session without relying on utterance callbacks.
+  // Bumps generation so late onend/onerror cannot advance a new session.
+  function abortTtsSession(message){
+    ttsGeneration++;
+    ttsQueue = [];
+    ttsSpeaking = false;
+    clearTtsHighlight();
+    if(typeof speechSynthesis !== 'undefined'){
+      try{ speechSynthesis.cancel(); }catch(e){}
+    }
+    updateTtsButton();
+    resumeCattWarm();
+    hideTtsPipelineDebug();
+    if(message && UI && UI.showToast) UI.showToast(message);
   }
 
 
@@ -458,29 +484,46 @@
     }
   }
 
-  function applyQuranTashkeel(text){
+  function applyQuranTashkeel(text, surah, ayah){
     try{
       if(!text || typeof text !== 'string') return text;
       var dict = (typeof window !== 'undefined') && window.QURAN_TASHKEEL_DICT;
       if(!dict) return text;
+
+      // The Quran dictionary is a protection/fallback layer, not a global
+      // Arabic dictionary. Only allow it to fire for a word that belongs to
+      // the current Quran ayah. This prevents collisions such as:
+      // tafsir "يتكون" -> Quran dictionary key "يتكون" -> "يَتَّكُِٔون".
+      var ayahMap = null;
+      if(surah != null && ayah != null){
+        ayahMap = _getAyahWordMap(surah, ayah);
+      }
+
       var AR_PUNCT = '،؛؟٪ـ';
       return text.replace(/[\u0600-\u06FF]+/g, function(run){
         var start = 0, end = run.length;
         while(start < end && AR_PUNCT.indexOf(run[start]) !== -1) start++;
         while(end > start && AR_PUNCT.indexOf(run[end - 1]) !== -1) end--;
         if(end <= start) return run;
+
         var core = run.slice(start, end);
-        // Strip existing diacritics + alef variants for lookup
         var key = core
           .replace(/[\u064B-\u065F\u0670\u06D6-\u06ED\u0640]/g, '')
           .replace(/[آأإٱ]/g, 'ا');
         if(!key) return run;
+
+        // If CATT or Same-Ayah already supplied vocalization, never destroy
+        // it with a generic dictionary replacement.
+        if(/[\u064B-\u065F\u0670]/.test(core)) return run;
+
+        if(ayahMap && !ayahMap[key]) return run;
+
         var repl = dict[key];
         if(!repl) return run;
         return run.slice(0, start) + repl + run.slice(end);
       });
     }catch(e){
-      return text; // never break TTS
+      return text;
     }
   }
 
@@ -653,6 +696,91 @@
     }
   }
 
+  // ------------------------------------------------------------------
+  // Contextual TTS corrections AFTER CATT / local dict layers.
+  // Phrase- or (surah,ayah)-guarded — never a global map for ambiguous
+  // roots like سحب (clouds سُحُب vs dragging سَحْب).
+  // ------------------------------------------------------------------
+  var TTS_CONTEXT_CORRECTIONS = [
+    {
+      id: 'suhub-clouds-water',
+      // الذاريات 2 tafsir: clouds that carry abundant water
+      surah: 51,
+      ayah: 2,
+      // Also match the distinctive phrase if meta is missing
+      contextPlain: /السحب[\s\S]{0,48}تحمل[\s\S]{0,40}الماء|تحمل[\s\S]{0,40}الماء[\s\S]{0,24}الغزير/,
+      replace: [
+        [/وَبِالسَّحْبِ/g, 'وَبِالسُّحُبِ'],
+        [/بِالسَّحْبِ/g, 'بِالسُّحُبِ'],
+        [/السَّحْبِ/g, 'السُّحُبِ'],
+        [/السَّحْب(?=[\s،.؛؟!)]|$)/g, 'السُّحُب'],
+        [/وَبِالسحب/g, 'وَبِالسُّحُب'],
+        [/وبالسحب/g, 'وَبِالسُّحُب'],
+        [/بِالسحب/g, 'بِالسُّحُب'],
+        [/بالسحب/g, 'بِالسُّحُب'],
+        [/السحب(?=[\s،.؛؟!)]|$)/g, 'السُّحُب']
+      ]
+    },
+    {
+      // أقسم الله → past 3rd person (أَقْسَمَ اللَّهُ), not 1st person imperfect.
+      // Phrase-guarded only — never a global map for bare أقسم.
+      id: 'aqsama-allahu',
+      contextPlain: /اقسم\s+الله/,
+      replace: [
+        [/أُقْسِمُ\s+اللَّه[َُِ]?/g, 'أَقْسَمَ اللَّهُ'],
+        [/أُقْسِمُ\s+الله/g, 'أَقْسَمَ اللَّهُ'],
+        [/أَقْسِمُ\s+اللَّه[َُِ]?/g, 'أَقْسَمَ اللَّهُ'],
+        [/أَقْسِمُ\s+الله/g, 'أَقْسَمَ اللَّهُ'],
+        [/أقسم\s+الله/g, 'أَقْسَمَ اللَّهُ'],
+        [/أَقْسَمَ\s+الله/g, 'أَقْسَمَ اللَّهُ']
+      ]
+    },
+    {
+      // وأقسم بالخيل → وَأَقْسَمَ بِالْخَيْلِ (continuation of divine oath, not "I swear").
+      // Phrase-guarded: requires أقسم + بالخيل. Bare أقسم unchanged.
+      id: 'wa-aqsama-bilkhayl',
+      contextPlain: /اقسم\s+بالخيل/,
+      replace: [
+        [/وَأُقْسِمُ\s+بِالْخَيْلِ/g, 'وَأَقْسَمَ بِالْخَيْلِ'],
+        [/وَأُقْسِمُ\s+بالخيل/g, 'وَأَقْسَمَ بِالْخَيْلِ'],
+        [/وأُقْسِمُ\s+بِالْخَيْلِ/g, 'وَأَقْسَمَ بِالْخَيْلِ'],
+        [/وأُقْسِمُ\s+بالخيل/g, 'وَأَقْسَمَ بِالْخَيْلِ'],
+        [/وَأَقْسِمُ\s+بِالْخَيْلِ/g, 'وَأَقْسَمَ بِالْخَيْلِ'],
+        [/وَأَقْسِمُ\s+بالخيل/g, 'وَأَقْسَمَ بِالْخَيْلِ'],
+        [/وأقسم\s+بالخيل/g, 'وَأَقْسَمَ بِالْخَيْلِ'],
+        [/وَأَقْسَمَ\s+بالخيل/g, 'وَأَقْسَمَ بِالْخَيْلِ'],
+        [/أُقْسِمُ\s+بِالْخَيْلِ/g, 'أَقْسَمَ بِالْخَيْلِ'],
+        [/أُقْسِمُ\s+بالخيل/g, 'أَقْسَمَ بِالْخَيْلِ'],
+        [/أقسم\s+بالخيل/g, 'أَقْسَمَ بِالْخَيْلِ']
+      ]
+    }
+  ];
+
+  function applyTtsContextCorrections(text, surah, ayah){
+    try{
+      if(!text || typeof text !== 'string') return text;
+      if(!TTS_CONTEXT_CORRECTIONS || !TTS_CONTEXT_CORRECTIONS.length) return text;
+      var plain = text
+        .replace(/[\u064B-\u065F\u0670\u06D6-\u06ED\u0640]/g, '')
+        .replace(/[آأإٱ]/g, 'ا');
+      var out = text;
+      for(var i = 0; i < TTS_CONTEXT_CORRECTIONS.length; i++){
+        var rule = TTS_CONTEXT_CORRECTIONS[i];
+        var ayahHit = (rule.surah != null && surah != null && ayah != null &&
+          Number(rule.surah) === Number(surah) && Number(rule.ayah) === Number(ayah));
+        var ctxHit = rule.contextPlain && rule.contextPlain.test(plain);
+        if(!ayahHit && !ctxHit) continue;
+        var reps = rule.replace || [];
+        for(var r = 0; r < reps.length; r++){
+          out = out.replace(reps[r][0], reps[r][1]);
+        }
+      }
+      return out;
+    }catch(e){
+      return text;
+    }
+  }
+
   function fixQuranWordPronunciation(text){
     try{
       if(!text || typeof text !== 'string') return text;
@@ -693,6 +821,11 @@
           }
         }
         if(!repl) return run;
+
+        // Existing contextual/CATT vocalization has priority.
+        if(/[\u064B-\u065F\u0670]/.test(core)){
+          return run;
+        }
         return prefix + repl + suffix;
       });
     }catch(e){
@@ -700,53 +833,255 @@
     }
   }
 
+  // Android TTS compatibility: combining tanween marks can cause
+  // syllable-level segmentation. For speech only, convert tanween to the
+  // corresponding short vowel while preserving the visible/source text.
+  function normalizeTanweenForTts(text){
+    return String(text || '').replace(/([^\u064B-\u065F\u0670])([ًٌٍ])/g,
+      function(_, base, mark){
+        if(mark === 'ً') return base + 'َ';
+        if(mark === 'ٌ') return base + 'ُ';
+        if(mark === 'ٍ') return base + 'ِ';
+        return base + mark;
+      });
+  }
+
+  // Mobile-visible TTS pipeline debug (diagnosis only — does not change speech).
+  // Set TTS_PIPELINE_DEBUG = false to hide.
+  var TTS_PIPELINE_DEBUG = false;
+
+  function showTtsPipelineDebug(info){
+    if(!TTS_PIPELINE_DEBUG) return;
+    try{
+      var box = document.getElementById('tts-pipeline-debug');
+      if(!box){
+        box = document.createElement('div');
+        box.id = 'tts-pipeline-debug';
+        box.setAttribute('dir', 'rtl');
+        box.style.cssText = [
+          'position:fixed', 'left:8px', 'right:8px', 'bottom:8px', 'z-index:99999',
+          'max-height:42vh', 'overflow:auto', 'padding:10px 12px',
+          'background:#1a1a1a', 'color:#f0f0f0', 'border:1px solid #666',
+          'border-radius:10px', 'font-size:12px', 'line-height:1.55',
+          'font-family:ui-monospace,monospace', 'box-shadow:0 4px 20px rgba(0,0,0,.45)'
+        ].join(';');
+        document.body.appendChild(box);
+      }
+      function esc(s){
+        return String(s == null ? '—' : s)
+          .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      }
+      var ref = (info.surah != null && info.ayah != null)
+        ? (info.surah + ':' + info.ayah) : '—';
+      box.innerHTML =
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">' +
+          '<strong style="color:#8f8">TTS Pipeline Debug</strong>' +
+          '<span style="opacity:.8">' + esc(ref) + '</span>' +
+          '<button type="button" id="tts-pipeline-debug-close" style="background:#333;color:#fff;border:0;border-radius:6px;padding:2px 8px;font-size:12px">إغلاق</button>' +
+        '</div>' +
+        '<div style="margin:4px 0"><span style="color:#9cf">SOURCE</span><br><span style="white-space:pre-wrap;word-break:break-word">' + esc(info.source) + '</span></div>' +
+        '<div style="margin:4px 0"><span style="color:#fc9">CATT</span> <span style="opacity:.7">(' + esc(info.cattStatus) + ')</span><br><span style="white-space:pre-wrap;word-break:break-word">' + esc(info.catt) + '</span></div>' +
+        '<div style="margin:4px 0"><span style="color:#9f9">FINAL TTS</span><br><span style="white-space:pre-wrap;word-break:break-word">' + esc(info.final) + '</span></div>';
+      var btn = document.getElementById('tts-pipeline-debug-close');
+      if(btn) btn.onclick = function(){ try{ box.parentNode.removeChild(box); }catch(e){} };
+    }catch(e){}
+  }
+
+  function hideTtsPipelineDebug(){
+    try{
+      var box = document.getElementById('tts-pipeline-debug');
+      if(box && box.parentNode) box.parentNode.removeChild(box);
+    }catch(e){}
+  }
+
   function speakText(text, meta, gen){
     if(!ttsApiAvailable || typeof speechSynthesis === 'undefined' || !text){
       return Promise.resolve();
     }
-    // Refresh voice pick right before speaking (list may have filled in).
     if(!preferredVoice) preferredVoice = pickArabicVoice();
-    return new Promise(function(resolve){
-      // Stale session (user already switched/stopped) — do nothing.
-      if(gen !== ttsGeneration){ resolve(); return; }
-      // TTS-only: Quran stem diacritics, then muqatta'at expansion for
-      // the current ayah when applicable. Display text unchanged.
-      // Order: Same-Ayah exact → Quran dict → muqatta'at → mark normalize → fixed overrides.
-      // Overrides always last so قرآن/النبي/لغة cannot be undone by dict/ayah.
-      // Order (v1.0.418): Same-Ayah → Quran Dict → Static Phrases (wins over dict)
-      // → Muqatta'at → normalize marks → fixed word overrides → speak.
-      var speakable = text;
+    if(gen !== ttsGeneration) return Promise.resolve();
+
+    // Smart Wait (v1.0.463+): give CATT a real chance before local fallback.
+    // - Cache hit  → use immediately
+    // - Not ready  → wait up to SMART_WAIT_MS for an in-flight / new result
+    // - Still not  → local pipeline (CATT remains optional, never blocks forever)
+    var SMART_WAIT_MS = 1800;
+
+    function buildSpeakable(src){
+      // TTS-only: contextual Quran layers. Display text remains unchanged.
+      var speakable = src;
       if(meta && meta.surah != null && meta.ayah != null){
         speakable = applySameAyahTashkeel(speakable, meta.surah, meta.ayah);
       }
-      speakable = applyQuranTashkeel(speakable);
+      speakable = applyQuranTashkeel(speakable, meta && meta.surah, meta && meta.ayah);
       speakable = applyStaticQuranPhrases(speakable);
       if(meta && meta.surah != null && meta.ayah != null){
         speakable = expandMuqattaatForTts(speakable, meta.surah, meta.ayah);
       }
       speakable = normalizeTtsMarks(speakable);
+
+      // TTS-only: U+065E caused Android TTS segmentation in testing.
+      speakable = speakable.replace(/\u065E/g, '\u064C');
+
       speakable = fixQuranWordPronunciation(speakable);
-      var u = new SpeechSynthesisUtterance(speakable);
-      u.rate = 0.95;
-      u.pitch = 1;
-      u.volume = 1;
-      if(preferredVoice){
-        u.voice = preferredVoice;
-        u.lang = preferredVoice.lang || 'ar-SA';
-      } else {
-        // No listed Arabic voice — ask the engine for Arabic via lang only.
-        // Do NOT assign a non-Arabic voice object.
-        u.lang = 'ar-SA';
+
+      // Contextual corrections (e.g. سُحُب vs سَحْب) after CATT + dict layers.
+      speakable = applyTtsContextCorrections(
+        speakable,
+        meta && meta.surah,
+        meta && meta.ayah
+      );
+
+      // FINAL Android TTS compatibility pass. Keep this as the last text
+      // transformation so no later layer can reintroduce tanween.
+      speakable = normalizeTanweenForTts(speakable);
+
+      // Android TTS compatibility:
+      // U+0656 (ARABIC SUBSCRIPT ALEF) is used in the Quranic/tafsir
+      // text for the tanween-kasr style seen in "أَحَدٖ". Android Web
+      // Speech segments this mark, while the equivalent standard kasra
+      // U+0650 is spoken continuously. Convert it only in the TTS copy;
+      // never alter the displayed/source text.
+      speakable = speakable.replace(/\u0656/g, '\u0650');
+      return speakable;
+    }
+
+    function doSpeak(finalText, cattInfo){
+      return new Promise(function(resolve){
+        if(gen !== ttsGeneration){ resolve(); return; }
+
+        var speakable = buildSpeakable(finalText);
+        cattInfo = cattInfo || {};
+        showTtsPipelineDebug({
+          surah: meta && meta.surah,
+          ayah: meta && meta.ayah,
+          source: text,
+          catt: cattInfo.cattText != null ? cattInfo.cattText : '—',
+          cattStatus: cattInfo.status || 'none',
+          final: speakable
+        });
+        var u = new SpeechSynthesisUtterance(speakable);
+        u.rate = 0.95;
+        u.pitch = 1;
+        u.volume = 1;
+        // Prefer a listed Arabic voice when available; otherwise lang=ar-SA only
+        // (many Android WebViews speak Arabic without listing an ar-* voice).
+        // Never attach a non-Arabic voice object.
+        if(preferredVoice){
+          u.voice = preferredVoice;
+          u.lang = preferredVoice.lang || 'ar-SA';
+        }else{
+          u.lang = 'ar-SA';
+        }
+
+        // Idempotent settlement: only the first of onstart-timeout / onend /
+        // onerror / speak-throw may finish this utterance Promise. Late
+        // callbacks after abortTtsSession must not resolve a newer session's
+        // chain or re-enter playQueue.
+        var settled = false;
+        var started = false;
+        var watchdogTimer = null;
+
+        function settle(){
+          if(settled) return;
+          settled = true;
+          if(watchdogTimer != null){
+            try{ clearTimeout(watchdogTimer); }catch(e){}
+            watchdogTimer = null;
+          }
+          resolve();
+        }
+
+        function failSilentStart(){
+          if(settled) return;
+          settled = true;
+          if(watchdogTimer != null){
+            try{ clearTimeout(watchdogTimer); }catch(e){}
+            watchdogTimer = null;
+          }
+          // Only the generation that started this utterance may abort UI state.
+          // abortTtsSession bumps ttsGeneration so playQueue().then will not
+          // advance to the next ayah, and late engine callbacks become no-ops.
+          if(gen === ttsGeneration){
+            abortTtsSession(TTS_SILENT_FAIL_MSG);
+          }
+          resolve();
+        }
+
+        u.onstart = function(){
+          if(settled || gen !== ttsGeneration) return;
+          started = true;
+          if(watchdogTimer != null){
+            try{ clearTimeout(watchdogTimer); }catch(e){}
+            watchdogTimer = null;
+          }
+        };
+        u.onend = function(){
+          if(gen !== ttsGeneration){ settle(); return; }
+          settle();
+        };
+        u.onerror = function(){
+          if(gen !== ttsGeneration){ settle(); return; }
+          settle();
+        };
+
+        if(meta && meta.surah != null) setTtsHighlight(meta.surah, meta.ayah);
+
+        watchdogTimer = setTimeout(function(){
+          if(settled || started) return;
+          if(gen !== ttsGeneration){ settle(); return; }
+          failSilentStart();
+        }, TTS_STARTUP_WATCHDOG_MS);
+
+        try{
+          speechSynthesis.speak(u);
+        }catch(e){
+          failSilentStart();
+        }
+      });
+    }
+
+    // --- Smart Wait path ---
+    try{
+      if(typeof TTS_CATT_ONLINE !== 'undefined' && TTS_CATT_ONLINE){
+        var cached = null;
+        if(TTS_CATT_ONLINE.getCached){
+          cached = TTS_CATT_ONLINE.getCached(text);
+        }
+        if(cached){
+          return doSpeak(cached, {
+            cattText: cached,
+            status: cached === text ? 'cache-hit (same as source)' : 'cache-hit'
+          });
+        }
+
+        // Not in cache: start/await CATT with a hard maximum wait.
+        // getReadyOrWarm reuses any already-pending request for the same text.
+        var readyPromise = (TTS_CATT_ONLINE.getReadyOrWarm
+          ? TTS_CATT_ONLINE.getReadyOrWarm(text)
+          : (TTS_CATT_ONLINE.warm ? TTS_CATT_ONLINE.warm(text) : Promise.resolve(text)));
+
+        return Promise.race([
+          readyPromise,
+          new Promise(function(resolve){
+            setTimeout(function(){ resolve(null); }, SMART_WAIT_MS);
+          })
+        ]).then(function(result){
+          if(gen !== ttsGeneration) return;
+          // null = timed out → local fallback
+          // otherwise use whatever CATT returned (improved or original)
+          if(result == null){
+            return doSpeak(text, { cattText: '—', status: 'timeout / miss → local' });
+          }
+          var useText = (typeof result === 'string') ? result : text;
+          var status = (useText === text) ? 'returned source (no change)' : 'applied';
+          return doSpeak(useText, { cattText: useText, status: status });
+        });
       }
-      if(meta && meta.surah != null) setTtsHighlight(meta.surah, meta.ayah);
-      u.onend = function(){ resolve(); };
-      u.onerror = function(){ resolve(); };
-      try{
-        speechSynthesis.speak(u);
-      }catch(e){
-        resolve();
-      }
-    });
+    }catch(e){}
+
+    // No CATT module available → local pipeline immediately
+    return doSpeak(text, { cattText: '—', status: 'CATT unavailable' });
   }
 
   function playQueue(){
@@ -757,17 +1092,23 @@
       ttsSpeaking = false;
       clearTtsHighlight();
       updateTtsButton();
+      resumeCattWarm();
       return;
     }
     if(!ttsApiAvailable){
       stopTts();
       return;
     }
+    // Best-effort: refresh preferred Arabic voice if the list has loaded.
+    // Absence of a listed voice is NOT a hard stop — speak with lang=ar-SA.
+    if(!preferredVoice) preferredVoice = pickArabicVoice();
     ttsSpeaking = true;
+    pauseCattWarm(); // keep CATT free for current ayah Smart Wait
     updateTtsButton();
     var item = ttsQueue.shift();
     speakText(item.text, item, gen).then(function(){
-      // Cancelled utterance from a previous session, or user stopped: ignore.
+      // Cancelled utterance from a previous session, user stopped, or
+      // silent-start abort (generation bumped): do not advance the queue.
       if(gen !== ttsGeneration || !ttsSpeaking) return;
       playQueue();
     });
@@ -877,6 +1218,9 @@
     } else {
       p.className = 'tafsir-text';
       p.textContent = text;
+
+      // CATT page warm-up is started once the current tafsir page has
+      // finished loading, not once per ayah.
     }
   }
 
@@ -913,40 +1257,150 @@
   // keep moving forward than to backtrack, so the forward ruku should be
   // first in line for the browser's (also limited) per-origin connection
   // pool, not tied with or behind the backward one.
-  function prefetchNeighbors(pageIdx){
-    [pageIdx + 1, pageIdx - 1].forEach(function(idx){
-      var p = PAGES[idx];
-      if(!p || !p.ayahs) return;
-      p.ayahs.forEach(function(a){
-        fetchOne(a.surah, a.ayah).catch(function(){}); // best-effort, silent
-      });
+  // ------------------------------------------------------------------
+  // CATT warm-up priority:
+  //   1) Warm connection (once)
+  //   2) Current ruku (full)
+  //   3) Next ruku
+  //   4) Previous ruku
+  // While the user is listening (ttsSpeaking), neighbor warm-up PAUSES
+  // so the CATT connection stays free for the current ayah's Smart Wait.
+  // ------------------------------------------------------------------
+  var cattPageWarmChain = Promise.resolve();
+  var cattPageWarmToken = 0;
+  var cattWarmPaused = false;
+  var cattResumeWaiters = [];
+
+  function pauseCattWarm(){
+    cattWarmPaused = true;
+  }
+
+  function resumeCattWarm(){
+    if(!cattWarmPaused) return;
+    cattWarmPaused = false;
+    var waiters = cattResumeWaiters.slice();
+    cattResumeWaiters = [];
+    for(var i = 0; i < waiters.length; i++){
+      try{ waiters[i](); }catch(e){}
+    }
+  }
+
+  function waitIfCattPaused(){
+    if(!cattWarmPaused) return Promise.resolve();
+    return new Promise(function(resolve){
+      cattResumeWaiters.push(resolve);
     });
   }
 
-  // Silent warm-up: called every time the reader shows a page (see
-  // onAfterRender in app.js) — NOT only when the tafsir panel is opened.
-  // Priority order is current ruku, then next ruku, then previous ruku
-  // (see prefetchNeighbors above): this function's own fetchOne() calls
-  // for the current ruku fire immediately, and only once every one of
-  // them has settled does it call prefetchNeighbors — so the current
-  // ruku never has to share the connection pool with the neighbor
-  // warm-up, and forward always wins over backward once it does.
-  // fetchOne()'s own cache/inFlight guards make this free to call
-  // repeatedly (same-page re-renders from a settings change, etc.) —
-  // already-cached or already-in-flight ayaat are skipped instantly, and
-  // never duplicated as a second in-flight request. By the time the user
-  // actually taps زر التفسير, loadCurrentRuku() below finds everything
-  // already cached and renders instantly instead of waiting on a
-  // round-trip.
-  // Deliberately does nothing when offline — no point queuing requests
-  // that will just reject, and it keeps `isOffline`/the panel's own
-  // offline state untouched since this never renders anything.
+  function ensureCattConnection(){
+    try{
+      if(typeof TTS_CATT_ONLINE !== 'undefined' &&
+         TTS_CATT_ONLINE && TTS_CATT_ONLINE.warmConnection){
+        return TTS_CATT_ONLINE.warmConnection().catch(function(){ return null; });
+      }
+      if(typeof TTS_CATT_ONLINE !== 'undefined' &&
+         TTS_CATT_ONLINE && TTS_CATT_ONLINE.initialize){
+        return TTS_CATT_ONLINE.initialize().catch(function(){ return null; });
+      }
+    }catch(e){}
+    return Promise.resolve(null);
+  }
+
+  function warmTafsirPage(pageIdx, opts){
+    opts = opts || {};
+    // All background warm-up yields while TTS is speaking so the CATT
+    // connection stays free for the current ayah's Smart Wait.
+    var p = PAGES[pageIdx];
+    if(!p || !p.ayahs) return Promise.resolve();
+
+    if(cattWarmPaused){
+      return Promise.resolve();
+    }
+
+    // If every ayah in this page has already been prepared, do nothing.
+    try{
+      if(typeof TTS_CATT_ONLINE !== 'undefined' &&
+         TTS_CATT_ONLINE && TTS_CATT_ONLINE.getPageCached){
+        var readyPage = TTS_CATT_ONLINE.getPageCached(pageIdx);
+        if(readyPage){
+          var readyCount = Object.keys(readyPage).length;
+          if(readyCount >= p.ayahs.length) return Promise.resolve();
+        }
+      }
+    }catch(e){}
+
+    return ensureCattConnection().then(function(){
+      var chain = Promise.resolve();
+      var pageMap = Object.create(null);
+
+      p.ayahs.forEach(function(a){
+        chain = chain.then(function(){
+          // Neighbors yield while the user is listening.
+          return waitIfCattPaused().then(function(){
+            if(cattWarmPaused) return;
+            return fetchOne(a.surah, a.ayah).then(function(text){
+              pageMap[a.surah + ':' + a.ayah] = text;
+              try{
+                if(typeof TTS_CATT_ONLINE !== 'undefined' &&
+                   TTS_CATT_ONLINE && TTS_CATT_ONLINE.warm){
+                  return TTS_CATT_ONLINE.warm(text).then(function(prepared){
+                    pageMap[a.surah + ':' + a.ayah] = prepared || text;
+                  });
+                }
+              }catch(e){}
+            });
+          });
+        });
+      });
+
+      return chain.then(function(){
+        try{
+          if(typeof TTS_CATT_ONLINE !== 'undefined' &&
+             TTS_CATT_ONLINE && TTS_CATT_ONLINE.cachePage){
+            TTS_CATT_ONLINE.cachePage(pageIdx, pageMap);
+          }
+        }catch(e){}
+      });
+    }).catch(function(){});
+  }
+
+  function prefetchNeighbors(pageIdx){
+    // Order: current → next → previous.
+    // ALL background CATT warm-up (including current) pauses while TTS
+    // is speaking, so the connection stays free for the playing ayah.
+    var token = ++cattPageWarmToken;
+    cattPageWarmChain = cattPageWarmChain.then(function(){
+      if(token !== cattPageWarmToken) return;
+      return waitIfCattPaused();
+    }).then(function(){
+      if(token !== cattPageWarmToken) return;
+      return warmTafsirPage(pageIdx);
+    }).then(function(){
+      if(token !== cattPageWarmToken) return;
+      return waitIfCattPaused();
+    }).then(function(){
+      if(token !== cattPageWarmToken) return;
+      return warmTafsirPage(pageIdx + 1);
+    }).then(function(){
+      if(token !== cattPageWarmToken) return;
+      return waitIfCattPaused();
+    }).then(function(){
+      if(token !== cattPageWarmToken) return;
+      return warmTafsirPage(pageIdx - 1);
+    }).catch(function(){});
+  }
+
+  // Silent warm-up on every page render (app.js onAfterRender).
+  // 1) Fetch current ruku tafsir texts
+  // 2) Then run prioritized CATT warm: current → next → previous
   function prefetchCurrentRuku(){
     if(typeof navigator !== 'undefined' && navigator.onLine === false) return;
     var p = PAGES[state.page];
     if(!p || !p.ayahs || !p.ayahs.length) return;
     var pageIdx = state.page;
     var ayahs = p.ayahs;
+    // Kick connection early — does not wait for fetchOne to finish
+    ensureCattConnection();
     var settled = 0;
     ayahs.forEach(function(a){
       fetchOne(a.surah, a.ayah).catch(function(){}).then(function(){
@@ -1073,6 +1527,8 @@
 
     els.btnTafsir.addEventListener('click', function(){
       reprobeOnPanelOpen();
+      // Warm CATT connection immediately so Smart Wait has a live socket
+      ensureCattConnection();
       UI.openPanel(els.tafsirPanel);
       loadCurrentRuku();
     });
