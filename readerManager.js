@@ -1297,6 +1297,27 @@
     return conflicts;
   })();
 
+  // سياسة عامة نهائية (طلب مباشر): أي علامة من DEFAULT_MARK_TYPES
+  // تتقاطع مع «لا» أو «صلي» على نفس الكلمة → تُستبعد من التلوين فورًا.
+  // يُبنى فهرس الموضعين مرة واحدة هنا ويُستخدم داخل buildDefaultWordMap
+  // حتى لا يعتمد الاستبعاد على اكتمال القوائم اليدوية (كانت ناقصة —
+  // مثال: 111:3:4 ج×صلي ظهرت بعد السماح بـج على آخر كلمة).
+  var DEFAULT_MARK_LA_SILA_BLOCK = (function(){
+    var block = Object.create(null);
+    var positions = (typeof window !== 'undefined' && window.WAQF_POSITIONS) || [];
+    for(var i = 0; i < positions.length; i++){
+      if(positions[i].type === 'LA'){
+        block[positions[i].surah + ':' + positions[i].ayah + ':' + positions[i].word] = 'LA';
+      }
+    }
+    var sila = (typeof window !== 'undefined' && window.SILA_POSITIONS) || [];
+    for(var j = 0; j < sila.length; j++){
+      var sk = sila[j].surah + ':' + sila[j].ayah + ':' + sila[j].word;
+      if(!block[sk]) block[sk] = 'SILA';
+    }
+    return block;
+  })();
+
   function buildDefaultWordMap(waqfType){
     var map = {};
     var positions = (typeof window !== 'undefined' && window.WAQF_POSITIONS) || [];
@@ -1304,6 +1325,10 @@
       var p = positions[i];
       if(p.type !== waqfType) continue;
       var wordKey = p.surah + ':' + p.ayah + ':' + p.word;
+      // سياسة لا/صلي: استبعاد تلقائي شامل (يغطي أي فجوة في القوائم اليدوية)
+      if(DEFAULT_MARK_LA_SILA_BLOCK[wordKey]){
+        continue;
+      }
       if(DEFAULT_MARK_MANUAL_EXCLUSIONS[waqfType] && DEFAULT_MARK_MANUAL_EXCLUSIONS[waqfType][wordKey]){
         continue; // استبعاد يدوي مؤكَّد — راجع تعليق DEFAULT_MARK_MANUAL_EXCLUSIONS أعلاه
       }
@@ -1321,6 +1346,8 @@
     var manualAdditions = DEFAULT_MARK_MANUAL_ADDITIONS[waqfType];
     if(manualAdditions){
       Object.keys(manualAdditions).forEach(function(wordKey){
+        // الإضافات اليدوية لا تتجاوز سياسة لا/صلي
+        if(DEFAULT_MARK_LA_SILA_BLOCK[wordKey]) return;
         var parts = wordKey.split(':');
         var key = parts[0] + ':' + parts[1];
         var idx = parseInt(parts[2], 10) - 1;
@@ -1459,10 +1486,9 @@
   var DEFAULT_QIF_WORDS = buildDefaultWordMap('QIF');
 
   // ج (الوقف الجائز — JEEM) — طلب مباشر أول: "بناءً على القواعد التي
-  // لديك، أضف ج باللون الأزرق"، ثم طلب مباشر لاحق: غُيِّر إلى الأخضر —
-  // نفس لون .has-default-sad-rukhsa/.has-default-zay-jawaz/
-  // .has-default-qad-qila بالضبط (#2E7D32 نهاري / #81C784 ليلي). تُستبعد
-  // عند آخر كلمة في الآية (نفس النمط الافتراضي المتبع لباقي العلامات).
+  // لديك، أضف ج باللون الأزرق"، ثم غُيِّر إلى الأخضر، ثم إلى البني
+  // (#A9793B نهاري / #C9A06A ليلي — نفس لون قف). طلب مباشر لاحق:
+  // تُلوَّن حتى على آخر كلمة في الآية (مثل ط وم) — مصحف المدينة فقط.
   //
   // فحص التعارض (طلب مباشر: تطبيق الخوارزمية العامة الموثَّقة أعلاه
   // تلقائيًا بلا حاجة لمراجعة يدوية من الصفر):
@@ -2078,6 +2104,9 @@ var KNOWN_SPLIT_WORD_FRAGMENTS = ["اٰ تُوۡهُمۡ", "اٰ تَيۡتُم�
           nonKufiHostResolved[hostKey] = {sym: sSym || '', color: sCol, mapKey: skey};
           // ما عدا «لا» وبلا رمز: ضع نجمة سجاوندي على المضيف نفسه
           if(!sSym || sSym === 'لا') return;
+          // سياسة لا/صلي: لا تُلوَّن علامة سجاوندي على كلمة تحمل لا أو صلي
+          var hostWordKey1 = a.surah + ':' + a.ayah + ':' + (hostIdx + 1);
+          if(DEFAULT_MARK_LA_SILA_BLOCK[hostWordKey1]) return;
           if(sSym === 'ط') shiftedMutlaqIdxs.push(hostIdx);
           else if(sSym === 'قف') shiftedQifIdxs.push(hostIdx);
           else if(sSym === 'ص') shiftedSadIdxs.push(hostIdx);
@@ -2109,10 +2138,12 @@ var KNOWN_SPLIT_WORD_FRAGMENTS = ["اٰ تُوۡهُمۡ", "اٰ تَيۡتُم�
       // تلوين نص الكلمة — راجع القواعد المقابلة في style.css التي تستثني
       // .khilaf-word من تلوين نص has-default-* وتُظهر النجمة بدلاً منه.
       if(isKhilafWord) extraCls += ' khilaf-word';
-      // ط فقط: تُلوَّن حتى على آخر كلمة في الآية ليتوافق مع ظهورها في
-      // مصحف النسخ (مثل «الدين» و«نستعين» في الفاتحة — طلب 2026-08-10).
-      // باقي العلامات (ص/ز/ق/قف/ج) تبقى على قاعدة «لا تُلوَّن آخر كلمة»
-      // لأن نهاية الآية وقف بالفعل. م (الوقف اللازم) بلا هذا الاستثناء أصلًا.
+      // ط وم وج: تُلوَّن حتى على آخر كلمة في الآية.
+      // ط: ليتوافق مع ظهورها في مصحف النسخ (مثل «الدين» و«نستعين» في الفاتحة — طلب 2026-08-10).
+      // م: بلا استثناء «آخر كلمة» أصلًا (الوقف اللازم).
+      // ج: طلب مباشر لاحق — تُلوَّن بالبني حتى لو كانت آخر كلمة في الآية (مصحف المدينة).
+      // باقي العلامات (ص/ز/ق/قف) تبقى على قاعدة «لا تُلوَّن آخر كلمة»
+      // لأن نهاية الآية وقف بالفعل.
       var isDefaultWaqfMutlaq = !!(defaultWaqfMutlaqIdxs && defaultWaqfMutlaqIdxs.indexOf(idx) !== -1) ||
         shiftedMutlaqIdxs.indexOf(idx) !== -1;
       if(isDefaultWaqfMutlaq) extraCls += ' has-default-waqf';
@@ -2131,8 +2162,8 @@ var KNOWN_SPLIT_WORD_FRAGMENTS = ["اٰ تُوۡهُمۡ", "اٰ تَيۡتُم�
       var isDefaultQif = ((!!(defaultQifIdxs && defaultQifIdxs.indexOf(idx) !== -1) &&
         idx !== words.length - 1) || shiftedQifIdxs.indexOf(idx) !== -1);
       if(isDefaultQif) extraCls += ' has-default-qif';
-      var isDefaultJeem = ((!!(defaultJeemIdxs && defaultJeemIdxs.indexOf(idx) !== -1) &&
-        idx !== words.length - 1) || shiftedJeemIdxs.indexOf(idx) !== -1);
+      var isDefaultJeem = !!(defaultJeemIdxs && defaultJeemIdxs.indexOf(idx) !== -1) ||
+        shiftedJeemIdxs.indexOf(idx) !== -1;
       if(isDefaultJeem) extraCls += ' has-default-jeem';
       // رأس آية لغير الكوفيين — نجمة في مصحف المدينة فقط.
       // المضيف يُحدَّد بمطابقة حروف الأساس (أعلاه) لا بالفهرس وحده.
