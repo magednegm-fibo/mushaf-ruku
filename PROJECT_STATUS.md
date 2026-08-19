@@ -1,7 +1,7 @@
 # Project Status
 
-**الإصدار الحالي:** 1.0.476  
-**آخر تحديث:** 2026-08-17
+**الإصدار الحالي:** 1.0.485  
+**آخر تحديث:** 2026-08-18
 
 هذا الملف يُحدَّث مع كل إصدار ويُضمَّن دائمًا داخل الـ ZIP.  
 الغرض: حالة واضحة في بداية أي Session جديدة — ما اكتمل، وما هو معلَّق، وما يُفترض ألا يُمس.
@@ -19,7 +19,45 @@
 
 ---
 
+### 1.0.485 — Tafsir TTS: pause after ornate closing bracket ﴾
 
+- Aysar uses ﴿...﴾ (U+FD3E close), not ASCII ). Pause now applied on U+FD3E
+- ASCII ) and fullwidth ） still supported
+
+---
+
+### 1.0.484 — Aysar letter-name TTS: match partial diacritics + ﴿﴾
+
+- Aysar API ships ألِف / لاَم / مِيم with partial tashkeel and ornate brackets
+- Letter-name matcher now allows optional diacritics between base letters and wraps ﴿ ﴾ / ( )
+- Display text unchanged; Mukhtasar path untouched
+
+---
+
+### 1.0.483 — Tafsir TTS: pause after closing parentheses
+
+- TTS-only: `)` and `﴾` become a short speech boundary (period) so the next word is not joined
+- Applies to Mukhtasar + Aysar speak paths; display text unchanged
+- No other TTS / settings / source changes
+
+---
+
+### 1.0.482 — Tafsir TTS rate 0.9
+
+- سرعة نطق التفسير (المختصر + أيسر): `u.rate = 0.9` بدل 0.95
+- لا تغيير آخر
+
+---
+
+### 1.0.481 — دمج أيسر التفاسير مع الحفاظ على المختصر كـ baseline
+
+- BASELINE: 1.0.476 (المختصر في تفسير القرآن + TTS كامل CATT/dictionary/…)
+- أُضيف: أيسر التفاسير (Quranpedia book 54) من 1.0.480 مع Direct TTS فقط
+- محدد تفسير في الإعدادات (بعد نطاق التلاوة) — default = المختصر
+- عزل cache و TTS state بين التفسيرين
+- لا تغيير على نظام التلاوة القرآنية أو باقي الإعدادات
+
+---
 
 ### 1.0.476 — استبعاد تلقائي شامل لـ لا/صلي من تلوين السجاوندي
 

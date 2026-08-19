@@ -245,6 +245,11 @@
       els.rukuRepeatSelect.value = String(state.rukuRepeatCount);
     }
     if(els.displayScopeSelect && state.displayScope) els.displayScopeSelect.value = state.displayScope;
+    if(els.tafsirSelect){
+      var tv = state.selectedTafsir || 'mukhtasar';
+      if(tv !== 'mukhtasar' && tv !== 'aysar') tv = 'mukhtasar';
+      els.tafsirSelect.value = tv;
+    }
   }
 
   function finalUISyncAfterRehydrate(){
@@ -406,6 +411,20 @@
       saveState();
       UI.haptic && UI.haptic();
     });
+
+    if(els.tafsirSelect){
+      els.tafsirSelect.addEventListener('change', function(){
+        var val = els.tafsirSelect.value;
+        if(val !== 'mukhtasar' && val !== 'aysar') val = 'mukhtasar';
+        state.selectedTafsir = val;
+        saveState();
+        UI.haptic && UI.haptic();
+        // Notify ReaderTafsir so it can stop TTS, update labels, and isolate state.
+        if(typeof ReaderTafsir !== 'undefined' && ReaderTafsir.onTafsirChanged){
+          ReaderTafsir.onTafsirChanged(val);
+        }
+      });
+    }
 
     els.wakeLockToggle && els.wakeLockToggle.addEventListener('change', function(){
       state.keepScreenAwake = els.wakeLockToggle.checked;

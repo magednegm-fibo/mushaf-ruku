@@ -89,6 +89,7 @@
     homeProgressText: document.getElementById('homeProgressText'),
     stripFill: document.getElementById('stripFill'),
     displayScopeSelect: document.getElementById('displayScopeSelect'),
+    tafsirSelect: document.getElementById('tafsirSelect'),
 
     tileSurah: document.getElementById('tileSurah'),
     tileJuz: document.getElementById('tileJuz'),
@@ -132,6 +133,7 @@
 
     btnTafsir: document.getElementById('btnTafsir'),
     tafsirPanel: document.getElementById('tafsirPanel'),
+    tafsirPanelTitle: document.getElementById('tafsirPanelTitle'),
     btnCloseTafsir: document.getElementById('btnCloseTafsir'),
     tafsirList: document.getElementById('tafsirList'),
     btnTafsirPrev: document.getElementById('btnTafsirPrev'),

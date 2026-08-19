@@ -37,12 +37,15 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icons/favicon.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
-<!-- Warms up the connection (DNS + TLS) to the tafsir source ahead of
+<!-- Warms up the connection (DNS + TLS) to the tafsir sources ahead of
      time, on page load, instead of only starting it the moment the user
      taps تفسير الركوع for the first time — that handshake is normally
-     the biggest chunk of the "first tap" delay. See reader-tafsir.js. -->
+     the biggest chunk of the "first tap" delay. See reader-tafsir.js.
+     Mukhtasar: raw.githubusercontent.com | Aysar: api.quranpedia.net -->
 <link rel="preconnect" href="https://raw.githubusercontent.com" crossorigin>
 <link rel="dns-prefetch" href="https://raw.githubusercontent.com">
+<link rel="preconnect" href="https://api.quranpedia.net" crossorigin>
+<link rel="dns-prefetch" href="https://api.quranpedia.net">
 <link rel="stylesheet" href="style.css">
 <!-- QCF Override (رسمي) — راجع qcf-override.css / tools/README.md -->
 <link rel="stylesheet" href="qcf-override.css">
@@ -144,7 +147,7 @@
         <svg id="listenIconPause" viewBox="0 0 24 24" class="hidden"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>
         <svg id="listenIconLoading" class="listen-spin hidden" viewBox="0 0 24 24"><path d="M12 2a10 10 0 0 1 10 10" fill="none" stroke-width="2.4"/></svg>
       </button>
-      <button class="tafsir-btn" id="btnTafsir" aria-label="المختصر في تفسير القرآن" title="المختصر في تفسير القرآن">
+      <button class="tafsir-btn" id="btnTafsir" aria-label="التفسير" title="التفسير">
         <svg viewBox="0 0 24 24"><path d="M12 6c-2-1.5-5-2-8-1v13c3-1 6-.5 8 1 2-1.5 5-2 8-1V5c-3-1-6-.5-8 1z"/><path d="M12 6v13"/></svg>
       </button>
 
@@ -625,10 +628,10 @@
     </div>
   </div>
 
-  <!-- ============ TAFSIR PANEL (تفسير الركوع - المختصر) ============ -->
+  <!-- ============ TAFSIR PANEL (تفسير الركوع) ============ -->
   <div id="tafsirPanel" class="panel hidden">
     <div class="panel-head">
-      <h2>المختصر في تفسير القرآن</h2>
+      <h2 id="tafsirPanelTitle">المختصر في تفسير القرآن</h2>
       <div class="panel-head-actions">
         <button class="icon-btn tafsir-tts-btn hidden" id="btnTafsirTts" aria-label="استمع للتفسير" title="استمع للتفسير">
           <svg id="tafsirTtsIconPlay" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
@@ -844,6 +847,17 @@
       </div>
       <p class="about-text" id="recitationScopeHint" style="margin-top:2px;">
         يتم تشغيل التلاوة للركوع الحالي أو حتى نهاية نطاق العرض.
+      </p>
+      <hr class="settings-divider">
+      <div class="setting-row">
+        <span>التفسير</span>
+        <select class="reciter-select" id="tafsirSelect">
+          <option value="mukhtasar">المختصر في تفسير القرآن</option>
+          <option value="aysar">أيسر التفاسير</option>
+        </select>
+      </div>
+      <p class="about-text" id="tafsirSelectHint" style="margin-top:2px;">
+        نطق التفسير تجريبي وقد لا يكون دقيقًا في بعض المواضع.
       </p>
       <hr class="settings-divider">
       <div class="setting-row">

@@ -1,24 +1,19 @@
 // ReaderTafsir: "تفسير الركوع" panel (button top-right of the reader,
-// level with زر الاستماع), fetches المختصر في تفسير القرآن الكريم (Tafsir
-// Center for Quranic Studies) for every ayah on the current ruku page and
-// renders them in order, separated by a divider between each ayah's
-// tafsir.
+// level with زر الاستماع). Supports two independent tafsirs:
 //
-// The current ruku's tafsir is also silently warmed into `cache` as soon
-// as the reader shows a page — see prefetchCurrentRuku(), called from
-// onAfterRender in app.js — so that by the time the user actually taps
-// the button the network round-trip has usually already happened while
-// they were reading, and the panel just renders from cache. Nothing is
-// shown on screen for this warm-up; it only ever touches `cache`.
+//   1. المختصر في تفسير القرآن (Mukhtasar) — baseline 1.0.476
+//      Source: spa5k/tafsir_api  ar-tafsir-al-mukhtasar
+//      TTS: full CATT + Quran dictionary / phrases / Muqattaat / context
+//           corrections / normalizeTanween pipeline from 1.0.476
 //
-// Deliberately online-only, per direct request: nothing is bundled into
-// the app or written to data.js — each ayah's tafsir text is fetched from
-// a public, CORS-enabled mirror of the "ar-tafsir-al-mukhtasar" edition
-// (https://github.com/spa5k/tafsir_api) only at the moment the panel is
-// opened. Results are kept in an in-memory cache for the lifetime of the
-// page load only (so flipping back to a ruku already opened this session
-// doesn't re-fetch), never written to localStorage/IndexedDB — closing
-// the app clears it, consistent with "مش عايز أي تحميلات".
+//   2. أيسر التفاسير (Aysar) — from 1.0.480
+//      Source: Quranpedia API book=54
+//      TTS: Direct path only (normalizeTanweenForTts → Android TTS)
+//           No CATT, no Quran dictionary, no phrase/Muqattaat layers.
+//
+// Selection is stored as state.selectedTafsir ('mukhtasar' | 'aysar'),
+// default 'mukhtasar'. Cache keys are isolated by tafsir type so the two
+// never cross-contaminate. TTS state is stopped and reset on switch.
 //
 // Loaded before app.js (see index.html). Call ReaderTafsir.init(deps)
 // once; deps: els, state, PAGES, UI
@@ -28,43 +23,106 @@
 
   var els, state, PAGES, UI, ReaderManager;
 
-  var TAFSIR_BASE = 'https://raw.githubusercontent.com/spa5k/tafsir_api/main/tafsir/ar-tafsir-al-mukhtasar/';
-  // In-memory only — see the comment above for why this is intentionally
-  // never persisted to disk.
-  var cache = {}; // 'surah:ayah' -> tafsir text
-  var inFlight = {}; // 'surah:ayah' -> Promise, while a fetch hasn't settled yet —
-                      // stops a swipe and a background prefetch that land on
-                      // the same still-loading ayah from firing two requests.
-  var requestToken = 0; // guards against a slow fetch for a page the
-                         // reader has already navigated away from landing
-                         // on top of a newer page's results
-  var isOffline = false; // true while the panel is showing the "تعذّر
-                          // التحميل" retry state — see wireSwipe(), which
-                          // uses this to stop swipes from moving the
-                          // reader page behind the panel while there's no
-                          // connection to load a new ruku's tafsir with.
+  // --- Mukhtasar (baseline) ---
+  var MUKHTASAR_BASE = 'https://raw.githubusercontent.com/spa5k/tafsir_api/main/tafsir/ar-tafsir-al-mukhtasar/';
+  // --- Aysar (from 1.0.480) ---
+  var AYSAR_API_BASE = 'https://api.quranpedia.net/v1/ayah/';
+  var AYSAR_BOOK_ID = 54;
 
-  function cacheKey(surah, ayah){ return surah + ':' + ayah; }
+  // In-memory only — never persisted to disk.
+  // Keys: 'mukhtasar:surah:ayah' or 'aysar:surah:ayah'
+  var cache = {};
+  var inFlight = {};
+  var requestToken = 0;
+  var isOffline = false;
+
+  function getSelectedTafsir(){
+    var t = (state && state.selectedTafsir) || 'mukhtasar';
+    if(t !== 'mukhtasar' && t !== 'aysar') t = 'mukhtasar';
+    return t;
+  }
+
+  function tafsirLabel(t){
+    return t === 'aysar' ? 'أيسر التفاسير' : 'المختصر في تفسير القرآن';
+  }
+
+  function updateTafsirLabels(){
+    var t = getSelectedTafsir();
+    var label = tafsirLabel(t);
+    if(els && els.tafsirPanelTitle) els.tafsirPanelTitle.textContent = label;
+    if(els && els.btnTafsir){
+      els.btnTafsir.setAttribute('aria-label', label);
+      els.btnTafsir.setAttribute('title', label);
+    }
+  }
+
+  function cacheKey(surah, ayah){
+    return getSelectedTafsir() + ':' + surah + ':' + ayah;
+  }
+
+  // Strip Quranpedia HTML wrappers (Aysar only). Keep Arabic + tashkeel.
+  function stripTafsirHtml(raw){
+    if(!raw || typeof raw !== 'string') return '';
+    var t = raw;
+    t = t.replace(/<[^>]+>/g, '');
+    t = t.replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>');
+    t = t.replace(/(^|﴾)\s*\(\s*[\d\u0660-\u0669]+\s*\)\s*[-–—]\s*/g, '$1 ');
+    t = t.replace(/[ \t\r\n]+/g, ' ').trim();
+    return t;
+  }
+
+  function extractAysarText(json){
+    if(!json || !json.content || !json.content.length) return '';
+    var parts = [];
+    for(var i = 0; i < json.content.length; i++){
+      var block = json.content[i];
+      var raw = (block && block.text) ? block.text : '';
+      if(raw) parts.push(raw);
+    }
+    if(!parts.length) return '';
+    return stripTafsirHtml(parts.join(' '));
+  }
 
   function fetchOne(surah, ayah){
     var key = cacheKey(surah, ayah);
     if(cache[key] !== undefined) return Promise.resolve(cache[key]);
     if(inFlight[key]) return inFlight[key];
-    var p = fetch(TAFSIR_BASE + surah + '/' + ayah + '.json')
-      .then(function(res){
-        if(!res.ok) throw new Error('http ' + res.status);
-        return res.json();
-      })
-      .then(function(json){
-        var text = (json && json.text) ? json.text : '';
-        cache[key] = text;
-        delete inFlight[key];
-        return text;
-      })
-      .catch(function(err){
-        delete inFlight[key];
-        throw err;
-      });
+    var t = getSelectedTafsir();
+    var p;
+    if(t === 'aysar'){
+      var url = AYSAR_API_BASE + surah + '/' + ayah + '/book/' + AYSAR_BOOK_ID;
+      p = fetch(url)
+        .then(function(res){
+          if(!res.ok) throw new Error('http ' + res.status);
+          return res.json();
+        })
+        .then(function(json){
+          var text = extractAysarText(json);
+          cache[key] = text;
+          delete inFlight[key];
+          return text;
+        })
+        .catch(function(err){
+          delete inFlight[key];
+          throw err;
+        });
+    } else {
+      p = fetch(MUKHTASAR_BASE + surah + '/' + ayah + '.json')
+        .then(function(res){
+          if(!res.ok) throw new Error('http ' + res.status);
+          return res.json();
+        })
+        .then(function(json){
+          var text = (json && json.text) ? json.text : '';
+          cache[key] = text;
+          delete inFlight[key];
+          return text;
+        })
+        .catch(function(err){
+          delete inFlight[key];
+          throw err;
+        });
+    }
     inFlight[key] = p;
     return p;
   }
@@ -846,6 +904,28 @@
       });
   }
 
+  // TTS-only: treat closing parentheses as a short speech boundary so the
+  // following word is not joined to the parenthetical phrase.
+  // Display/source text is never modified. Does not affect normal word spacing.
+  // Supports ASCII () and Quranic ornate brackets ﴿ ﴾.
+  function normalizeParensForTts(text){
+    if(!text || typeof text !== 'string') return text;
+    try{
+      var out = text;
+      // Closing ASCII paren → period boundary (short pause on Android TTS)
+      out = out.replace(/\)\s*/g, '). ');
+      // Closing ornate Arabic bracket ﴾ (U+FD3E) — Aysar uses ﴿...﴾ not (...)
+      out = out.replace(/\uFD3E\s*/g, '\uFD3E. ');
+      // Fullwidth closing paren ）
+      out = out.replace(/\uFF09\s*/g, '\uFF09. ');
+      // Collapse accidental double spaces introduced by the above
+      out = out.replace(/ {2,}/g, ' ');
+      return out;
+    }catch(e){
+      return text;
+    }
+  }
+
   // Mobile-visible TTS pipeline debug (diagnosis only — does not change speech).
   // Set TTS_PIPELINE_DEBUG = false to hide.
   var TTS_PIPELINE_DEBUG = false;
@@ -901,6 +981,136 @@
     if(!preferredVoice) preferredVoice = pickArabicVoice();
     if(gen !== ttsGeneration) return Promise.resolve();
 
+    // Route by selected tafsir: Aysar uses Direct TTS (1.0.480), Mukhtasar uses full pipeline (1.0.476).
+    if(getSelectedTafsir() === 'aysar'){
+      return speakTextAysar(text, meta, gen);
+    }
+    return speakTextMukhtasar(text, meta, gen);
+  }
+
+  // -----------------------------------------------------------------
+  // Aysar Direct TTS (from 1.0.480) — no CATT, no Quran layers.
+  // Minimal speech-only fix for letter names as written in Aysar text
+  // (e.g. "ألف. لام. ميم.") so Android TTS gets sukoon endings:
+  // أَلِف لَامْ مِيمْ — display text is never modified.
+  // This is NOT the Mukhtasar expandMuqattaatForTts pipeline.
+  // -----------------------------------------------------------------
+  function normalizeLetterNamesForTts(text){
+    if(!text || typeof text !== 'string') return text;
+    try{
+      // Optional tashkeel/tatweel between base letters — Aysar API often ships
+      // partial diacritics inside letter names (e.g. ألِف / لاَم / مِيم).
+      var T = '[\\u064B-\\u065F\\u0670\\u0640]*';
+      function nameRe(letters){
+        // letters: array of base Arabic letters, e.g. ['أ','ل','ف']
+        var parts = [];
+        for(var i = 0; i < letters.length; i++){
+          parts.push(letters[i].replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&') + T);
+        }
+        return parts.join('');
+      }
+      // Separator between letter-names: optional period / ornate dots / spaces
+      var SEP = '[\\s.\\u06D4\\uFD3E\\uFD3F]*';
+      // Optional surrounding ornate or ASCII parens around the whole group
+      var WRAP_L = '[\\(\\uFD3F]?';
+      var WRAP_R = '[\\)\\uFD3E]?';
+
+      var pairs = [
+        // ألف لام ميم صاد
+        [new RegExp(WRAP_L + nameRe(['أ','ل','ف']) + SEP + nameRe(['ل','ا','م']) + SEP + nameRe(['م','ي','م']) + SEP + nameRe(['ص','ا','د']) + WRAP_R, 'g'), 'أَلِف لَامْ مِيمْ صَادْ'],
+        // ألف لام ميم را
+        [new RegExp(WRAP_L + nameRe(['أ','ل','ف']) + SEP + nameRe(['ل','ا','م']) + SEP + nameRe(['م','ي','م']) + SEP + nameRe(['ر','ا']) + WRAP_R, 'g'), 'أَلِف لَامْ مِيمْ رَا'],
+        // ألف لام ميم
+        [new RegExp(WRAP_L + nameRe(['أ','ل','ف']) + SEP + nameRe(['ل','ا','م']) + SEP + nameRe(['م','ي','م']) + WRAP_R, 'g'), 'أَلِف لَامْ مِيمْ'],
+        // ألف لام را
+        [new RegExp(WRAP_L + nameRe(['أ','ل','ف']) + SEP + nameRe(['ل','ا','م']) + SEP + nameRe(['ر','ا']) + WRAP_R, 'g'), 'أَلِف لَامْ رَا'],
+        // كاف ها يا عين صاد
+        [new RegExp(WRAP_L + nameRe(['ك','ا','ف']) + SEP + nameRe(['ه','ا']) + SEP + nameRe(['ي','ا']) + SEP + nameRe(['ع','ي','ن']) + SEP + nameRe(['ص','ا','د']) + WRAP_R, 'g'), 'كَافْ هَا يَا عَيْنْ صَادْ'],
+        // طا سين ميم
+        [new RegExp(WRAP_L + nameRe(['ط','ا']) + SEP + nameRe(['س','ي','ن']) + SEP + nameRe(['م','ي','م']) + WRAP_R, 'g'), 'طَا سِينْ مِيمْ'],
+        // طا سين
+        [new RegExp(WRAP_L + nameRe(['ط','ا']) + SEP + nameRe(['س','ي','ن']) + WRAP_R, 'g'), 'طَا سِينْ'],
+        // طا ها
+        [new RegExp(WRAP_L + nameRe(['ط','ا']) + SEP + nameRe(['ه','ا']) + WRAP_R, 'g'), 'طَا هَا'],
+        // يا سين
+        [new RegExp(WRAP_L + nameRe(['ي','ا']) + SEP + nameRe(['س','ي','ن']) + WRAP_R, 'g'), 'يَا سِينْ'],
+        // حا ميم
+        [new RegExp(WRAP_L + nameRe(['ح','ا']) + SEP + nameRe(['م','ي','م']) + WRAP_R, 'g'), 'حَا مِيمْ'],
+        // عين سين قاف
+        [new RegExp(WRAP_L + nameRe(['ع','ي','ن']) + SEP + nameRe(['س','ي','ن']) + SEP + nameRe(['ق','ا','ف']) + WRAP_R, 'g'), 'عَيْنْ سِينْ قَافْ'],
+        // صاد / قاف / نون standalone letter names (with optional trailing period)
+        [new RegExp(WRAP_L + nameRe(['ص','ا','د']) + '[.\\u06D4]?' + WRAP_R, 'g'), 'صَادْ'],
+        [new RegExp(WRAP_L + nameRe(['ق','ا','ف']) + '[.\\u06D4]?' + WRAP_R, 'g'), 'قَافْ'],
+        [new RegExp(WRAP_L + nameRe(['ن','و','ن']) + '[.\\u06D4]?' + WRAP_R, 'g'), 'نُونْ']
+      ];
+
+      var out = text;
+      for(var i = 0; i < pairs.length; i++){
+        out = out.replace(pairs[i][0], pairs[i][1]);
+      }
+      return out;
+    }catch(e){
+      return text;
+    }
+  }
+
+  function speakTextAysar(text, meta, gen){
+    if(gen !== ttsGeneration) return Promise.resolve();
+    // Direct path only: letter-name pronunciation + tanween fix. No CATT / dict / Muqattaat pipeline.
+    var speakable = normalizeLetterNamesForTts(text);
+    speakable = normalizeTanweenForTts(speakable);
+    speakable = normalizeParensForTts(speakable);
+    return new Promise(function(resolve){
+      if(gen !== ttsGeneration){ resolve(); return; }
+      var u = new SpeechSynthesisUtterance(speakable);
+      u.rate = 0.9;
+      u.pitch = 1;
+      u.volume = 1;
+      if(preferredVoice){
+        u.voice = preferredVoice;
+        u.lang = preferredVoice.lang || 'ar-SA';
+      }else{
+        u.lang = 'ar-SA';
+      }
+      var settled = false;
+      var started = false;
+      var watchdogTimer = null;
+      function settle(){
+        if(settled) return;
+        settled = true;
+        if(watchdogTimer != null){ try{ clearTimeout(watchdogTimer); }catch(e){} watchdogTimer = null; }
+        resolve();
+      }
+      function failSilentStart(){
+        if(settled) return;
+        settled = true;
+        if(watchdogTimer != null){ try{ clearTimeout(watchdogTimer); }catch(e){} watchdogTimer = null; }
+        if(gen === ttsGeneration){ abortTtsSession(TTS_SILENT_FAIL_MSG); }
+        resolve();
+      }
+      u.onstart = function(){
+        if(settled || gen !== ttsGeneration) return;
+        started = true;
+        if(watchdogTimer != null){ try{ clearTimeout(watchdogTimer); }catch(e){} watchdogTimer = null; }
+      };
+      u.onend = function(){ if(gen !== ttsGeneration){ settle(); return; } settle(); };
+      u.onerror = function(){ if(gen !== ttsGeneration){ settle(); return; } settle(); };
+      if(meta && meta.surah != null) setTtsHighlight(meta.surah, meta.ayah);
+      watchdogTimer = setTimeout(function(){
+        if(settled || started) return;
+        if(gen !== ttsGeneration){ settle(); return; }
+        failSilentStart();
+      }, TTS_STARTUP_WATCHDOG_MS);
+      try{ speechSynthesis.speak(u); }catch(e){ failSilentStart(); }
+    });
+  }
+
+  // -----------------------------------------------------------------
+  // Mukhtasar TTS (baseline 1.0.476) — full CATT + layers.
+  // -----------------------------------------------------------------
+  function speakTextMukhtasar(text, meta, gen){
+    if(gen !== ttsGeneration) return Promise.resolve();
+
     // Smart Wait (v1.0.463+): give CATT a real chance before local fallback.
     // - Cache hit  → use immediately
     // - Not ready  → wait up to SMART_WAIT_MS for an in-flight / new result
@@ -943,6 +1153,9 @@
       // U+0650 is spoken continuously. Convert it only in the TTS copy;
       // never alter the displayed/source text.
       speakable = speakable.replace(/\u0656/g, '\u0650');
+
+      // Parenthesis boundary pause (TTS-only)
+      speakable = normalizeParensForTts(speakable);
       return speakable;
     }
 
@@ -961,7 +1174,7 @@
           final: speakable
         });
         var u = new SpeechSynthesisUtterance(speakable);
-        u.rate = 0.95;
+        u.rate = 0.9;
         u.pitch = 1;
         u.volume = 1;
         // Prefer a listed Arabic voice when available; otherwise lang=ar-SA only
@@ -1310,8 +1523,18 @@
     opts = opts || {};
     // All background warm-up yields while TTS is speaking so the CATT
     // connection stays free for the current ayah's Smart Wait.
+    // Aysar uses Direct TTS — no CATT warm-up for it.
     var p = PAGES[pageIdx];
     if(!p || !p.ayahs) return Promise.resolve();
+
+    if(getSelectedTafsir() === 'aysar'){
+      // Still fetch texts into cache, but skip CATT entirely.
+      var chainA = Promise.resolve();
+      p.ayahs.forEach(function(a){
+        chainA = chainA.then(function(){ return fetchOne(a.surah, a.ayah).catch(function(){}); });
+      });
+      return chainA.catch(function(){});
+    }
 
     if(cattWarmPaused){
       return Promise.resolve();
@@ -1512,6 +1735,18 @@
     });
   }
 
+  function onTafsirChanged(newVal){
+    // Hard isolation on switch: stop any running TTS, clear queue/state,
+    // update labels, and if panel is open re-load current ruku with new source.
+    stopTts();
+    updateTafsirLabels();
+    if(els && els.tafsirPanel && !els.tafsirPanel.classList.contains('hidden')){
+      loadCurrentRuku();
+    }
+    // Pre-warm for the newly selected tafsir
+    try{ prefetchCurrentRuku(); }catch(e){}
+  }
+
   function init(deps){
     els = deps.els;
     state = deps.state;
@@ -1521,14 +1756,16 @@
 
     if(!els.btnTafsir || !els.tafsirPanel) return;
 
+    updateTafsirLabels();
+
     // Header TTS button starts hidden; startVoicesProbe() reveals it only
     // after a real Arabic voice is confirmed on this device.
     if(els.btnTafsirTts) els.btnTafsirTts.classList.add('hidden');
 
     els.btnTafsir.addEventListener('click', function(){
       reprobeOnPanelOpen();
-      // Warm CATT connection immediately so Smart Wait has a live socket
-      ensureCattConnection();
+      // Warm CATT connection only for Mukhtasar
+      if(getSelectedTafsir() === 'mukhtasar') ensureCattConnection();
       UI.openPanel(els.tafsirPanel);
       loadCurrentRuku();
     });
@@ -1562,6 +1799,8 @@
   window.ReaderTafsir = {
     init: init,
     prefetchCurrentRuku: prefetchCurrentRuku,
-    stopTts: stopTts
+    stopTts: stopTts,
+    onTafsirChanged: onTafsirChanged,
+    getSelectedTafsir: getSelectedTafsir
   };
 })();

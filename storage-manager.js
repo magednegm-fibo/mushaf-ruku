@@ -74,7 +74,7 @@
       colorCodingEnabled:true,
       pinchZoomEnabled:true, keepScreenAwake:false, reciter:'abdulbasit',
       autoScrollEnabled:true, recitationRepeatCount:1, rukuRepeatCount:1, playbackRate:1,
-      displayScope:'all', recitationScope:'ruku'
+      displayScope:'all', recitationScope:'ruku', selectedTafsir:'mukhtasar'
     };
     var result = Object.assign({}, DEFAULTS, readJSON(KEYS.STORAGE_KEY, {}));
 
