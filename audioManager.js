@@ -771,6 +771,13 @@
       stopListening();
       return;
     }
+    // Mutual exclusion: only one audio source may play. Stop Tafsir TTS
+    // (speechSynthesis) before any Quran playback path runs. Covers the
+    // main playAyahAt path and the playBismillahThenAyah branch below.
+    // playSurahPlaylistAt has the matching call for playlist modes.
+    if(window.ReaderTafsir && typeof ReaderTafsir.stopTts === 'function'){
+      ReaderTafsir.stopTts();
+    }
     var a = p.ayahs[ayahIdx];
     // البسملة بس لمسار "الاستماع للركوع" (أول الركوع أو لما التشغيل
     // يوصل لبداية سورة جديدة أثناء الركوع نفسه) — مش للضغط المطول على
@@ -921,6 +928,11 @@
     if(idx >= playlist.length){
       stopListening();
       return;
+    }
+    // Mutual exclusion: only one audio source may play. Stop Tafsir TTS
+    // before playlist-driven Quran playback (surah/juz/manzil/displayScope).
+    if(window.ReaderTafsir && typeof ReaderTafsir.stopTts === 'function'){
+      ReaderTafsir.stopTts();
     }
     var player = getAudioPlayer();
     if(!player){

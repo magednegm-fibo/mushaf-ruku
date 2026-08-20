@@ -1315,6 +1315,13 @@
     // Best-effort: refresh preferred Arabic voice if the list has loaded.
     // Absence of a listed voice is NOT a hard stop — speak with lang=ar-SA.
     if(!preferredVoice) preferredVoice = pickArabicVoice();
+    // Mutual exclusion: only one audio source may play. Stop Quran
+    // recitation (HTMLAudioElement) before any Tafsir TTS starts.
+    // playQueue is the single shared entry for both startTtsForRuku and
+    // speakSingleAyah (and for advancing the queue).
+    if(window.AudioManager && typeof AudioManager.stopListening === 'function'){
+      AudioManager.stopListening();
+    }
     ttsSpeaking = true;
     pauseCattWarm(); // keep CATT free for current ayah Smart Wait
     updateTtsButton();

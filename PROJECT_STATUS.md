@@ -1,7 +1,7 @@
 # Project Status
 
-**الإصدار الحالي:** 1.0.485  
-**آخر تحديث:** 2026-08-18
+**الإصدار الحالي:** 1.0.486  
+**آخر تحديث:** 2026-08-19
 
 هذا الملف يُحدَّث مع كل إصدار ويُضمَّن دائمًا داخل الـ ZIP.  
 الغرض: حالة واضحة في بداية أي Session جديدة — ما اكتمل، وما هو معلَّق، وما يُفترض ألا يُمس.
@@ -16,6 +16,15 @@
 2. لا تعيد مراجعة العناصر الموجودة في **Completed**.
 3. ركّز على **Pending** فقط.
 4. اعتبر هذا الملف هو المرجع الرسمي لحالة المشروع.
+
+---
+
+### 1.0.486 — Audio mutual exclusion: Quran vs Tafsir TTS
+
+- Only one audio source may play at a time (Quran HTMLAudioElement ↔ Tafsir speechSynthesis)
+- `playQueue` (shared TTS entry) calls `AudioManager.stopListening()` before any Tafsir speech
+- `playAyahAt` and `playSurahPlaylistAt` call `ReaderTafsir.stopTts()` before any Quran playback
+- No UI / prefetch / playlist / repeat / TTS voice changes
 
 ---
 
