@@ -1,7 +1,7 @@
 # Project Status
 
-**الإصدار الحالي:** 1.0.486  
-**آخر تحديث:** 2026-08-19
+**الإصدار الحالي:** 1.0.487  
+**آخر تحديث:** 2026-08-20
 
 هذا الملف يُحدَّث مع كل إصدار ويُضمَّن دائمًا داخل الـ ZIP.  
 الغرض: حالة واضحة في بداية أي Session جديدة — ما اكتمل، وما هو معلَّق، وما يُفترض ألا يُمس.
@@ -16,6 +16,18 @@
 2. لا تعيد مراجعة العناصر الموجودة في **Completed**.
 3. ركّز على **Pending** فقط.
 4. اعتبر هذا الملف هو المرجع الرسمي لحالة المشروع.
+
+---
+
+### 1.0.487 — Keep-screen-awake after backup restore
+
+- Bug: after «استعادة من ملف» when the restored settings had `keepScreenAwake: true`, the toggle showed ON but the Screen Wake Lock was not held (screen still slept). Toggling the switch off/on fixed it.
+- Cause: FileReader.onload is async — user activation from the file picker expires, and any visibilitychange while the picker was open requested the lock with the *pre-restore* state (usually false).
+- Fix (`settings.js`):
+  - Re-request wake lock after `rehydrateFromStorage()` completes on the restore path.
+  - `requestWakeLock` skips if a sentinel is already held; clearer comments on silent failure cases.
+  - Factory Reset path explicitly `releaseWakeLock()` after rehydrate (defaults are off).
+- No change to storage schema, backup format, or other settings.
 
 ---
 

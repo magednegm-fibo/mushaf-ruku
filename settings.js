@@ -185,16 +185,20 @@
   }
   function requestWakeLock(){
     if(!WAKE_LOCK_SUPPORTED || !state.keepScreenAwake) return;
+    // Avoid stacking multiple outstanding requests if one is already held.
+    if(wakeLockSentinel) return;
     navigator.wakeLock.request('screen').then(function(sentinel){
       wakeLockSentinel = sentinel;
       // The OS/browser releases the lock on its own if the page is
-      // hidden (e.g. switching apps); listen so it's re-acquired
-      // automatically when the reader comes back, without needing to
-      // retoggle the setting.
+      // hidden (e.g. switching apps) or for other system reasons. Clear
+      // our handle so a later visibilitychange / rehydrate can re-acquire
+      // without needing to retoggle the setting.
       wakeLockSentinel.addEventListener('release', function(){ wakeLockSentinel = null; });
     }).catch(function(){
       // Can fail for reasons outside our control (low battery mode, some
-      // in-app browsers, etc.) — fail silently rather than nag the reader.
+      // in-app browsers, expired user activation after async file restore,
+      // etc.) — fail silently rather than nag the reader. The next
+      // visibilitychange or explicit toggle will retry.
     });
   }
 
@@ -321,6 +325,13 @@
           }else{
             rehydrateFromStorage().then(function(){
               UI.showToast('تم استعادة النسخة الاحتياطية');
+              // FileReader.onload is async — any transient user-activation
+              // from the file picker is gone, and a visibilitychange that
+              // fired while the picker was open would have requested the
+              // lock with the *pre-restore* state (usually false). Re-request
+              // now that state.keepScreenAwake is the restored value so the
+              // checkbox and the actual lock stay in sync.
+              if(typeof requestWakeLock === 'function') requestWakeLock();
             }).catch(function(){
               UI.showToast('تعذّرت استعادة النسخة الاحتياطية');
             });
@@ -400,6 +411,9 @@
         }
         rehydrateFromStorage().then(function(){
           UI.showToast('تمت إعادة ضبط التطبيق');
+          // Defaults have keepScreenAwake:false — release any lock held
+          // from the previous session so the screen can sleep again.
+          if(typeof releaseWakeLock === 'function') releaseWakeLock();
         }).catch(function(){
           UI.showToast('تعذّرت إعادة ضبط التطبيق');
         });
