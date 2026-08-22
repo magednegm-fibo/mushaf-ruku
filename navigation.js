@@ -42,9 +42,18 @@
     if(!window.RUB_STARTS || !window.ReaderManager || typeof window.ReaderManager.findPageIndexForAyah !== 'function'){
       return [];
     }
+    // حدود الجزء في PAGES (قد تختلف عن بداية الربع التقليدي في RUB_STARTS:
+    // مثلًا أول ربع من الجزء 4 يبدأ عند آل عمران 93 وهي ما زالت على صفحة
+    // مُوسومة juz=3). عند نطاق العرض = الجزء الحالي يجب ألا يخرج التنقّل
+    // من صفحات هذا الجزء، وإلا بعد الضغط على «الربع الأول» تتغيّر
+    // curPage.juz فيُعاد بناء الفهرس لجزء آخر ويُبرَز الربع الثامن خطأً.
+    var firstPageIdxOfJuz = -1;
     var lastPageIdxOfJuz = -1;
-    for(var i = PAGES.length - 1; i >= 0; i--){
-      if(PAGES[i].juz === juzNum){ lastPageIdxOfJuz = i; break; }
+    for(var i = 0; i < PAGES.length; i++){
+      if(PAGES[i].juz === juzNum){
+        if(firstPageIdxOfJuz === -1) firstPageIdxOfJuz = i;
+        lastPageIdxOfJuz = i;
+      }
     }
     if(lastPageIdxOfJuz === -1) return [];
 
@@ -55,16 +64,20 @@
       if(!pair) continue;
       var pageIdx = window.ReaderManager.findPageIndexForAyah(pair[0], pair[1]);
       if(pageIdx === -1) continue;
+      // اربط بداية الربع داخل صفحات الجزء الحالي فقط حتى لا يخرج
+      // التنقّل من نطاق العرض (مثال: ربع 1 من الجزء 4 عند 3:93 على
+      // صفحة juz=3 → يُثبَّت على أول صفحة juz=4).
+      if(pageIdx < firstPageIdxOfJuz) pageIdx = firstPageIdxOfJuz;
+      if(pageIdx > lastPageIdxOfJuz) pageIdx = lastPageIdxOfJuz;
       starts.push({ordinal: q + 1, surah: pair[0], ayah: pair[1], startIdx: pageIdx});
     }
     return starts.map(function(s, idx){
       var nextStartIdx = (idx + 1 < starts.length) ? starts[idx + 1].startIdx : null;
       var endIdx = (nextStartIdx !== null) ? Math.max(s.startIdx, nextStartIdx - 1) : lastPageIdxOfJuz;
-      // اسم السورة بيتاخد من نفس الآية اللي الربع بيبدأ عندها بالظبط
-      // (s.surah/s.ayah) — مش من أول آية في الركوع (PAGES[s.startIdx]
-      // .ayahs[0])، لأن حدود الأرباع مش بالضرورة على حدود الركوعات: لو
-      // الربع بدأ في نص ركوع بيخص سورة تانية عن اللي بدأ بيها الركوع نفسه
-      // (نادر لكن ممكن)، لازم اسم السورة الصحيح ده هو اللي يتاخد.
+      if(endIdx > lastPageIdxOfJuz) endIdx = lastPageIdxOfJuz;
+      if(endIdx < s.startIdx) endIdx = s.startIdx;
+      // اسم السورة من آية بداية الربع التقليدية إن وُجدت في الصفحة،
+      // وإلا من أول آية في الصفحة المُقيَّدة بعد الـ clamp.
       var surahName = null;
       var pageAyahs = PAGES[s.startIdx].ayahs;
       for(var k = 0; k < pageAyahs.length; k++){
@@ -72,6 +85,9 @@
           surahName = pageAyahs[k].surahName;
           break;
         }
+      }
+      if(!surahName && pageAyahs.length){
+        surahName = pageAyahs[0].surahName;
       }
       return {
         type: 'quarter',

@@ -1,7 +1,7 @@
 # Project Status
 
-**الإصدار الحالي:** 1.0.487  
-**آخر تحديث:** 2026-08-20
+**الإصدار الحالي:** 1.0.489  
+**آخر تحديث:** 2026-08-21
 
 هذا الملف يُحدَّث مع كل إصدار ويُضمَّن دائمًا داخل الـ ZIP.  
 الغرض: حالة واضحة في بداية أي Session جديدة — ما اكتمل، وما هو معلَّق، وما يُفترض ألا يُمس.
@@ -18,6 +18,22 @@
 4. اعتبر هذا الملف هو المرجع الرسمي لحالة المشروع.
 
 ---
+
+### 1.0.489 — Juz-scope quarter index: clamp starts inside the juz
+
+- Bug: with نطاق العرض = الجزء الحالي, opening the ruku index on a page in juz 4 highlighted the 8th quarter correctly, but tapping «الربع الأول» jumped to a page still tagged juz=3 (RUB_STARTS first quarter of juz 4 = آل عمران 93 lands on a juz-3 page). Reopening the index then used curPage.juz=3 and highlighted the 8th quarter of juz 3.
+- Cause: traditional rub boundaries in `RUB_STARTS` can start slightly before the first `PAGES[i].juz === N` page.
+- Fix (`navigation.js` `computeJuzQuarterRows`): clamp each quarter `startIdx`/`endIdx` to `[firstPageOfJuz, lastPageOfJuz]` so navigation never leaves the display scope.
+- No change to RUB_STARTS data, other scopes, or search.
+
+### 1.0.488 — Tafsir TTS: correct pronunciation of «يا أيها»
+
+- Bug: Aysar (and sometimes Mukhtasar) TTS read concatenated `ياأيها` with sukoon on the yāʾ before hāʾ (yā-yhā) instead of the correct أَيُّهَا (shadda + ḍamma).
+- Fix (`reader-tafsir.js`):
+  - New TTS-only helper `normalizeYaAyyuhaForTts` rewrites common surface forms (`ياأيها`, `يا أيها`, partial tashkeel) to `يَا أَيُّهَا`.
+  - Applied on both Aysar Direct path and Mukhtasar full pipeline.
+  - Display/source text never modified.
+- No other TTS / settings / source changes.
 
 ### 1.0.487 — Keep-screen-awake after backup restore
 

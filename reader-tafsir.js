@@ -1054,10 +1054,31 @@
     }
   }
 
+  // TTS-only: force correct pronunciation of "يا أيها" / "ياأيها".
+  // Android/Web Speech often reads concatenated ياأيها with sukoon on the
+  // yāʾ before hāʾ (yā-yhā). Correct form is يَا أَيُّهَا (shadda + ḍamma).
+  // Display text is never modified.
+  function normalizeYaAyyuhaForTts(text){
+    if(!text || typeof text !== 'string') return text;
+    try{
+      var T = '[\\u064B-\\u065F\\u0670\\u0640]*'; // optional tashkeel/tatweel
+      // Match يا + optional space + أيها / اياها variants (with or without existing marks)
+      var re = new RegExp(
+        'ي' + T + 'ا' + T + '[\\s\\u00A0]*' +
+        '[اأإآٱ]?' + T + 'ي' + T + 'ه' + T + 'ا' + T,
+        'g'
+      );
+      return text.replace(re, 'يَا أَيُّهَا');
+    }catch(e){
+      return text;
+    }
+  }
+
   function speakTextAysar(text, meta, gen){
     if(gen !== ttsGeneration) return Promise.resolve();
     // Direct path only: letter-name pronunciation + tanween fix. No CATT / dict / Muqattaat pipeline.
     var speakable = normalizeLetterNamesForTts(text);
+    speakable = normalizeYaAyyuhaForTts(speakable);
     speakable = normalizeTanweenForTts(speakable);
     speakable = normalizeParensForTts(speakable);
     return new Promise(function(resolve){
@@ -1141,6 +1162,9 @@
         meta && meta.surah,
         meta && meta.ayah
       );
+
+      // Force correct "يا أيها" pronunciation (shadda + ḍamma)
+      speakable = normalizeYaAyyuhaForTts(speakable);
 
       // FINAL Android TTS compatibility pass. Keep this as the last text
       // transformation so no later layer can reintroduce tanween.
