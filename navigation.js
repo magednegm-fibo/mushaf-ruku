@@ -42,11 +42,10 @@
     if(!window.RUB_STARTS || !window.ReaderManager || typeof window.ReaderManager.findPageIndexForAyah !== 'function'){
       return [];
     }
-    // حدود الجزء في PAGES (قد تختلف عن بداية الربع التقليدي في RUB_STARTS:
-    // مثلًا أول ربع من الجزء 4 يبدأ عند آل عمران 93 وهي ما زالت على صفحة
-    // مُوسومة juz=3). عند نطاق العرض = الجزء الحالي يجب ألا يخرج التنقّل
-    // من صفحات هذا الجزء، وإلا بعد الضغط على «الربع الأول» تتغيّر
-    // curPage.juz فيُعاد بناء الفهرس لجزء آخر ويُبرَز الربع الثامن خطأً.
+    // first/last page of the requested juz — used only for endIdx of the
+    // last quarter and for empty-juz guard. Navigation startIdx is the
+    // page that actually contains RUB_STARTS ayah (may be tagged with a
+    // neighbouring juz), so «الربع الأول» of juz 12 opens ruku 183.
     var firstPageIdxOfJuz = -1;
     var lastPageIdxOfJuz = -1;
     for(var i = 0; i < PAGES.length; i++){
@@ -62,13 +61,12 @@
     for(var q = 0; q < 8; q++){
       var pair = window.RUB_STARTS[firstGlobalRub + q];
       if(!pair) continue;
+      // اذهب إلى صفحة الركوع التي تقع فيها آية بداية الربع الرسمية
+      // (RUB_STARTS) دون تثبيت داخل صفحات الجزء الموسومة — مثال:
+      // الربع الأول من الجزء 12 عند هود 6 → الركوع 183 حتى لو الصفحة
+      // موسومة juz=11.
       var pageIdx = window.ReaderManager.findPageIndexForAyah(pair[0], pair[1]);
       if(pageIdx === -1) continue;
-      // اربط بداية الربع داخل صفحات الجزء الحالي فقط حتى لا يخرج
-      // التنقّل من نطاق العرض (مثال: ربع 1 من الجزء 4 عند 3:93 على
-      // صفحة juz=3 → يُثبَّت على أول صفحة juz=4).
-      if(pageIdx < firstPageIdxOfJuz) pageIdx = firstPageIdxOfJuz;
-      if(pageIdx > lastPageIdxOfJuz) pageIdx = lastPageIdxOfJuz;
       starts.push({ordinal: q + 1, surah: pair[0], ayah: pair[1], startIdx: pageIdx});
     }
     return starts.map(function(s, idx){
@@ -76,8 +74,7 @@
       var endIdx = (nextStartIdx !== null) ? Math.max(s.startIdx, nextStartIdx - 1) : lastPageIdxOfJuz;
       if(endIdx > lastPageIdxOfJuz) endIdx = lastPageIdxOfJuz;
       if(endIdx < s.startIdx) endIdx = s.startIdx;
-      // اسم السورة من آية بداية الربع التقليدية إن وُجدت في الصفحة،
-      // وإلا من أول آية في الصفحة المُقيَّدة بعد الـ clamp.
+      // اسم السورة من آية بداية الربع إن وُجدت في الصفحة، وإلا من أول آية فيها.
       var surahName = null;
       var pageAyahs = PAGES[s.startIdx].ayahs;
       for(var k = 0; k < pageAyahs.length; k++){
@@ -129,11 +126,21 @@
   // ---------------------------------------------------------------------
   // "الذهاب إلى جزء رقم" — نفس فكرة findPageIndexForManzil فوق، بس لما
   // نطاق العرض = الجزء: زر "الذهاب إلى ركوع رقم" (btnGoto) يتحول لأداة
-  // الذهاب إلى جزء رقم (١-٣٠). أول ركوع في الجزء N هو أول صفحة PAGES ليها
-  // p.juz === N (PAGES مرتبة بالفعل بترتيب المصحف)، فمفيش داعي لـ
-  // findPageIndexForAyah زي المنزل. Pure/DOM-free على قصد.
+  // الذهاب إلى جزء رقم (١-٣٠). أول صفحة للجزء N = صفحة الركوع التي فيها
+  // آية بداية أول ربع في الجزء (RUB_STARTS[(N-1)*8]) — نفس منطق فهرس
+  // الأرباع، مش أول صفحة موسومة p.juz === N.
   function findPageIndexForJuz(PAGES, juzNum){
     if(!juzNum || juzNum < 1 || juzNum > 30) return -1;
+    // بداية الجزء الرسمية = أول ربع في الجزء (RUB_STARTS[(juz-1)*8]).
+    // مثال: الجزء 12 يبدأ هود 6 على الركوع 183، حتى لو PAGES[i].juz للصفحة
+    // ما زال 11 (وسم الصفحة يتبع أول آية في الركوع أحيانًا).
+    if(window.RUB_STARTS && window.ReaderManager && typeof window.ReaderManager.findPageIndexForAyah === 'function'){
+      var pair = window.RUB_STARTS[(juzNum - 1) * 8];
+      if(pair){
+        var idx = window.ReaderManager.findPageIndexForAyah(pair[0], pair[1]);
+        if(idx !== -1) return idx;
+      }
+    }
     for(var i = 0; i < PAGES.length; i++){
       if(PAGES[i].juz === juzNum) return i;
     }
@@ -143,7 +150,8 @@
   // افتراضية لمربع الإدخال، بنفس منطق currentManzilNumber فوق.
   function currentJuzNumber(PAGES, state){
     var curPage = PAGES[state.page];
-    return (curPage && curPage.juz) ? curPage.juz : 1;
+    if(!curPage) return 1;
+    return effectiveJuzForPage(curPage);
   }
   // ---------------------------------------------------------------------
   // "الانتقال إلى سورة" — عند نطاق العرض = السورة الحالية، زر "الذهاب إلى
@@ -177,19 +185,49 @@
     return null;
   }
 
+  // الجزء «الفعّال» لصفحة ركوع عند نطاق العرض = الجزء:
+  // 1) لو الصفحة فيها آية بداية جزء رسمي (أول ربع في RUB_STARTS) → هذا الجزء
+  //    (مثال: ع 183 فيها هود 6 → جزء 12، حتى لو أول آية في الصفحة هود 1
+  //    وpage.juz = 11).
+  // 2) وإلا: من موضع أول آية في الصفحة ضمن الأرباع العالمية.
+  function effectiveJuzForPage(page){
+    if(!page || !page.ayahs || !page.ayahs.length || !window.RUB_STARTS){
+      return page && page.juz ? page.juz : 1;
+    }
+    var i, pair, a, j;
+    for(j = 1; j <= 30; j++){
+      pair = window.RUB_STARTS[(j - 1) * 8];
+      if(!pair) continue;
+      for(i = 0; i < page.ayahs.length; i++){
+        a = page.ayahs[i];
+        if(a.surah === pair[0] && a.ayah === pair[1]) return j;
+      }
+    }
+    var fa = page.ayahs[0];
+    var best = -1;
+    for(i = 0; i < window.RUB_STARTS.length; i++){
+      pair = window.RUB_STARTS[i];
+      if(fa.surah > pair[0] || (fa.surah === pair[0] && fa.ayah >= pair[1])) best = i;
+      else break;
+    }
+    if(best < 0) return page.juz || 1;
+    return Math.floor(best / 8) + 1;
+  }
+
   function computeIndexRows(PAGES, JUZ_INFO, state){
+
     var scope = state.displayScope || 'all';
     var curPage = PAGES[state.page];
     // نطاق "الجزء الحالي" له عرض مختلف تمامًا (٨ أرباع بحدودهم الحقيقية،
     // مش قائمة ركوعات) — يتفرّع هنا قبل منطق الفلترة العادي بالأسفل.
     if(scope === 'juz' && JUZ_INFO.fullMushaf && curPage){
-      return computeJuzQuarterRows(PAGES, curPage.juz);
+      return computeJuzQuarterRows(PAGES, effectiveJuzForPage(curPage));
     }
     var onlySurah = null, onlyJuz = null, manzilRange = null;
     if(curPage && scope === 'surah'){
       onlySurah = curPage.ayahs[0].surah;
     } else if(curPage && scope === 'juz' && JUZ_INFO.fullMushaf){
-      onlyJuz = curPage.juz;
+      onlyJuz = effectiveJuzForPage(curPage);
     } else if(curPage && scope === 'manzil'){
       manzilRange = window.getManzilRange(curPage.ayahs[0].surah);
     }
@@ -210,30 +248,53 @@
     var curItem = null;
     PAGES.forEach(function(p, i){
       if(onlySurah !== null && p.ayahs[0].surah !== onlySurah) return;
-      if(onlyJuz !== null && p.juz !== onlyJuz) return;
+      if(onlyJuz !== null && effectiveJuzForPage(p) !== onlyJuz) return;
       if(manzilRange !== null){
         var s = p.ayahs[0].surah;
         if(s < manzilRange.start || s > manzilRange.end) return;
       }
       var curSurah = p.ayahs[0].surah;
-      if(showJuzHeaders && p.juz !== lastJuz){
-        rows.push({type: 'header', juz: p.juz});
-        lastJuz = p.juz;
+      // رؤوس الأجزاء وحدود التجميع حسب الجزء الرسمي (effectiveJuz)، مش page.juz —
+      // الجزء 11 يبدأ عند التوبة 93 على ع 167 وليس عند ع 168 (آية 100).
+      var pageJuz = showJuzHeaders ? effectiveJuzForPage(p) : p.juz;
+      var openedNewJuz = false;
+      if(showJuzHeaders && pageJuz !== lastJuz){
+        rows.push({type: 'header', juz: pageJuz});
+        lastJuz = pageJuz;
         lastSurahInJuz = null;
         curItem = null;
+        openedNewJuz = true;
       }
       if(collapseBySurah && curItem && curSurah === lastSurahInJuz){
         curItem.endIdx = i;
         return;
       }
       lastSurahInJuz = curSurah;
+      var displayAyah = p.ayahs[0].ayah;
+      var displayRuku = JUZ_INFO.fullMushaf ? p.ruku : p.rukuInJuz;
+      var startIdx = i;
+      // أول صف بعد رأس الجزء: إن كانت بداية الجزء الرسمية في نفس السورة،
+      // اعرض آية البداية الرسمية (مثل 93 لا 90) ووجه startIdx لصفحتها.
+      if(openedNewJuz && window.RUB_STARTS){
+        var pair = window.RUB_STARTS[(pageJuz - 1) * 8];
+        if(pair && pair[0] === curSurah){
+          displayAyah = pair[1];
+          if(window.ReaderManager && typeof window.ReaderManager.findPageIndexForAyah === 'function'){
+            var oj = window.ReaderManager.findPageIndexForAyah(pair[0], pair[1]);
+            if(oj !== -1){
+              startIdx = oj;
+              displayRuku = JUZ_INFO.fullMushaf ? PAGES[oj].ruku : PAGES[oj].rukuInJuz;
+            }
+          }
+        }
+      }
       curItem = {
         type: 'item',
-        startIdx: i,
+        startIdx: startIdx,
         endIdx: i,
         name: p.ayahs[0].surahName,
-        ayah: p.ayahs[0].ayah,
-        ruku: JUZ_INFO.fullMushaf ? p.ruku : p.rukuInJuz
+        ayah: displayAyah,
+        ruku: displayRuku
       };
       rows.push(curItem);
     });
@@ -246,7 +307,7 @@
         return '<div class="juz-header">الجزء ' + UI.toArabicDigits(r.juz) + '</div>';
       }
       if(r.type === 'quarter'){
-        return '<div class="index-item" data-idx="' + r.startIdx + '" data-idx-end="' + r.endIdx + '">' +
+        return '<div class="index-item" data-idx="' + r.startIdx + '" data-idx-end="' + r.endIdx + '" data-ordinal="' + r.ordinal + '">' +
           '<div class="index-item-inner">' +
             '<span class="num">' + UI.toArabicDigits(r.ordinal) + '</span>' +
             '<div><div class="name">الربع ' + QUARTER_ORDINALS[r.ordinal - 1] + '</div>' +
@@ -301,18 +362,62 @@
   function highlightAndScrollIndexToCurrent(){
     var prev = els.indexList.querySelector('.index-item.current');
     if(prev) prev.classList.remove('current');
-    // data-idx-end may cover more than one collapsed ruku (see
-    // computeIndexRows), so match by range containment rather than an
-    // exact data-idx equality check.
     var items = els.indexList.querySelectorAll('.index-item');
     var current = null;
-    for(var k = 0; k < items.length; k++){
-      var start = parseInt(items[k].getAttribute('data-idx'), 10);
-      var endAttr = items[k].getAttribute('data-idx-end');
-      var end = endAttr !== null ? parseInt(endAttr, 10) : start;
-      if(state.page >= start && state.page <= end){
-        current = items[k];
-        break;
+    // نطاق العرض = الجزء: أبرز الربع الذي تقع آية بدايته (RUB_STARTS) في
+    // الصفحة الحالية — نفس صفحة الوجهة عند الضغط على صف الربع. مثال:
+    // ع 184 فيها هود 24 (بداية الربع 2) → يُبرَز الربع 2، حتى لو أول آية
+    // في الصفحة (هود 9) ما زالت بعد بداية الربع 1. إن لم تُوجد آية بداية
+    // أي ربع في الصفحة، يُستخدم موضع أول آية كالسابق.
+    var scope = state.displayScope;
+    var curPage = PAGES[state.page];
+    if(scope === 'juz' && curPage && curPage.ayahs && curPage.ayahs.length && window.RUB_STARTS){
+      var effJuz = effectiveJuzForPage(curPage);
+      var base = (effJuz - 1) * 8;
+      var ordinal = 0;
+      var rq, rp, ai, a;
+      for(rq = 7; rq >= 0; rq--){
+        rp = window.RUB_STARTS[base + rq];
+        if(!rp) continue;
+        for(ai = 0; ai < curPage.ayahs.length; ai++){
+          a = curPage.ayahs[ai];
+          if(a.surah === rp[0] && a.ayah === rp[1]){
+            ordinal = rq + 1;
+            break;
+          }
+        }
+        if(ordinal) break;
+      }
+      if(!ordinal){
+        var fa = curPage.ayahs[0];
+        for(rq = 7; rq >= 0; rq--){
+          rp = window.RUB_STARTS[base + rq];
+          if(!rp) continue;
+          if(fa.surah > rp[0] || (fa.surah === rp[0] && fa.ayah >= rp[1])){
+            ordinal = rq + 1;
+            break;
+          }
+        }
+      }
+      if(ordinal){
+        for(var k = 0; k < items.length; k++){
+          if(parseInt(items[k].getAttribute('data-ordinal'), 10) === ordinal){
+            current = items[k];
+            break;
+          }
+        }
+      }
+    }
+    // باقي الفهارس (ركوع / سور مجمّعة): تطابق نطاق data-idx .. data-idx-end
+    if(!current){
+      for(var k2 = 0; k2 < items.length; k2++){
+        var start = parseInt(items[k2].getAttribute('data-idx'), 10);
+        var endAttr = items[k2].getAttribute('data-idx-end');
+        var end = endAttr !== null ? parseInt(endAttr, 10) : start;
+        if(state.page >= start && state.page <= end){
+          current = items[k2];
+          break;
+        }
       }
     }
     if(current){
@@ -638,7 +743,7 @@
         els.indexPanelTitle.textContent = indexPanelTitleFor(
           state.displayScope || 'all',
           curPage ? curPage.ayahs[0].surah : null,
-          curPage ? curPage.juz : null,
+          curPage ? effectiveJuzForPage(curPage) : null,
           UI.toArabicDigits
         );
       }
@@ -659,23 +764,24 @@
 
     // ---- فهرس الأجزاء ----
     els.tileJuz && els.tileJuz.addEventListener('click', function(){
-      var juzJumpMap = {};
       var order = [];
-      PAGES.forEach(function(p, i){
-        if(JUZ_INFO.fullMushaf && !(p.juz in juzJumpMap)){
-          juzJumpMap[p.juz] = i;
-          order.push({juz: p.juz, page: i, name: p.ayahs[0].surahName});
-        }
-      });
-      // نطاق كل جزء: من ركوع/سورة أول صفحة فيه، لحد ركوع/سورة آخر صفحة
-      // قبل بداية الجزء اللي بعده مباشرة (أو آخر صفحة في المصحف كله لو
-      // ده آخر جزء). p.ruku هو نفس رقم الركوع العالمي المعروض في الفهرس
-      // الرئيسي (الفهرس)، فمفيش رقمين مختلفين للركوع في التطبيق.
+      // بداية كل جزء = آية أول ربع فيه (RUB_STARTS) → صفحة الركوع التي
+      // تحتويها، نفس قاعدة فهرس الأرباع (الجزء 12 → ع 183 @ هود 6).
+      for(var jn = 1; jn <= 30; jn++){
+        var pageIdx = findPageIndexForJuz(PAGES, jn);
+        if(pageIdx < 0) continue;
+        var startP = PAGES[pageIdx];
+        order.push({
+          juz: jn,
+          page: pageIdx,
+          name: startP.ayahs[0].surahName,
+          startRuku: startP.ruku
+        });
+      }
       order.forEach(function(j, k){
         var endPageIdx = (k < order.length - 1) ? (order[k+1].page - 1) : (PAGES.length - 1);
-        var startP = PAGES[j.page];
+        if(endPageIdx < j.page) endPageIdx = j.page;
         var endP = PAGES[endPageIdx];
-        j.startRuku = startP.ruku;
         j.endRuku = endP.ruku;
         j.endName = endP.ayahs[0].surahName;
       });
@@ -973,6 +1079,7 @@
     currentManzilNumber: currentManzilNumber,
     findPageIndexForJuz: findPageIndexForJuz,
     currentJuzNumber: currentJuzNumber,
+    effectiveJuzForPage: effectiveJuzForPage,
     resolveSurahGotoInput: resolveSurahGotoInput,
     gotoButtonLabelFor: gotoButtonLabelFor
   };

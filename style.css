@@ -1279,7 +1279,7 @@ body.indopak-font .sajdah-mark{
 }
 .ruku-label{
   font-family: var(--font-ui);
-  font-size: 12px;
+  font-size: 13px;
   color: var(--ink-soft);
 }
 body.night .ruku-label{ color:#9A9A9E; }

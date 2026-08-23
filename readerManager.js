@@ -2293,10 +2293,47 @@ var KNOWN_SPLIT_WORD_FRAGMENTS = ["اٰ تُوۡهُمۡ", "اٰ تَيۡتُم�
     });
 
     if(JUZ_INFO.fullMushaf){
-      els.rukuLabel.textContent = 'نهاية الركوع رقم ' + toArabicDigits(p.ruku) + ' من ' + toArabicDigits(PAGES.length) + ' \u2022 الجزء ' + toArabicDigits(p.juz);
+      // الجزء والربع الرسميان (effectiveJuz + آية بداية الربع على الصفحة).
+      var footerJuz = p.juz;
+      if(window.Navigation && typeof window.Navigation.effectiveJuzForPage === 'function'){
+        footerJuz = window.Navigation.effectiveJuzForPage(p);
+      }
+      var footerRub = 0;
+      if(window.RUB_STARTS && p.ayahs && p.ayahs.length){
+        var base = (footerJuz - 1) * 8;
+        var rq, rp, ai, a;
+        for(rq = 7; rq >= 0; rq--){
+          rp = window.RUB_STARTS[base + rq];
+          if(!rp) continue;
+          for(ai = 0; ai < p.ayahs.length; ai++){
+            a = p.ayahs[ai];
+            if(a.surah === rp[0] && a.ayah === rp[1]){
+              footerRub = rq + 1;
+              break;
+            }
+          }
+          if(footerRub) break;
+        }
+        if(!footerRub){
+          var fa = p.ayahs[0];
+          for(rq = 7; rq >= 0; rq--){
+            rp = window.RUB_STARTS[base + rq];
+            if(!rp) continue;
+            if(fa.surah > rp[0] || (fa.surah === rp[0] && fa.ayah >= rp[1])){
+              footerRub = rq + 1;
+              break;
+            }
+          }
+        }
+      }
+      var label = 'نهاية الركوع ' + toArabicDigits(p.ruku) + ' • الجزء ' + toArabicDigits(footerJuz);
+      if(footerRub >= 1 && footerRub <= 8){
+        label += ' • الربع ' + toArabicDigits(footerRub);
+      }
+      els.rukuLabel.textContent = label;
       els.rukuEnd && els.rukuEnd.classList.remove('incomplete');
       if(els.rukuMarkSpan) els.rukuMarkSpan.textContent = 'ع';
-    } else {
+        } else {
       els.rukuLabel.textContent = 'نهاية الركوع رقم ' + toArabicDigits(p.rukuInJuz) + ' من ' + (window.JUZ_INFO ? window.JUZ_INFO.name : 'الجزء');
       if(p.rukuComplete === false){
         els.rukuEnd && els.rukuEnd.classList.add('incomplete');
@@ -2328,6 +2365,11 @@ var KNOWN_SPLIT_WORD_FRAGMENTS = ["اٰ تُوۡهُمۡ", "اٰ تَيۡتُم�
       return PAGES[a].ayahs[0].surah === PAGES[b].ayahs[0].surah;
     }
     if(scope === 'juz'){
+      // جزء رسمي عبر بداية الأرباع/الأجزاء (RUB_STARTS)، مش page.juz فقط —
+      // حتى يبقى ع 183 (بداية الجزء 12 @ هود 6) ضمن الجزء 12 مع ع 184+.
+      if(window.Navigation && typeof window.Navigation.effectiveJuzForPage === 'function'){
+        return window.Navigation.effectiveJuzForPage(PAGES[a]) === window.Navigation.effectiveJuzForPage(PAGES[b]);
+      }
       return PAGES[a].juz === PAGES[b].juz;
     }
     if(scope === 'manzil'){

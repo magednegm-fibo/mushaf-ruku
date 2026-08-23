@@ -1,7 +1,7 @@
 # Project Status
 
-**الإصدار الحالي:** 1.0.489  
-**آخر تحديث:** 2026-08-21
+**الإصدار الحالي:** 1.0.503  
+**آخر تحديث:** 2026-08-22
 
 هذا الملف يُحدَّث مع كل إصدار ويُضمَّن دائمًا داخل الـ ZIP.  
 الغرض: حالة واضحة في بداية أي Session جديدة — ما اكتمل، وما هو معلَّق، وما يُفترض ألا يُمس.
@@ -18,6 +18,84 @@
 4. اعتبر هذا الملف هو المرجع الرسمي لحالة المشروع.
 
 ---
+
+### 1.0.503 — Guide: ayah-head circle wording
+
+- دليل القارئ / علامات الوقف / رأس الآية: الوقف لتمام المعنى.
+
+### 1.0.502 — Full-mushaf index juz headers use official juz
+
+
+- `computeIndexRows` (نطاق الكل): رؤوس الأجزاء والتجميع بـ `effectiveJuzForPage`؛ أول صف بعد الرأس يعرض آية بداية الجزء الرسمية إن وُجدت في نفس السورة (ج11 → توبة 93 / ع167).
+
+### 1.0.501 — Footer rub as digit
+
+
+- تذييل: نهاية الركوع N • الجزء J • الربع ١…٨ (أرقام).
+
+### 1.0.500 — Footer without «رقم»
+
+
+- تذييل: نهاية الركوع N • الجزء J • الربع …
+
+### 1.0.499 — ruku-label font 13px
+
+
+- `.ruku-label`: 13px.
+
+### 1.0.498 — Larger ruku-label footer font
+
+
+- `.ruku-label`: 12px → 14px.
+
+### 1.0.497 — Footer shows ruku + juz + rub ordinal
+
+
+- تذييل ع: نهاية الركوع رقم N • الجزء J • الربع الأول…الثامن (نفس قاعدة تصنيف الربع في الفهرس).
+
+### 1.0.496 — Footer juz number uses effectiveJuzForPage
+
+
+- تذييل علامة ع: يعرض الجزء الرسمي وليس `page.juz` فقط (ع 183 → 12).
+
+### 1.0.495 — Quarter highlight: prefer rub whose start ayah is on the page
+
+
+- إن وُجدت آية بداية ربع من أرباع الجزء على الصفحة الحالية يُبرَز أعلى ordinal منها؛ وإلا موضع أول آية.
+- ع 184 (هود 9–24) تبرز الربع 2 لأن هود 24 بداية الربع 2.
+
+### 1.0.494 — Juz-scope nav uses official juz boundaries
+
+
+- `inSameDisplayScope` (readerManager): عند نطاق الجزء يقارن `effectiveJuzForPage` للصفحتين حتى لا تُحسب ع 183 نهاية الجزء 11.
+- `Navigation.effectiveJuzForPage` مُصدَّر للاستخدام من readerManager.
+
+### 1.0.493 — effectiveJuzForPage for juz-scope quarter index
+
+
+- `effectiveJuzForPage`: إن كانت الصفحة تحتوي آية بداية جزء رسمي → هذا الجزء (ع 183 / هود 6 → جزء 12).
+- يُستخدم في بناء فهرس الأرباع، العنوان، الإبراز، و`currentJuzNumber`.
+
+### 1.0.492 — Juz index: official juz start ayah → ruku page
+
+
+- فهرس الأجزاء و`findPageIndexForJuz`: بداية الجزء من `RUB_STARTS[(juz-1)*8]` (أول ربع) → الركوع الذي فيه الآية، ليس أول `PAGES[i].juz === N`.
+- الجزء 12 → ع 183 (هود 6).
+
+### 1.0.491 — Quarter index highlight by official rub ayah
+
+
+- إبراز صف الربع في الفهرس (نطاق الجزء) حسب مقارنة أول آية في الصفحة الحالية مع `RUB_STARTS` للجزء، وليس احتواء `data-idx` فقط.
+- يمنع إبراز الربع 2 عند الوقوف على ع 184 في الجزء 12 (هود 9–24 ما زالت ضمن الربع 1 الذي يبدأ هود 6).
+
+### 1.0.490 — Quarter index: jump to ruku containing official rub start
+
+
+- فهرس الأرباع (نطاق الجزء): الضغط على ربع يذهب إلى صفحة الركوع التي تحتوي آية بداية الربع في `RUB_STARTS` (بدون clamp إلى صفحات `juz === N`).
+- مثال: جزء 12 ربع 1 → ع 183 (هود 6)؛ ربع 2 → ع 184.
+- لا تغيير على `RUB_STARTS`، علامات الركوع، أو باقي النطاقات.
+
+### 1.0.489 — Juz-scope quarter index: clamp starts inside the juz
 
 ### 1.0.489 — Juz-scope quarter index: clamp starts inside the juz
 
