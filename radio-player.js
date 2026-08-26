@@ -26,9 +26,7 @@
     { id: 'quran_cairo', name: 'القرآن الكريم من القاهرة', url: 'https://stream.radiojar.com/8s5u5tpdtwzuv' },
     { id: 'quran_makkah', name: 'القرءان الكريم من مكة', url: 'https://stream.radiojar.com/4wqre23fytzuv' },
     { id: 'sharawy_tafsir', name: 'تفسير الشيخ الشعراوي', url: 'https://serverkw.quran-uni.com:8202/;*.mp3' },
-    { id: 'mohamed_refaat', name: 'محمد رفعت', url: 'https://radio.mp3islam.com/listen/refaat/radio.mp3' },
-    { id: 'mustafa_ismail', name: 'مصطفى إسماعيل', url: 'https://qurango.net/radio/mustafa_ismail' },
-    { id: 'mahmoud_ali_albanna', name: 'محمود علي البنا', url: 'https://qurango.net/radio/mahmoud_ali__albanna' }
+    { id: 'mustafa_ismail', name: 'مصطفى إسماعيل', url: 'https://qurango.net/radio/mustafa_ismail' }
   ];
 
   var radioPlayer = null;   // <audio> الخاص بالإذاعة فقط
