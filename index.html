@@ -274,6 +274,7 @@
       <button class="guide-tab-btn active" id="tabWaqfMarks">علامات الوقف</button>
       <button class="guide-tab-btn" id="tabTajweedRules">قصر المنفصل</button>
       <button class="guide-tab-btn" id="tabKhatmDua">دعاء الختم</button>
+      <button class="guide-tab-btn" id="tabRadio">الإذاعة</button>
     </div>
     <div class="panel-body">
       <div class="guide-tab-panel" id="waqfMarksTab">
@@ -625,6 +626,34 @@
           <p>رَبَّنَا آتِنَا فِي الدُّنْيَا حَسَنَةً وَفِي الآخِرَةِ حَسَنَةً وَقِنَا عَذَابَ النَّارِ وَصَلَّى اللهُ عَلَى سَيِّدِنَا وَنَبِيِّنَا مُحَمَّدٍ وَعَلَى آلِهِ وَأَصْحَابِهِ الأَخْيَارِ وَسَلَّمَ تَسْلِيمًا كَثِيراً.</p>
         </div>
       </div>
+
+      <!-- الإذاعة: standalone live-radio player, entirely separate from
+           the ayah/reciter playback system — see radio-player.js. -->
+      <div class="guide-tab-panel hidden" id="radioTab">
+        <div class="radio-player">
+          <h3 class="radio-player-title">الإذاعة القرآنية</h3>
+          <div class="setting-row">
+            <span>المحطة</span>
+            <select class="reciter-select" id="radioStationSelect">
+              <option value="quran_cairo">القرآن الكريم من القاهرة</option>
+              <option value="quran_makkah">القرءان الكريم من مكة</option>
+              <option value="sharawy_tafsir">تفسير الشيخ الشعراوي</option>
+              <option value="mohamed_refaat">محمد رفعت</option>
+              <option value="mustafa_ismail">مصطفى إسماعيل</option>
+              <option value="mahmoud_ali_albanna">محمود علي البنا</option>
+            </select>
+          </div>
+          <div class="radio-status-row">
+            <span class="radio-status-dot" id="radioStatusDot"></span>
+            <span id="radioStatusText">اضغط تشغيل للبدء</span>
+          </div>
+          <button class="modal-btn primary radio-play-btn" id="radioPlayPauseBtn" aria-label="تشغيل الإذاعة">
+            <svg id="radioIconPlay" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+            <svg id="radioIconPause" viewBox="0 0 24 24" class="hidden"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>
+            <span id="radioPlayPauseLabel">تشغيل</span>
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -932,6 +961,7 @@
 <script src="reader-bookmark.js"></script>
 <script src="reader-reminders.js"></script>
 <script src="reader-guide.js"></script>
+<script src="radio-player.js"></script>
 <script src="quran-tashkeel-dictionary.js"></script>
 <script src="tts-diacritizer.js"></script>
 <script src="reader-tafsir.js"></script>

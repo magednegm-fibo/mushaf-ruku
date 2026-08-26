@@ -168,6 +168,14 @@
   //                      scroll
   //   onSwipe(dx, dy)    fires once, on touchend, only if the gesture
   //                      cleared both threshold and ratioLock
+  //   ignoreTarget(el)   optional -- given the touchstart target, return
+  //                      true to skip swipe-tracking entirely for this
+  //                      touch. Used to carve out a nested horizontally-
+  //                      scrollable child (e.g. دليل القارئ's own
+  //                      scrollable tab bar) so its native scroll/momentum
+  //                      isn't fought over -- and killed -- by this
+  //                      listener's preventDefault on every touchmove of
+  //                      the same touch sequence.
   function swipe(options){
     var root = options.root;
     if(!root) return;
@@ -175,9 +183,10 @@
     var ratioLock = options.ratioLock || 1.5;
     var startX = null, startY = null;
     var horizontal = false; // becomes true once a drag is confirmed horizontal
+    var ignored = false; // this touch started on a carved-out scrollable child
 
     function onMove(e){
-      if(startX === null || e.touches.length !== 1) return;
+      if(ignored || startX === null || e.touches.length !== 1) return;
       var t = e.touches[0];
       var dx = t.clientX - startX;
       var dy = t.clientY - startY;
@@ -191,6 +200,8 @@
 
     root.addEventListener('touchstart', function(e){
       if(e.touches.length !== 1){ startX = null; return; }
+      ignored = !!(options.ignoreTarget && options.ignoreTarget(e.target));
+      if(ignored) return;
       var t = e.touches[0];
       startX = t.clientX; startY = t.clientY;
       horizontal = false;

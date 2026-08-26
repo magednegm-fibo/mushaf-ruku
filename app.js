@@ -130,6 +130,15 @@
     waqfMarksTab: document.getElementById('waqfMarksTab'),
     tajweedRulesTab: document.getElementById('tajweedRulesTab'),
     khatmDuaTab: document.getElementById('khatmDuaTab'),
+    tabRadio: document.getElementById('tabRadio'),
+    radioTab: document.getElementById('radioTab'),
+    radioStationSelect: document.getElementById('radioStationSelect'),
+    radioPlayPauseBtn: document.getElementById('radioPlayPauseBtn'),
+    radioIconPlay: document.getElementById('radioIconPlay'),
+    radioIconPause: document.getElementById('radioIconPause'),
+    radioPlayPauseLabel: document.getElementById('radioPlayPauseLabel'),
+    radioStatusDot: document.getElementById('radioStatusDot'),
+    radioStatusText: document.getElementById('radioStatusText'),
 
     btnTafsir: document.getElementById('btnTafsir'),
     tafsirPanel: document.getElementById('tafsirPanel'),
@@ -265,6 +274,8 @@
   });
 
   safeInit('ReaderGuide', function(){ ReaderGuide.init({els: els, UI: UI}); });
+
+  safeInit('RadioPlayer', function(){ RadioPlayer.init({els: els}); });
 
   safeInit('ReaderTafsir', function(){
     ReaderTafsir.init({els: els, state: state, PAGES: PAGES, UI: UI, ReaderManager: ReaderManager});

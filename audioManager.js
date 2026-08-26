@@ -443,9 +443,10 @@
     if(a && a.surahName) return a.surahName;
     return (window.SURAH_NAMES_VOCALIZED && window.SURAH_NAMES_VOCALIZED[surah]) || '';
   }
-  // Wired once in init(): lets the lock-screen/notification media controls
-  // (and hardware media keys) actually control playback, instead of only
-  // the in-app listen button working.
+  // Registers Quran (AudioManager) as the active Media Session owner.
+  // Called from init() and again whenever Quran playback starts so that
+  // after RadioPlayer claimed the session for live radio, the lock-screen
+  // / Android notification controls return to controlling recitation.
   function setupMediaSessionHandlers(){
     if(!mediaSessionSupported()) return;
     try{
@@ -471,6 +472,11 @@
         stopListening();
       });
     }catch(e){ /* some actions may be unsupported on older browsers — ignore */ }
+  }
+
+  // Reclaim Media Session for Quran after RadioPlayer may have owned it.
+  function claimMediaSessionForQuran(){
+    setupMediaSessionHandlers();
   }
 
   // ---- Time-synced scrolling for an ayah taller than the screen ----
@@ -728,6 +734,7 @@
     updateListenButton();
     requestAudioWakeLock();
     highlightAyah(a.surah, a.ayah);
+    claimMediaSessionForQuran();
     updateMediaSessionMetadata(surahNameFor(pageIdx, ayahIdx, a.surah) + ' — البسملة', null);
     setMediaSessionPlaybackState('playing');
     beginPlaybackPrefetchHandoff(bismillahAudioUrl());
@@ -778,6 +785,12 @@
     if(window.ReaderTafsir && typeof ReaderTafsir.stopTts === 'function'){
       ReaderTafsir.stopTts();
     }
+    // Mutual exclusion: only one audio source may play. Stop the radio
+    // (RadioPlayer) before Quran playback runs. RadioPlayer.stop() never
+    // calls back into AudioManager, so no recursion risk.
+    if(window.RadioPlayer && typeof RadioPlayer.stop === 'function'){
+      RadioPlayer.stop();
+    }
     var a = p.ayahs[ayahIdx];
     // البسملة بس لمسار "الاستماع للركوع" (أول الركوع أو لما التشغيل
     // يوصل لبداية سورة جديدة أثناء الركوع نفسه) — مش للضغط المطول على
@@ -802,6 +815,8 @@
     updateListenButton();
     requestAudioWakeLock();
     highlightAyah(a.surah, a.ayah);
+    // استعادة ملكية Media Session بعد RadioPlayer إن وُجدت
+    claimMediaSessionForQuran();
     updateMediaSessionMetadata(a.surahName, a.ayah);
     setMediaSessionPlaybackState('playing');
     beginPlaybackPrefetchHandoff(ayahAudioUrl(a.surah, a.ayah));
@@ -934,6 +949,12 @@
     if(window.ReaderTafsir && typeof ReaderTafsir.stopTts === 'function'){
       ReaderTafsir.stopTts();
     }
+    // Mutual exclusion: only one audio source may play. Stop the radio
+    // (RadioPlayer) before playlist-driven Quran playback. RadioPlayer.stop()
+    // never calls back into AudioManager, so no recursion risk.
+    if(window.RadioPlayer && typeof RadioPlayer.stop === 'function'){
+      RadioPlayer.stop();
+    }
     var player = getAudioPlayer();
     if(!player){
       showToast('التشغيل الصوتي غير مدعوم في هذا المتصفح');
@@ -970,6 +991,8 @@
     }
     updateListenButton();
     requestAudioWakeLock();
+    // استعادة ملكية Media Session بعد RadioPlayer إن وُجدت
+    claimMediaSessionForQuran();
     if(item.bismillah){
       updateMediaSessionMetadata(surahNameFor(item.pageIdx, item.ayahIdx, item.surah) + ' — البسملة', null);
     } else {

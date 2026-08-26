@@ -1,7 +1,7 @@
 # Project Status
 
-**الإصدار الحالي:** 1.0.503  
-**آخر تحديث:** 2026-08-22
+**الإصدار الحالي:** 1.0.519  
+**آخر تحديث:** 2026-08-26
 
 هذا الملف يُحدَّث مع كل إصدار ويُضمَّن دائمًا داخل الـ ZIP.  
 الغرض: حالة واضحة في بداية أي Session جديدة — ما اكتمل، وما هو معلَّق، وما يُفترض ألا يُمس.
@@ -18,6 +18,83 @@
 4. اعتبر هذا الملف هو المرجع الرسمي لحالة المشروع.
 
 ---
+
+### 1.0.519 — Radio: soft Pause keeps Media Notification visible
+
+- `radio-player.js`: فصل Pause عن Stop. Pause من Android notification يستدعي `softPause()` (pause فقط، بدون إزالة src وبدون releaseMediaSession) فيبقى الإشعار وزر Play.
+- عند Play بعد Pause: إعادة `src` + `load` + `play` للاتصال من اللحظة الحيّة.
+- Stop من التطبيق / `stop()` / تغيير المحطة: `hardStop()` كما كان (فصل src + تحرير الجلسة).
+
+### 1.0.518 — Radio: Media Session ownership for Android notification
+
+- `radio-player.js`: عند تشغيل الإذاعة تصبح RadioPlayer مالكة `navigator.mediaSession` (metadata + play/pause/stop) حتى يعمل Pause/Play من Android Media Notification على البث الحي.
+- عند الإيقاف الكامل تُحرَّر الجلسة (`playbackState = none` + مسح handlers).
+- `audioManager.js`: عند بدء تلاوة القرآن تُستعاد ملكية Media Session عبر إعادة تسجيل handlers التلاوة بعد `RadioPlayer.stop()`.
+- mutual exclusion دون تغيير: مصدر صوت واحد فقط في أي لحظة.
+
+### 1.0.517 — Radio: rename Makkah station + reorder list
+
+- اسم محطة مكة: «القرءان الكريم من مكة».
+- ترتيب القائمة: القاهرة → مكة → الشعراوي → محمد رفعت → مصطفى إسماعيل → محمود علي البنا (الافتراضي: القاهرة).
+
+### 1.0.516 — Radio: add إذاعة القرآن الكريم من مكة المكرمة
+
+- `radio-player.js` (`STATIONS`) و`index.html` (`#radioStationSelect`): محطة `quran_makkah` — «إذاعة القرآن الكريم من مكة المكرمة».
+- Direct stream: `https://stream.radiojar.com/4wqre23fytzuv` — نفس منطق التشغيل/التبديل الحالي دون تعديل AudioManager أو باقي المنطق.
+
+### 1.0.515 — Radio: محمد رفعت first in station list
+
+- `radio-player.js` و`index.html`: ترتيب قائمة المحطات — «محمد رفعت» أولًا (الافتراضي عند أول فتح).
+
+### 1.0.514 — Radio: add محمد رفعت station
+
+- `radio-player.js` (`STATIONS`) و`index.html` (`#radioStationSelect`): محطة `mohamed_refaat` — «محمد رفعت».
+- رابط البث الخام من metadata محطة Zeno (`streamURL`): `https://radio.mp3islam.com/listen/refaat/radio.mp3` (Shoutcast/MP3 128kbps، CORS مفتوح) — وليس رابط صفحة Zeno. mount `stream.zeno.fm/toyii0eewivtv` يعيد 401 بدون مصادقة فلم يُستخدم.
+- نفس منطق التشغيل/التبديل الحالي دون تعديل AudioManager أو باقي المنطق.
+
+### 1.0.513 — Guide tabs: RTL scroll reset after panel visible
+
+- `reader-guide.js`: إصلاح إعادة موضع شريط التابات عند إعادة فتح الدليل — (1) الضبط بعد `openPanel` عبر `requestAnimationFrame` لأن `scrollLeft` أثناء `display:none` يُتجاهل ويُستعاد الموضع السابق؛ (2) في RTL على Chrome/Android `scrollLeft = 0` يعرض الحافة اليسرى (الإذاعة) وليس البداية، لذا نضبط `scrollLeft = scrollWidth` لإظهار «علامات الوقف» على اليمين.
+
+### 1.0.512 — Guide tabs: reset horizontal scroll on reopen
+
+- `reader-guide.js`: عند فتح «دليل القارئ» من الشاشة الرئيسية يُعاد `scrollLeft` لشريط `.guide-tabs` إلى 0 بعد `switchGuideTab('waqf')` — كان التاب النشط يعود لـ«علامات الوقف» لكن موضع التمرير الأفقي يبقى عند الإذاعة بعد زيارة سابقة.
+- لا تغيير على منطق التابات أو السحب أو الإذاعة.
+
+### 1.0.511 — Radio UX: connecting state + stop button while connecting
+
+- `radio-player.js` فقط: حالات واضحة `idle → connecting → playing` مع `playGeneration` لمنع race condition.
+- عند الضغط على تشغيل: فورًا «جاري الاتصال…» + زر «إيقاف» + أيقونة الإيقاف (قبل اكتمال الـstream).
+- عند وصول `playing`: «● بث مباشر» والزر يبقى إيقاف.
+- إيقاف أثناء connecting: إلغاء فعلي (`pause` + إزالة `src` + `load`)، عودة إلى idle/تشغيل، وتجاهل أي `playing` متأخر من المحاولة السابقة.
+- فشل الاتصال: زر تشغيل + رسالة خطأ مناسبة.
+- لا تغيير على قائمة المحطات أو AudioManager أو تشغيل التلاوة.
+
+### 1.0.507 — Radio tab: resume from live edge, not paused buffer
+
+- `radio-player.js` (`togglePlayPause`، فرع الإيقاف): بث حيّ فلا معنى لـ"استئناف من نفس النقطة" كالملفات العادية — pause() وحدها كانت تُبقي المتصفح على الـbuffer المُنزَّل فيُكمل عند التشغيل من اللحظة القديمة. الحل: عند الإيقاف نفصل الاتصال بالكامل (`removeAttribute('src')` + `load()`) بدل `pause()` فقط — تمامًا كما تفعل `prepareStation` عند تبديل المحطة — فيفتح الضغط على تشغيل لاحقًا اتصالًا جديدًا يبدأ من اللحظة الحيّة الفعلية.
+- فرع التشغيل يعيد ضبط `radioPlayer.src = radioStream` دائمًا الآن (بدل الشرط `if(!radioPlayer.src)` السابق) لأن `src` بقي فارغًا بعد الإيقاف.
+
+### 1.0.506 — Radio tab: add «القرآن الكريم من القاهرة» station
+
+- `radio-player.js` (`STATIONS`) و`index.html` (`#radioStationSelect`): محطة ثالثة `quran_cairo` — `https://stream.radiojar.com/8s5u5tpdtwzuv`. نفس منطق التشغيل/التبديل الحالي دون أي تعديل إضافي (لا autoplay، إيقاف+تجهيز عند التبديل).
+
+### 1.0.505 — Guide tabs: fix janky horizontal scroll
+
+- `.guide-tabs` (4 tabs, scrollable): كاشف السحب الخاص بتبديل التابات (`Gestures.swipe` على `waqfGuidePanel` بالكامل) كان يعمل `preventDefault()` على أي سحب أفقي — بما فيه سحب شريط الـTabs نفسه — فيكسر التمرير الأصلي وmomentum بتاعه.
+- `gestures.js`: أُضيف خيار `ignoreTarget(el)` اختياري إلى `swipe()` — لو رجّع true عند touchstart، يتجاهل الـtouch بالكامل (مفيش تتبع swipe ولا preventDefault). Backward-compatible: مفيش استخدام تاني للدالة (تفسير الركوع) بيمرر الخيار ده فمفيش تغيير في سلوكه.
+- `reader-guide.js` (`wireSwipe`): بيمرر `ignoreTarget: el => el.closest('.guide-tabs')` فالسحب اللي يبدأ داخل شريط التابات يُترك بالكامل للمتصفح.
+- `style.css` (`.guide-tabs`): أضيف `touch-action: pan-x` (تعزيز إضافي على مستوى CSS).
+- التبديل بالسحب بين محتوى التابات (خارج شريط الأزرار نفسه) شغال زي ما هو، بلا تغيير.
+
+### 1.0.504 — Guide: new «الإذاعة» tab (standalone radio player)
+
+- تاب رابع «الإذاعة» داخل «دليل القارئ» فقط (`index.html`/`reader-guide.js`) — بلا شاشة أو زر رئيسي جديد. شريط الـTabs صار قابلًا للتمرير أفقيًا (`overflow-x`) ليستوعب الرابع على الشاشات الضيقة، بنفس التصميم الحالي (ألوان/حدود/border-radius/RTL دون تغيير).
+- ملف جديد `radio-player.js`: مشغّل مستقل تمامًا عن `audioManager.js` (لم يُمس إطلاقًا) — عنصر `<audio>` وحالة خاصة به فقط: `radioPlayer` / `radioStream` / `radioStation` / `radioPlaying`.
+- محطتان فقط: مصطفى إسماعيل، محمود علي البنا (روابط Live MP3 مباشرة، HTML5 `<audio>`، بلا HLS.js أو أي dependency جديدة).
+- بلا autoplay: التشغيل يبدأ فقط بضغط المستخدم على تشغيل. تبديل المحطة يوقف الحالية، يغيّر الرابط، يجهّز الجديدة، ولا يشغّلها تلقائيًا. عند خطأ شبكة/بث تظهر حالة واضحة («تعذّر الاتصال بالبث») بدل ترك الزر بحالة تشغيل وهمية.
+- `app.js`: إضافة عناصر الإذاعة إلى `els` واستدعاء `RadioPlayer.init` بعد `ReaderGuide.init` عبر نفس نمط `safeInit` الموجود.
+- لم يُلمس `sw.js` ولا الـcaching architecture (الـstream خارجي، وworker أصلًا يتجاهل الطلبات cross-origin).
 
 ### 1.0.503 — Guide: ayah-head circle wording
 

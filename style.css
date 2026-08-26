@@ -2388,9 +2388,24 @@ body.night .empty-state{ color:#9A9A9E; }
   padding: 10px 16px;
   border-bottom: 1px solid var(--paper-edge);
   background: var(--paper);
+  /* Four tabs (بعد إضافة "الإذاعة") قد لا تتسع على الشاشات الضيقة —
+     نسمح بتمرير أفقي بدل كسر التصميم، مع إخفاء شريط التمرير نفسه. */
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  /* يخبر المتصفح صراحة أن هذا الشريط يملك تمريره الأفقي الخاص، بمعزل
+     عن أي touch-listener آخر في الصفحة (راجع ignoreTarget في
+     reader-guide.js/gestures.js) — يمنع أي تأخير أو تلعثم قبل بدء
+     السحب على Android Chrome. */
+  touch-action: pan-x;
 }
+.guide-tabs::-webkit-scrollbar{ display:none; }
 .guide-tab-btn{
-  flex:1;
+  /* flex-shrink بدل flex:1 الصرف: تبقى الأزرار متساوية العرض وتملأ
+     الشريط كما كانت مع ثلاث Tabs، لكنها لا تنكمش تحت min-width عند
+     إضافة رابعة — عندها يتولى overflow-x أعلاه التمرير بدل الانضغاط. */
+  flex: 1 0 auto;
+  min-width: 84px;
   padding: 10px 8px;
   border-radius: 20px;
   border: 1px solid var(--gold);
@@ -2399,12 +2414,49 @@ body.night .empty-state{ color:#9A9A9E; }
   font-family: var(--font-ui);
   font-size: 13px;
   font-weight: 600;
+  white-space: nowrap;
 }
 .guide-tab-btn.active{ background: var(--emerald); border-color: var(--emerald); color:#fff; }
 .guide-tab-panel.hidden{ display:none; }
 body.night .guide-tabs{ background:#242426; border-color:rgba(255,255,255,.14); }
 body.night .guide-tab-btn{ color:#9A9A9E; border-color:rgba(255,255,255,.14); }
 body.night .guide-tab-btn.active{ background:#2c2c2e; border-color:rgba(255,255,255,.22); color:#F2F2F2; }
+
+/* ---------- Tab «الإذاعة»: مشغّل بث حيّ مستقل عن نظام تشغيل الآيات ---------- */
+.radio-player{ padding-top: 6px; }
+.radio-player-title{
+  margin: 4px 0 4px;
+  font-family: var(--font-ui);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ink);
+}
+body.night .radio-player-title{ color:#F2F2F2; }
+.radio-status-row{
+  display:flex; align-items:center; gap:8px;
+  padding: 14px 4px;
+  font-family: var(--font-ui);
+  font-size: 13.5px;
+  color: var(--ink-soft);
+}
+body.night .radio-status-row{ color:#9A9A9E; }
+.radio-status-dot{
+  width:9px; height:9px; border-radius:50%;
+  background: var(--ink-soft);
+  opacity:.5;
+  flex-shrink:0;
+}
+.radio-status-dot.live{ background:#2E8B57; opacity:1; box-shadow:0 0 0 3px rgba(46,139,87,.18); }
+.radio-status-dot.error{ background:#C0392B; opacity:1; }
+body.night .radio-status-dot.live{ background:#4CAF50; box-shadow:0 0 0 3px rgba(76,175,80,.2); }
+.radio-play-btn{
+  display:flex; align-items:center; justify-content:center; gap:8px;
+  width:100%;
+  padding: 12px 16px;
+  margin-top: 4px;
+}
+.radio-play-btn svg{ width:20px; height:20px; fill:currentColor; }
+.radio-play-btn svg.hidden{ display:none; }
 
 /* دعاء ختم القرآن: this is ordinary devotional prose, not Quranic verse
    text, so it deliberately does NOT use var(--font-quran) — that webfont

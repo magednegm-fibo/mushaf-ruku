@@ -54,6 +54,7 @@ const DYNAMIC_ASSETS = [
   './reader-reminders.js',
   './reader-guide.js',
   './reader-tafsir.js',
+  './radio-player.js',
   './quran-tashkeel-dictionary.js',
   './non-kufi-heads.js',
   './no-sajawandi-heads.js',
