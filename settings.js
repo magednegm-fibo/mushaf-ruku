@@ -282,6 +282,14 @@
     if(ReaderReminders && typeof ReaderReminders.reloadWaqfMarksForCurrentStyle === 'function'){
       ReaderReminders.reloadWaqfMarksForCurrentStyle();
     }
+    // Prayer + Radio settings live outside StorageManager.loadSettings();
+    // re-read their keys so city/GPS prefer and station match the restored backup.
+    if(typeof Prayer !== 'undefined' && Prayer && typeof Prayer.reloadFromStorage === 'function'){
+      Prayer.reloadFromStorage();
+    }
+    if(typeof RadioPlayer !== 'undefined' && RadioPlayer && typeof RadioPlayer.reloadFromStorage === 'function'){
+      RadioPlayer.reloadFromStorage();
+    }
 
     // Font chrome without measuring the previous page's QCF glyphs.
     applyFontChrome({ skipQcfFit: true });

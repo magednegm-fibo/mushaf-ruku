@@ -15,6 +15,9 @@
   // Ta'liq mushaf, or vice versa — the two are independent readings of
   // the same ayaat, with independent word positions.
   var WAQF_KEY_LEGACY = 'quranRuku_waqfMarks_v1';
+  // Prayer tab settings (prayer.js) and Radio station preference (radio-player.js)
+  var PRAYER_KEY = 'quranRuku_prayer_v1';
+  var RADIO_KEY = 'quranRuku_radio_v1';
   function waqfKeyForStyle(style){
     return WAQF_KEY_LEGACY + '_' + (style === 'uthmani' ? 'uthmani' : 'indopak');
   }
@@ -44,6 +47,8 @@
     FAV_KEY: FAV_KEY,
     BOOKMARK_KEY: BOOKMARK_KEY,
     WAQF_KEY_LEGACY: WAQF_KEY_LEGACY,
+    PRAYER_KEY: PRAYER_KEY,
+    RADIO_KEY: RADIO_KEY,
     waqfKeyForStyle: waqfKeyForStyle
   };
   window.MANZIL_STARTS = MANZIL_STARTS;

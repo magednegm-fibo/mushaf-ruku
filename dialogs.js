@@ -166,6 +166,43 @@
     cb();
   }
 
+
+  // -----------------------------------------------------------------
+  // Location services OFF confirm — Yes opens system location settings
+  // (best-effort from web/PWA); No keeps previous location source.
+  // Used by prayer.js. Same openPanel / backOut pattern as factory-reset.
+  // -----------------------------------------------------------------
+  var locationServicesOnYes = null;
+  var locationServicesOnNo = null;
+  function openLocationServicesModal(onYes, onNo){
+    if(!els.locationServicesModal) return;
+    locationServicesOnYes = onYes || null;
+    locationServicesOnNo = onNo || null;
+    UI.openPanel(els.locationServicesModal);
+    setTimeout(function(){
+      if(els.locationServicesModalNo) els.locationServicesModalNo.focus();
+    }, 50);
+  }
+  function backOutOfLocationServicesModal(){
+    if(!els.locationServicesModal || els.locationServicesModal.classList.contains('hidden')) return;
+    els.locationServicesModal.classList.add('hidden');
+    UI.backIfTag('panel', function(){});
+  }
+  function confirmLocationServicesNo(){
+    var cb = locationServicesOnNo;
+    locationServicesOnYes = null;
+    locationServicesOnNo = null;
+    backOutOfLocationServicesModal();
+    if(cb) cb();
+  }
+  function confirmLocationServicesYes(){
+    var cb = locationServicesOnYes;
+    locationServicesOnYes = null;
+    locationServicesOnNo = null;
+    backOutOfLocationServicesModal();
+    if(cb) cb();
+  }
+
   // -----------------------------------------------------------------
   // "الانتقال إلى آية" modal — opened from a small icon on each فهرس
   // السور row. Same one-shot-callback shape as the modals above, and
@@ -257,6 +294,9 @@
     els.clearRemindersModalCancel && els.clearRemindersModalCancel.addEventListener('click', closeClearRemindersModal);
     els.clearRemindersModalConfirm && els.clearRemindersModalConfirm.addEventListener('click', confirmClearRemindersModal);
 
+    els.locationServicesModalNo && els.locationServicesModalNo.addEventListener('click', confirmLocationServicesNo);
+    els.locationServicesModalYes && els.locationServicesModalYes.addEventListener('click', confirmLocationServicesYes);
+
     els.ayahJumpModalCancel && els.ayahJumpModalCancel.addEventListener('click', closeAyahJumpModal);
     els.ayahJumpModalGo && els.ayahJumpModalGo.addEventListener('click', submitAyahJumpModal);
     els.ayahJumpInput && els.ayahJumpInput.addEventListener('keydown', function(e){
@@ -267,7 +307,7 @@
     // see UI.js. If the back button force-closes favModal mid-flow, the
     // pending callback must be cleared too so a later Save press can't
     // fire with a stale callback.
-    UI.registerOverlayModals([els.favModal, els.gotoModal, els.clearRemindersModal, els.ayahJumpModal].filter(Boolean));
+    UI.registerOverlayModals([els.favModal, els.gotoModal, els.clearRemindersModal, els.locationServicesModal, els.prayerSaveLocModal, els.ayahJumpModal].filter(Boolean));
   }
 
   window.Dialogs = {
@@ -275,6 +315,7 @@
     openFavModal: openFavModal,
     openGotoModal: openGotoModal,
     openClearRemindersModal: openClearRemindersModal,
+    openLocationServicesModal: openLocationServicesModal,
     openAyahJumpModal: openAyahJumpModal,
     // Called by UI.js's onModalForceClosed hook (wired in app.js) so a
     // back-press that closes favModal/gotoModal also clears the pending
@@ -283,6 +324,10 @@
       if(el === els.favModal) favOnSave = null;
       if(el === els.gotoModal) gotoOnGo = null;
       if(el === els.clearRemindersModal) clearRemindersOnConfirm = null;
+      if(el === els.locationServicesModal){
+        locationServicesOnYes = null;
+        locationServicesOnNo = null;
+      }
       if(el === els.ayahJumpModal) ayahJumpOnGo = null;
     }
   };

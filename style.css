@@ -2946,3 +2946,487 @@ body.night .tafsir-nav-btn:active{ background: rgba(76,175,80,.16); }
   .page-frame{ max-width:640px; margin:0 auto; }
   .ayah-flow{ font-size: calc(var(--ayah-size) + 2px); }
 }
+
+/* ---- Prayer (مواقيت + قبلة) — from 605, notifications removed ---- */
+.prayer-panel{ display:flex; flex-direction:column; gap:18px; padding-bottom:24px; }
+/* Dividers between prayer subsections */
+.prayer-panel .prayer-section + .prayer-section{
+  margin-top:14px;
+  padding-top:14px;
+  border-top:1px solid var(--paper-edge);
+}
+body.night .prayer-panel .prayer-section + .prayer-section{
+  border-top-color:rgba(255,255,255,.12);
+}
+.prayer-section-title{
+  margin:0 0 8px;
+  font-size:15px;
+  font-weight:700;
+  color:var(--emerald);
+  font-family:var(--font-ui);
+}
+body.night .prayer-section-title{ color:#7dcea0; }
+.prayer-source-list{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.prayer-source-row{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  min-width:0;
+}
+.prayer-source-option{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  flex:1 1 auto;
+  min-width:0;
+  font-size:14px;
+  color:var(--ink);
+  cursor:pointer;
+}
+.prayer-source-option input[type="radio"]{
+  flex-shrink:0;
+  accent-color:var(--emerald);
+  margin:0;
+}
+.prayer-source-row .reciter-select,
+.prayer-source-row select{
+  flex:0 1 42%;
+  min-width:7.5rem;
+  max-width:11rem;
+  margin:0;
+  font-size:13px;
+}
+.prayer-source-row select:disabled,
+.prayer-source-row select.prayer-city-inactive{
+  opacity:0.5;
+}
+.prayer-gps-refresh{
+  flex:0 0 auto;
+  min-width:4.75rem;
+  padding:6px 12px;
+  font-size:12px;
+  /* Pill shape like .guide-tab-btn; compact so the GPS row doesn't grow */
+  border-radius:20px;
+  /* Reserve layout space so switching GPS/city doesn't shift the status line */
+  visibility:hidden;
+  pointer-events:none;
+}
+button.prayer-gps-refresh.modal-btn{
+  /* Override .modal-btn's border-radius:10px without touching padding/font */
+  border-radius:20px;
+}
+.prayer-source-row.is-active .prayer-gps-refresh{
+  visibility:visible;
+  pointer-events:auto;
+}
+.prayer-location-meta{
+  display:flex;
+  flex-direction:row;
+  align-items:baseline;
+  justify-content:space-between;
+  gap:8px;
+  margin:6px 0 0;
+  min-width:0;
+}
+.prayer-source-status{
+  margin:0;
+  font-size:12px;
+  color:var(--ink-soft);
+  line-height:1.35;
+  flex:1 1 auto;
+  min-width:0;
+}
+.prayer-location-label{
+  margin:0;
+  font-size:11px;
+  color:var(--ink-soft);
+  line-height:1.35;
+  direction:ltr;
+  unicode-bidi:isolate;
+  text-align:left;
+  flex:0 1 auto;
+  white-space:nowrap;
+  max-width:55%;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.prayer-location-label[hidden]{
+  display:none !important;
+}
+/* When coordinates are hidden, let status take the full width */
+.prayer-location-meta:has(.prayer-location-label[hidden]) .prayer-source-status{
+  flex:1 1 100%;
+}
+/* Inline GPS error, compact, no card weight */
+.prayer-gps-error{
+  display:block;
+  margin:4px 0 0;
+  padding:0;
+  font-size:11px;
+  line-height:1.35;
+  color:#a33a3a;
+  background:none;
+  border:none;
+}
+.prayer-gps-error[hidden]{
+  display:none !important;
+}
+body.night .prayer-gps-error{
+  color:#e08a8a;
+  background:none;
+}
+.prayer-gps-error-text{
+  /* Matches the status line's text weight */
+}
+.prayer-gps-error-text::before{
+  content:"⚠ ";
+  font-size:10px;
+}
+.prayer-gps-retry{
+  display:inline;
+  margin:0 0 0 4px;
+  padding:0;
+  font:inherit;
+  font-size:11px;
+  line-height:inherit;
+  color:inherit;
+  background:none;
+  border:none;
+  border-radius:0;
+  text-decoration:underline;
+  cursor:pointer;
+  opacity:.85;
+  vertical-align:baseline;
+}
+.prayer-gps-retry:active{
+  opacity:.6;
+}
+
+.prayer-times-list{ display:flex; flex-direction:column; }
+.prayer-time-row{
+  display:flex;
+  flex-direction:column;
+  padding:10px 4px;
+  border-bottom:1px solid var(--paper-edge);
+  font-size:14px;
+}
+body.night .prayer-time-row{ border-bottom-color:rgba(255,255,255,.12); }
+.prayer-time-main{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+.prayer-time-row.prayer-time-next{
+  background:rgba(22,73,58,.1);
+  border-radius:8px;
+  padding-inline:10px;
+  font-weight:700;
+}
+body.night .prayer-time-row.prayer-time-next{ background:rgba(125,206,160,.12); }
+.prayer-time-name{ color:var(--ink); }
+.prayer-time-value{ font-variant-numeric:tabular-nums; color:var(--ink-soft); direction:ltr; unicode-bidi:isolate; }
+/* Countdown shown only in the highlighted row, under the prayer time.
+   Small and secondary so it reads as a detail, not a new UI element. */
+.prayer-countdown{
+  margin-top:2px;
+  font-size:11px;
+  font-weight:400;
+  color:var(--emerald-light);
+  font-variant-numeric:tabular-nums;
+}
+body.night .prayer-countdown{ color:#7dceA0; }
+.prayer-method-note{
+  margin:10px 0 0;
+  font-size:11px;
+  color:var(--ink-soft);
+  line-height:1.45;
+}
+.prayer-open-compass-btn{
+  display:block;
+  width:100%;
+  margin:12px 0 0;
+}
+/* Salah tab: touch-action pan-y allows native vertical scrolling while
+   leaving horizontal panning unclaimed by the browser. Without this,
+   a sideways drag here is read as Chrome/Android's own page-drag /
+   history-navigation gesture instead of app content. */
+#salahTab{
+  touch-action: pan-y;
+}
+.prayer-qibla-title{
+  margin-top:0;
+}
+.prayer-qibla-summary{ margin:0 0 10px; font-size:14px; color:var(--ink); }
+.prayer-compass-panel{ margin-top:12px; }
+.prayer-compass-wrap{
+  position:relative;
+  width:200px;
+  height:200px;
+  margin:0 auto 12px;
+}
+.prayer-compass-rose{
+  width:100%;
+  height:100%;
+  border-radius:50%;
+  border:2px solid var(--gold);
+  background:radial-gradient(circle at center, var(--paper) 60%, rgba(22,73,58,.08));
+  position:relative;
+  transition:transform .12s linear;
+}
+body.night .prayer-compass-rose{ background:radial-gradient(circle at center, #2c2c2e 60%, rgba(125,206,160,.08)); }
+.prayer-compass-n{
+  position:absolute;
+  top:8px;
+  left:50%;
+  transform:translateX(-50%);
+  font-weight:700;
+  font-size:13px;
+  color:var(--emerald);
+}
+.prayer-qibla-marker{
+  position:absolute;
+  inset:0;
+  display:flex;
+  justify-content:center;
+  padding-top:18px;
+  pointer-events:none;
+  transform-origin:center center;
+}
+.prayer-qibla-arrow{
+  color:#c0392b;
+  font-size:22px;
+  line-height:1;
+  text-shadow:0 1px 2px rgba(0,0,0,.25);
+}
+.prayer-compass-device-pointer{
+  position:absolute;
+  top:50%;
+  left:50%;
+  width:0;
+  height:0;
+  border-left:7px solid transparent;
+  border-right:7px solid transparent;
+  border-bottom:16px solid var(--emerald);
+  transform:translate(-50%, -120%);
+  z-index:2;
+  pointer-events:none;
+}
+.prayer-compass-readout{
+  text-align:center;
+  font-size:13px;
+  color:var(--ink);
+  line-height:1.7;
+}
+.prayer-aligned-badge{
+  margin-top:6px;
+  min-height:1.35em;
+  color:var(--emerald);
+  font-weight:700;
+}
+/* Keep vertical space reserved when hidden, so the readout doesn't jump */
+.prayer-aligned-badge.hidden{
+  visibility:hidden;
+  display:block !important;
+  pointer-events:none;
+}
+.prayer-sensor-status{
+  margin-top:6px;
+  font-size:12px;
+  color:var(--ink-soft);
+}
+.prayer-sensor-status[data-status="good"]{ color:var(--emerald); }
+.prayer-sensor-status[data-status="fair"],
+.prayer-sensor-status[data-status="warming"]{ color:#c0392b; }
+.prayer-sensor-status[data-status="poor"],
+.prayer-sensor-status[data-status="calibrate"],
+.prayer-sensor-status[data-status="unstable"],
+.prayer-sensor-status[data-status="interference"],
+.prayer-sensor-status[data-status="unreliable"],
+.prayer-sensor-status[data-status="denied"],
+.prayer-sensor-status[data-status="unavailable"]{ color:#c0392b; }
+/* Night: match guide-tab / radio / settings text colors (#F2F2F2, #9A9A9E).
+   Base rules use --ink / --ink-soft (day browns) which stay unreadable on
+   the dark panel without these overrides. */
+body.night .prayer-source-option{ color:#F2F2F2; }
+body.night .prayer-source-status{ color:#9A9A9E; }
+body.night .prayer-location-label{ color:#9A9A9E; }
+body.night .prayer-time-name{ color:#F2F2F2; }
+body.night .prayer-time-value{ color:#9A9A9E; }
+body.night .prayer-method-note{ color:#9A9A9E; }
+body.night .prayer-qibla-summary{ color:#F2F2F2; }
+body.night .prayer-compass-readout{ color:#F2F2F2; }
+body.night .prayer-sensor-status{ color:#9A9A9E; }
+body.night .prayer-sensor-status[data-status="good"]{ color:#4CAF50; }
+
+/* Location-services confirm: compact, content-sized (logic unchanged) */
+#locationServicesModal.modal-overlay{
+  background: rgba(14,51,42,.38);
+  padding: 16px;
+  align-items: center;
+  justify-content: center;
+}
+#locationServicesModal .modal-box{
+  width: auto;
+  max-width: min(280px, 86vw);
+  padding: 14px 16px 12px;
+  border-radius: 12px;
+  box-shadow: 0 8px 28px rgba(14,51,42,.18);
+}
+#locationServicesModal .modal-box h3{
+  margin: 0 0 6px;
+  font-size: 14.5px;
+  font-weight: 700;
+  line-height: 1.3;
+  text-align: center;
+}
+#locationServicesModal .about-text,
+#locationServicesModal #locationServicesModalText{
+  margin: 0 0 12px;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--ink-soft);
+  text-align: center;
+}
+body.night #locationServicesModal .about-text,
+body.night #locationServicesModal #locationServicesModalText{
+  color: #9A9A9E;
+}
+#locationServicesModal .modal-actions{
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  padding: 0;
+  margin: 0;
+}
+#locationServicesModal .modal-btn{
+  flex: 0 0 auto;
+  min-width: 4.5rem;
+  padding: 6px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 8px;
+  line-height: 1.25;
+}
+
+/* Qibla safety state: neutral frozen compass while phone orientation is invalid. */
+#prayerCompassRose.qibla-compass-frozen {
+  transform: none !important;
+}
+#prayerCompassRose.qibla-compass-frozen #prayerQiblaMarker {
+  visibility: hidden !important;
+  transform: none !important;
+}
+#prayerCompassRose .qibla-neutral-indicator {
+  display: none;
+  position: absolute;
+  inset: 50% auto auto 50%;
+  transform: translate(-50%, -50%) !important;
+  animation: none !important;
+  opacity: .65;
+  pointer-events: none;
+  font-size: 22px;
+  line-height: 1;
+  color: var(--ink-soft);
+  z-index: 2;
+}
+body.night #prayerCompassRose .qibla-neutral-indicator {
+  color: #9A9A9E;
+}
+#prayerCompassRose.qibla-compass-frozen .qibla-neutral-indicator {
+  display: block;
+}
+#prayerCompassRose.qibla-compass-frozen .prayer-compass-n {
+  /* keep N label fixed; rose itself must not rotate */
+}
+
+/* Saved locations + GPS save (1.0.612+) */
+.prayer-saved-row{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  /* Same footprint as the old lone city <select> on the row */
+  flex:0 1 48%;
+  min-width:8.5rem;
+  max-width:14rem;
+}
+.prayer-saved-row .reciter-select,
+.prayer-saved-row select{
+  flex:1 1 auto;
+  min-width:6.5rem;
+  width:100%;
+  max-width:100%;
+  margin:0;
+  font-size:13px;
+}
+.prayer-gps-actions{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  flex:0 0 auto;
+}
+/* Compact icon-only buttons (حذف / حفظ) — replaces the old text pills so
+   the radio label next to them ("مواقع محفوظة" / "استخدام موقعي الحالي
+   (GPS)") always has room to stay on one line. */
+.prayer-icon-btn{
+  flex:0 0 auto;
+  width:30px;
+  height:30px;
+  padding:0;
+  border-radius:50%;
+  border:1px solid var(--ink-soft);
+  background:transparent;
+  color:var(--ink-soft);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+}
+.prayer-icon-btn svg{
+  width:16px; height:16px;
+  fill:none; stroke:currentColor; stroke-width:1.8;
+  stroke-linecap:round; stroke-linejoin:round;
+}
+.prayer-icon-btn:disabled{ opacity:.4; cursor:default; }
+body.night .prayer-icon-btn{ color:#9A9A9E; border-color:rgba(255,255,255,.14); }
+/* Save-location prompt: compact, content-sized (same pattern as
+   #locationServicesModal) instead of the full-size generic .modal-box. */
+#prayerSaveLocModal.modal-overlay{
+  padding:16px;
+}
+#prayerSaveLocModal .modal-box{
+  width:auto;
+  max-width:min(300px, 88vw);
+  padding:16px 18px 14px;
+  border-radius:12px;
+}
+#prayerSaveLocModal .modal-box h3{
+  font-size:14.5px;
+  margin:0 0 10px;
+}
+#prayerSaveLocModal .about-text{
+  font-size:12.5px;
+  margin:0 0 6px;
+}
+#prayerSaveLocModal .search-input{
+  width:100%;
+  margin-bottom:8px;
+  box-sizing:border-box;
+}
+#prayerSaveLocModal .modal-error{
+  margin:0 0 8px;
+  font-size:12.5px;
+  color:#c0392b;
+  text-align:center;
+}
+#prayerSaveLocModal .modal-actions{
+  gap:10px;
+}
+#prayerSaveLocModal .modal-btn{
+  padding:8px 10px;
+  font-size:13px;
+  border-radius:8px;
+}

@@ -243,6 +243,8 @@
   //   KEYS.BOOKMARK_KEY         — reading bookmark
   //   KEYS.waqfKeyForStyle(*)   — reminder marks per script
   //   KEYS.WAQF_KEY_LEGACY      — pre-split reminder marks (migration only)
+  //   KEYS.PRAYER_KEY           — prayer tab settings (city / GPS prefer)
+  //   KEYS.RADIO_KEY            — radio station preference
   function allUserDataKeys(){
     return [
       KEYS.STORAGE_KEY,
@@ -250,7 +252,9 @@
       KEYS.BOOKMARK_KEY,
       KEYS.waqfKeyForStyle('uthmani'),
       KEYS.waqfKeyForStyle('indopak'),
-      KEYS.WAQF_KEY_LEGACY
+      KEYS.WAQF_KEY_LEGACY,
+      KEYS.PRAYER_KEY,
+      KEYS.RADIO_KEY
     ];
   }
 
@@ -309,7 +313,15 @@
       reminders: {
         uthmani: readJSON(KEYS.waqfKeyForStyle('uthmani'), {}),
         indopak: readJSON(KEYS.waqfKeyForStyle('indopak'), {})
-      }
+      },
+      // Prayer tab (city / preferGps / customLocations) + radio station preference
+      prayer: readJSON(KEYS.PRAYER_KEY, {}),
+      radio: readJSON(KEYS.RADIO_KEY, {}),
+      // Explicit custom saved locations (also embedded in prayer.customLocations)
+      savedLocations: (function(){
+        var p = readJSON(KEYS.PRAYER_KEY, {}) || {};
+        return Array.isArray(p.customLocations) ? p.customLocations : [];
+      })()
     };
   }
 
@@ -380,7 +392,10 @@
       favorites: readJSON(KEYS.FAV_KEY, []),
       bookmarkRaw: localStorage.getItem(KEYS.BOOKMARK_KEY),
       remindersUthmani: readJSON(KEYS.waqfKeyForStyle('uthmani'), {}),
-      remindersIndopak: readJSON(KEYS.waqfKeyForStyle('indopak'), {})
+      remindersIndopak: readJSON(KEYS.waqfKeyForStyle('indopak'), {}),
+      // Prayer tab (city / preferGps) + radio station preference
+      prayer: readJSON(KEYS.PRAYER_KEY, {}),
+      radio: readJSON(KEYS.RADIO_KEY, {})
     };
   }
 
@@ -396,6 +411,8 @@
     }catch(e){ /* best-effort rollback */ }
     writeJSON(KEYS.waqfKeyForStyle('uthmani'), snap.remindersUthmani);
     writeJSON(KEYS.waqfKeyForStyle('indopak'), snap.remindersIndopak);
+    if(snap.prayer !== undefined) writeJSON(KEYS.PRAYER_KEY, snap.prayer);
+    if(snap.radio !== undefined) writeJSON(KEYS.RADIO_KEY, snap.radio);
   }
 
   // Apply a validated full-backup payload. Replace-if-present only.
@@ -416,6 +433,9 @@
         indopak: (src.reminders.indopak !== undefined) ? src.reminders.indopak : undefined
       };
     }
+    if(src.prayer !== undefined) plan.prayer = src.prayer;
+    if(src.radio !== undefined) plan.radio = src.radio;
+    if(src.savedLocations !== undefined) plan.savedLocations = src.savedLocations;
 
     var snap = snapshotAllUserData();
     try{
@@ -439,6 +459,40 @@
         if(plan.reminders.indopak !== undefined){
           if(!writeJSON(KEYS.waqfKeyForStyle('indopak'), plan.reminders.indopak)) throw new Error('reminders.indopak write failed');
         }
+      }
+      if(plan.prayer !== undefined){
+        if(!writeJSON(KEYS.PRAYER_KEY, plan.prayer)) throw new Error('prayer write failed');
+      }
+      if(plan.radio !== undefined){
+        if(!writeJSON(KEYS.RADIO_KEY, plan.radio)) throw new Error('radio write failed');
+      }
+      // Merge top-level savedLocations into prayer.customLocations (no duplicates; keep defaults intact)
+      if(plan.savedLocations !== undefined && Array.isArray(plan.savedLocations)){
+        var pobj = readJSON(KEYS.PRAYER_KEY, {}) || {};
+        if(!Array.isArray(pobj.customLocations)) pobj.customLocations = [];
+        var seen = Object.create(null);
+        pobj.customLocations.forEach(function(x){ if(x && x.id) seen[x.id] = true; });
+        plan.savedLocations.forEach(function(x){
+          if(!x || typeof x !== 'object' || !x.id || !x.name) return;
+          var lat = typeof x.lat === 'number' ? x.lat : parseFloat(x.lat);
+          var lng = typeof x.lng === 'number' ? x.lng : parseFloat(x.lng);
+          if(isNaN(lat) || isNaN(lng)) return;
+          if(seen[x.id]){
+            // update existing custom entry
+            for(var i = 0; i < pobj.customLocations.length; i++){
+              if(pobj.customLocations[i].id === x.id){
+                pobj.customLocations[i].name = String(x.name).trim();
+                pobj.customLocations[i].lat = lat;
+                pobj.customLocations[i].lng = lng;
+                break;
+              }
+            }
+          }else{
+            seen[x.id] = true;
+            pobj.customLocations.push({ id: String(x.id), name: String(x.name).trim(), lat: lat, lng: lng });
+          }
+        });
+        if(!writeJSON(KEYS.PRAYER_KEY, pobj)) throw new Error('savedLocations write failed');
       }
       return { ok:true, applied: plan };
     }catch(e){

@@ -140,6 +140,31 @@
     radioStatusDot: document.getElementById('radioStatusDot'),
     radioStatusText: document.getElementById('radioStatusText'),
 
+    tabSalah: document.getElementById('tabSalah'),
+    salahTab: document.getElementById('salahTab'),
+    prayerLocationLabel: document.getElementById('prayerLocationLabel'),
+    prayerLocationStatus: document.getElementById('prayerLocationStatus'),
+    prayerGpsBtn: document.getElementById('prayerGpsBtn'),
+    prayerGpsSaveBtn: document.getElementById('prayerGpsSaveBtn'),
+    prayerLocDeleteBtn: document.getElementById('prayerLocDeleteBtn'),
+    prayerCitySelect: document.getElementById('prayerCitySelect'),
+    prayerSourceManual: document.getElementById('prayerSourceManual'),
+    prayerSourceGps: document.getElementById('prayerSourceGps'),
+    prayerSourceManualCard: document.getElementById('prayerSourceManualCard'),
+    prayerSourceGpsCard: document.getElementById('prayerSourceGpsCard'),
+    prayerManualHint: document.getElementById('prayerManualHint'),
+    prayerTimesList: document.getElementById('prayerTimesList'),
+    prayerQiblaAngle: document.getElementById('prayerQiblaAngle'),
+    prayerOpenCompassBtn: document.getElementById('prayerOpenCompassBtn'),
+    prayerCompassPanel: document.getElementById('prayerCompassPanel'),
+    prayerCompassRose: document.getElementById('prayerCompassRose'),
+    prayerQiblaMarker: document.getElementById('prayerQiblaMarker'),
+    prayerDeviceHeading: document.getElementById('prayerDeviceHeading'),
+    prayerHeadingDiff: document.getElementById('prayerHeadingDiff'),
+    prayerSensorStatus: document.getElementById('prayerSensorStatus'),
+    prayerAlignedBadge: document.getElementById('prayerAlignedBadge'),
+    prayerQiblaAngle2: document.getElementById('prayerQiblaAngle2'),
+
     btnTafsir: document.getElementById('btnTafsir'),
     tafsirPanel: document.getElementById('tafsirPanel'),
     tafsirPanelTitle: document.getElementById('tafsirPanelTitle'),
@@ -203,6 +228,15 @@
     clearRemindersModalText: document.getElementById('clearRemindersModalText'),
     clearRemindersModalCancel: document.getElementById('clearRemindersModalCancel'),
     clearRemindersModalConfirm: document.getElementById('clearRemindersModalConfirm'),
+    prayerSaveLocModal: document.getElementById('prayerSaveLocModal'),
+    prayerSaveLocInput: document.getElementById('prayerSaveLocInput'),
+    prayerSaveLocError: document.getElementById('prayerSaveLocError'),
+    prayerSaveLocCancel: document.getElementById('prayerSaveLocCancel'),
+    prayerSaveLocConfirm: document.getElementById('prayerSaveLocConfirm'),
+    locationServicesModal: document.getElementById('locationServicesModal'),
+    locationServicesModalText: document.getElementById('locationServicesModalText'),
+    locationServicesModalNo: document.getElementById('locationServicesModalNo'),
+    locationServicesModalYes: document.getElementById('locationServicesModalYes'),
     pinchZoomToggle: document.getElementById('pinchZoomToggle'),
     wakeLockToggle: document.getElementById('wakeLockToggle'),
     wakeLockRow: document.getElementById('wakeLockRow'),
@@ -276,6 +310,7 @@
   safeInit('ReaderGuide', function(){ ReaderGuide.init({els: els, UI: UI}); });
 
   safeInit('RadioPlayer', function(){ RadioPlayer.init({els: els}); });
+  safeInit('Prayer', function(){ Prayer.init({els: els}); });
 
   safeInit('ReaderTafsir', function(){
     ReaderTafsir.init({els: els, state: state, PAGES: PAGES, UI: UI, ReaderManager: ReaderManager});
