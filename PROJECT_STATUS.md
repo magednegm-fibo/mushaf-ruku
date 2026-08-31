@@ -1,7 +1,7 @@
 # Project Status
 
-**الإصدار الحالي:** 1.0.627  
-**آخر تحديث:** 2026-08-29
+**الإصدار الحالي:** 1.0.633  
+**آخر تحديث:** 2026-08-30
 
 هذا الملف يُحدَّث مع كل إصدار ويُضمَّن دائمًا داخل الـ ZIP.  
 الغرض: حالة واضحة في بداية أي Session جديدة — ما اكتمل، وما هو معلَّق، وما يُفترض ألا يُمس.
@@ -18,6 +18,57 @@
 4. اعتبر هذا الملف هو المرجع الرسمي لحالة المشروع.
 
 ---
+
+### 1.0.633 — مواءمة تعليقات evaluateCompassReliability مع السلوك الفعلي
+
+- تعديل تعليقات فقط في `prayer.js`: التعليق السابق أوحى بأن غياب عينات Magnetometer يعني `UNKNOWN`، بينما الكود يعيد `RELIABLE` عند variance منخفض وغياب accuracy سيئة.
+- السلوك لم يتغير: `UNKNOWN` أثناء الإحماء فقط؛ ثم `UNRELIABLE` / `RELIABLE` حسب accuracy وheading variance.
+- لا تغيير في Qibla/heading/WMM أو أي منطق تشغيل.
+
+### 1.0.632 — تنظيف نهائي لبقايا dead code بعد إزالة Magnetometer
+
+- **حُذف من `prayer.js` (dead code بلا references حقيقية)**:
+  - `computeExpectedIntensity_uT()` و`_intensityCache` وexport الخاص بها (كانت للتحقق من شدة المجال المغناطيسي عبر عينات Magnetometer X/Y/Z التي أُزيلت في 1.0.631).
+  - `magMags()`، `magStd()`، `vecAngleDeg()` (helpers لعينات المجال المغناطيسي، لم تعد تُستدعى).
+  - `magGoodStreak` و`MAG_GOOD_EXIT` (كُتبا/عُرّفا دون قراءة فعلية في أي شرط — hysteresis الحالي يصفّر التحذير فور `RELIABLE`).
+- **أُبقي عليه عمدًا**:
+  - `magInterferenceLatched` / `magBadStreak` / `MAG_BAD_ENTER` / `MAG_INTERFER_MSG` — مستخدمة فعليًا في hysteresis رسالة التحذير بناءً على `evaluateCompassReliability()` (accuracy + heading variance)، وليست مرتبطة بعينات Magnetometer.
+  - `evaluateCompassReliability(accuracy, variance)` — يعتمد فقط على دقة المستشعر عند توفرها و`headingVariance`؛ لا يدّعي اكتشاف معايرة مجال مغناطيسي.
+  - شرط `accuracy != null && accuracy < 0` — إشارة موثوقة من `webkitCompassAccuracy` على iOS (−1 = يحتاج معايرة)، ولا يُستدعى على مسار Android (accuracy يبقى null).
+  - رسالة `#prayerCalibTip` الثابتة في `index.html`: «حرّك الهاتف على شكل 8 عدة مرات لمعايرة البوصلة.» — بدون تغيير مكان أو نص أو Toast جديد.
+  - `computeQiblaBearing`، WMM/`wmmDeclination`/`computeDeclination` (بما فيه حقل `F_nT` غير المستهلك)، `headingFromOrientation`، smoothing، `headingVariance`، phone-flat، GPS، Qibla UI، lifecycle المستشعرات.
+- **تحقق**: بحث شامل عن الرموز المحذوفة = صفر مراجع. `node --check prayer.js` ناجح. كل regression tests موجودة نجحت (0 failures).
+
+### 1.0.631 — تنظيف: حذف Magnetometer sampling/monitoring غير المستخدم
+
+- **الحذف الكامل من `prayer.js`**: المتغيرات `magnetometerSensor`، `magVectorSamples`، `lastMagVector`، `lastMagFieldTs`؛ الدوال `stopMagnetometer()`، `pushMagVector()`، `attachMagnetometerSensor()`، `startMagnetometer()`؛ استدعاء `startMagnetometer()` (مع تعليقه "Best-effort |B| monitor…") داخل `startCompass()`؛ استدعاء `stopMagnetometer()` داخل `stopCompass()`.
+- **تأكيد قبل الحذف**: `grep` شامل على المشروع كله (كل ملفات `.js`) أثبت عدم وجود أي مرجع لأي من هذه الأسماء خارج `prayer.js`، وداخل `prayer.js` نفسه لم تكن مستخدمة في `evaluateCompassReliability()`، حساب `heading`، `Qibla bearing`، أو أي قرار reliability فعلي — فقط بيانات مُجمَّعة بدون استهلاك (dead code)، بالضبط كما وصف الطلب.
+- **لم يُمس**: خوارزمية Qibla bearing/heading، `evaluateCompassReliability()`، `headingVariance()`، منطق `DeviceOrientation`/`deviceorientationabsolute`/lifecycle الخاص بها، رسالة الهاتف الأفقي، `computeDeclination`/`wmmDeclination` (تُستخدم فعليًا في حساب True heading)، منطق GPS/الموقع، ورسالة "حرّك الهاتف على شكل 8…" (باقية في مكانها الحالي بعد سطر اتجاه القبلة من 1.0.630، بدون نقل).
+- **لم يُمس أيضًا (خارج نطاق الطلب صراحة)**: `computeExpectedIntensity_uT()` و`wmmDeclination()`'s F_nT — دالة WMM منفصلة، غير مستخدمة داخليًا فعلاً (Export فقط)، لكنها ليست جزءًا من "Magnetometer sampling/monitoring" المطلوب حذفه تحديدًا (لا تستخدم `magVectorSamples` ولا `window.Magnetometer` ولا أي event listener) — تُركت كما هي تفاديًا لأي refactoring أوسع من المطلوب. كذلك `MAG_GOOD_EXIT` (ثابت غير مستخدم من قبل، لا علاقة له بـ Magnetometer sampling) تُرك بدون تغيير لأنه جزء من منطق reliability الممنوع لمسه في هذه المهمة.
+- **تحقق سلوكي**: بُني harness مؤقت (Node + vm) يحمّل `prayer.js` في بيئة DOM وهمية، ينفّذ `Prayer.init()`، يفتح/يغلق البوصلة 5 مرات متتالية (Case 6) ويتحقق من عدم تبقّي أي window listener بعد كل دورة، ثم يفتحها مرة أخيرة ويغذّي 20 حدث `deviceorientationabsolute` للتأكد من عدم رمي أي خطأ وتحديث `heading` بنجاح (Case 7). نفس الـ harness شُغّل حرفيًا على نسخة 1.0.630 الأصلية (قبل الحذف) فأعطى نفس عدد استدعاءات addEventListener/removeEventListener (12/19) ونفس نتيجة PASS — إثبات أن السلوك لم يتغير إطلاقًا.
+- ملفات معدَّلة: `prayer.js` فقط (بالإضافة لـ `version.js`/`manifest.json`/`PROJECT_STATUS.md` القياسية).
+
+### 1.0.630 — نقل إرشاد شكل 8 إلى مباشرة بعد سطر اتجاه القبلة
+
+- `#prayerCalibTip` اتنقل من جوّه `#prayerCompassPanel` (المخفي لحد ما يفتح المستخدم البوصلة) إلى مباشرة بعد `<p class="prayer-qibla-summary">` في `index.html` — بقى ظاهر حتى قبل فتح البوصلة، مش محتاج المستخدم يضغط "فتح البوصلة" الأول عشان يشوفه.
+- CSS: نمط النص اتعدّل من محاذاة وسط (كان متوافق مع سياق لوحة البوصلة المتمركزة) إلى محاذاة يمين تتماشى مع سطر "اتجاه القبلة" (نفس `margin` المستخدم في `.prayer-qibla-summary`).
+- شيلت `els.prayerCalibTip` من `app.js` لأنها مبقتش مستخدمة في أي منطق JavaScript — العنصر بقى نص ثابت بحت في الـ HTML، مفيش أي كود بيقرأه أو يعدّله.
+- لا تغيير في منطق أي شيء تاني: خوارزمية القبلة، `MAG_INTERFER_MSG`، `evaluateCompassReliability`، أو أي عنصر داخل لوحة البوصلة.
+
+### 1.0.629 — تبسيط: إزالة زر "الاتجاه غير دقيق؟"، إرشاد شكل 8 ثابت الظهور
+
+- بناءً على طلب المستخدم بعد مراجعة 1.0.628 (سكرين شوت): إزالة زر الإفصاح `#prayerCalibInfoBtn` بالكامل من `index.html`/`app.js`/`prayer.js`/`style.css`.
+- `#prayerCalibTip` ("حرّك الهاتف على شكل 8 عدة مرات لمعايرة البوصلة.") بقى نص ثابت الظهور دايمًا جوه لوحة البوصلة (مش خلف toggle)، بدل ما يكون مخفي افتراضيًا.
+- لسه بدون منطق تلقائي: مش مربوط بـ `accuracy`/`variance`/`setSensorStatus` — نفس القرار الأصلي في 1.0.628 (مفيش دليل sensor موثوق كافي عشان نبني عليه إظهار/إخفاء تلقائي)، بس دلوقتي ظاهر طول الوقت بدل ما يحتاج ضغطة.
+- لا تغيير في خوارزمية Qibla/heading/GPS أو `MAG_INTERFER_MSG`/`evaluateCompassReliability`.
+
+### 1.0.628 — إتاحة إرشاد معايرة البوصلة (شكل 8) في صفحة القبلة
+
+- المشكلة المُبلَّغة: بوصلة الجهاز ممكن تدّي اتجاه ثابت لكنه منحرف (مثلًا ~45°) بدون أي تنبيه معايرة، لأن `accuracy` (من `webkitCompassAccuracy`) بييجي `null` غالبًا على أندرويد (المصدر `absolute-event`/`orientation-absolute` مبيحطّهاش)، والـ `variance` بتفضل واطية لأن القراءة *مستقرة* (بس غلط) — فـ `evaluateCompassReliability` بترجّع `RELIABLE` والرسالة التلقائية `MAG_INTERFER_MSG` ("لضبط البوصلة، حرّك الهاتف بشكل 8") محتاجة 5 نتائج `UNRELIABLE` متتالية عشان تظهر، فمستحيل تظهر في الحالة دي.
+- **لم يتم تعديل**: خوارزمية Qibla bearing، حساب heading، منطق الهاتف الأفقي (beta/gamma)، منطق GPS، `evaluateCompassReliability`، أو أي شرط تفعيل `MAG_INTERFER_MSG` — كل ده فضل زي ما هو، لأن مفيش دليل sensor موثوق كافي في الحالة دي عشان نزوّد به دقة الاكتشاف بدون افتراض غير مضمون.
+- **الإضافة الوحيدة**: زر إفصاح صغير هادئ (`#prayerCalibInfoBtn`) تحت `#prayerSensorStatus` في لوحة البوصلة — بالضغط عليه بيظهر/يتخفي نص ثابت: "حرّك الهاتف على شكل 8 عدة مرات لمعايرة البوصلة." (`#prayerCalibTip`). العنصر متاح دايمًا بغض النظر عن حالة الاكتشاف الحالية (لا يعتمد على `accuracy`/`variance`)، وده اللي بيخلّيه متاح فعليًا حتى في حالة "قراءة مستقرة لكن منحرفة". مش Toast ومش تلقائي — المستخدم هو اللي بيفتحه.
+- `magVectorSamples` و`computeExpectedIntensity_uT` اتفحصوا وفضلوا زي ما هما: مجموعين لكن مش مستخدمين فعليًا في أي قرار reliability حاليًا (بنية جاهزة لمستقبل)، ومفيش أي تعديل ليهم أو حذف.
+- ملفات معدَّلة: `index.html` (زرار + نص الإرشاد)، `style.css` (تنسيق هادئ + وضع ليلي)، `app.js` (تسجيل العنصرين في `els`)، `prayer.js` (معالج ضغط toggle + إخفاء الإرشاد عند إغلاق البوصلة في `stopCompass`).
 
 ### 1.0.627 — إعادة ترتيب قائمة المواقع المحفوظة الافتراضية
 

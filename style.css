@@ -3262,6 +3262,20 @@ body.night .prayer-compass-readout{ color:#F2F2F2; }
 body.night .prayer-sensor-status{ color:#9A9A9E; }
 body.night .prayer-sensor-status[data-status="good"]{ color:#4CAF50; }
 
+/* Calm, always-visible calibration tip (v1.0.629/630). Static caption, not
+   an alert/toast — a stable compass reading cannot always prove it is free
+   of bias (see prayer.js evaluateCompassReliability comments), so this
+   stays visible regardless of detected status instead of depending on it.
+   Placed right under the Qibla direction summary (v1.0.630) so it's visible
+   even before the compass panel is opened. */
+.prayer-calib-tip{
+  margin:0 0 10px;
+  font-size:12px;
+  line-height:1.6;
+  color:var(--ink-soft);
+}
+body.night .prayer-calib-tip{ color:#9A9A9E; }
+
 /* Location-services confirm: compact, content-sized (logic unchanged) */
 #locationServicesModal.modal-overlay{
   background: rgba(14,51,42,.38);
