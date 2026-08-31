@@ -384,6 +384,28 @@
     return { decl: rtd(Math.atan2(ByGeo, BxGeo)), F_nT: F_nT };
   }
 
+  /**
+   * Expected geomagnetic total intensity at lat/lng (µT), from WMM2025.
+   * Used only for magnetometer reliability checks — never alters heading/Qibla.
+   * Phone magnetometers are coarse; comparison uses wide relative tolerance.
+   */
+  var _intensityCache = { key: null, value: 0 };
+  function computeExpectedIntensity_uT(lat, lng, dateObj, altKm){
+    altKm = altKm || 0;
+    if(lat == null || lng == null || isNaN(lat) || isNaN(lng)) return null;
+    var dyear = decimalYearFromDate(dateObj || new Date());
+    var key = lat.toFixed(4) + ',' + lng.toFixed(4) + ',' + dyear.toFixed(3) + ',' + (altKm||0);
+    if(_intensityCache.key === key) return _intensityCache.value;
+    var field = wmmDeclination(lat, lng, dyear, altKm);
+    // wmmDeclination now returns {decl, F_nT}; keep backward-safe if ever numeric.
+    var f_nT = (field && typeof field === 'object') ? field.F_nT : null;
+    if(f_nT == null || !isFinite(f_nT) || f_nT <= 0) return null;
+    var uT = f_nT / 1000; // nT → µT (Chrome Magnetometer unit)
+    _intensityCache = { key: key, value: uT };
+    return uT;
+  }
+
+
   // ---- Timezone ----
   function getTimezoneOffsetHours(dateObj, timeZone){
     try{
@@ -1148,12 +1170,17 @@ function setQiblaCompassNeutralState(active) {
   var qiblaAlignedLatched = false;
   // Compass reliability: RELIABLE | UNRELIABLE | UNKNOWN
   // Never uses Qibla offset. Latches warning after sustained UNRELIABLE.
-  // Based on sensor accuracy (when available) and heading variance only.
-  // Low variance with missing accuracy → RELIABLE (stable reading, not field-calibrated certainty).
+  // Without Magnetometer X/Y/Z, quiet constant bias cannot be proven (UNKNOWN).
   var magInterferenceLatched = false;
   var magBadStreak = 0;
+  var magGoodStreak = 0;
   var MAG_BAD_ENTER = 5;
+  var MAG_GOOD_EXIT = 6;
   var MAG_INTERFER_MSG = 'لضبط البوصلة، حرّك الهاتف بشكل 8';
+  var magnetometerSensor = null;
+  var magVectorSamples = []; // {x,y,z,mag,t} Chrome Magnetometer µT
+  var lastMagVector = null;
+  var lastMagFieldTs = 0;
   // Motion proxy from orientation deltas (deg/s) — false-positive guard only.
   var lastOrientMotion = null;
   var recentAngularRates = [];
@@ -1261,6 +1288,34 @@ function setQiblaCompassNeutralState(active) {
     return Math.sqrt(sum / samples.length);
   }
 
+  function magMags(samples){
+    var out = [];
+    for(var i = 0; i < samples.length; i++) out.push(samples[i].mag);
+    return out;
+  }
+
+  function magStd(values){
+    if(!values || values.length < 3) return 0;
+    var sum = 0, i;
+    for(i = 0; i < values.length; i++) sum += values[i];
+    var mean = sum / values.length;
+    var acc = 0;
+    for(i = 0; i < values.length; i++){
+      var d = values[i] - mean;
+      acc += d * d;
+    }
+    return Math.sqrt(acc / values.length);
+  }
+
+  function vecAngleDeg(a, b){
+    var na = Math.sqrt(a.x * a.x + a.y * a.y + a.z * a.z) || 1;
+    var nb = Math.sqrt(b.x * b.x + b.y * b.y + b.z * b.z) || 1;
+    var c = (a.x * b.x + a.y * b.y + a.z * b.z) / (na * nb);
+    if(c > 1) c = 1;
+    if(c < -1) c = -1;
+    return rtd(Math.acos(c));
+  }
+
   function updateDeviceMotionProxy(alpha, beta, gamma){
     var now = Date.now();
     if(lastOrientMotion){
@@ -1289,9 +1344,7 @@ function setQiblaCompassNeutralState(active) {
   /**
    * Simple reliability verdict for the current compass direction.
    * Returns 'RELIABLE' | 'UNRELIABLE' | 'UNKNOWN'.
-   * Never uses Qibla. Uses accuracy (when present) and heading variance only.
-   * UNKNOWN only while samples are still warming up; stable low variance is RELIABLE
-   * even if accuracy is unavailable (does not claim magnetometer-field calibration).
+   * Never uses Qibla. Does not invent certainty without magnetometer for quiet bias.
    */
   function evaluateCompassReliability(accuracy, variance) {
   // Diagnostic only. Never changes heading, smoothing, WMM, or Qibla math.
@@ -1304,6 +1357,70 @@ function setQiblaCompassNeutralState(active) {
   if (accuracyBad || headingTooNoisy) return 'UNRELIABLE';
   return 'RELIABLE';
 }
+
+  function stopMagnetometer(){
+    if(magnetometerSensor){
+      try{ magnetometerSensor.stop(); }catch(e){}
+      try{
+        magnetometerSensor.onreading = null;
+        magnetometerSensor.onerror = null;
+      }catch(e2){}
+      magnetometerSensor = null;
+    }
+    magVectorSamples = [];
+    lastMagVector = null;
+    lastMagFieldTs = 0;
+  }
+
+  function pushMagVector(x, y, z){
+    var mag = Math.sqrt(x * x + y * y + z * z);
+    if(!isFinite(mag)) return;
+    var sample = { x: x, y: y, z: z, mag: mag, t: Date.now() };
+    lastMagVector = sample;
+    lastMagFieldTs = sample.t;
+    magVectorSamples.push(sample);
+    if(magVectorSamples.length > 16) magVectorSamples.shift();
+  }
+
+  function attachMagnetometerSensor(){
+    if(typeof window.Magnetometer !== 'function') return;
+    try{
+      var sensor = new window.Magnetometer({ frequency: 10 });
+      sensor.onreading = function(){
+        try{
+          var x = sensor.x, y = sensor.y, z = sensor.z;
+          if(x == null || y == null || z == null) return;
+          pushMagVector(x, y, z);
+        }catch(e){}
+      };
+      sensor.onerror = function(){ stopMagnetometer(); };
+      sensor.start();
+      magnetometerSensor = sensor;
+    }catch(e){
+      magnetometerSensor = null;
+    }
+  }
+
+  function startMagnetometer(){
+    stopMagnetometer();
+    if(typeof window.Magnetometer !== 'function') return;
+    try{
+      if(navigator.permissions && typeof navigator.permissions.query === 'function'){
+        var q = navigator.permissions.query({ name: 'magnetometer' });
+        if(q && typeof q.then === 'function'){
+          q.then(function(status){
+            if(status && status.state === 'denied') return;
+            if(!compassActive) return;
+            attachMagnetometerSensor();
+          }).catch(function(){
+            if(compassActive) attachMagnetometerSensor();
+          });
+          return;
+        }
+      }
+    }catch(e){}
+    attachMagnetometerSensor();
+  }
 
   function onOrientation(ev){
     // ---- Identify what this event can provide ----
@@ -1501,8 +1618,10 @@ function setQiblaCompassNeutralState(active) {
 
       if(verdict === 'UNRELIABLE'){
         magBadStreak++;
+        magGoodStreak = 0;
         if(magBadStreak >= MAG_BAD_ENTER) magInterferenceLatched = true;
       }else if(verdict === 'RELIABLE'){
+        magGoodStreak++;
         magBadStreak = 0;
         // Once the sensor is confirmed reliable again, remove the recovery
         // guidance immediately instead of keeping stale warning state visible.
@@ -1510,6 +1629,7 @@ function setQiblaCompassNeutralState(active) {
       }else{
         // UNKNOWN: do not push toward warning or recovery
         magBadStreak = 0;
+        magGoodStreak = 0;
       }
 
       if(magInterferenceLatched){
@@ -1581,6 +1701,7 @@ function setQiblaCompassNeutralState(active) {
       lockedHeadingSource = null;
       magInterferenceLatched = false;
       magBadStreak = 0;
+      magGoodStreak = 0;
       lastOrientMotion = null;
       recentAngularRates = [];
       lastSensorMeta = { source: null, frame: null, absolute: false, accuracy: null, appliedDecl: false };
@@ -1618,6 +1739,9 @@ function setQiblaCompassNeutralState(active) {
       }
 
       compassActive = true;
+      // Best-effort |B| monitor for stable-but-biased interference cases.
+      // No-op when Magnetometer is missing or permission is denied.
+      startMagnetometer();
       setSensorStatus('warming', 'جاري استقرار القراءة…');
       if(els.prayerCompassPanel) els.prayerCompassPanel.classList.remove('hidden');
       if(els.prayerOpenCompassBtn) els.prayerOpenCompassBtn.textContent = 'إغلاق البوصلة';
@@ -1640,6 +1764,7 @@ function setQiblaCompassNeutralState(active) {
     smoothedTrueHeading = null;
     magInterferenceLatched = false;
     magBadStreak = 0;
+    magGoodStreak = 0;
     lastOrientMotion = null;
     recentAngularRates = [];
     setSensorStatus('warming', 'جاري استقرار القراءة…');
@@ -1647,6 +1772,7 @@ function setQiblaCompassNeutralState(active) {
 
   function stopCompass(){
     clearCompassProbe();
+    stopMagnetometer();
     if(orientationHandler){
       window.removeEventListener('deviceorientationabsolute', orientationHandler, true);
       window.removeEventListener('deviceorientation', orientationHandler, true);
@@ -1664,6 +1790,7 @@ function setQiblaCompassNeutralState(active) {
     qiblaAlignedLatched = false;
     magInterferenceLatched = false;
     magBadStreak = 0;
+    magGoodStreak = 0;
     lastOrientMotion = null;
     recentAngularRates = [];
     lockedHeadingSource = null;
@@ -1840,6 +1967,7 @@ function setQiblaCompassNeutralState(active) {
     ASR_FACTOR: ASR_FACTOR,
     CITIES: CITIES,
     computeDeclination: computeDeclination,
+    computeExpectedIntensity_uT: computeExpectedIntensity_uT,
     wmmDeclination: wmmDeclination,
     angleDiff: angleDiff,
     headingFromOrientation: headingFromOrientation,
