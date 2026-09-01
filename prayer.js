@@ -1195,6 +1195,29 @@ function setQiblaCompassNeutralState(active) {
   // null until first valid reading locks the source.
   var lockedHeadingSource = null;
 
+  // ---- 1.0.629: initialization confidence gate ----
+  // Purpose (see PART 3 of the change spec): prevent a transient/uninitialized
+  // sensor reading from immediately becoming the trusted heading. This does
+  // NOT determine whether the heading points to true North — a wrong magnetic
+  // reference can be perfectly stable. It only withholds acceptance into the
+  // existing (unmodified) smoothing pipeline below until several consecutive
+  // readings agree over a short window. Once STABLE, this gate never runs
+  // again for the session (until a reset event) and every subsequent sample
+  // flows through the exact same 628 math as before.
+  var COMPASS_STATE_ACQUIRING = 'ACQUIRING';
+  var COMPASS_STATE_STABLE = 'STABLE';
+  var compassInitState = COMPASS_STATE_ACQUIRING;
+  var acquisitionSamples = []; // { h: trueHeading, t: timestamp } pre-acceptance buffer
+  var ACQUIRE_MIN_SAMPLES = 5;      // smallest reasonable sample requirement
+  var ACQUIRE_MIN_WINDOW_MS = 350;  // smallest reasonable time requirement
+  var ACQUIRE_MAX_STD_DEG = 8;      // circular std-dev considered "stable enough"
+  var ACQUIRE_MAX_BUFFER = 10;      // cap buffer growth
+
+  function resetCompassInitGate(){
+    compassInitState = COMPASS_STATE_ACQUIRING;
+    acquisitionSamples = [];
+  }
+
   function angleDiff(a, b){
     return ((b - a + 540) % 360) - 180;
   }
@@ -1566,6 +1589,37 @@ function setQiblaCompassNeutralState(active) {
       }catch(e){}
     }
 
+    // ---- 1.0.629: initialization confidence gate (PART 3) ----
+    // Withhold acceptance until several consecutive readings agree over a
+    // short window. Nothing below this block is modified from 628: once
+    // STABLE, this sample (and every one after it) falls straight through
+    // to the exact same circularEma/headingSamples/Qibla-comparison code
+    // that 628 always ran. STABILITY IS NOT PROOF OF TRUE NORTH (PART 4) —
+    // this only rejects transient/uninitialized readings, never "corrects"
+    // a heading or applies any offset.
+    if(compassInitState !== COMPASS_STATE_STABLE){
+      acquisitionSamples.push({ h: trueHeading, t: Date.now() });
+      if(acquisitionSamples.length > ACQUIRE_MAX_BUFFER) acquisitionSamples.shift();
+
+      var acquiredEnough = acquisitionSamples.length >= ACQUIRE_MIN_SAMPLES;
+      var acquiredLongEnough = acquiredEnough &&
+        (Date.now() - acquisitionSamples[0].t) >= ACQUIRE_MIN_WINDOW_MS;
+      var acquiredStable = acquiredEnough &&
+        headingVariance(acquisitionSamples.map(function(s){ return s.h; })) <= ACQUIRE_MAX_STD_DEG;
+
+      if(acquiredLongEnough && acquiredStable){
+        // Confidence reached on this sample — let it (and only it, going
+        // forward) fall through to the unmodified 628 pipeline below.
+        compassInitState = COMPASS_STATE_STABLE;
+      }else{
+        setQiblaCompassNeutralState(true);
+        setSensorStatus('warming', 'جاري استقرار القراءة…');
+        if(els.prayerDeviceHeading) els.prayerDeviceHeading.textContent = '—';
+        if(els.prayerHeadingDiff) els.prayerHeadingDiff.textContent = '—';
+        return;
+      }
+    }
+
     smoothedTrueHeading = circularEma(smoothedTrueHeading, trueHeading, SMOOTH_ALPHA);
     headingSamples.push(trueHeading);
     if(headingSamples.length > 12) headingSamples.shift();
@@ -1699,6 +1753,7 @@ function setQiblaCompassNeutralState(active) {
       headingSamples = [];
       smoothedTrueHeading = null;
       lockedHeadingSource = null;
+      resetCompassInitGate();
       magInterferenceLatched = false;
       magBadStreak = 0;
       magGoodStreak = 0;
@@ -1762,6 +1817,7 @@ function setQiblaCompassNeutralState(active) {
     if(!compassActive) return;
     headingSamples = [];
     smoothedTrueHeading = null;
+    resetCompassInitGate();
     magInterferenceLatched = false;
     magBadStreak = 0;
     magGoodStreak = 0;
@@ -1787,6 +1843,7 @@ function setQiblaCompassNeutralState(active) {
     compassActive = false;
     headingSamples = [];
     smoothedTrueHeading = null;
+    resetCompassInitGate();
     qiblaAlignedLatched = false;
     magInterferenceLatched = false;
     magBadStreak = 0;
