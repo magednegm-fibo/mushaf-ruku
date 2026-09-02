@@ -3161,12 +3161,54 @@ body.night .prayer-countdown{ color:#7dceA0; }
   margin-top:0;
 }
 .prayer-qibla-summary{ margin:0 0 10px; font-size:14px; color:var(--ink); }
-.prayer-calib-tip{
+/* Tappable hint that opens the calibration-instructions info panel.
+   Underline + emerald brand color signal "tappable" the same way
+   .prayer-gps-retry does elsewhere, without introducing a new visual
+   vocabulary. A plain <button> reset to inline text, not a link. */
+.prayer-calib-hint{
+  display:inline-block;
   margin:-6px 0 12px;
+  padding:0;
+  border:none;
+  background:none;
+  font-family: var(--font-ui);
   font-size:12px;
-  color:var(--ink-soft);
   line-height:1.45;
+  color: var(--emerald);
+  text-decoration:underline;
+  cursor:pointer;
 }
+.prayer-calib-hint:active{ opacity:.65; }
+body.night .prayer-calib-hint{ color: var(--emerald-light); }
+/* Content list inside #prayerCalibModal — same typography/color as the
+   existing .about-text used in other modal-box confirm dialogs. */
+.prayer-calib-list{
+  margin:0 0 18px;
+  padding-inline-start:20px;
+  font-family: var(--font-ui);
+  font-size:13px;
+  line-height:1.9;
+  color: var(--ink-soft);
+}
+.prayer-calib-list li{ margin:0 0 6px; }
+.prayer-calib-list li:last-child{ margin-bottom:0; }
+body.night .modal-box .prayer-calib-list{ color:#9A9A9E; }
+/* Compact mobile layout for #prayerCalibModal only — keeps shared
+   .modal-box chrome and typography intact while reducing overall
+   footprint so the two short instructions read as a concise info card
+   rather than a large dialog. Text size unchanged for Arabic readability. */
+#prayerCalibModal .modal-box{
+  width:92%;
+  max-width:340px;
+  padding:14px 14px 12px;
+}
+#prayerCalibModal h3{ margin-bottom:8px; }
+#prayerCalibModal .prayer-calib-list{
+  margin-bottom:12px;
+  padding-inline-start:18px;
+}
+#prayerCalibModal .prayer-calib-list li{ margin-bottom:4px; }
+#prayerCalibModal .modal-btn{ padding:8px; }
 .prayer-compass-panel{ margin-top:12px; }
 .prayer-compass-wrap{
   position:relative;
@@ -3264,7 +3306,6 @@ body.night .prayer-time-name{ color:#F2F2F2; }
 body.night .prayer-time-value{ color:#9A9A9E; }
 body.night .prayer-method-note{ color:#9A9A9E; }
 body.night .prayer-qibla-summary{ color:#F2F2F2; }
-body.night .prayer-calib-tip{ color:#9A9A9E; }
 body.night .prayer-compass-readout{ color:#F2F2F2; }
 body.night .prayer-sensor-status{ color:#9A9A9E; }
 body.night .prayer-sensor-status[data-status="good"]{ color:#4CAF50; }

@@ -699,7 +699,7 @@
           <section class="prayer-section">
             <h3 class="prayer-section-title prayer-qibla-title">القبلة</h3>
             <p class="prayer-qibla-summary">اتجاه القبلة: <strong id="prayerQiblaAngle">—</strong> من الشمال الحقيقي</p>
-            <p class="prayer-calib-tip">حرّك الهاتف على شكل 8 عدة مرات لمعايرة البوصلة.</p>
+            <button type="button" class="prayer-calib-hint" id="prayerCalibHintBtn" aria-haspopup="dialog">إرشادات معايرة البوصلة</button>
             <div class="prayer-compass-panel hidden" id="prayerCompassPanel">
               <div class="prayer-compass-wrap">
                 <div class="prayer-compass-rose" id="prayerCompassRose">
@@ -807,6 +807,21 @@
       <div class="modal-actions">
         <button type="button" id="prayerSaveLocCancel" class="modal-btn primary modal-btn-cancel">إلغاء</button>
         <button type="button" id="prayerSaveLocConfirm" class="modal-btn primary">حفظ</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ QIBLA CALIBRATION INSTRUCTIONS (INFO ONLY — no sensor/compass
+       side effects on open or close; see wiring in prayer.js) ============ -->
+  <div id="prayerCalibModal" class="modal-overlay hidden">
+    <div class="modal-box">
+      <h3>إرشادات معايرة البوصلة</h3>
+      <ul class="prayer-calib-list">
+        <li>حرّك الهاتف على شكل 8 أو (∞) عدة مرات.</li>
+        <li>أدر الهاتف أفقيًا 360 درجة عدة مرات.</li>
+      </ul>
+      <div class="modal-actions">
+        <button type="button" id="prayerCalibModalClose" class="modal-btn primary">حسنًا</button>
       </div>
     </div>
   </div>

@@ -966,6 +966,31 @@
     }
   }
 
+  // ---- 1.0.632: Qibla calibration-instructions info panel ----
+  // Purely informational UI. Opening/closing it only toggles a modal's
+  // hidden class and pushes/pops the shared history stack (identical
+  // mechanism to openSaveLocationModal/closeSaveLocationModal above) — it
+  // never touches compassActive, orientationHandler, lockedHeadingSource,
+  // headingSamples, the rotation-recovery tracker, or any other sensor
+  // state. No sensor restart, calibration API, or heading/Qibla
+  // recalculation is triggered here.
+  function openCalibInfoModal(){
+    if(!els.prayerCalibModal) return;
+    if(window.UI && typeof UI.openPanel === 'function'){
+      UI.openPanel(els.prayerCalibModal);
+    }else{
+      els.prayerCalibModal.classList.remove('hidden');
+    }
+  }
+
+  function closeCalibInfoModal(){
+    if(!els.prayerCalibModal) return;
+    els.prayerCalibModal.classList.add('hidden');
+    if(window.UI && typeof UI.backIfTag === 'function'){
+      try{ UI.backIfTag('panel', function(){}); }catch(e){}
+    }
+  }
+
   function confirmSaveLocation(){
     if(locationState.source !== 'gps' || locationState.lat == null || locationState.lng == null){
       try{ if(window.UI && UI.showToast) UI.showToast('لا يوجد موقع GPS صالح للحفظ'); }catch(e){}
@@ -1216,6 +1241,85 @@ function setQiblaCompassNeutralState(active) {
   function resetCompassInitGate(){
     compassInitState = COMPASS_STATE_ACQUIRING;
     acquisitionSamples = [];
+  }
+
+  // ---- 1.0.630/631: rotation-based recovery window ----
+  // A significant physical rotation of the phone can give Android's own
+  // absolute-orientation sensor fusion a chance to re-lock onto a fresh
+  // magnetic reference (see the "RECOVERY LOGIC" section of the change
+  // spec). This block does NOT compute North itself, does NOT replace the
+  // absolute heading with a relative one, and does NOT add/subtract any
+  // correction angle. It only detects that the phone physically rotated
+  // and, when the rotation is significant, re-arms the EXISTING
+  // initialization confidence gate above — the exact same reset already
+  // performed by onScreenOrientationChange() below on a screen-rotation
+  // event. Once re-armed, every subsequent sample flows through the
+  // unmodified acquisition → stability → EMA pipeline exactly as before;
+  // this block never decides what the "correct" heading is.
+  //
+  // 1.0.631 change: the rotation-detection *input* changed from the derived
+  // rawHeading (which mixes alpha, beta, and gamma via the rotation matrix)
+  // to the RAW alpha sample straight from the orientation event. alpha is
+  // used ONLY to measure physical yaw movement for this trigger — it is
+  // never used as a heading and never feeds computeQiblaBearing() or
+  // headingFromOrientation(). Trigger/min-step/gap constants and the
+  // recovery action are unchanged from 630.
+  var rotationRecoveryLastAlpha = null; // last RAW alpha seen (0-360, pre-WMM, pre-screen-correction)
+  var rotationRecoveryLastTs = null;
+  var rotationRecoveryAccumDeg = 0;
+  var ROTATION_RECOVERY_TRIGGER_DEG = 150; // cumulative physical yaw required before recovery
+  var ROTATION_RECOVERY_MIN_STEP_DEG = 2;  // ignore per-sample jitter below this (small hand movement guard)
+  var ROTATION_RECOVERY_GAP_MS = 2500;     // a pause this long starts a fresh burst (no slow-drift accumulation)
+
+  function resetRotationRecoveryTracking(){
+    rotationRecoveryLastAlpha = null;
+    rotationRecoveryLastTs = null;
+    rotationRecoveryAccumDeg = 0;
+  }
+
+  /**
+   * Feed the latest RAW alpha sample in (straight from the orientation
+   * event, 0-360, before any heading math). Uses it ONLY to measure how far
+   * the phone has physically rotated since the last sample — never as a
+   * North reference, never to compute or offset a heading. Handles the
+   * 0/360 wraparound via the shortest signed angular difference (angleDiff),
+   * so e.g. 359°→1° counts as 2° of movement, not 358°. When cumulative
+   * movement crosses ROTATION_RECOVERY_TRIGGER_DEG, re-arms the existing
+   * confidence gate so the existing (unmodified) pipeline can naturally
+   * re-acquire a stable heading, and returns true for that call.
+   */
+  function trackRotationForRecovery(alphaNow){
+    var now = Date.now();
+    var triggered = false;
+
+    if(rotationRecoveryLastAlpha != null){
+      if(rotationRecoveryLastTs != null && (now - rotationRecoveryLastTs) > ROTATION_RECOVERY_GAP_MS){
+        // Long pause since the last sample: start a fresh burst rather than
+        // letting slow drift accumulate across an entire session.
+        rotationRecoveryAccumDeg = 0;
+      }
+      // Shortest signed angular difference correctly handles 0/360 wraparound.
+      var step = Math.abs(angleDiff(rotationRecoveryLastAlpha, alphaNow));
+      if(step >= ROTATION_RECOVERY_MIN_STEP_DEG){
+        rotationRecoveryAccumDeg += step;
+      }
+      if(rotationRecoveryAccumDeg >= ROTATION_RECOVERY_TRIGGER_DEG){
+        rotationRecoveryAccumDeg = 0;
+        // Re-arm the existing gate only (identical to onScreenOrientationChange):
+        // does not touch lockedHeadingSource, WMM, declination, or Qibla bearing.
+        headingSamples = [];
+        smoothedTrueHeading = null;
+        resetCompassInitGate();
+        magInterferenceLatched = false;
+        magBadStreak = 0;
+        magGoodStreak = 0;
+        triggered = true;
+      }
+    }
+
+    rotationRecoveryLastAlpha = alphaNow;
+    rotationRecoveryLastTs = now;
+    return triggered;
   }
 
   function angleDiff(a, b){
@@ -1555,6 +1659,27 @@ function setQiblaCompassNeutralState(active) {
       compassSourcePrefs.absoluteDelivered = true;
     }
 
+    // 1.0.631: feed the RAW alpha sample (not the derived rawHeading) to the
+    // rotation-recovery tracker. rawHeading is explicitly derived from BOTH
+    // alpha and beta (atan2(east, north) above), so it conflates yaw with
+    // tilt. alpha alone is a simpler, more direct motion proxy — NOT a
+    // guaranteed pure/isolated yaw signal: it is still one angle of the same
+    // Euler (Z-X'-Y'') decomposition, and under combined tilt+rotation
+    // motion — especially near gimbal-lock (beta approaching ±90°) — alpha
+    // and gamma can couple, degrading alpha as a yaw-only indicator. In
+    // practice this call site is only ever reached while isQiblaPhoneFlat
+    // holds (beta/gamma within ±15°, see the early-return above), which
+    // keeps us far from gimbal-lock and limits (but does not formally prove
+    // away) that coupling. ev.alpha is used here ONLY to detect physical
+    // rotation — never as a heading. When significant, it re-arms the
+    // confidence gate above — see trackRotationForRecovery(). Not reached at
+    // all when not flat, matching 630's existing behavior of not
+    // accumulating (no reset/decay needed since the accumulator was never
+    // advanced).
+    if(typeof ev.alpha === 'number' && !isNaN(ev.alpha)){
+      trackRotationForRecovery(normalizeDeg(ev.alpha));
+    }
+
     // WMM once: magnetic frame only (never double-apply)
     var decl = 0;
     var appliedDecl = false;
@@ -1754,6 +1879,7 @@ function setQiblaCompassNeutralState(active) {
       smoothedTrueHeading = null;
       lockedHeadingSource = null;
       resetCompassInitGate();
+      resetRotationRecoveryTracking();
       magInterferenceLatched = false;
       magBadStreak = 0;
       magGoodStreak = 0;
@@ -1818,6 +1944,7 @@ function setQiblaCompassNeutralState(active) {
     headingSamples = [];
     smoothedTrueHeading = null;
     resetCompassInitGate();
+    resetRotationRecoveryTracking();
     magInterferenceLatched = false;
     magBadStreak = 0;
     magGoodStreak = 0;
@@ -1844,6 +1971,7 @@ function setQiblaCompassNeutralState(active) {
     headingSamples = [];
     smoothedTrueHeading = null;
     resetCompassInitGate();
+    resetRotationRecoveryTracking();
     qiblaAlignedLatched = false;
     magInterferenceLatched = false;
     magBadStreak = 0;
@@ -1938,6 +2066,15 @@ function setQiblaCompassNeutralState(active) {
           startCompass();
         }
       });
+    }
+    if(els.prayerCalibHintBtn){
+      els.prayerCalibHintBtn.addEventListener('click', function(e){
+        e.preventDefault();
+        openCalibInfoModal();
+      });
+    }
+    if(els.prayerCalibModalClose){
+      els.prayerCalibModalClose.addEventListener('click', function(){ closeCalibInfoModal(); });
     }
   }
 

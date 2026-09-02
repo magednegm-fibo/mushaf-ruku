@@ -307,7 +307,7 @@
     // see UI.js. If the back button force-closes favModal mid-flow, the
     // pending callback must be cleared too so a later Save press can't
     // fire with a stale callback.
-    UI.registerOverlayModals([els.favModal, els.gotoModal, els.clearRemindersModal, els.locationServicesModal, els.prayerSaveLocModal, els.ayahJumpModal].filter(Boolean));
+    UI.registerOverlayModals([els.favModal, els.gotoModal, els.clearRemindersModal, els.locationServicesModal, els.prayerSaveLocModal, els.ayahJumpModal, els.prayerCalibModal].filter(Boolean));
   }
 
   window.Dialogs = {

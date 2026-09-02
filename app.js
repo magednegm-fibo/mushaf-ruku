@@ -164,6 +164,9 @@
     prayerSensorStatus: document.getElementById('prayerSensorStatus'),
     prayerAlignedBadge: document.getElementById('prayerAlignedBadge'),
     prayerQiblaAngle2: document.getElementById('prayerQiblaAngle2'),
+    prayerCalibHintBtn: document.getElementById('prayerCalibHintBtn'),
+    prayerCalibModal: document.getElementById('prayerCalibModal'),
+    prayerCalibModalClose: document.getElementById('prayerCalibModalClose'),
 
     btnTafsir: document.getElementById('btnTafsir'),
     tafsirPanel: document.getElementById('tafsirPanel'),
