@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 // =============================================================================
-// prayer-reliability-regression.js — 1.0.635
+// prayer-reliability-regression.js — 1.0.636
 //
 // Pure-logic mirror of the compass-reliability engine restored/fixed in
 // prayer.js (evaluateMagFieldEvidence, evaluateCompassReliability, and the
 // MAG_BAD_ENTER/MAG_GOOD_EXIT hysteresis around magInterferenceLatched).
-// 1.0.635: fixes double-sqrt on headingVariance (already a circular SD).
+// 1.0.636: fixes double-sqrt on headingVariance (already a circular SD).
 //
 // Mirrors only — does not eval prayer.js itself (prayer.js expects a DOM
 // `els` object built by init()/wire(), same reason tests/prayer-regression.js
@@ -119,7 +119,7 @@ function evaluateMagFieldEvidence(opts){
 }
 
 // ---- mirror of evaluateCompassReliability() ----
-// 1.0.635: headingVariance() already returns circular *standard deviation*
+// 1.0.636: headingVariance() already returns circular *standard deviation*
 // (sqrt(sum(angleDiff^2)/n)). Do NOT apply a second Math.sqrt — that made
 // headingTooNoisy unreachable (post-sqrt max ≈13.4 < threshold 16).
 function evaluateCompassReliability(headingSamplesLen, accuracy, variance, magEvidence){
@@ -169,7 +169,7 @@ console.log('=== Test A: normal field + normal heading -> RELIABLE ===');
 
 console.log('=== Test B: noisy heading + normal field -> UNRELIABLE ===');
 (function(){
-  // 1.0.635: headingVariance already returns circular std-dev; evaluateCompassReliability
+  // 1.0.636: headingVariance already returns circular std-dev; evaluateCompassReliability
   // uses it directly (no second sqrt). High heading STD alone now correctly
   // reaches UNRELIABLE. Poor accuracy remains an independent path.
   var noisySamples = [10, 60, 340, 90, 200];
@@ -190,7 +190,7 @@ console.log('=== Test B: noisy heading + normal field -> UNRELIABLE ===');
     'high heading STD alone (accuracy=12, no mag) -> UNRELIABLE after double-sqrt fix, got ' + verdictHighStd);
 })();
 
-console.log('=== Test B2 (1.0.635): heading STD threshold boundary cases ===');
+console.log('=== Test B2 (1.0.636): heading STD threshold boundary cases ===');
 (function(){
   // Case 1: STD = 5 -> headingTooNoisy = false
   var v1 = evaluateCompassReliability(4, 12, 5, null);
@@ -205,7 +205,7 @@ console.log('=== Test B2 (1.0.635): heading STD threshold boundary cases ===');
   assert(v3 === 'UNRELIABLE', 'STD=16.1 -> UNRELIABLE (just over 16), got ' + v3);
 })();
 
-console.log('=== Test B3 (1.0.635): mathematical validation — no extra sqrt on headingVariance ===');
+console.log('=== Test B3 (1.0.636): mathematical validation — no extra sqrt on headingVariance ===');
 (function(){
   // headingVariance returns sqrt(sum(d^2)/n). Feeding a known STD value through
   // evaluateCompassReliability must treat it as degrees of SD, not as variance
