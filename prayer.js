@@ -1193,19 +1193,53 @@ function setQiblaCompassNeutralState(active) {
   var SMOOTH_ALPHA = 0.32;
   // Hysteresis so "في اتجاه القبلة" does not flicker near the threshold
   var qiblaAlignedLatched = false;
-  // Compass reliability: RELIABLE | UNRELIABLE | UNKNOWN
-  // Never uses Qibla offset. Latches warning after sustained UNRELIABLE.
-  // Without Magnetometer X/Y/Z, quiet constant bias cannot be proven (UNKNOWN).
+  // Compass reliability: RELIABLE | SUSPECT | UNRELIABLE | MAGNETIC_INTERFERENCE | UNKNOWN
+  // Never uses Qibla offset/bearing in the evaluation (no circular logic).
+  // MAGNETIC_INTERFERENCE is a distinct diagnosis from UNRELIABLE: UNRELIABLE
+  // means the heading angle itself is noisy/low-accuracy (a calibration-type
+  // problem — moving the phone in a figure-8 can genuinely help). 
+  // MAGNETIC_INTERFERENCE means the raw magnetic field magnitude |B| itself
+  // looks physically wrong versus the WMM-expected value at this location —
+  // a *stable* heading does not clear this, because a stable-but-biased
+  // reading is exactly the failure mode |B| evidence exists to catch
+  // (restored from 1.0.577's hasAbnormalMagField(), which the 1.0.629+
+  // rewrite of evaluateCompassReliability() stopped consulting even though
+  // the raw-field sampling infrastructure below kept running).
+  // 1.0.634: latch hysteresis now only tracks MAGNETIC_INTERFERENCE↔RELIABLE
+  // transitions (see evaluate/streak logic near onOrientation) — SUSPECT/
+  // UNRELIABLE/UNKNOWN are shown directly and do not drive this latch, so a
+  // calibration-type issue is never mislabeled as environmental interference
+  // or vice versa.
   var magInterferenceLatched = false;
   var magBadStreak = 0;
   var magGoodStreak = 0;
   var MAG_BAD_ENTER = 5;
   var MAG_GOOD_EXIT = 6;
-  var MAG_INTERFER_MSG = 'لضبط البوصلة، حرّك الهاتف بشكل 8';
+  // Environmental interference (magnetic evidence) — distinct from the
+  // sensor-calibration message below; moving the phone will not fix this.
+  var MAG_INTERFER_MSG = 'تحذير: قراءة البوصلة غير دقيقة بسبب تشويش مغناطيسي في المكان الحالي';
+  // Sensor-calibration guidance (accuracy-only problem, unrelated to |B|).
+  var MAG_CALIBRATE_MSG = 'يحتاج معايرة — حرّك الجهاز على شكل ∞';
+  // Possible-but-unconfirmed magnetic anomaly (single soft signal only).
+  var MAG_SUSPECT_MSG = 'قراءة قد تتأثر بمجال مغناطيسي محيط — راقب الاتجاه';
   var magnetometerSensor = null;
   var magVectorSamples = []; // {x,y,z,mag,t} Chrome Magnetometer µT
   var lastMagVector = null;
   var lastMagFieldTs = 0;
+  // ---- 1.0.634: restored magnetic-field anomaly evidence (from 1.0.577) ----
+  // Compares raw |B| against the WMM-expected intensity at the user's
+  // lat/lng, plus short-window jitter/jump and absolute sensor sanity.
+  // WMM is a *reference*, not ground truth — wide tolerances (ratio + a
+  // minimum absolute delta) avoid flagging small, normal local variation.
+  // Values unchanged from 1.0.577 (already tuned there for phone-grade
+  // magnetometer coarseness); kept as-is per minimal-risk requirement.
+  var MAG_WMM_RATIO_HIGH = 1.55; // measured > expected * this
+  var MAG_WMM_RATIO_LOW = 0.55;  // measured < expected * this
+  var MAG_WMM_DELTA_MIN = 18;    // also require |meas-exp| >= this (uT)
+  var MAG_STD_LIMIT = 12;        // short-window |B| jitter (uT)
+  var MAG_JUMP_LIMIT = 22;       // sudden |B| jump vs recent median (uT)
+  var MAG_ABS_INSANE_LOW = 3;    // below this: broken/saturated sensor
+  var MAG_ABS_INSANE_HIGH = 250; // above this: broken/saturated sensor
   // Motion proxy from orientation deltas (deg/s) — false-positive guard only.
   var lastOrientMotion = null;
   var recentAngularRates = [];
@@ -1434,6 +1468,76 @@ function setQiblaCompassNeutralState(active) {
     return Math.sqrt(acc / values.length);
   }
 
+  // ---- 1.0.634: restored from 1.0.577 (magFieldMedian) ----
+  // Median of recent |B| samples, used for the sudden-jump check below.
+  // Median (not mean) so a single spike doesn't drag the baseline with it.
+  function magFieldMedian(values){
+    if(!values || !values.length) return null;
+    var arr = values.slice().sort(function(a, b){ return a - b; });
+    var mid = Math.floor(arr.length / 2);
+    return arr.length % 2 ? arr[mid] : (arr[mid - 1] + arr[mid]) / 2;
+  }
+
+  /**
+   * ---- 1.0.634: restored from 1.0.577 (hasAbnormalMagField) ----
+   * Evaluates the raw magnetometer evidence only — never heading, never
+   * Qibla bearing/offset. Reuses the existing magVectorSamples/lastMagVector
+   * infrastructure (already populated by pushMagVector()); no new sampling
+   * path is introduced.
+   *
+   * Returns:
+   *   'HARD' — |B| itself looks physically wrong (WMM mismatch beyond wide
+   *            tolerance, or absolute sensor sanity failure). Strong enough
+   *            to declare MAGNETIC_INTERFERENCE even if heading is stable.
+   *   'SOFT' — short-window |B| jitter or a sudden jump vs recent median.
+   *            Suggestive but not conclusive on its own → SUSPECT only.
+   *   null   — no usable/fresh magnetometer evidence either way (device has
+   *            no Magnetometer API, permission denied, or reading stale).
+   *
+   * HARD LIMIT (same as 1.0.577): without a fresh Magnetometer reading (or
+   * without a location fix for the WMM comparison), a quiet constant heading
+   * bias cannot be proven from Web orientation APIs alone — this correctly
+   * returns null rather than guessing, and callers fall back to heading
+   * accuracy/variance evidence only (see evaluateCompassReliability).
+   */
+  function evaluateMagFieldEvidence(){
+    if(lastMagVector == null || (Date.now() - lastMagFieldTs) > 1500) return null;
+    var b = lastMagVector.mag;
+    if(!isFinite(b)) return null;
+
+    // Absolute sanity: broken/saturated sensor, not a normal Earth-field band.
+    if(b < MAG_ABS_INSANE_LOW || b > MAG_ABS_INSANE_HIGH) return 'HARD';
+
+    // Primary: measured |B| vs WMM-expected intensity at the user's location.
+    // Independent of where the compass was opened — catches a bias that was
+    // already present when the page loaded, not just a bias that develops
+    // mid-session. Requires a known lat/lng; WMM is a reference, not a
+    // absolute truth, so a wide ratio band plus a minimum absolute delta are
+    // both required before this counts as evidence (avoids flagging normal
+    // local geomagnetic variation as interference).
+    if(locationState.lat != null && locationState.lng != null){
+      var expected = computeExpectedIntensity_uT(locationState.lat, locationState.lng, new Date(), 0);
+      if(expected != null && expected > 5){
+        var delta = Math.abs(b - expected);
+        if(delta >= MAG_WMM_DELTA_MIN){
+          if(b > expected * MAG_WMM_RATIO_HIGH || b < expected * MAG_WMM_RATIO_LOW){
+            return 'HARD';
+          }
+        }
+      }
+    }
+
+    // Secondary: short-window jitter / sudden jump (works even before a
+    // location fix, or on devices where the WMM comparison isn't possible).
+    var mags = magMags(magVectorSamples);
+    if(mags.length >= 4 && magStd(mags) > MAG_STD_LIMIT) return 'SOFT';
+    if(mags.length >= 6){
+      var med = magFieldMedian(mags.slice(0, mags.length - 2));
+      if(med != null && Math.abs(b - med) > MAG_JUMP_LIMIT) return 'SOFT';
+    }
+    return null;
+  }
+
   function vecAngleDeg(a, b){
     var na = Math.sqrt(a.x * a.x + a.y * a.y + a.z * a.z) || 1;
     var nb = Math.sqrt(b.x * b.x + b.y * b.y + b.z * b.z) || 1;
@@ -1469,19 +1573,42 @@ function setQiblaCompassNeutralState(active) {
   }
 
   /**
-   * Simple reliability verdict for the current compass direction.
-   * Returns 'RELIABLE' | 'UNRELIABLE' | 'UNKNOWN'.
-   * Never uses Qibla. Does not invent certainty without magnetometer for quiet bias.
+   * Reliability verdict for the current compass direction.
+   * Returns 'RELIABLE' | 'SUSPECT' | 'UNRELIABLE' | 'MAGNETIC_INTERFERENCE' | 'UNKNOWN'.
+   * Never uses Qibla bearing/offset — evidence is sensor/magnetic only (no
+   * circular logic). Does not invent certainty without magnetometer evidence
+   * for a quiet/stable bias.
+   *
+   * 1.0.634: combines heading evidence (unchanged from 1.0.633) with
+   * restored magnetic-field evidence (from 1.0.577's hasAbnormalMagField),
+   * so a *stable* heading no longer automatically means RELIABLE — see
+   * evaluateMagFieldEvidence(). 'HARD' magnetic evidence takes precedence
+   * over heading-only evidence, because it diagnoses a different, more
+   * specific problem (environmental interference vs. sensor noise/accuracy)
+   * that a stable angle cannot rule out.
    */
   function evaluateCompassReliability(accuracy, variance) {
   // Diagnostic only. Never changes heading, smoothing, WMM, or Qibla math.
   if (headingSamples.length < 4) return 'UNKNOWN';
 
-  var headingStd = Math.sqrt(Math.max(0, Number(variance) || 0));
+  // headingVariance() already returns circular standard deviation
+  // (sqrt(sum(angleDiff^2)/n)). Do NOT sqrt again — that made the
+  // headingTooNoisy branch unreachable (max post-sqrt value ≈13.4 < 16).
+  var headingStd = Math.max(0, Number(variance) || 0);
   var accuracyBad = Number.isFinite(accuracy) && accuracy > 30;
   var headingTooNoisy = headingStd > 16;
 
+  var magEvidence = evaluateMagFieldEvidence(); // null | 'SOFT' | 'HARD'
+
+  // A stable heading is NOT proof of a correct heading: 'HARD' magnetic
+  // evidence overrides heading stability/accuracy on purpose (this is the
+  // exact "stable but wrong" case the restored |B| check exists to catch).
+  if (magEvidence === 'HARD') return 'MAGNETIC_INTERFERENCE';
+
   if (accuracyBad || headingTooNoisy) return 'UNRELIABLE';
+
+  if (magEvidence === 'SOFT') return 'SUSPECT';
+
   return 'RELIABLE';
 }
 
@@ -1788,39 +1915,53 @@ function setQiblaCompassNeutralState(active) {
     }
 
     var variance = headingVariance(headingSamples);
-    // Reliability: RELIABLE / UNRELIABLE / UNKNOWN → hysteresis → warning.
-    // Independent of Qibla. Does not alter heading values.
+    // Reliability: RELIABLE / SUSPECT / UNRELIABLE / MAGNETIC_INTERFERENCE /
+    // UNKNOWN → hysteresis → warning. Independent of Qibla. Does not alter
+    // heading values.
     if(headingSamples.length < 4){
       setSensorStatus('warming', 'جاري استقرار القراءة…');
     }else{
       var verdict = evaluateCompassReliability(accuracy, variance);
 
-      if(verdict === 'UNRELIABLE'){
+      // 1.0.634 fix: the interference latch now only tracks
+      // MAGNETIC_INTERFERENCE ↔ RELIABLE transitions (bug fix — previously
+      // ANY single RELIABLE verdict cleared the latch immediately, silently
+      // ignoring MAG_GOOD_EXIT). SUSPECT/UNRELIABLE/UNKNOWN are separate,
+      // non-environmental diagnoses (see evaluateCompassReliability doc) and
+      // must not drive this specific latch in either direction.
+      if(verdict === 'MAGNETIC_INTERFERENCE'){
         magBadStreak++;
         magGoodStreak = 0;
         if(magBadStreak >= MAG_BAD_ENTER) magInterferenceLatched = true;
       }else if(verdict === 'RELIABLE'){
         magGoodStreak++;
         magBadStreak = 0;
-        // Once the sensor is confirmed reliable again, remove the recovery
-        // guidance immediately instead of keeping stale warning state visible.
-        magInterferenceLatched = false;
+        // Exit requires MAG_GOOD_EXIT *consecutive* RELIABLE verdicts, same
+        // as the entry requires MAG_BAD_ENTER consecutive bad ones — a
+        // single good reading no longer clears a latched warning.
+        if(magGoodStreak >= MAG_GOOD_EXIT) magInterferenceLatched = false;
       }else{
-        // UNKNOWN: do not push toward warning or recovery
+        // SUSPECT / UNRELIABLE / UNKNOWN: do not push the interference latch
+        // toward entering or exiting; also don't let stale progress persist.
         magBadStreak = 0;
         magGoodStreak = 0;
       }
 
-      if(magInterferenceLatched){
-        setSensorStatus('unreliable', MAG_INTERFER_MSG);
+      if(magInterferenceLatched || verdict === 'MAGNETIC_INTERFERENCE'){
+        // Environmental magnetic interference — distinct from a sensor
+        // calibration problem; moving the phone in a figure-8 will not
+        // reliably fix this, so it gets its own message/status code.
+        setSensorStatus('interference', MAG_INTERFER_MSG);
       }else if(accuracy != null && accuracy < 0){
-        setSensorStatus('calibrate', 'يحتاج معايرة — حرّك الجهاز على شكل ∞');
+        setSensorStatus('calibrate', MAG_CALIBRATE_MSG);
       }else if(accuracy != null && accuracy > 25){
         setSensorStatus('poor', 'قراءة غير موثوقة (دقة المستشعر ضعيفة)');
       }else if(variance > 14 && isDeviceLikelyStill()){
         setSensorStatus('unstable', 'قراءة غير مستقرة — ابتعد عن المعادن والأجهزة الكهربائية');
       }else if(variance > 6){
         setSensorStatus('fair', 'القراءة غير مستقرة — لا تعتمد على الاتجاه');
+      }else if(verdict === 'SUSPECT'){
+        setSensorStatus('suspect', MAG_SUSPECT_MSG);
       }else if(verdict === 'RELIABLE'){
         var noteOk = appliedDecl
           ? ('مغناطيسي + WMM ' + (decl >= 0 ? '+' : '') + decl.toFixed(1) + '°')
@@ -1830,6 +1971,29 @@ function setQiblaCompassNeutralState(active) {
           : 'قراءة مستقرة');
       }else{
         setSensorStatus('fair', 'جاري التحقق من استقرار القراءة — لا تعتمد على الاتجاه');
+      }
+
+      if(typeof window !== 'undefined' && window.__PRAYER_HEADING_DEBUG){
+        try{
+          var dbgExpected = (locationState.lat != null && locationState.lng != null)
+            ? computeExpectedIntensity_uT(locationState.lat, locationState.lng, new Date(), 0)
+            : null;
+          var dbgMags = magMags(magVectorSamples);
+          console.log('[prayer-reliability]', {
+            magField_uT: lastMagVector ? lastMagVector.mag : null,
+            magExpected_uT: dbgExpected,
+            magDelta_uT: (lastMagVector && dbgExpected != null) ? Math.abs(lastMagVector.mag - dbgExpected) : null,
+            magRatio: (lastMagVector && dbgExpected) ? (lastMagVector.mag / dbgExpected) : null,
+            magStd: dbgMags.length >= 3 ? magStd(dbgMags) : null,
+            magJump: (dbgMags.length >= 6 && lastMagVector)
+              ? Math.abs(lastMagVector.mag - magFieldMedian(dbgMags.slice(0, dbgMags.length - 2)))
+              : null,
+            magneticInterference: magInterferenceLatched,
+            reliabilityVerdict: verdict,
+            magBadStreak: magBadStreak,
+            magGoodStreak: magGoodStreak
+          });
+        }catch(e){}
       }
     }
   }

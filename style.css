@@ -3293,6 +3293,7 @@ body.night .prayer-compass-rose{ background:radial-gradient(circle at center, #2
 .prayer-sensor-status[data-status="calibrate"],
 .prayer-sensor-status[data-status="unstable"],
 .prayer-sensor-status[data-status="interference"],
+.prayer-sensor-status[data-status="suspect"],
 .prayer-sensor-status[data-status="unreliable"],
 .prayer-sensor-status[data-status="denied"],
 .prayer-sensor-status[data-status="unavailable"]{ color:#c0392b; }
