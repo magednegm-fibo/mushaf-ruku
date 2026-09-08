@@ -1445,6 +1445,41 @@
     els.tafsirList.innerHTML = html;
   }
 
+  // True when every ayah of this ruku is already in the in-memory cache
+  // for the currently selected tafsir. Used to skip the skeleton flash on
+  // back-navigation (and any forward hop whose neighbor was prefetched).
+  function allAyahsCached(ayahs){
+    for(var i = 0; i < ayahs.length; i++){
+      var a = ayahs[i];
+      if(cache[cacheKey(a.surah, a.ayah)] === undefined) return false;
+    }
+    return true;
+  }
+
+  // Instant full render from cache — same structure as renderSkeleton but
+  // with real tafsir text already in place. Avoids the "…" → text flash
+  // that made sequential next-ruku hops feel slow compared to going back.
+  function renderCachedRuku(ayahs){
+    stopTts();
+    isOffline = false;
+    var html = ayahs.map(function(a, i){
+      var ttsBtn = ttsApiAvailable ? ayahTtsBtnHtml(a.surah, a.ayah) : '';
+      var head = '<div class="tafsir-ayah-head">' +
+          '<span class="tafsir-ayah-label">' +
+            (a.surahName ? 'سورة ' + UI.escapeHtml(a.surahName) + ' — ' : '') +
+            'الآية ' + UI.toArabicDigits(a.ayah) +
+          '</span>' +
+          ttsBtn +
+        '</div>';
+      var text = cache[cacheKey(a.surah, a.ayah)] || '';
+      var divider = i > 0 ? '<hr class="tafsir-divider">' : '';
+      return divider + '<div class="tafsir-item" id="' + entryId(a.surah, a.ayah) + '">' + head +
+        '<p class="tafsir-text">' + UI.escapeHtml(text) + '</p>' +
+      '</div>';
+    }).join('');
+    els.tafsirList.innerHTML = html;
+  }
+
   // Swaps one ayah's placeholder text for its real tafsir (or an error
   // line) the moment that ayah's own fetch resolves — instead of holding
   // the whole ruku back behind Promise.all, the first ayah (usually the
@@ -1550,21 +1585,34 @@
     return Promise.resolve(null);
   }
 
+  // Text-only preload for one ruku page. Parallel fetchOne into the
+  // in-memory `cache`. Independent of CATT: never waits on
+  // ensureCattConnection / warm / cattWarmPaused. Used so next/prev
+  // navigation can hit allAyahsCached and render without skeleton.
+  function prefetchTafsirTexts(pageIdx){
+    var p = PAGES[pageIdx];
+    if(!p || !p.ayahs || !p.ayahs.length) return Promise.resolve();
+    var jobs = [];
+    for(var i = 0; i < p.ayahs.length; i++){
+      var a = p.ayahs[i];
+      jobs.push(fetchOne(a.surah, a.ayah).catch(function(){}));
+    }
+    return Promise.all(jobs).then(function(){});
+  }
+
+  // CATT-only warm for one page (Mukhtasar). Relies on fetchOne which
+  // is a cache hit when prefetchTafsirTexts already ran. Must never be
+  // the only path that populates the text cache for neighbors.
   function warmTafsirPage(pageIdx, opts){
     opts = opts || {};
-    // All background warm-up yields while TTS is speaking so the CATT
+    // All background CATT warm-up yields while TTS is speaking so the
     // connection stays free for the current ayah's Smart Wait.
-    // Aysar uses Direct TTS — no CATT warm-up for it.
+    // Aysar uses Direct TTS — text preload only, no CATT.
     var p = PAGES[pageIdx];
     if(!p || !p.ayahs) return Promise.resolve();
 
     if(getSelectedTafsir() === 'aysar'){
-      // Still fetch texts into cache, but skip CATT entirely.
-      var chainA = Promise.resolve();
-      p.ayahs.forEach(function(a){
-        chainA = chainA.then(function(){ return fetchOne(a.surah, a.ayah).catch(function(){}); });
-      });
-      return chainA.catch(function(){});
+      return prefetchTafsirTexts(pageIdx);
     }
 
     if(cattWarmPaused){
@@ -1619,9 +1667,15 @@
   }
 
   function prefetchNeighbors(pageIdx){
-    // Order: current → next → previous.
-    // ALL background CATT warm-up (including current) pauses while TTS
-    // is speaking, so the connection stays free for the playing ayah.
+    // 1) Text preload first and in parallel for current / next / prev.
+    //    This is what makes next/prev navigation instant when cache hits.
+    //    Independent of CATT pause or warm chain.
+    // 2) CATT warm remains background-only: current → next → previous,
+    //    paused while TTS is speaking — never blocks text rendering.
+    prefetchTafsirTexts(pageIdx);
+    prefetchTafsirTexts(pageIdx + 1);
+    prefetchTafsirTexts(pageIdx - 1);
+
     var token = ++cattPageWarmToken;
     cattPageWarmChain = cattPageWarmChain.then(function(){
       if(token !== cattPageWarmToken) return;
@@ -1645,23 +1699,17 @@
   }
 
   // Silent warm-up on every page render (app.js onAfterRender).
-  // 1) Fetch current ruku tafsir texts
-  // 2) Then run prioritized CATT warm: current → next → previous
+  // 1) Fetch tafsir texts for current + next + prev (parallel, text-only)
+  // 2) Then prioritized CATT warm in background (does not block text)
   function prefetchCurrentRuku(){
     if(typeof navigator !== 'undefined' && navigator.onLine === false) return;
     var p = PAGES[state.page];
     if(!p || !p.ayahs || !p.ayahs.length) return;
     var pageIdx = state.page;
-    var ayahs = p.ayahs;
-    // Kick connection early — does not wait for fetchOne to finish
+    // Kick CATT connection early — does not gate text preload
     ensureCattConnection();
-    var settled = 0;
-    ayahs.forEach(function(a){
-      fetchOne(a.surah, a.ayah).catch(function(){}).then(function(){
-        settled++;
-        if(settled === ayahs.length) prefetchNeighbors(pageIdx);
-      });
-    });
+    // Text for current+neighbors immediately; CATT chain follows inside
+    prefetchNeighbors(pageIdx);
   }
 
   function loadCurrentRuku(){
@@ -1679,8 +1727,19 @@
       renderOffline();
       return;
     }
-    var myToken = ++requestToken;
     var ayahs = p.ayahs;
+
+    // Fast path: every ayah already in the in-memory cache (typical for
+    // going back, or for a next-ruku that was prefetched). Render the
+    // full content in one shot — no skeleton flash, no pending "…".
+    if(allAyahsCached(ayahs)){
+      ++requestToken; // invalidate any in-flight fill from a previous hop
+      renderCachedRuku(ayahs);
+      prefetchNeighbors(state.page);
+      return;
+    }
+
+    var myToken = ++requestToken;
     renderSkeleton(ayahs);
 
     var results = []; // tracks success/failure to detect a fully-offline ruku
@@ -1794,11 +1853,7 @@
     if(els.btnTafsirTts) els.btnTafsirTts.classList.add('hidden');
 
     els.btnTafsir.addEventListener('click', function(){
-      reprobeOnPanelOpen();
-      // Warm CATT connection only for Mukhtasar
-      if(getSelectedTafsir() === 'mukhtasar') ensureCattConnection();
-      UI.openPanel(els.tafsirPanel);
-      loadCurrentRuku();
+      openPanel();
     });
     els.btnCloseTafsir && els.btnCloseTafsir.addEventListener('click', function(){
       stopTts();
@@ -1827,8 +1882,19 @@
     updateTtsButton();
   }
 
+  // فتح لوحة التفسير وتحميل محتوى الركوع الحالي (يُستدعى من الزر أو بعد التحميل الكسول)
+  function openPanel(){
+    if(!els || !els.tafsirPanel || !UI) return;
+    reprobeOnPanelOpen();
+    // Warm CATT connection only for Mukhtasar
+    if(getSelectedTafsir() === 'mukhtasar') ensureCattConnection();
+    UI.openPanel(els.tafsirPanel);
+    loadCurrentRuku();
+  }
+
   window.ReaderTafsir = {
     init: init,
+    openPanel: openPanel,
     prefetchCurrentRuku: prefetchCurrentRuku,
     stopTts: stopTts,
     onTafsirChanged: onTafsirChanged,

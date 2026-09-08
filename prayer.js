@@ -664,20 +664,22 @@
     opts = opts || {};
     var code = err && typeof err.code === 'number' ? err.code : null;
 
-    // Never change locationState.source / coords on GPS failure.
-    // Never call applyManualCity() here — manual only when the user picks a city.
-    // If the user already has a successful GPS source, keep the last valid fix.
-    updateLocationUI();
-
-    // Already on GPS (or silent retry after Settings / tab re-open): toast only.
+    // Silent retry (tab re-open / return from Settings) or already on GPS:
+    // GPS is no longer available — fall back to the last saved/manual location
+    // so the UI does not stay stuck on a dead GPS source.
+    // Matches the contract in onTabShown: on failure switch to manual city.
     if(locationState.source === 'gps' || opts.silent){
+      applyManualCity(settings.manualCityId || 'cairo');
+      updateLocationUI();
       try{
         if(window.UI && typeof UI.showToast === 'function'){
-          UI.showToast('تعذر تحديث موقعك حاليًا');
+          UI.showToast('تعذر تحديد موقعك الحالي (GPS)');
         }
       }catch(e){}
       return;
     }
+
+    updateLocationUI();
 
     // POSITION_UNAVAILABLE (2) / TIMEOUT (3) on a first attempt (not yet gps):
     // toast only — do not open Settings dialog.
@@ -2013,12 +2015,6 @@ function setQiblaCompassNeutralState(active) {
     probeTimer: null
   };
 
-  // Short tab switches should not throw away an already stable compass session.
-  // Sensors are detached while hidden, but the last stable state is retained
-  // for a very short resume window. A longer absence starts a fresh session.
-  var COMPASS_TAB_RESUME_WINDOW_MS = 3000;
-  var compassPausedAt = null;
-
   function clearCompassProbe(){
     if(compassSourcePrefs.probeTimer){
       clearTimeout(compassSourcePrefs.probeTimer);
@@ -2032,14 +2028,7 @@ function setQiblaCompassNeutralState(active) {
     }
   }
 
-  function startCompass(options){
-    options = options || {};
-
-    var canResume = options.resume === true &&
-      compassPausedAt != null &&
-      (Date.now() - compassPausedAt) <= COMPASS_TAB_RESUME_WINDOW_MS &&
-      lockedHeadingSource != null;
-
+  function startCompass(){
     if(!sensorSupport()){
       setSensorStatus('unavailable', 'المستشعر غير متاح على هذا الجهاز/المتصفح');
       return;
@@ -2053,78 +2042,58 @@ function setQiblaCompassNeutralState(active) {
 
       orientationHandler = onOrientation;
 
-      if(!canResume){
-        headingSamples = [];
-        smoothedTrueHeading = null;
-        lockedHeadingSource = null;
-        resetCompassInitGate();
-        resetRotationRecoveryTracking();
-        magInterferenceLatched = false;
-        magBadStreak = 0;
-        magGoodStreak = 0;
-        lastOrientMotion = null;
-        recentAngularRates = [];
-        lastSensorMeta = { source: null, frame: null, absolute: false, accuracy: null, appliedDecl: false };
-        compassSourcePrefs.absoluteListenerAttached = false;
-        compassSourcePrefs.absoluteDelivered = false;
-        compassSourcePrefs.absoluteGaveUp = false;
-        clearCompassProbe();
-      }else{
-        // Reattach only the source that was already locked. This avoids a new
-        // source-selection/acquisition cycle and preserves a previously stable
-        // heading across a short tab switch.
-        clearCompassProbe();
-        compassSourcePrefs.absoluteListenerAttached = false;
-        compassSourcePrefs.absoluteDelivered = (lockedHeadingSource === 'absolute-event');
-        compassSourcePrefs.absoluteGaveUp = true;
-
-        if(lockedHeadingSource === 'absolute-event'){
-          window.addEventListener('deviceorientationabsolute', orientationHandler, true);
-          compassSourcePrefs.absoluteListenerAttached = true;
-        }else{
-          window.addEventListener('deviceorientation', orientationHandler, true);
-        }
-      }
+      // Always a fresh session — leaving the prayer tab fully closes the
+      // compass (see onTabHidden → stopCompass); there is no pause/resume.
+      headingSamples = [];
+      smoothedTrueHeading = null;
+      lockedHeadingSource = null;
+      resetCompassInitGate();
+      resetRotationRecoveryTracking();
+      magInterferenceLatched = false;
+      magBadStreak = 0;
+      magGoodStreak = 0;
+      lastOrientMotion = null;
+      recentAngularRates = [];
+      lastSensorMeta = { source: null, frame: null, absolute: false, accuracy: null, appliedDecl: false };
+      compassSourcePrefs.absoluteListenerAttached = false;
+      compassSourcePrefs.absoluteDelivered = false;
+      compassSourcePrefs.absoluteGaveUp = false;
+      clearCompassProbe();
 
       var hasAbsoluteApi = ('ondeviceorientationabsolute' in window);
 
-      if(!canResume){
-        if(hasAbsoluteApi){
-          // Primary: absolute event only. Fallback orientation is attached briefly
-          // until absolute delivers, or until a short probe timeout.
-          window.addEventListener('deviceorientationabsolute', orientationHandler, true);
-          compassSourcePrefs.absoluteListenerAttached = true;
-          // Fallback for iOS webkit / rare absolute API present but silent
-          window.addEventListener('deviceorientation', orientationHandler, true);
-          // After 400ms without absolute delivery, allow fallback sources to lock
-          compassSourcePrefs.probeTimer = setTimeout(function(){
-            compassSourcePrefs.probeTimer = null;
-            if(!compassSourcePrefs.absoluteDelivered){
-              compassSourcePrefs.absoluteGaveUp = true;
-              // If we already locked absolute, keep it; else fallback may lock now
-              if(lockedHeadingSource === 'absolute-event'){
-                detachOrientationFallback();
-              }
-            }else{
-              // Absolute is working — drop orientation listener to guarantee single source
+      if(hasAbsoluteApi){
+        // Primary: absolute event only. Fallback orientation is attached briefly
+        // until absolute delivers, or until a short probe timeout.
+        window.addEventListener('deviceorientationabsolute', orientationHandler, true);
+        compassSourcePrefs.absoluteListenerAttached = true;
+        // Fallback for iOS webkit / rare absolute API present but silent
+        window.addEventListener('deviceorientation', orientationHandler, true);
+        // After 400ms without absolute delivery, allow fallback sources to lock
+        compassSourcePrefs.probeTimer = setTimeout(function(){
+          compassSourcePrefs.probeTimer = null;
+          if(!compassSourcePrefs.absoluteDelivered){
+            compassSourcePrefs.absoluteGaveUp = true;
+            // If we already locked absolute, keep it; else fallback may lock now
+            if(lockedHeadingSource === 'absolute-event'){
               detachOrientationFallback();
             }
-          }, 400);
-        }else{
-          // No absolute API: deviceorientation only (webkit or absolute===true)
-          window.addEventListener('deviceorientation', orientationHandler, true);
-        }
+          }else{
+            // Absolute is working — drop orientation listener to guarantee single source
+            detachOrientationFallback();
+          }
+        }, 400);
+      }else{
+        // No absolute API: deviceorientation only (webkit or absolute===true)
+        window.addEventListener('deviceorientation', orientationHandler, true);
       }
 
       compassActive = true;
-      compassPausedAt = null;
 
       // Best-effort |B| monitor for stable-but-biased interference cases.
       // No-op when Magnetometer is missing or permission is denied.
       startMagnetometer();
-      if(!canResume){
-        setSensorStatus('warming', 'جاري استقرار القراءة…');
-      }
+      setSensorStatus('warming', 'جاري استقرار القراءة…');
       if(els.prayerCompassPanel) els.prayerCompassPanel.classList.remove('hidden');
       if(els.prayerOpenCompassBtn) els.prayerOpenCompassBtn.textContent = 'إغلاق البوصلة';
       renderQiblaStatic();
@@ -2280,45 +2249,15 @@ function setQiblaCompassNeutralState(active) {
   }
 
   function onTabHidden(){
-    // Detach sensors immediately to save battery, but preserve a stable session
-    // briefly so a quick tab switch does not force a full compass reacquisition.
+    // Full close — not pause. Leaving the prayer tab must stop sensors and
+    // clear any session so returning to the tab never auto-reopens the compass.
+    // Idempotent: stopCompass is safe when already inactive.
     if(!compassActive) return;
-
-    clearCompassProbe();
-    stopMagnetometer();
-    if(orientationHandler){
-      window.removeEventListener('deviceorientationabsolute', orientationHandler, true);
-      window.removeEventListener('deviceorientation', orientationHandler, true);
-      orientationHandler = null;
-    }
-    try{
-      if(screen.orientation && typeof screen.orientation.removeEventListener === 'function'){
-        screen.orientation.removeEventListener('change', onScreenOrientationChange);
-      }
-      window.removeEventListener('orientationchange', onScreenOrientationChange);
-    }catch(e){}
-
-    compassActive = false;
-    compassPausedAt = Date.now();
-
-    if(els.prayerCompassPanel) els.prayerCompassPanel.classList.add('hidden');
-    if(els.prayerOpenCompassBtn) els.prayerOpenCompassBtn.textContent = 'فتح البوصلة';
+    stopCompass();
   }
 
   function onTabShown(){
-    if(compassPausedAt != null){
-      if((Date.now() - compassPausedAt) <= COMPASS_TAB_RESUME_WINDOW_MS &&
-         lockedHeadingSource != null){
-        startCompass({ resume: true });
-      }else{
-        // Long absence: discard the preserved session so the next manual open
-        // performs a normal fresh acquisition.
-        compassPausedAt = null;
-        lockedHeadingSource = null;
-        resetCompassInitGate();
-      }
-    }
-
+    // Never auto-start the compass here. User must press «فتح البوصلة».
     ensureTimesFresh();
     updateLocationUI();
     renderTimes();
@@ -2353,6 +2292,8 @@ function setQiblaCompassNeutralState(active) {
   function init(deps){
     els = deps.els || {};
     wire();
+    // املأ قائمة المدن/المواقع المحفوظة قبل أي تطبيق للقيمة المختارة
+    rebuildLocationSelect();
     // Initial location: prefer last manual; attempt GPS only when user opens tab / presses button
     applyManualCity(settings.manualCityId || 'cairo');
     updateLocationUI();

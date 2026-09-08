@@ -412,12 +412,24 @@
         if(AudioManager && typeof AudioManager.stopListening === 'function'){
           AudioManager.stopListening();
         }
+        // أوقف الإذاعة إن كانت تعمل حتى لا تبقى محطة قديمة في الذاكرة/البث
+        if(typeof RadioPlayer !== 'undefined' && RadioPlayer && typeof RadioPlayer.stop === 'function'){
+          try{ RadioPlayer.stop(); }catch(e){}
+        }
         var result = StorageManager.factoryReset();
         if(!result.ok){
           UI.showToast('تعذّر إعادة الضبط');
           return;
         }
         rehydrateFromStorage().then(function(){
+          // محطة الإذاعة الافتراضية بعد إعادة الضبط: القرآن الكريم من القاهرة
+          try{
+            if(typeof RadioPlayer !== 'undefined' && RadioPlayer && typeof RadioPlayer.reloadFromStorage === 'function'){
+              RadioPlayer.reloadFromStorage();
+            }else if(els.radioStationSelect){
+              els.radioStationSelect.value = 'quran_cairo';
+            }
+          }catch(e){}
           UI.showToast('تمت إعادة ضبط التطبيق');
           // Defaults have keepScreenAwake:false — release any lock held
           // from the previous session so the screen can sleep again.

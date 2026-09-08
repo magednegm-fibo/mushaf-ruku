@@ -66,9 +66,23 @@
     els.khatmDuaTab && els.khatmDuaTab.classList.toggle('hidden', tab !== 'khatm');
     els.radioTab && els.radioTab.classList.toggle('hidden', tab !== 'radio');
     els.salahTab && els.salahTab.classList.toggle('hidden', tab !== 'salah');
-    if(tab === 'salah' && window.Prayer && typeof window.Prayer.onTabShown === 'function'){
-      window.Prayer.onTabShown();
+
+    // تحميل كسول: لا تُحمَّل وحدات الإذاعة/الصلاة إلا عند فتح تبويبها أول مرة
+    if(tab === 'radio' && typeof window.ensureRadioPlayer === 'function'){
+      window.ensureRadioPlayer().catch(function(){ /* مُسجَّل في app.js */ });
     }
+    if(tab === 'salah'){
+      if(typeof window.ensurePrayer === 'function'){
+        window.ensurePrayer().then(function(){
+          if(currentTab === 'salah' && window.Prayer && typeof window.Prayer.onTabShown === 'function'){
+            window.Prayer.onTabShown();
+          }
+        }).catch(function(){ /* مُسجَّل في app.js */ });
+      }else if(window.Prayer && typeof window.Prayer.onTabShown === 'function'){
+        window.Prayer.onTabShown();
+      }
+    }
+
     // After class toggles, bring the active tab chip into the visible strip
     // (fixes: swipe from الصلاة back to علامات الوقف while the bar stayed scrolled left).
     requestAnimationFrame(function(){ ensureActiveTabVisible(tab); });
@@ -136,6 +150,26 @@
     els.tabRadio && els.tabRadio.addEventListener('click', function(){ switchGuideTab('radio'); });
     els.tabSalah && els.tabSalah.addEventListener('click', function(){ switchGuideTab('salah'); });
     wireSwipe();
+
+    // Closing the guide via Android/system back (or any path that only
+    // toggles .hidden through UI.closeTopmostOverlay) never hits the
+    // btnCloseWaqfGuide handler above — sensors would keep running and
+    // the compass panel would still be "open" when the user returns to
+    // الصلاة. Mirror the tafsir panel pattern: observe the guide panel
+    // and stop the compass whenever it becomes hidden while الصلاة is
+    // the active tab. onTabHidden is idempotent (early-returns when
+    // compassActive is already false), so double-calls from the close
+    // button + observer are safe.
+    if(typeof MutationObserver !== 'undefined' && els.waqfGuidePanel){
+      var mo = new MutationObserver(function(){
+        if(!els.waqfGuidePanel.classList.contains('hidden')) return;
+        if(currentTab !== 'salah') return;
+        if(window.Prayer && typeof window.Prayer.onTabHidden === 'function'){
+          window.Prayer.onTabHidden();
+        }
+      });
+      mo.observe(els.waqfGuidePanel, { attributes: true, attributeFilter: ['class'] });
+    }
 
     UI.registerOverlayPanels([els.waqfGuidePanel].filter(Boolean));
   }

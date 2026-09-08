@@ -53,16 +53,25 @@ const DYNAMIC_ASSETS = [
   './reader-bookmark.js',
   './reader-reminders.js',
   './reader-guide.js',
-  './reader-tafsir.js',
-  './radio-player.js',
+  // Core offline: مواقيت الصلاة + القبلة يجب أن تبقى متاحة بلا شبكة حتى
+  // لو لم يفتح المستخدم التبويب من قبل. الملف ما زال Lazy-loaded في
+  // الصفحة (لا يُنفَّذ عند الإقلاع) لكن يُثبَّت في الكاش هنا حتى ينجح
+  // fetch عبر SW offline → cache fallback.
   './prayer.js',
-  './quran-tashkeel-dictionary.js',
+  // لوحة التفسير (الواجهة) — Lazy في الصفحة لكن precache حتى لا يفشل
+  // الفتح عند ضعف الشبكة. محتوى التفسير نفسه يُجلب من الشبكة عند العرض.
+  './reader-tafsir.js',
+  // واجهة الإذاعة (لا البث نفسه) — precache حتى تعمل بعد إعادة الضبط بلا سباق شبكة
+  './radio-player.js',
+  // وحدات ثانوية غير-Core — لا تُثبَّت في install (تُحمَّل كسولًا):
+  // quran-tashkeel-dictionary.js, tts-diacritizer.js
   './non-kufi-heads.js',
   './no-sajawandi-heads.js',
   './data/no-sajawandi-heads.json', // Single Source of Truth — يُحمَّل بـfetch عند الإقلاع
   './home.js',
   './settings.js',
   './navigation.js',
+  './lazy-loader.js',
   './app.js',
   './qcf-override.css', // QCF Override
   './qcf-override.js',  // QCF Override

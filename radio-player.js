@@ -27,10 +27,14 @@
     { id: 'sharawy_tafsir', name: 'تفسير الشيخ الشعراوي', url: 'https://serverkw.quran-uni.com:8202/;*.mp3' },
     { id: 'mustafa_ismail', name: 'مصطفى إسماعيل', url: 'https://qurango.net/radio/mustafa_ismail' }
   ];
+  var DEFAULT_STATION_ID = STATIONS[0].id; // القرآن الكريم من القاهرة
+  var STORAGE_KEY = (typeof MUSHAF_KEYS !== 'undefined' && MUSHAF_KEYS.RADIO_KEY)
+    ? MUSHAF_KEYS.RADIO_KEY
+    : 'quranRuku_radio_v1';
 
   var radioPlayer = null;   // <audio> الخاص بالإذاعة فقط
   var radioStream = null;   // رابط البث الحالي
-  var radioStation = STATIONS[0].id;
+  var radioStation = DEFAULT_STATION_ID;
   // idle | connecting | playing — يمنع race condition عند إلغاء الاتصال أثناء play() المعلّق
   var radioState = 'idle';
   // رقم تسلسلي لكل محاولة تشغيل؛ أي playing/error متأخر من محاولة قديمة يُتجاهل
@@ -117,10 +121,38 @@
 
   // يهيّئ محطة جديدة دون تشغيلها — يوقف الحالية، يبدّل الرابط، يجهّز
   // الجديدة، وينتظر ضغط المستخدم على تشغيل (كما هو مطلوب بالضبط).
+  function loadSavedStationId(){
+    try{
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if(!raw) return DEFAULT_STATION_ID;
+      var data = JSON.parse(raw);
+      if(data && typeof data.stationId === 'string' && stationById(data.stationId).id === data.stationId){
+        return data.stationId;
+      }
+    }catch(e){ /* ignore corrupt storage */ }
+    return DEFAULT_STATION_ID;
+  }
+
+  function saveStationId(id){
+    try{
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ stationId: id }));
+    }catch(e){ /* quota / private mode */ }
+  }
+
+  function syncStationSelect(id){
+    if(els && els.radioStationSelect){
+      els.radioStationSelect.value = id;
+    }
+  }
+
   function prepareStation(stationId, opts){
     var station = stationById(stationId);
     radioStation = station.id;
     radioStream = station.url;
+    syncStationSelect(radioStation);
+    if(!opts || !opts.skipSave){
+      saveStationId(radioStation);
+    }
 
     playGeneration++; // ألغِ أي محاولة اتصال سابقة
     if(radioPlayer){
@@ -135,6 +167,14 @@
     if(!opts || !opts.silent){
       setStatus('idle', 'اضغط تشغيل للبدء');
     }
+  }
+
+  // بعد Factory Reset / استعادة نسخة: أعد قراءة المفتاح من التخزين
+  // (عند المسح يعود DEFAULT_STATION_ID = القرآن الكريم من القاهرة).
+  function reloadFromStorage(){
+    var id = loadSavedStationId();
+    prepareStation(id, { silent: true, skipSave: true });
+    setStatus('idle', 'اضغط تشغيل للبدء');
   }
 
   function ensurePlayer(){
@@ -281,20 +321,32 @@
     prepareStation(els.radioStationSelect.value);
   }
 
+  var _wired = false;
+
   function init(deps){
-    els = deps.els;
-    if(!els.radioPlayPauseBtn || !els.radioStationSelect) return;
+    els = deps.els || els;
+    if(!els || !els.radioPlayPauseBtn || !els.radioStationSelect) return false;
 
     ensurePlayer();
-    prepareStation(els.radioStationSelect.value || radioStation, { silent: true });
+    // فضّل المحطة المحفوظة؛ إن لم يوجد مفتاح (أول تشغيل / بعد إعادة ضبط) → القاهرة
+    prepareStation(loadSavedStationId(), { silent: true, skipSave: true });
     setStatus('idle', 'اضغط تشغيل للبدء');
 
-    els.radioPlayPauseBtn.addEventListener('click', togglePlayPause);
-    els.radioStationSelect.addEventListener('change', onStationChange);
+    // لا تربط المستمعين مرتين — وإلا togglePlayPause يعمل مرتين فيلغي التشغيل فورًا
+    if(!_wired){
+      els.radioPlayPauseBtn.addEventListener('click', togglePlayPause);
+      els.radioStationSelect.addEventListener('change', onStationChange);
+      _wired = true;
+    }
+    return true;
   }
 
   window.RadioPlayer = {
     init: init,
-    stop: stop
+    stop: stop,
+    reloadFromStorage: reloadFromStorage,
+    getDefaultStationId: function(){ return DEFAULT_STATION_ID; },
+    getStationId: function(){ return radioStation; },
+    isWired: function(){ return _wired; }
   };
 })();

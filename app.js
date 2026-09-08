@@ -312,11 +312,73 @@
 
   safeInit('ReaderGuide', function(){ ReaderGuide.init({els: els, UI: UI}); });
 
-  safeInit('RadioPlayer', function(){ RadioPlayer.init({els: els}); });
-  safeInit('Prayer', function(){ Prayer.init({els: els}); });
+  // --- تحميل كسول: الإذاعة فقط (+ موارد نطق التفسير في الخلفية) ---
+  // prayer.js و reader-tafsir.js يُحمَّلان مع الصفحة (index.html)
+  var _radioReady = null;
+
+  function ensureRadioPlayer(){
+    function wireIfNeeded(rp){
+      if(!rp || typeof rp.init !== 'function'){
+        throw new Error('RadioPlayer غير متاح');
+      }
+      // اضمن ربط الزر مرة واحدة. لا تستدعِ reloadFromStorage هنا —
+      // كان يقطع التشغيل عند كل فتح للتاب؛ الاستعادة عند Factory Reset فقط.
+      if(typeof rp.isWired !== 'function' || !rp.isWired()){
+        rp.init({els: els});
+      }
+      return rp;
+    }
+    if(_radioReady) return _radioReady.then(wireIfNeeded);
+    if(typeof RadioPlayer !== 'undefined' && RadioPlayer && RadioPlayer.init){
+      _radioReady = Promise.resolve(RadioPlayer).then(wireIfNeeded);
+      return _radioReady;
+    }
+    _radioReady = LazyLoader.load('radio-player.js').then(function(){
+      if(typeof RadioPlayer === 'undefined' || !RadioPlayer.init){
+        throw new Error('RadioPlayer غير متاح بعد التحميل');
+      }
+      return wireIfNeeded(RadioPlayer);
+    }).catch(function(err){
+      _radioReady = null;
+      console.error('تعذّر تحميل الإذاعة:', err);
+      throw err;
+    });
+    return _radioReady;
+  }
+
+  // Prayer محمّل مع الصفحة — جاهز فورًا لـ reader-guide
+  function ensurePrayer(){
+    return Promise.resolve(typeof Prayer !== 'undefined' ? Prayer : null);
+  }
+
+  window.ensureRadioPlayer = ensureRadioPlayer;
+  window.ensurePrayer = ensurePrayer;
+
+  safeInit('Prayer', function(){
+    if(typeof Prayer === 'undefined' || !Prayer.init){
+      throw new Error('Prayer غير محمّل من index.html');
+    }
+    Prayer.init({els: els});
+    if(typeof Prayer.reloadFromStorage === 'function'){
+      Prayer.reloadFromStorage();
+    }
+  });
 
   safeInit('ReaderTafsir', function(){
-    ReaderTafsir.init({els: els, state: state, PAGES: PAGES, UI: UI, ReaderManager: ReaderManager});
+    if(typeof ReaderTafsir === 'undefined' || !ReaderTafsir.init){
+      throw new Error('ReaderTafsir غير محمّل من index.html');
+    }
+    ReaderTafsir.init({
+      els: els, state: state, PAGES: PAGES, UI: UI, ReaderManager: ReaderManager
+    });
+    if(typeof LazyLoader !== 'undefined' && LazyLoader.loadMany){
+      LazyLoader.loadMany([
+        'quran-tashkeel-dictionary.js',
+        'tts-diacritizer.js'
+      ]).catch(function(err){
+        console.warn('موارد نطق التفسير (اختياري) لم تُحمَّل:', err);
+      });
+    }
   });
 
   safeInit('Settings', function(){
@@ -359,7 +421,10 @@
         ReaderBookmark.updateBookmarkButton();
         Home.updateProgressUI();
         saveState();
-        ReaderTafsir.prefetchCurrentRuku();
+        // لا تُحمَّل وحدة التفسير إلا عند الطلب؛ prefetch اختياري إن كانت جاهزة
+        if(typeof ReaderTafsir !== 'undefined' && ReaderTafsir && typeof ReaderTafsir.prefetchCurrentRuku === 'function'){
+          try{ ReaderTafsir.prefetchCurrentRuku(); }catch(e){}
+        }
         // QCF Override يجب أن يُطبَّق متزامنًا هنا (نفس دورة renderPage،
         // قبل أول paint). الاعتماد على MutationObserver وحده يؤجّل
         // applyOverrides لما بعد الرسم فيظهر النص الأصلي لحظة (flicker)
