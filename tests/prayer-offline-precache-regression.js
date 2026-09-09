@@ -161,14 +161,24 @@ console.log('prayer-offline-precache-regression\n');
 }
 
 // ---- 6. محاكاة مسار offline: الملف في قائمة precache = متاح بعد install ----
-// (بدون متصفح: نثبت العقدة الحرجة وهي إدراج الملف في addAll)
+// (بدون متصفح: نثبت أن install precache يغطي DYNAMIC_ASSETS)
+// 1.0.674+: التثبيت فردي عبر fetchAndCache + Promise.all (بدل cache.addAll
+// all-or-nothing) لتحسين offline على Cloudflare Workers — كلا المسارين مقبولان.
 {
   const sw = read('sw.js');
   const usesAddAll = /cache\.addAll\s*\(\s*STATIC_ASSETS\.concat\(\s*DYNAMIC_ASSETS\s*\)\s*\)/.test(sw)
     || /cache\.addAll\s*\([^)]*DYNAMIC_ASSETS/.test(sw);
-  check('sw.js install uses cache.addAll with DYNAMIC_ASSETS', usesAddAll);
+  const usesPerFilePrecache =
+    /function\s+fetchAndCache\s*\(/.test(sw)
+    && /STATIC_ASSETS\.concat\(\s*DYNAMIC_ASSETS\s*\)/.test(sw)
+    && /Promise\.all\s*\(/.test(sw);
+  check(
+    'sw.js install precaches DYNAMIC_ASSETS (addAll or per-file fetchAndCache)',
+    usesAddAll || usesPerFilePrecache,
+    usesAddAll ? 'addAll' : (usesPerFilePrecache ? 'fetchAndCache' : 'no known precache path')
+  );
 
-  const assets = extractDynamicAssets(sw) || [];
+const assets = extractDynamicAssets(sw) || [];
   const coreOffline = ['./prayer.js'];
   const missing = coreOffline.filter(function (a) { return assets.indexOf(a) === -1; });
   check(
