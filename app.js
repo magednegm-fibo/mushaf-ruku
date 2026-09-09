@@ -587,7 +587,7 @@
       // could otherwise have the browser's update check served a stale,
       // HTTP-cached copy of sw.js indefinitely, with no update ever
       // detected no matter how many times CACHE inside it gets bumped.
-      navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then(function(reg){
+      navigator.serviceWorker.register('./sw.js', { scope: './', updateViaCache: 'none' }).then(function(reg){
         if(!reg) return;
         // Proactively re-check for a newer sw.js right away and again
         // whenever the app comes back to the foreground, rather than

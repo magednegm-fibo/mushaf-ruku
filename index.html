@@ -35,6 +35,15 @@
 }
 </script>
 <link rel="manifest" href="manifest.json">
+  <!-- Early SW registration: do not wait for window.load / app.js.
+       Critical for Cloudflare Workers offline — SW must install and
+       control the page as soon as possible after first online visit. -->
+  <script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js', { scope: './', updateViaCache: 'none' }).catch(function () {});
+  }
+  </script>
+
 <link rel="icon" href="icons/favicon.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <!-- Warms up the connection (DNS + TLS) to the tafsir sources ahead of
