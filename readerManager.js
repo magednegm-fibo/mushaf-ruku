@@ -802,7 +802,7 @@
     // رأس الآية فعليًا عند غير الكوفيين، فيُختار بالسنة، ويُلغي هذا
     // الطرف ("ذلك") — راجع '47:4:20': 'QIF' في
     // DEFAULT_MARK_CONFLICT_RESOLUTIONS أعلاه لتفاصيل القرار الجديد.
-    'TA_MUTLAQ': {'14:9:13': true, '33:13:18': true, '3:172:9': true, '11:49:16': true, '47:4:21': true, '57:19:10': true},
+    'TA_MUTLAQ': {'14:9:13': true, '33:13:18': true, '11:49:16': true, '47:4:21': true, '57:19:10': true, '66:2:6': true /* أيمانكم: ط→ج */, '2:187:42': true /* الفجر: ط→ص */ /* 3:172:9 القرح: أُزيل الاستبعاد — طلب مباشر ط أزرق */},
     // مراجعة يدوية مباشرة من المستخدم لتقرير تعارض ط/ص/م مع لا (الوقف
     // الممنوع عند السجاوندي — النوع LA في waqf-positions.js): من أصل 4
     // مواضع نشطة فعليًا فيها تقاطع (الباقي مستبعد أصلًا بقاعدة آخر
@@ -1059,6 +1059,8 @@
   // التحقق برمجيًا من الثمانين موضعًا كلها).
   var DEFAULT_MARK_MANUAL_ADDITIONS = {
     'TA_MUTLAQ': {
+      // 2:222:3 المحيض — طلب مباشر: وقف مطلق ط (كانت لا في الخام)
+      '2:222:3': true,
       '60:8:17': true,
       // Indopak ط (U+0615) on word — keep as TA_MUTLAQ (not JEEM).
       // Madinah may show U+06DA; Indopak is source of truth.
@@ -1177,6 +1179,10 @@
       '46:15:39': true,
       // 7:69:22 بصطة — طلب مباشر: اعتماد ج بني حسب مصحف النسخ المطبوع
       '7:69:22': true,
+      // 66:2:6 أيمانكم — طلب مباشر: من ط مطلق إلى ج جائز
+      '66:2:6': true,
+      // 2:255:5 هو — طلب مباشر: وقف جائز ج بني
+      '2:255:5': true,
       // WAQF_REVIEW JEEM gaps — word from UTH U+06DA glyph; skipped if
       // already TA_MUTLAQ manual addition, last-word, or LA/SILA.
       // 60:9:16 reported by user opened this sweep.
@@ -1236,6 +1242,8 @@
     },
     // ص (SAD_RUKHSA) — فجوات WAQF_REVIEW (Indopak U+E01B)
     'SAD_RUKHSA': {
+      // 2:187:42 الفجر — طلب مباشر: من ط إلى ص
+      '2:187:42': true,
       '2:144:9': true, '2:282:110': true,
       '5:46:12': true, '6:71:23': true, '16:28:5': true,
       // سور الشمس القصيرة: أغلبها آخر كلمة (policy OK)
@@ -1343,6 +1351,8 @@
   // لا/صلي — وليس تعطيلًا عامًا للسياسة (لهذا هو بالنوع لا بالكلمة
   // وحدها: { wordKey: { TYPE: true } }).
   var DEFAULT_MARK_LA_SILA_OVERRIDES = {
+    // 2:222:3 ("ٱلۡمَحِيضِ"): خامها لا؛ طلب مباشر اعتماد ط مطلق.
+    '2:222:3': { TA_MUTLAQ: true },
     // 3:30:9 ("مُّحۡضَرًا"): تحمل صلى فعليًا في مصحف النسخ (موجودة في
     // SILA_POSITIONS)، فكانت تُستبعد تلقائيًا من DEFAULT_MARK_LA_SILA_BLOCK.
     // استثناء مباشر لاحق من المستخدم (راجع "استثناء 3:30 المباشر" في
@@ -1509,8 +1519,12 @@
     var manualAdditions = DEFAULT_MARK_MANUAL_ADDITIONS[waqfType];
     if(manualAdditions){
       Object.keys(manualAdditions).forEach(function(wordKey){
-        // الإضافات اليدوية لا تتجاوز سياسة لا/صلي
-        if(DEFAULT_MARK_LA_SILA_BLOCK[wordKey]) return;
+        // الإضافات اليدوية لا تتجاوز سياسة لا/صلي — إلا باستثناء صريح
+        // في DEFAULT_MARK_LA_SILA_OVERRIDES لهذا النوع عند هذه الكلمة.
+        if(DEFAULT_MARK_LA_SILA_BLOCK[wordKey] &&
+           !(DEFAULT_MARK_LA_SILA_OVERRIDES[wordKey] && DEFAULT_MARK_LA_SILA_OVERRIDES[wordKey][waqfType])){
+          return;
+        }
         var parts = wordKey.split(':');
         var key = parts[0] + ':' + parts[1];
         var idx = parseInt(parts[2], 10) - 1;
@@ -2270,9 +2284,11 @@ var KNOWN_SPLIT_WORD_FRAGMENTS = ["اٰ تُوۡهُمۡ", "اٰ تَيۡتُم�
           nonKufiHostResolved[hostKey] = {sym: sSym || '', color: sCol, mapKey: skey};
           // ما عدا «لا» وبلا رمز: ضع نجمة سجاوندي على المضيف نفسه
           if(!sSym || sSym === 'لا') return;
-          // سياسة لا/صلي: لا تُلوَّن علامة سجاوندي على كلمة تحمل لا أو صلي
-          var hostWordKey1 = a.surah + ':' + a.ayah + ':' + (hostIdx + 1);
-          if(DEFAULT_MARK_LA_SILA_BLOCK[hostWordKey1]) return;
+          // Override (NON_KUFI_HEADS_SYM_*) يقدَّم على بيانات لا/صلي الأصلية:
+          // إن وُجد رمز نهائي غير «لا» طُبّق التلوين والنجمة الفعلية على الكلمة
+          // حتى لو كان الموضع في DEFAULT_MARK_LA_SILA_BLOCK (مثل 65:2:23 لا→ط).
+          // المسارات الأخرى (رأس غير كوفي، Popup، Tooltip) تقرأ الرمز النهائي
+          // من نفس الجدول — لا تُنشأ جداول مكررة.
           if(sSym === 'ط') shiftedMutlaqIdxs.push(hostIdx);
           else if(sSym === 'قف') shiftedQifIdxs.push(hostIdx);
           else if(sSym === 'ص') shiftedSadIdxs.push(hostIdx);
