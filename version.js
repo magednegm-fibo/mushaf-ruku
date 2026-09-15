@@ -4,7 +4,7 @@
 //   - package.json → "version"
 //   - PROJECT_STATUS.md header
 //   - README.md version notes
-self.APP_VERSION = '1.0.683';
+self.APP_VERSION = '1.0.691';
 if (typeof window !== 'undefined') {
   window.APP_VERSION = self.APP_VERSION;
 }
