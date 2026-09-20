@@ -249,8 +249,9 @@ self.addEventListener('fetch', function(e){
   if(new URL(url).origin !== self.location.origin) return;
 
   // ---- Document navigations: explicit offline path (Cloudflare Workers) ----
+  // cache:'no-cache' bypasses HTTP/CDN stale copies so network-first is real.
   if(isNavigateRequest(e.request)){
-    var navNetwork = fetch(e.request).then(function(res){
+    var navNetwork = fetch(e.request, { cache: 'no-cache' }).then(function(res){
       if(res && res.status === 200){
         var clone = res.clone();
         e.waitUntil(
@@ -280,6 +281,7 @@ self.addEventListener('fetch', function(e){
   }
 
   if(isStaticAsset(url)){
+    // Cache-first: fonts/icons/data.js. HTTP long-cache (see _headers) is OK.
     e.respondWith(
       caches.match(e.request).then(function(cached){
         if(cached) return cached;
@@ -298,13 +300,14 @@ self.addEventListener('fetch', function(e){
   }
 
   // Network-first for JS/CSS/JSON; cache fallback when offline.
+  // cache:'no-cache' ensures "network" is not a stale HTTP/CDN hit.
   var NETWORK_TIMEOUT_MS = 4000;
   function timeoutPromise(ms){
     return new Promise(function(_, reject){
       setTimeout(function(){ reject(new Error('sw-network-timeout')); }, ms);
     });
   }
-  var networkFetch = fetch(e.request).then(function(res){
+  var networkFetch = fetch(e.request, { cache: 'no-cache' }).then(function(res){
     if(res && res.status === 200){
       var resClone = res.clone();
       e.waitUntil(caches.open(CACHE).then(function(cache){
