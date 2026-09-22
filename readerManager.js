@@ -1143,6 +1143,8 @@
       '95:7:4': true,
       // 96:12:3 بالتقوى — طلب مباشر: ط أزرق (تجاوز لا)
       '96:12:3': true,
+      // 27:44:17 قوارير: اللون الأزرق يأتي من رأس الآية لغير الكوفيين
+      // (NON_KUFI_HEADS_UTHMANI)، وليس من إضافة ط يدوية على كلمة "مِّن".
       '60:8:17': true,
       // Indopak ط (U+0615) on word — keep as TA_MUTLAQ (not JEEM).
       // Madinah may show U+06DA; Indopak is source of truth.
