@@ -2670,17 +2670,26 @@ var KNOWN_SPLIT_WORD_FRAGMENTS = ["اٰ تُوۡهُمۡ", "اٰ تَيۡتُم�
       if(isDefaultJeem) extraCls += ' has-default-jeem';
       // رأس آية لغير الكوفيين — نجمة في مصحف المدينة فقط.
       // المضيف يُحدَّد بمطابقة حروف الأساس (أعلاه) لا بالفهرس وحده.
-      // «لا»: رأس أخضر. غير «لا»: رأس بلون المصحف + نجمة سجاوندي على نفس الكلمة.
-      // بلا رمز: رأس بلون المصحف فقط. مصحف النسخ: بدون تدخل.
+      // معاني رأس غير الكوفيين — مطابقة دليل القارئ (1.0.766):
+      //   خضراء (green) = الوصل أولى.
+      //   مفرّغة / عدم تلوين ("") = عدم الوقف.
+      //   أزرق/بني = تتبع علامة الوقف (ط/ج) على نفس المضيف.
+      // «لا»+green → أخضر. «لا»+"" → مفرّغ. مصحف النسخ: بدون تدخل.
       var isUthmani = state.fontStyle === 'uthmani';
       var nonKufiColor = null; // null = ليس رأس غير كوفي؛ "" = بلا لون (حبر النص)
       if(isUthmani){
         var resolved = nonKufiHostResolved[key];
         if(resolved){
           if(resolved.sym === 'لا'){
-            nonKufiColor = 'green';
+            // دليل القارئ: green = الوصل أولى
+            //               ""    = عدم الوقف (مفرّغة)
+            // طلب مباشر 1.0.756: احترم "" الصريح في الجدول؛ وإلا أخضر افتراضي
+            nonKufiColor = (resolved.color === '') ? '' : 'green';
           } else if(resolved.sym){
-            nonKufiColor = ''; // لون المصحف؛ السجاوندي على نفس الكلمة عبر shifted*
+            // طلب مباشر 1.0.764/1.0.767: أزرق/بني تتبع علامة الوقف (ط/ج) من الجدول
+            // لا يُفرَّغ الرأس عند وجود علامة وقف ملونة على نفس المضيف
+            var _c = resolved.color;
+            nonKufiColor = (_c === 'blue' || _c === 'brown' || _c === 'red' || _c === 'green') ? _c : '';
           } else {
             nonKufiColor = ''; // عارٍ بلا علامة وقف
           }
@@ -2694,8 +2703,13 @@ var KNOWN_SPLIT_WORD_FRAGMENTS = ["اٰ تُوۡهُمۡ", "اٰ تَيۡتُم�
               nonKufiColor = null;
             }
             var fbSym = window.NON_KUFI_HEADS_SYM_UTHMANI && window.NON_KUFI_HEADS_SYM_UTHMANI[key];
-            if(nonKufiColor !== null && fbSym && fbSym !== 'لا') nonKufiColor = '';
-            if(nonKufiColor !== null && fbSym === 'لا') nonKufiColor = 'green';
+            // طلب مباشر 1.0.764: غير «لا» — أبقِ لون الجدول إن كان blue/brown/red/green
+            if(nonKufiColor !== null && fbSym && fbSym !== 'لا'){
+              if(nonKufiColor !== 'blue' && nonKufiColor !== 'brown' &&
+                 nonKufiColor !== 'red' && nonKufiColor !== 'green') nonKufiColor = '';
+            }
+            // طلب مباشر 1.0.756: احترم "" الصريح في الجدول لـ«لا»
+            if(nonKufiColor !== null && fbSym === 'لا') nonKufiColor = (nonKufiColor === '') ? '' : 'green';
           }
         }
       }
@@ -2709,8 +2723,15 @@ var KNOWN_SPLIT_WORD_FRAGMENTS = ["اٰ تُوۡهُمۡ", "اٰ تَيۡتُم�
       var nonKufiColorCls = (nonKufiColor === 'red' || nonKufiColor === 'green' ||
         nonKufiColor === 'blue' || nonKufiColor === 'brown')
         ? (' mark-' + nonKufiColor) : '';
+      // aria-label — مطابقة دليل القارئ (1.0.766)
+      var nonKufiAria = 'رأس آية لغير الكوفيين';
+      if(nonKufiColor === '') nonKufiAria += ' — عدم الوقف';
+      else if(nonKufiColor === 'green')
+        nonKufiAria += ' — الوصل أولى';
+      else if(nonKufiColor === 'blue' || nonKufiColor === 'brown' || nonKufiColor === 'red')
+        nonKufiAria += ' — تتبع علامة الوقف';
       var nonKufiHtml = nonKufiColor !== null
-        ? ('<span class="non-kufi-mark' + nonKufiColorCls + '" aria-label="رأس آية لغير الكوفيين">' +
+        ? ('<span class="non-kufi-mark' + nonKufiColorCls + '" aria-label="' + nonKufiAria + '">' +
            '<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M20 2 L23 10 L31 6 L27 14 L36 15 L28 20 L36 25 L27 26 L31 34 L23 30 L20 38 L17 30 L9 34 L13 26 L4 25 L12 20 L4 15 L13 14 L9 6 L17 10 Z"/></svg>' +
            '</span>')
         : '';

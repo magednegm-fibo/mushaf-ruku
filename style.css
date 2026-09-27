@@ -713,6 +713,13 @@ body.uthmani-font .non-kufi-mark{
   fill: currentColor;
   stroke: none;
 }
+/* رأس غير كوفي عارٍ (بلا mark-*) — مفرّغة = عدم الوقف (دليل القارئ 1.0.766) */
+.non-kufi-mark:not(.mark-red):not(.mark-green):not(.mark-blue):not(.mark-brown) svg path{
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.8;
+  stroke-linejoin: round;
+}
 .non-kufi-mark.mark-red{ color:#C62828; }
 .non-kufi-mark.mark-green{ color:#2E7D32; }
 .non-kufi-mark.mark-blue{ color:#1565C0; }
