@@ -164,6 +164,16 @@
       // digraph; lone ئ (أولئك، ملائكة…) still follows ئ→ي below.
       // -----------------------------------------------------------------
       .replace(/يئ/g, 'يء')
+      // -----------------------------------------------------------------
+      // Medial alef-maksura + dagger alif (ىٰ + letter): Quranic orthography
+      // writes a long /ā/ as ىٰ inside the word (التَّوۡرَىٰةِ، تُقَىٰة،
+      // مَوۡلَىٰنَا، هَدَىٰكُمۡ، مِيكَىٰلَ…). Modern typing uses plain ا
+      // ("التوراة"، "تقاة"، "مولانا"). Without this rule the ى survives as ي
+      // after dagger stripping → "التوريه" never matches "التوراه".
+      // Word-final ىٰ (عَلَىٰ، مُوسَىٰ، إِلَىٰ) is intentionally excluded by
+      // the letter lookahead so it still folds to ي and matches "على/موسى/إلى".
+      // -----------------------------------------------------------------
+      .replace(/ى\u0670(?=[\u0621-\u064A])/g, 'ا')
       .replace(/\u0670/g, daggerAlifTo)
       .replace(/[\u064B-\u065F\u0610-\u061A\u06D6-\u06ED\u08F0-\u08FF\u06DF\u06E0-\u06E4\u06E7\u06E8\u06EA-\u06ED]/g, '')
       .replace(/[\u0640]/g, '')            // tatweel

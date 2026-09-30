@@ -103,5 +103,22 @@ console.log('Section N5 — شيء / شيئًا (tatweel-borne hamza + modern ي
   check('lone ئ still → ي (أولئك)', N('أولئك') === 'اوليك', N('أولئك'));
 }
 
+console.log('Section N6 — medial alef-maksura + dagger (التوراة / تقاة / مولانا)');
+{
+  const N = SM.normalizeArabic;
+  check('التَّوۡرَىٰةِ → التوراه', N('ٱلتَّوۡرَىٰةِ') === 'التوراه', N('ٱلتَّوۡرَىٰةِ'));
+  check('user التوراة → التوراه', N('التوراة') === 'التوراه', N('التوراة'));
+  const r = SM.searchAyahs('ذلك مثلهم فى التوراة', false);
+  check('tolerant «ذلك مثلهم فى التوراة» finds 48:29', r.some(e => e.surah === 48 && e.ayah === 29), 'hits=' + r.length);
+  const rExact = SM.searchAyahs('ذلك مثلهم فى التوراة', true);
+  check('exact «ذلك مثلهم فى التوراة» finds 48:29', rExact.some(e => e.surah === 48 && e.ayah === 29), 'hits=' + rExact.length);
+  check('عَلَىٰ → علي (word-final)', N('عَلَىٰ') === 'علي', N('عَلَىٰ'));
+  check('مُوسَىٰ → موسي (word-final)', N('مُوسَىٰ') === 'موسي', N('مُوسَىٰ'));
+  const rAla = SM.searchAyahs('على', false);
+  check('tolerant على still finds many hits', rAla.length >= 40, 'hits=' + rAla.length);
+  check('مَوۡلَىٰنَا → مولانا', N('مَوۡلَىٰنَا') === 'مولانا', N('مَوۡلَىٰنَا'));
+  check('تُقَىٰة → تقاه', N('تُقَىٰة') === 'تقاه', N('تُقَىٰة'));
+}
+
 console.log('\n==== TOTAL: PASS=' + pass + ' FAIL=' + fail + ' ====');
 process.exit(fail ? 1 : 0);

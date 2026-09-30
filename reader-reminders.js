@@ -30,10 +30,10 @@
     // الشكل القرآني يأتي من font-family (Uthmanic Hafs / Saleem) في CSS.
     {cls: 'has-default-waqf-lazim', symbol: '\u0645', label: 'وقف لازم', color: 'red'},
     {cls: 'has-default-waqf', symbol: 'ط', label: 'وقف مطلق', color: 'blue'},
-    {cls: 'has-default-qif', symbol: 'قف', label: 'وقف لبيان ما قبلها', color: 'brown'},
+    {cls: 'has-default-qif', symbol: 'قف', label: 'لبيان ما قبلها', color: 'brown'},
     {cls: 'has-default-jeem', symbol: 'ج', label: 'وقف جائز', color: 'brown'},
     {cls: 'has-default-zay-jawaz', symbol: 'ز', label: 'وقف مجوز لوجه', color: 'green'},
-    {cls: 'has-default-qad-qila', symbol: 'ق', label: 'وقف لبيان ما بعدها', color: 'green'},
+    {cls: 'has-default-qad-qila', symbol: 'ق', label: 'لبيان ما بعدها', color: 'green'},
     {cls: 'has-default-sad-rukhsa', symbol: 'ص', label: 'وقف مرخص للضرورة', color: 'green'}
   ];
   function resolveDefaultMarkInfo(wordEl){
