@@ -1,0 +1,742 @@
+[
+  {
+    "surah": 2,
+    "ayah": 40,
+    "position": 2,
+    "page": 7,
+    "codepoint": "FC61",
+    "label": "إسرائيل"
+  },
+  {
+    "surah": 2,
+    "ayah": 43,
+    "position": 7,
+    "page": 7,
+    "codepoint": "FC91",
+    "label": "الراكعين",
+    "scale": 0.85,
+    "margin_factor": 1.02
+  },
+  {
+    "surah": 4,
+    "ayah": 34,
+    "position": 2,
+    "page": 84,
+    "codepoint": "FC42",
+    "label": "قوامون"
+  },
+  {
+    "surah": 2,
+    "ayah": 47,
+    "position": 2,
+    "page": 7,
+    "codepoint": "FCB4",
+    "label": "إسرائيل"
+  },
+  {
+    "surah": 2,
+    "ayah": 72,
+    "position": 4,
+    "page": 11,
+    "codepoint": "FC71",
+    "label": "فَٱدَّـٰرَ⁠ٰٔتُمۡ"
+  },
+  {
+    "surah": 2,
+    "ayah": 83,
+    "position": 5,
+    "page": 12,
+    "codepoint": "FCAB",
+    "label": "إسرائيل"
+  },
+  {
+    "surah": 2,
+    "ayah": 122,
+    "position": 2,
+    "page": 19,
+    "codepoint": "FC75",
+    "label": "إسرائيل"
+  },
+  {
+    "surah": 2,
+    "ayah": 211,
+    "position": 3,
+    "page": 33,
+    "codepoint": "FC43",
+    "label": "إسرائيل"
+  },
+  {
+    "surah": 2,
+    "ayah": 222,
+    "position": 25,
+    "page": 35,
+    "codepoint": "FCAB",
+    "label": "ٱلتَّوَّٰبِينَ"
+  },
+  {
+    "surah": 2,
+    "ayah": 246,
+    "position": 7,
+    "page": 40,
+    "codepoint": "FC47",
+    "label": "إسرائيل"
+  },
+  {
+    "surah": 3,
+    "ayah": 7,
+    "position": 32,
+    "page": 50,
+    "codepoint": "FCA9",
+    "label": "وَٱلرَّٰسِخُونَ"
+  },
+  {
+    "surah": 3,
+    "ayah": 43,
+    "position": 7,
+    "page": 55,
+    "codepoint": "FCA5",
+    "label": "الراكعين",
+    "scale": 0.9
+  },
+  {
+    "surah": 3,
+    "ayah": 49,
+    "position": 4,
+    "page": 56,
+    "codepoint": "FC6C",
+    "label": "إسرائيل"
+  },
+  {
+    "surah": 3,
+    "ayah": 93,
+    "position": 6,
+    "page": 62,
+    "codepoint": "FC58",
+    "label": "إسرائيل"
+  },
+  {
+    "surah": 3,
+    "ayah": 93,
+    "position": 10,
+    "page": 62,
+    "codepoint": "FC5C",
+    "label": "إسرائيل"
+  },
+  {
+    "surah": 4,
+    "ayah": 162,
+    "position": 2,
+    "page": 103,
+    "codepoint": "FCC0",
+    "label": "ٱلرَّٰسِخُونَ"
+  },
+  {
+    "surah": 5,
+    "ayah": 12,
+    "position": 6,
+    "page": 109,
+    "codepoint": "FC69",
+    "label": "إسرائيل"
+  },
+  {
+    "surah": 5,
+    "ayah": 32,
+    "position": 7,
+    "page": 113,
+    "codepoint": "FC47",
+    "label": "إسرائيل"
+  },
+  {
+    "surah": 5,
+    "ayah": 70,
+    "position": 5,
+    "page": 119,
+    "codepoint": "FCC0",
+    "label": "إسرائيل"
+  },
+  {
+    "surah": 5,
+    "ayah": 72,
+    "position": 14,
+    "page": 120,
+    "codepoint": "FC64",
+    "label": "إسرائيل"
+  },
+  {
+    "surah": 5,
+    "ayah": 78,
+    "position": 6,
+    "page": 121,
+    "codepoint": "FC46",
+    "label": "إسرائيل"
+  },
+  {
+    "surah": 5,
+    "ayah": 110,
+    "position": 50,
+    "page": 126,
+    "codepoint": "FC8A",
+    "label": "إسرائيل"
+  },
+  {
+    "surah": 7,
+    "ayah": 105,
+    "position": 18,
+    "page": 164,
+    "codepoint": "FC53",
+    "label": "إسرائيل"
+  },
+  {
+    "surah": 7,
+    "ayah": 134,
+    "position": 22,
+    "page": 166,
+    "codepoint": "FC8B",
+    "label": "إسرائيل"
+  },
+  {
+    "surah": 7,
+    "ayah": 137,
+    "position": 18,
+    "page": 166,
+    "codepoint": "FCB7",
+    "label": "إسرائيل"
+  },
+  {
+    "surah": 7,
+    "ayah": 138,
+    "position": 3,
+    "page": 167,
+    "codepoint": "FC43",
+    "label": "إسرائيل"
+  },
+  {
+    "surah": 10,
+    "ayah": 90,
+    "position": 3,
+    "page": 219,
+    "codepoint": "FC50",
+    "label": "إسرائيل"
+  },
+  {
+    "surah": 10,
+    "ayah": 90,
+    "position": 24,
+    "page": 219,
+    "codepoint": "FC66",
+    "label": "إسرائيل"
+  },
+  {
+    "surah": 10,
+    "ayah": 93,
+    "position": 4,
+    "page": 219,
+    "codepoint": "FC86",
+    "label": "إسرائيل"
+  },
+  {
+    "surah": 17,
+    "ayah": 2,
+    "position": 7,
+    "page": 282,
+    "codepoint": "FC5E",
+    "label": "إسرائيل"
+  },
+  {
+    "surah": 17,
+    "ayah": 4,
+    "position": 4,
+    "page": 282,
+    "codepoint": "FC73",
+    "label": "إسرائيل"
+  },
+  {
+    "surah": 17,
+    "ayah": 101,
+    "position": 9,
+    "page": 292,
+    "codepoint": "FCA2",
+    "label": "إسرائيل"
+  },
+  {
+    "surah": 17,
+    "ayah": 104,
+    "position": 5,
+    "page": 292,
+    "codepoint": "FCCB",
+    "label": "إسرائيل"
+  },
+  {
+    "surah": 19,
+    "ayah": 58,
+    "position": 18,
+    "page": 309,
+    "codepoint": "FC87",
+    "label": "وإسرائيل"
+  },
+  {
+    "surah": 20,
+    "ayah": 47,
+    "position": 9,
+    "page": 314,
+    "codepoint": "FCBD",
+    "label": "إسرائيل"
+  },
+  {
+    "surah": 20,
+    "ayah": 80,
+    "position": 2,
+    "page": 317,
+    "codepoint": "FC64",
+    "label": "إسرائيل"
+  },
+  {
+    "surah": 20,
+    "ayah": 94,
+    "position": 15,
+    "page": 318,
+    "codepoint": "FC94",
+    "label": "إسرائيل"
+  },
+  {
+    "surah": 26,
+    "ayah": 17,
+    "position": 5,
+    "page": 367,
+    "codepoint": "FCC8",
+    "label": "إسرائيل"
+  },
+  {
+    "surah": 26,
+    "ayah": 22,
+    "position": 8,
+    "page": 368,
+    "codepoint": "FC5B",
+    "label": "إسرائيل"
+  },
+  {
+    "surah": 26,
+    "ayah": 59,
+    "position": 4,
+    "page": 369,
+    "codepoint": "FCDC",
+    "label": "إسرائيل"
+  },
+  {
+    "surah": 26,
+    "ayah": 197,
+    "position": 9,
+    "page": 375,
+    "codepoint": "FCA4",
+    "label": "إسرائيل"
+  },
+  {
+    "surah": 27,
+    "ayah": 76,
+    "position": 7,
+    "page": 383,
+    "codepoint": "FCDA",
+    "label": "إسرائيل"
+  },
+  {
+    "surah": 32,
+    "ayah": 23,
+    "position": 14,
+    "page": 417,
+    "codepoint": "FC68",
+    "label": "إسرائيل"
+  },
+  {
+    "surah": 40,
+    "ayah": 53,
+    "position": 7,
+    "page": 473,
+    "codepoint": "FC73",
+    "label": "إسرائيل"
+  },
+  {
+    "surah": 43,
+    "ayah": 59,
+    "position": 10,
+    "page": 493,
+    "codepoint": "FCC9",
+    "label": "إسرائيل"
+  },
+  {
+    "surah": 44,
+    "ayah": 30,
+    "position": 4,
+    "page": 497,
+    "codepoint": "FC8F",
+    "label": "إسرائيل"
+  },
+  {
+    "surah": 45,
+    "ayah": 16,
+    "position": 4,
+    "page": 500,
+    "codepoint": "FC61",
+    "label": "إسرائيل"
+  },
+  {
+    "surah": 46,
+    "ayah": 10,
+    "position": 14,
+    "page": 503,
+    "codepoint": "FC9F",
+    "label": "إسرائيل"
+  },
+  {
+    "surah": 60,
+    "ayah": 4,
+    "position": 14,
+    "page": 549,
+    "codepoint": "FC9F",
+    "label": "بُرَءَٰٓؤُا۟"
+  },
+  {
+    "surah": 61,
+    "ayah": 6,
+    "position": 7,
+    "page": 552,
+    "codepoint": "FC47",
+    "label": "إسرائيل"
+  },
+  {
+    "surah": 61,
+    "ayah": 14,
+    "position": 26,
+    "page": 552,
+    "codepoint": "FCE6",
+    "label": "إسرائيل"
+  },
+  {
+    "surah": 66,
+    "ayah": 10,
+    "position": 27,
+    "page": 561,
+    "codepoint": "FC9A",
+    "label": "ٱلدَّٰخِلِينَ",
+    "scale": 0.8,
+    "margin_factor": 1.02
+  },
+  {
+    "surah": 24,
+    "ayah": 58,
+    "position": 14,
+    "page": 357,
+    "codepoint": "FCA9",
+    "label": "مرات"
+  },
+  {
+    "surah": 12,
+    "ayah": 75,
+    "position": 8,
+    "page": 244,
+    "codepoint": "FC7F",
+    "label": "جَزَـٰٓؤُهُۥۚ"
+  },
+  {
+    "surah": 51,
+    "ayah": 10,
+    "position": 2,
+    "page": 521,
+    "codepoint": "FC50",
+    "label": "ٱلۡخَرَّـٰصُونَ"
+  },
+  {
+    "surah": 7,
+    "ayah": 151,
+    "position": 11,
+    "page": 169,
+    "codepoint": "FC77",
+    "label": "ٱلرَّـٰحِمِينَ"
+  },
+  {
+    "surah": 12,
+    "ayah": 64,
+    "position": 17,
+    "page": 243,
+    "codepoint": "FC52",
+    "label": "ٱلرَّـٰحِمِينَ"
+  },
+  {
+    "surah": 12,
+    "ayah": 92,
+    "position": 11,
+    "page": 246,
+    "codepoint": "FCAA",
+    "label": "ٱلرَّـٰحِمِينَ"
+  },
+  {
+    "surah": 21,
+    "ayah": 83,
+    "position": 10,
+    "page": 329,
+    "codepoint": "FC59",
+    "label": "ٱلرَّـٰحِمِينَ",
+    "scale": 0.8,
+    "margin_factor": 1.02
+  },
+  {
+    "surah": 23,
+    "ayah": 109,
+    "position": 14,
+    "page": 349,
+    "codepoint": "FC6E",
+    "label": "ٱلرَّـٰحِمِينَ"
+  },
+  {
+    "surah": 23,
+    "ayah": 118,
+    "position": 7,
+    "page": 349,
+    "codepoint": "FCCE",
+    "label": "ٱلرَّـٰحِمِينَ",
+    "scale": 0.8,
+    "margin_factor": 1.02
+  },
+  {
+    "surah": 5,
+    "ayah": 114,
+    "position": 22,
+    "page": 127,
+    "codepoint": "FC57",
+    "label": "ٱلرَّـٰزِقِينَ",
+    "scale": 0.9
+  },
+  {
+    "surah": 22,
+    "ayah": 58,
+    "position": 18,
+    "page": 339,
+    "codepoint": "FC6A",
+    "label": "ٱلرَّـٰزِقِينَ"
+  },
+  {
+    "surah": 23,
+    "ayah": 72,
+    "position": 9,
+    "page": 346,
+    "codepoint": "FCCC",
+    "label": "ٱلرَّـٰزِقِينَ"
+  },
+  {
+    "surah": 34,
+    "ayah": 39,
+    "position": 20,
+    "page": 432,
+    "codepoint": "FCD5",
+    "label": "ٱلرَّـٰزِقِينَ"
+  },
+  {
+    "surah": 62,
+    "ayah": 11,
+    "position": 21,
+    "page": 554,
+    "codepoint": "FC7E",
+    "label": "ٱلرَّـٰزِقِينَ"
+  },
+  {
+    "surah": 49,
+    "ayah": 7,
+    "position": 28,
+    "page": 516,
+    "codepoint": "FC7E",
+    "label": "ٱلرَّـٰشِدُونَ"
+  },
+  {
+    "surah": 9,
+    "ayah": 112,
+    "position": 5,
+    "page": 205,
+    "codepoint": "FC45",
+    "label": "ٱلرَّـٰكِعُونَ",
+    "scale": 0.85,
+    "margin_factor": 1.0
+  },
+  {
+    "surah": 56,
+    "ayah": 64,
+    "position": 5,
+    "page": 536,
+    "codepoint": "FC8F",
+    "label": "ٱلزَّـٰرِعُونَ"
+  },
+  {
+    "surah": 12,
+    "ayah": 20,
+    "position": 9,
+    "page": 237,
+    "codepoint": "FC9F",
+    "label": "ٱلزَّـٰهِدِينَ",
+    "scale": 0.85,
+    "margin_factor": 1.0
+  },
+  {
+    "surah": 11,
+    "ayah": 75,
+    "position": 4,
+    "page": 230,
+    "codepoint": "FC6F",
+    "label": "أَوَّـٰهٞ"
+  },
+  {
+    "surah": 26,
+    "ayah": 61,
+    "position": 2,
+    "page": 370,
+    "codepoint": "FC42",
+    "label": "تَرَـٰٓءَا"
+  },
+  {
+    "surah": 5,
+    "ayah": 29,
+    "position": 12,
+    "page": 112,
+    "codepoint": "FCAC",
+    "label": "جَزَـٰٓؤُاْ"
+  },
+  {
+    "surah": 5,
+    "ayah": 33,
+    "position": 2,
+    "page": 113,
+    "codepoint": "FC6C",
+    "label": "جَزَـٰٓؤُاْ"
+  },
+  {
+    "surah": 59,
+    "ayah": 17,
+    "position": 9,
+    "page": 548,
+    "codepoint": "FC4A",
+    "label": "جَزَـٰٓؤُاْ"
+  },
+  {
+    "surah": 12,
+    "ayah": 74,
+    "position": 3,
+    "page": 244,
+    "codepoint": "FC73",
+    "label": "جَزَـٰٓؤُهُۥٓ"
+  },
+  {
+    "surah": 12,
+    "ayah": 75,
+    "position": 2,
+    "page": 244,
+    "codepoint": "FC79",
+    "label": "جَزَـٰٓؤُهُۥ"
+  },
+  {
+    "surah": 7,
+    "ayah": 176,
+    "position": 21,
+    "page": 173,
+    "codepoint": "FCAE",
+    "label": "ذَّـٰلِكَ"
+  },
+  {
+    "surah": 24,
+    "ayah": 58,
+    "position": 37,
+    "page": 357,
+    "codepoint": "FCC4",
+    "label": "طَوَّـٰفُونَ"
+  },
+  {
+    "surah": 37,
+    "ayah": 2,
+    "position": 1,
+    "page": 446,
+    "codepoint": "FC44",
+    "label": "فَٱلزَّـٰجِرَٰتِ"
+  },
+  {
+    "surah": 4,
+    "ayah": 135,
+    "position": 5,
+    "page": 100,
+    "codepoint": "FC46",
+    "label": "قَوَّـٰمِينَ"
+  },
+  {
+    "surah": 5,
+    "ayah": 8,
+    "position": 5,
+    "page": 108,
+    "codepoint": "FC9C",
+    "label": "قَوَّـٰمِينَ"
+  },
+  {
+    "surah": 9,
+    "ayah": 114,
+    "position": 21,
+    "page": 205,
+    "codepoint": "FC7D",
+    "label": "لَأَوَّـٰهٌ",
+    "scale": 0.9
+  },
+  {
+    "surah": 17,
+    "ayah": 25,
+    "position": 11,
+    "page": 284,
+    "codepoint": "FCBA",
+    "label": "لِلۡأَوَّـٰبِينَ"
+  },
+  {
+    "surah": 11,
+    "ayah": 114,
+    "position": 14,
+    "page": 234,
+    "codepoint": "FCA8",
+    "label": "لِلذَّـٰكِرِينَ",
+    "scale": 0.9
+  },
+  {
+    "surah": 51,
+    "ayah": 1,
+    "position": 1,
+    "page": 520,
+    "codepoint": "FCB3",
+    "label": "وَٱلذَّـٰرِيَٰتِ",
+    "scale": 0.9
+  },
+  {
+    "surah": 33,
+    "ayah": 35,
+    "position": 21,
+    "page": 422,
+    "codepoint": "FCA6",
+    "label": "وَٱلذَّـٰكِرِينَ",
+    "scale": 0.85
+  },
+  {
+    "surah": 33,
+    "ayah": 35,
+    "position": 24,
+    "page": 422,
+    "codepoint": "FCA9",
+    "label": "وَٱلذَّـٰكِرَٰتِ",
+    "scale": 0.85
+  },
+  {
+    "surah": 42,
+    "ayah": 40,
+    "position": 1,
+    "page": 487,
+    "codepoint": "FC9C",
+    "label": "وَجَزَـٰٓؤُاْ",
+    "scale": 0.9
+  },
+  {
+    "surah": 78,
+    "ayah": 35,
+    "position": 6,
+    "page": 583,
+    "codepoint": "FC53",
+    "label": "كِذَّـٰبٗا"
+  }
+]

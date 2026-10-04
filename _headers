@@ -1,0 +1,51 @@
+# Cloudflare Pages reads this file automatically and applies these
+# headers at the edge, on top of whatever the browser itself does.
+#
+# Strategy (three tiers):
+#
+# 1) UPDATE PATH — never CDN-cache. The browser must always see the real
+#    current bytes so a new release is detected and the shell bootstraps
+#    with the right <script> tags / APP_VERSION.
+# 2) MUTABLE CODE & DATA — no CDN cache. Same URL every release; content
+#    changes. Service Worker network-first still uses the browser HTTP
+#    cache unless the response arrived with no-cache, so a long CDN TTL
+#    here would make "network-first" serve stale JS/CSS/JSON.
+# 3) IMMUTABLE STATIC — long cache. Fonts and icons almost never change
+#    at the same path; SW serves them cache-first after install. CDN
+#    long-cache speeds first visit without blocking updates (version
+#    bump replaces the SW cache name).
+
+# --- Tier 1: update path ------------------------------------------------
+/sw.js
+  Cache-Control: no-cache, no-store, must-revalidate
+
+/index.html
+  Cache-Control: no-cache, no-store, must-revalidate
+
+/
+  Cache-Control: no-cache, no-store, must-revalidate
+
+/version.js
+  Cache-Control: no-cache, no-store, must-revalidate
+
+/manifest.json
+  Cache-Control: no-cache, no-store, must-revalidate
+
+# --- Tier 2: mutable code & data ----------------------------------------
+# Cloudflare Pages path rules: prefix match. These cover all shipped
+# JS/CSS and the data/ JSON used at runtime.
+/*.js
+  Cache-Control: no-cache, no-store, must-revalidate
+
+/*.css
+  Cache-Control: no-cache, no-store, must-revalidate
+
+/data/*
+  Cache-Control: no-cache, no-store, must-revalidate
+
+# --- Tier 3: immutable static -------------------------------------------
+/fonts/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/icons/*
+  Cache-Control: public, max-age=31536000, immutable

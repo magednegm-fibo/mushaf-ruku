@@ -1,0 +1,79 @@
+/* =============================================================================
+   PROTOTYPE ONLY — NOT part of stable 1.0.395 baseline.
+   File: prototype-ios-waqf-scale.css
+
+   Purpose
+   -------
+   iOS/WebKit experiment: keep the *visual* ~1.1 enlargement of Sajawandi
+   default-colored words, but avoid font-size-driven shaping-run splits that
+   break letter joining on iPhone.
+
+   Strategy
+   --------
+   - Android / non-WebKit: unchanged (still style.css font-size: 1.1em).
+   - WebKit (iOS Safari + iOS Chrome): override those words to font-size: 1em
+     and apply transform: scale(1.1) instead.
+
+   How to enable (temporary, local test only)
+   ------------------------------------------
+   In index.html <head>, AFTER style.css, add ONE line:
+
+     <link rel="stylesheet" href="prototype-ios-waqf-scale.css">
+
+   Remove the line when done. Do not ship this file in a release until the
+   prototype is accepted after real-device review.
+
+   What this does NOT change
+   -------------------------
+   - QCF architecture / fonts
+   - DOM structure / wrapWaqfSigns
+   - Per-word overrides (no قلوبهم / مثلكم special cases)
+   - TTS, AudioManager, Android font-size: 1.1em path outside @supports
+   - style.css / index.html / any JS (this file is standalone)
+   ============================================================================= */
+
+/* Gate: WebKit features common on iOS Safari & iOS Chrome (both WebKit).
+   Blink (Android Chrome / typical Android WebView) does not match this
+   the same way; the production 1.1em rule in style.css remains the Android
+   path. Desktop Safari may also match — acceptable for a prototype. */
+@supports (-webkit-touch-callout: none) {
+
+  /* Same selectors as style.css 1.1em block — Uthmani / Madinah only.
+     Load this file AFTER style.css so cascade order wins (no !important). */
+  body.uthmani-font .quran-word.has-default-waqf:not(.has-waqf),
+  body.uthmani-font .quran-word.has-default-sad-rukhsa:not(.has-waqf),
+  body.uthmani-font .quran-word.has-default-waqf-lazim:not(.has-waqf),
+  body.uthmani-font .quran-word.has-default-zay-jawaz:not(.has-waqf),
+  body.uthmani-font .quran-word.has-default-qad-qila:not(.has-waqf),
+  body.uthmani-font .quran-word.has-default-qif:not(.has-waqf),
+  body.uthmani-font .quran-word.has-default-jeem:not(.has-waqf){
+    /* Ambient size for shaping (cancels production 1.1em via cascade). */
+    font-size: 1em;
+
+    /* Visual ~1.1em. inline-block required for transform on otherwise-inline span. */
+    display: inline-block;
+    transform: scale(1.1);
+    transform-origin: center center;
+
+    /* Layout compensation experiment: scale does not grow the layout box.
+       ~0.05em each side ≈ half of the 10% visual growth — verify on device. */
+    margin-inline: 0.05em;
+
+    vertical-align: baseline;
+  }
+
+  /* Marks hidden: no size emphasis — clear scale/margin from the rule above.
+     Higher specificity (extra body.hide-waqf-marks) wins without !important. */
+  body.hide-waqf-marks.uthmani-font .quran-word.has-default-waqf:not(.has-waqf),
+  body.hide-waqf-marks.uthmani-font .quran-word.has-default-sad-rukhsa:not(.has-waqf),
+  body.hide-waqf-marks.uthmani-font .quran-word.has-default-waqf-lazim:not(.has-waqf),
+  body.hide-waqf-marks.uthmani-font .quran-word.has-default-zay-jawaz:not(.has-waqf),
+  body.hide-waqf-marks.uthmani-font .quran-word.has-default-qad-qila:not(.has-waqf),
+  body.hide-waqf-marks.uthmani-font .quran-word.has-default-qif:not(.has-waqf),
+  body.hide-waqf-marks.uthmani-font .quran-word.has-default-jeem:not(.has-waqf){
+    font-size: 1em;
+    transform: none;
+    margin-inline: 0;
+    display: inline;
+  }
+}
