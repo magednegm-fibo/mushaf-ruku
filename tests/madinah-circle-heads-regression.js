@@ -1,6 +1,7 @@
 'use strict';
 /**
  * ACTIVE: MADINAH_CIRCLE_HEADS is Source of Truth for ayah-number circle vs star.
+ * 1.0.812+: last-word sajawandi → circle, except م (red/lazim) → star (1.0.815).
  */
 const fs = require('fs');
 const path = require('path');
@@ -15,8 +16,10 @@ for (const page of global.JUZ_PAGES) {
   for (const ay of page.ayahs || []) uniq.add(ay.surah + ':' + ay.ayah);
 }
 
-const samplesCircle = ['1:1', '1:7', '2:5', '2:6', '2:7', '2:10'];
-const samplesStar = ['1:2', '1:3', '1:4', '1:5', '1:6', '2:1'];
+// Circles: no last-saj OR last-saj but not م
+const samplesCircle = ['1:1', '1:7', '2:5', '2:6', '2:7', '2:10', '1:4', '1:5', '2:1', '3:2', '3:15', '2:72'];
+// Stars: last-word م (red) e.g. 2:8, plus original no-circle without last-saj
+const samplesStar = ['1:2', '1:3', '1:6', '2:2', '2:3', '2:18', '2:8'];
 
 let invalid = 0;
 for (const k of SET) {
@@ -36,6 +39,6 @@ samplesStar.forEach(k => console.log('  STAR  ', k, SET.has(k) ? 'FAIL' : 'Star'
 
 const circleOk = samplesCircle.every(k => SET.has(k));
 const starOk = samplesStar.every(k => !SET.has(k));
-const pass = SET.size === 4035 && invalid === 0 && circleOk && starOk;
+const pass = SET.size === 4934 && invalid === 0 && circleOk && starOk;
 console.log(pass ? 'PASS' : 'FAIL');
 process.exit(pass ? 0 : 1);

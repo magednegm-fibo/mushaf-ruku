@@ -1007,15 +1007,23 @@ body.night .waqf-color-btn:active{ background: rgba(255,255,255,.08); }
   font-size: 16px;
   font-weight:700;
 }
+.waqf-info-popup.info-red{
+  /* مسافة إضافية قبل الميم حتى لا تلتصق بحافة الصندوق (RTL: بداية الصف) */
+  padding-inline-start: 18px;
+}
 .waqf-info-popup.info-red .waqf-info-symbol{
   font-family: 'Uthmanic Hafs', 'Amiri Quran', 'Noto Naskh Arabic', serif;
-  font-size: 28px;
+  font-size: 42px;
   font-weight: 400;
-  line-height: 1;
+  /* ارتفاع الصف = تقريبًا ارتفاع popup ط (لا يضخّم الصندوق) */
+  line-height: 18px;
+  height: 18px;
+  overflow: visible;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  transform: translateY(-0.12em);
+  /* U+06D8 عالية فوق السطر بطبعها — إنزال لتوازي «وقف لازم» */
+  transform: translateY(0.55em);
 }
 .waqf-info-label{
   font-size: 14px;

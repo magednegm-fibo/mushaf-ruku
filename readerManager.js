@@ -62,9 +62,9 @@
   }
 
   function ayahMarkerShapeSvg(surah, ayah){
-    var isNoSajawandiHead = isMadinahCircleHead(surah, ayah);
+    var isCircleHead = isMadinahCircleHead(surah, ayah);
     // الدائرة: لا محتوى SVG — الحلقة تُرسَم بـ CSS ::before على .ayah-num-circle
-    return isNoSajawandiHead ? '' : AYAH_NUM_STAR_PATH;
+    return isCircleHead ? '' : AYAH_NUM_STAR_PATH;
   }
 
   function ayahMarker(surah, ayah){

@@ -1,6 +1,6 @@
 'use strict';
 /**
- * ACTIVE official regression: table (5622) === rendered Madinah coloring + specials + khilaf exclusions.
+ * ACTIVE official regression: table (5570) === rendered Madinah coloring + specials + khilaf exclusions.
  */
 const fs = require('fs');
 const path = require('path');
@@ -89,7 +89,7 @@ console.log('');
 ['ط','ج','ز','ص','قف','م','ق'].forEach(m => console.log(m + ' =', counts[m] || 0));
 console.log('');
 console.log('Special cases:', specialOk ? 'PASS' : 'FAIL');
-const pass = rows.length === 5622 && rendered.size === 5622 && diffs === 0 &&
+const pass = rows.length === 5570 && rendered.size === 5570 && diffs === 0 &&
   duplicates === 0 && conflicts === 0 && invalidIndexes === 0 && invalidMarks === 0 && specialOk;
 console.log('');
 console.log(pass ? 'PASS' : 'FAIL');

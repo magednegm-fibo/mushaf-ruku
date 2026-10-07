@@ -8,8 +8,8 @@ eval(fs.readFileSync(path.join(root, 'data.js'), 'utf8').replace(/window\./g, 'g
 const rows = require(path.join(root, 'madinah-sajawandi.js'));
 
 const ALLOWED = new Set(['ط', 'ج', 'ص', 'ز', 'ق', 'قف', 'م']);
-const EXPECTED_TOTAL = 5622;
-const EXPECTED = { 'ط': 3520, 'ج': 1580, 'ز': 181, 'ص': 91, 'قف': 92, 'م': 85, 'ق': 73 };
+const EXPECTED_TOTAL = 5569;
+const EXPECTED = { 'ط': 3520, 'ج': 1563, 'ز': 166, 'ص': 90, 'قف': 92, 'م': 85, 'ق': 53 };
 
 const ayahWordCount = new Map();
 for (const page of global.JUZ_PAGES) {

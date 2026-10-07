@@ -25,10 +25,8 @@
   // waqf type here instead of the personal reminder-mark menu. Colors
   // match the exact mapping in style.css (.has-default-* → .waqf-mark.mark-*).
   var DEFAULT_MARK_INFO = [
-    // ميم الوقف اللازم: حرف «م» (U+0645) بخط المصحف في الـpopup —
-    // U+06D8 ۘ علامة عالية صغيرة فوق السطر فكانت بالكاد تظهر في الواجهة.
-    // الشكل القرآني يأتي من font-family (Uthmanic Hafs / Saleem) في CSS.
-    {cls: 'has-default-waqf-lazim', symbol: '\u0645', label: 'وقف لازم', color: 'red'},
+    // ميم الوقف اللازم: U+06D8 (شكل المصحف) مع إنزال عمودي في CSS لتكون على سطر التسمية.
+    {cls: 'has-default-waqf-lazim', symbol: '\u06D8', label: 'وقف لازم', color: 'red'},
     {cls: 'has-default-waqf', symbol: 'ط', label: 'وقف مطلق', color: 'blue'},
     {cls: 'has-default-qif', symbol: 'قف', label: 'وقف مستحب', color: 'brown'},
     {cls: 'has-default-jeem', symbol: 'ج', label: 'وقف جائز', color: 'brown'},
