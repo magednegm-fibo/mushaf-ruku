@@ -17,7 +17,7 @@ for (const page of global.JUZ_PAGES) {
 }
 
 // Circles: no last-saj OR last-saj but not م
-const samplesCircle = ['1:1', '1:7', '2:5', '2:6', '2:7', '2:10', '1:4', '1:5', '2:1', '3:2', '3:15', '2:72'];
+const samplesCircle = ['26:18', '26:32', '26:160', '20:43', '1:1', '1:7', '2:5', '2:6', '2:7', '2:10', '1:4', '1:5', '2:1', '3:2', '3:15', '2:72'];
 // Stars: last-word م (red) e.g. 2:8, plus original no-circle without last-saj
 const samplesStar = ['1:2', '1:3', '1:6', '2:2', '2:3', '2:18', '2:8'];
 
@@ -39,6 +39,6 @@ samplesStar.forEach(k => console.log('  STAR  ', k, SET.has(k) ? 'FAIL' : 'Star'
 
 const circleOk = samplesCircle.every(k => SET.has(k));
 const starOk = samplesStar.every(k => !SET.has(k));
-const pass = SET.size === 4934 && invalid === 0 && circleOk && starOk;
+const pass = SET.size === 4938 && invalid === 0 && circleOk && starOk;
 console.log(pass ? 'PASS' : 'FAIL');
 process.exit(pass ? 0 : 1);
