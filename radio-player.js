@@ -24,7 +24,7 @@
 
   var STATIONS = [
     { id: 'quran_cairo', name: 'القرآن الكريم من القاهرة', url: 'https://stream.radiojar.com/8s5u5tpdtwzuv' },
-    { id: 'sharawy_tafsir', name: 'تفسير الشيخ الشعراوي', url: 'https://serverkw.quran-uni.com:8202/;*.mp3' },
+    { id: 'sharawy_tafsir', name: 'تفسير الشعراوي والنابلسي', url: 'https://islamicbulletin.site:8066/stream' },
     { id: 'mustafa_ismail', name: 'مصطفى إسماعيل', url: 'https://qurango.net/radio/mustafa_ismail' }
   ];
   var DEFAULT_STATION_ID = STATIONS[0].id; // القرآن الكريم من القاهرة
