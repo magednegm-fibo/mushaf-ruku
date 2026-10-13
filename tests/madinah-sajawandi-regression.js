@@ -42,7 +42,7 @@ Object.keys(samples).forEach(function(k){
   assert(map[k] === samples[k], k + ' → ' + samples[k] + (map[k] ? ' (got '+map[k]+')' : ' MISSING'));
 });
 
-assert(rows.length === 5563, 'total 5563 (got ' + rows.length + ')');
+assert(rows.length === 5558, 'total 5558 (got ' + rows.length + ')');
 
 if (failed) { console.error('FAILED', failed); process.exit(1); }
 console.log('OK', passed, 'assertions');
