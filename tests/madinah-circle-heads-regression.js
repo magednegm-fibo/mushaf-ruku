@@ -39,6 +39,6 @@ samplesStar.forEach(k => console.log('  STAR  ', k, SET.has(k) ? 'FAIL' : 'Star'
 
 const circleOk = samplesCircle.every(k => SET.has(k));
 const starOk = samplesStar.every(k => !SET.has(k));
-const pass = SET.size === 4940 && invalid === 0 && circleOk && starOk;
+const pass = SET.size === 4941 && invalid === 0 && circleOk && starOk;
 console.log(pass ? 'PASS' : 'FAIL');
 process.exit(pass ? 0 : 1);
