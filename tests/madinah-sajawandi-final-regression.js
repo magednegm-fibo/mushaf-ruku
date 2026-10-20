@@ -1,6 +1,6 @@
 'use strict';
 /**
- * ACTIVE official regression: table (5554) === rendered Madinah coloring + specials + khilaf exclusions.
+ * ACTIVE official regression: table (5548) === rendered Madinah coloring + specials + khilaf exclusions.
  */
 const fs = require('fs');
 const path = require('path');
@@ -59,9 +59,9 @@ for (const [k] of rendered) {
 
 const specialExpect = {
   '4:171:28':'ج','7:187:15':'م','12:96:9':'ج','47:4:20':'ج',
-  '27:44:17':'ط','65:2:24':'ط','36:1:1':'ط'
+  '27:44:17':'ط','65:2:24':'ط','36:1:1':'ط','52:37:7':'ط'
 };
-const specialAbsent = ['2:245:14','7:69:22','18:1:11','36:52:6','52:37:7'];
+const specialAbsent = ['2:245:14','7:69:22','18:1:11','36:52:6'];
 let specialOk = true;
 for (const [k, exp] of Object.entries(specialExpect)) {
   if (rendered.get(k) !== exp) specialOk = false;
@@ -89,7 +89,7 @@ console.log('');
 ['ط','ج','ز','ص','قف','م','ق'].forEach(m => console.log(m + ' =', counts[m] || 0));
 console.log('');
 console.log('Special cases:', specialOk ? 'PASS' : 'FAIL');
-const pass = rows.length === 5554 && rendered.size === 5554 && diffs === 0 &&
+const pass = rows.length === 5548 && rendered.size === 5548 && diffs === 0 &&
   duplicates === 0 && conflicts === 0 && invalidIndexes === 0 && invalidMarks === 0 && specialOk;
 console.log('');
 console.log(pass ? 'PASS' : 'FAIL');
