@@ -141,8 +141,10 @@
       // ولقارئات الشاشة، ولمقاييس السطر أيضًا.
       // علامات الوقف السجاوندية الأصلية (.waqf-sign) غالباً تحتوي
       // الحرف الأخير + العلامة معاً (سلوك wrapWaqfSigns). مع جليف QCF
-      // الذي يرسم الكلمة كاملة، يجب الإبقاء على العلامة فقط وإلا يُرسم
-      // الحرف مرتين فيظهر الشكل مشوّهاً.
+      // الذي يرسم الكلمة كاملة: نستخرج الحروف فقط للطبقة المخفية،
+      // ولا نعيد إلحاق العلامة النقية (كانت تسبب ظهور ج/ط/... مرتين
+      // فوق الكلمة، مثل مَرَّاتٍ في النور 58). نجوم التذكير و.non-kufi
+      // تُحفظ منفصلة.
       var PURE_WAQF_MARKS = {
         0x0615:1, 0x06D6:1, 0x06D7:1, 0x06D8:1, 0x06D9:1,
         0x06DA:1, 0x06DB:1, 0x06DC:1, 0xE004:1, 0xE021:1, 0xE022:1,
@@ -172,18 +174,12 @@
           if (letterContent) {
             realTextNodes.push(document.createTextNode(letterContent));
           }
-          if (markChars) {
-            var cleanMark = document.createElement('span');
-            cleanMark.className = 'waqf-sign';
-            // انسخ الأصناف الإضافية إن وُجدت (لون/تمييز)
-            if (node.classList.length > 1) {
-              Array.prototype.forEach.call(node.classList, function (c) {
-                if (c !== 'waqf-sign') cleanMark.classList.add(c);
-              });
-            }
-            cleanMark.textContent = markChars;
-            preservedMarks.push(cleanMark);
-          }
+          // لا ننقل علامة الوقف الأصلية إلى طبقة العرض مرة ثانية.
+          // جليف QCF يرسم الكلمة كاملة (وقد يتضمن العلامة بصريًا)؛
+          // إعادة إلحاق .waqf-sign النقية كانت تسبب ظهور العلامة مرتين
+          // (مثل مَرَّاتٍ في النور 58). نجوم التذكير و.non-kufi-mark
+          // تُحفظ أعلاه كما هي.
+          // if (markChars) { ... preservedMarks.push(cleanMark); }
         } else {
           realTextNodes.push(node);
         }

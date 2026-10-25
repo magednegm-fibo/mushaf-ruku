@@ -125,7 +125,7 @@
   function applyVerseByVerse(){
     // Normalize + keep stored so full-backup always carries the field.
     // Default: OFF (continuous mushaf layout).
-    if(state.verseByVerse === undefined) state.verseByVerse = false;
+    if(state.verseByVerse === undefined) state.verseByVerse = true;
     state.verseByVerse = !!state.verseByVerse;
     var on = state.verseByVerse;
     document.body.classList.toggle('verse-by-verse', on);
@@ -426,9 +426,10 @@
             }
           }catch(e){}
           UI.showToast('تمت إعادة ضبط التطبيق');
-          // Defaults have keepScreenAwake:false — release any lock held
-          // from the previous session so the screen can sleep again.
-          if(typeof releaseWakeLock === 'function') releaseWakeLock();
+          // Defaults have keepScreenAwake:true — re-request wake lock after
+          // rehydrate so the screen stays on as the new default intends.
+          if(typeof requestWakeLock === 'function') requestWakeLock();
+          else if(typeof releaseWakeLock === 'function') releaseWakeLock();
         }).catch(function(){
           UI.showToast('تعذّرت إعادة ضبط التطبيق');
         });

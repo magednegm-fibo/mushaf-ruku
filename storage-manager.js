@@ -104,12 +104,12 @@
       page:0, fontSizeUthmani:28, night:false,
       furthestUthmani:0,
       lastPageUthmani:0, lastPageShared:0,
-      fontStyle:'uthmani', showWaqfMarksUthmani:false,
+      fontStyle:'uthmani', showWaqfMarksUthmani:true,
       colorCodingEnabled:true,
-      pinchZoomEnabled:true, keepScreenAwake:false, reciter:'abdulbasit',
+      pinchZoomEnabled:true, keepScreenAwake:true, reciter:'abdulbasit',
       autoScrollEnabled:true, recitationRepeatCount:1, rukuRepeatCount:1, playbackRate:1,
       displayScope:'all', recitationScope:'ruku', selectedTafsir:'mukhtasar',
-      verseByVerse:false
+      verseByVerse:true
     };
     var stored = readJSON(KEYS.STORAGE_KEY, {}) || {};
     // LEGACY MIGRATION: read old dual-script field names only to seed current values.
@@ -353,7 +353,7 @@
     // the browse mode even if an older client never persisted the field.
     var settings = sanitizeSettingsForCurrent(readJSON(KEYS.STORAGE_KEY, {}) || {});
     if(settings.verseByVerse === undefined){
-      settings.verseByVerse = false;
+      settings.verseByVerse = true;
     }else{
       settings.verseByVerse = !!settings.verseByVerse;
     }
@@ -479,11 +479,11 @@
     var plan = {};
     if(src.settings !== undefined){
       plan.settings = sanitizeSettingsForCurrent(src.settings || {});
-      // Preserve verse-by-verse browse mode from backup (default false if absent).
+      // Preserve verse-by-verse browse mode from backup (default true if absent).
       if(src.settings && src.settings.verseByVerse !== undefined){
         plan.settings.verseByVerse = !!src.settings.verseByVerse;
       }else if(plan.settings.verseByVerse === undefined){
-        plan.settings.verseByVerse = false;
+        plan.settings.verseByVerse = true;
       }
     }
     if(src.favorites !== undefined) plan.favorites = src.favorites;
