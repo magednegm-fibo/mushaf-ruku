@@ -2632,14 +2632,24 @@ body.night .reminder-color-legend{ color:#9A9A9E; }
   font-size:17px;
   line-height:1;
 }
-/* "م" (الوقف اللازم) is a single bare letter, so at the shared 17px it
-   reads visibly smaller than the other badges, which are mostly
-   multi-letter labels (لا, ج, صلي, قلي...) that fill the circle more.
-   Bumped just this one symbol up rather than the shared class, so the
-   rest of the badges keep their current size. */
-.waqf-symbol-meem{
-  font-size:24px;
+/* ميم الوقف اللازم: شكل المصحف U+06D8.
+   الحبر في أعلى الـ em-box؛ top عالٍ جدًا ليظهر الرمز في منتصف الدائرة. */
+.waqf-guide-symbol.waqf-symbol-meem{
+  position: relative;
+  font-size: 0;
+  overflow: visible;
+}
+.waqf-guide-symbol.waqf-symbol-meem::before{
+  content: '\06D8';
+  position: absolute;
+  left: 46%;
+  top: 108%;
+  transform: translate(-50%, -50%);
+  font-size: 37px;
   font-family: 'Uthmanic Hafs', 'Amiri Quran', 'Noto Naskh Arabic', serif;
+  font-weight: 400;
+  line-height: 1;
+  color: inherit;
 }
 /* ۩ reads slightly small/thin next to the other multi-letter badges at
    the shared 17px — same class of size fix as .waqf-symbol-meem above,
