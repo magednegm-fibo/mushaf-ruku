@@ -3429,20 +3429,32 @@ body.night .prayer-icon-btn{ color:#9A9A9E; border-color:rgba(255,255,255,.14); 
 
 
 /* Tajweed content injected into the guide (no iframe). */
+/* Host fills the full panel-body area so the beige background is continuous
+   behind the door list and in any empty space below / around the links
+   (previously only the list area showed the beige, the rest of the tab looked bare).
+   Always light paper because the injected ahkam-altajweed content is light-themed. */
+#tajweedRulesTab{
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+}
 .tajweed-content-host{
   display:block;
-  width:calc(100% + 24px);
-  margin-inline:-12px;
-  min-height:240px;
-  border-radius:8px;
-  background:#fdfaf0;
+  flex: 1 0 auto;
+  width:calc(100% + 32px);
+  margin-inline:-16px;
+  min-height: 100%;
+  border-radius:0;
+  background: #F6F1E4; /* match --paper day / original body --bg */
   overflow:visible;
 }
 .tajweed-content-host.hidden{ display:none !important; }
 .tajweed-injected-root{
-  padding:4px 2px 24px;
+  padding:8px 14px 28px;
   max-width:920px;
   margin:0 auto;
+  min-height: 100%;
+  background: inherit;
 }
 /* Scope injected Amiri size so it doesn't blow up the guide chrome */
 .tajweed-injected-root{
