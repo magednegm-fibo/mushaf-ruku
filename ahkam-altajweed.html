@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+
+
+
+<html dir="rtl" lang="ar">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1, viewport-fit=cover" name="viewport"/>
+<title>شرح تجويد الكلمات القرآنية</title>
+<style>
+@font-face{font-family:"Amiri Quran";src:url("./fonts/amiri-quran-arabic-400-normal.woff2") format("woff2");font-weight:400;font-style:normal;font-display:swap}
+</style>
+<style>
+:root{--p:#16493A;--pl:#E8EDE5;--a:#A9793B;--t:#2B2013;--bg:#F6F1E4;--c:#FBF8EF;--b:#E1D4B8;--v:#F6F1E4;--m:#6b5a3e;color-scheme:light}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{font-family:"Amiri Quran",Amiri,"Traditional Arabic",serif;font-size:20px;line-height:2;background:var(--bg);color:var(--t);max-width:920px;margin:0 auto;padding:calc(12px + env(safe-area-inset-top,0px)) 2px calc(60px + env(safe-area-inset-bottom,0px))}
+header{text-align:center;padding:6px 4px 16px;border-bottom:3px double var(--a);margin-bottom:16px}
+header h1{font-size:1.45rem;color:var(--p)}
+header p{font-size:1rem;color:var(--m)}
+h2{font-size:1.35rem;color:var(--p);background:linear-gradient(to left,var(--pl),transparent);border-right:6px solid var(--a);padding:8px 14px 8px 10px;margin:24px 0 10px;border-radius:0 8px 8px 0}
+.src{font-size:.85rem;color:var(--m);margin:0 4px 8px;line-height:1.8}
+.card{background:var(--c);border:1px solid var(--b);border-radius:12px;margin-bottom:10px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.05)}
+.verse{display:flow-root;background:var(--v);padding:10px 8px 10px 14px;width:100%;text-align:right;font:inherit;color:inherit;cursor:pointer;position:relative;overflow:visible;-webkit-tap-highlight-color:transparent;transition:none}
+
+.card.is-open .verse{border-bottom:1px solid var(--b)}
+.verse:focus-visible{outline:2px solid var(--a);outline-offset:-2px}
+.num{float:right;width:1.7rem;height:1.7rem;border-radius:50%;background:#D9DFD1;color:var(--p);display:flex;align-items:center;justify-content:center;font:700 .78rem system-ui,sans-serif;margin:4px 0 4px 6px}
+.txt{font-weight:700;font-size:1.02em;line-height:2.25;padding-block:3px 5px;overflow:visible}
+.h{display:block}
+/* Mnemonic single-letter markers: simple parens with LTR isolation so () orient correctly in RTL */
+.ml{unicode-bidi:isolate;direction:ltr;font-weight:700}
+/* محاذاة الشطر الثاني من كل بيت إلى اليسار */
+.txt .h:nth-of-type(2){text-align:left}
+.ex{padding:10px 16px;background:var(--c)}
+.ex p+p,.ex ol,.ex ul{margin-top:6px}
+.ex ol,.ex ul{padding-inline-start:1.4rem}
+.ex b{font-weight:700;color:var(--t)}
+.note{margin:14px 4px;font-size:.9rem;color:var(--m);border-top:1px solid var(--b);padding-top:8px;line-height:1.8}
+.tw{overflow-x:auto}
+table{width:100%;border-collapse:collapse;text-align:center;font-size:.95em}
+th,td{border:1px solid var(--b);padding:4px 8px}
+th{background:var(--pl);color:var(--p)}
+.card .ex{display:block}
+.card:has(.verse) .ex{display:none}
+.card:has(.verse).is-open .ex{display:block}
+h2.table-toggle{display:flex;align-items:center;justify-content:space-between;gap:10px;cursor:pointer}
+h2.table-toggle:focus-visible{outline:2px solid var(--a);outline-offset:2px}
+.table-toggle-icon{flex:none;display:inline-flex;align-items:center;justify-content:center;width:1.5em;height:1.5em;border:1px solid var(--a);border-radius:50%;font:700 .9em system-ui,sans-serif}
+.card.summary-table-collapsed .ex{display:none}
+.card.summary-table-open .ex{display:block}
+
+/* أبواب قابلة للفتح والإغلاق */
+.door-section{margin:0 0 12px}
+h2.door-title{-webkit-tap-highlight-color:transparent;tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;font-size:1.25rem;display:flex;align-items:center;justify-content:space-between;gap:12px;cursor:pointer;background:#D9DFD1;border:1px solid var(--b);border-right:6px solid var(--a);border-radius:10px;padding:12px 16px;margin:10px 0;color:var(--p);box-shadow:0 2px 6px rgba(0,0,0,.04)}
+.door-title:focus-visible{outline:2px solid var(--a);outline-offset:2px}
+.door-content{display:none}
+.door-section.is-open>.door-content{display:block}
+</style>
+</head>
+<body>
+<p class="tajweed-guide-intro">اضغط على عنوان الباب لعرض الأبيات، ثم على البيت للشرح.</p>
+<section class="door-section"><h2 aria-expanded="false" aria-label="فتح الباب: بَابُ التَّجْويدِ" class="door-title" role="button" tabindex="0">بَابُ التَّجْويدِ</h2><div class="door-content"><div class="card">
+<div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">1</span><div class="txt"><span class="h">أَرْكَانُهُ مَعْرِفَةُ الْمَخَارِجِ</span> <span class="h">كَذَا الصِّفَاتِ ثُمَّ أَحْكَامٍ تَجِي</span></div></div>
+<div class="ex"><p>للتجويد خمسة أركان، أولها ثلاثة علمية: <b>معرفة المخارج</b> ﴿مواضع خروج الحروف﴾، و<b>معرفة الصفات</b> ﴿كيفية النطق بالحرف من همس وجهر وشدة ورخاوة وغيرها﴾، و<b>معرفة الأحكام</b> التي تعرض للحروف عند التركيب كالإظهار والإدغام والمد والتفخيم والترقيق. ومعنى «تَجِي»: تأتي.</p></div>
+</div><div class="card">
+<div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">2</span><div class="txt"><span class="h">وَهَكَذَا رِيَاضَةٌ وَالْأَخْذُ مِنْ</span> <span class="h">أَفْوَاهِ عَارِفِيهِ خَمْسَةٌ تَعِنّ</span></div></div>
+<div class="ex"><p>والركنان الباقيان عمليان: <b>الرياضة</b> أي التمرين والمران باللسان حتى يعتاد الحروف على وجهها، و<b>الأخذ من أفواه العارفين</b> أي التلقي بالمشافهة عن شيخ متقن؛ لأن النطق لا يُضبط بالكتب وحدها. فتكتمل الأركان خمسة، ومعنى «تَعِنّ»: تظهر وتبين.</p></div>
+</div><div class="card">
+<div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">3</span><div class="txt"><span class="h">وَحُكْمُهُ فَرْضٌ كَمَا تَأَصَّلَا</span> <span class="h">كِفَايَةً عِلْمًا وَعَيْنًا عَمَلا</span></div></div>
+<div class="ex"><p>حكم التجويد فرض، ويختلف بحسب الجهة:</p>
+<ul><li><b>علمًا:</b> فرض كفاية، إذا قام به بعض الأمة سقط الإثم عن الباقين.</li>
+<li><b>عملًا:</b> فرض عين على كل مكلف يقرأ القرآن، بأن يحترز عن اللحن الجلي فيه.</li></ul>
+<p>ودليله قوله تعالى: ﴿وَرَتِّلِ الْقُرْآنَ تَرْتِيلًا﴾، وقد فسّره علي رضي الله عنه بأنه تجويد الحروف ومعرفة الوقوف. وقال ابن الجزري: «والأخذ بالتجويد حتم لازم».</p></div>
+</div></div></section>
+<section class="door-section"><h2 aria-expanded="false" aria-label="فتح الباب: مَعْنَى اللَّحْنِ وَأَقْسَامُهُ" class="door-title" role="button" tabindex="0">مَعْنَى اللَّحْنِ وَأَقْسَامُهُ</h2><div class="door-content"><div class="card">
+<div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">1</span><div class="txt"><span class="h">اللَّحْنُ قِسْمَانِ جَلِيٌّ وَخَفِي</span> <span class="h">كُلٌّ حَرَامٌ مَعْ خِلافٍ فِي الْخَفِي</span></div></div>
+<div class="ex"><p>اللحن لغةً الميل عن الصواب، واصطلاحًا الخطأ في القراءة. وهو قسمان: <b>جلي</b> و<b>خفي</b>. والجلي حرام باتفاق، أما الخفي ففيه خلاف بين أهل العلم: هل هو حرام أم مكروه، وإن كان تركه هو الأكمل في الأداء.</p></div>
+</div><div class="card">
+<div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">2</span><div class="txt"><span class="h">أَمَّا الْجَلِيُّ فَهْوَ مَبْنًى غَيَّرَا</span> <span class="h">ثُمَّ الْخَفِيُّ مَا عَلَى الْوَصْفِ طَرَا</span></div></div>
+<div class="ex"><ul>
+<li><b>اللحن الجلي:</b> خطأ يطرأ على <b>مبنى</b> الكلمة، أي على حروفها أو حركاتها، فيغيّر اللفظ ظاهرًا، سواء تغيّر به المعنى أم لا. مثاله: إبدال حرف بحرف كقراءة «الحمد» بالهاء «الهمد»، أو تغيير حركة كضم تاء «أنعمتَ». <b>تنبيه:</b> اللحن هو الخروج عن القراءات الثابتة، فما ثبتت به قراءة متواترة عن غير الرواية التي يقرأ بها القارئ ليس لحنًا، لكنه يُعدّ خروجًا عن روايته، كقراءة «الصراط» بالسين لمن يقرأ برواية حفص؛ فيلتزم القارئ أداء روايته، ولا يخلط بينها وبين غيرها في مقام الأخذ والإقراء.</li>
+<li><b>اللحن الخفي:</b> خلل يطرأ على <b>وصف</b> الحرف لا على ذاته، فلا يدركه إلا أهل الإتقان. مثاله: ترك الغنة، أو تفخيم المرقق، أو تكرير الراء، أو الزيادة على المد المقرر.</li></ul></div>
+</div><div class="card">
+<div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">3</span><div class="txt"><span class="h">وَوَاجِبٌ شَرْعًا تَجَنُّبُ الْجَلِيّْ</span> <span class="h">وَوَاجِبٌ صِنَاعَةً تَرْكُ الْخَفِيّْ</span></div></div>
+<div class="ex"><p>اجتناب الجلي <b>واجب شرعًا</b> على كل قارئ، يأثم بتركه. وترك الخفي <b>واجب صناعةً</b>، أي في صنعة الإقراء وعلى من يتصدّى لتعليم القرآن، فهو من كمال الأداء لا من الإثم الشرعي عند من لا يحرّمه.</p></div>
+</div></div></section>
+<section class="door-section"><h2 aria-expanded="false" aria-label="فتح الباب: وُجُوهُ الاِسْتِعَاذَةِ وَالْبَسْمَلَةِ" class="door-title" role="button" tabindex="0">وُجُوهُ الاِسْتِعَاذَةِ وَالْبَسْمَلَةِ</h2><div class="door-content"><div class="card">
+<div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">1</span><div class="txt"><span class="h">وَالنَّدْبُ مَشْهُورٌ فِي الاِسْتِعَاذَةِ</span> <span class="h">وَبَسْمِلاً بَدْءَا سِوَى بَرَاءَةِ</span></div></div>
+<div class="ex"><p>المشهور عند الجمهور أن الاستعاذة <b>مندوبة</b> لا واجبة، والأمر في قوله تعالى: ﴿فَإِذَا قَرَأْتَ الْقُرْآنَ فَاسْتَعِذْ بِاللَّهِ مِنَ الشَّيْطَانِ الرَّجِيمِ﴾ محمول على الندب. وتُشرع البسملة عند ابتداء القراءة من أول كل سورة <b>إلا سورة براءة</b> ﴿التوبة﴾.</p></div>
+</div><div class="card">
+<div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">2</span><div class="txt"><span class="h">وَخُيِّرَ الْبَادِي بِأَجْزَاءِ السُّوَرْ</span> <span class="h">وَالْجَعْبَرِيُّ فِي بَرَاءةٍ حَظَرْ</span></div></div>
+<div class="ex"><p>من ابتدأ القراءة من <b>وسط السورة</b> فهو مخيّر بين البسملة وتركها. أما سورة براءة فإذا ابتدأ من أثناء السورة فقد منع الجعبري البسملة فيها ﴿حظرها﴾، وغيره يجيزها على التخيير المتقدم.</p></div>
+</div><div class="card">
+<div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">3</span><div class="txt"><span class="h">وَاقْطَعْ وَصِلْ فَأَرْبَعٌ فِي أَوَّلِ</span> <span class="h">كُلٍّ وَفِي الْأَجْزَاءِ سِتٌّ تَنْجَلِي</span></div></div>
+<div class="ex"><p>عند الابتداء من <b>أول السورة</b> يجتمع ثلاثة أشياء: الاستعاذة والبسملة وأول السورة، وفيها أربعة أوجه جائزة:</p>
+<ol><li>قطع الجميع ﴿الوقف على كل واحد منها﴾.</li>
+<li>قطع الاستعاذة ووصل البسملة بأول السورة.</li>
+<li>وصل الاستعاذة بالبسملة مع الوقف عليها.</li>
+<li>وصل الجميع.</li></ol>
+<p>وعند الابتداء من <b>أجزاء السور</b> تصير الأوجه ستة: الأربعة السابقة مع البسملة، ووجهان بلا بسملة، هما قطع الاستعاذة عن أول الجزء ووصلها به.</p><p><b>فائدة:</b> إذا كان أول الجزء الذي يُبتدأ به اسمًا من أسماء الله تعالى أو ضميرًا يعود عليه، نحو «اللَّهُ لَا إِلَهَ إِلَّا هُوَ الْحَيُّ الْقَيُّومُ» و«اللَّهُ وَلِيُّ الَّذِينَ آمَنُوا» و«إِلَيْهِ يُرَدُّ عِلْمُ السَّاعَةِ»، فالأولى <b>قطع الاستعاذة</b> عنه وعدم وصلها به، لما في الوصل من البشاعة وإيهام عود الاسم أو الضمير على الشيطان. فإن أراد القارئ الوصل فيتعين أن يأتي بالبسملة للفصل بينهما. ويُلحق بذلك أن يكون أول الجزء اسم النبي صلى الله عليه وسلم أو صفته، نحو «مُحَمَّدٌ رَسُولُ اللَّهِ».</p></div>
+</div><div class="card">
+<div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">4</span><div class="txt"><span class="h">وَبَيْنَ أَنْفَالٍ وَبَيْنَ التَّوْبَةِ</span> <span class="h">قِفْ وَاسْكُتًا وَصِلْ بِلَا بَسْمَلَةِ</span></div></div>
+<div class="ex"><p>بين سورتي <b>الأنفال والتوبة</b> لا بسملة، وفيهما ثلاثة أوجه: <b>الوقف</b> ﴿مع التنفس﴾، و<b>السكت</b> ﴿قطع الصوت زمنًا يسيرًا بلا تنفس﴾، و<b>الوصل</b> بلا فصل.</p><p><b>تنبيه:</b> في الوجه الثالث ﴿الوصل﴾ يقع <b>الإقلاب</b>: فيُقلب تنوين «عَلِيمٌ» في آخر الأنفال ميمًا عند الباء في أول «بَرَاءَةٌ»، وتُخفى الميم <b>إخفاءً شفويًّا</b> مع الغنة. أما مع <b>الوقف</b> و<b>السكت</b> فيمتنع الإقلاب والإخفاء الشفوي، لأن السكت يُعامل معاملة الوقف، فتُنطق «عَلِيمْ» بسكون الميم من غير قلب ولا إخفاء.</p></div>
+</div><div class="card">
+<div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">5</span><div class="txt"><span class="h">وَبَيْنَ مَا سِوَاهُمَا اقْطَعْ وَصِلِ</span> <span class="h">جَمِيعَاً اوْ صِلْ ثَانِيًا بِالْأَوَّلِ</span></div></div>
+<div class="ex"><p>بين كل سورتين غير الأنفال والتوبة تُقرأ البسملة، وفيها ثلاثة أوجه جائزة:</p>
+<ol><li>قطع الجميع: الوقف على آخر السورة، ثم البسملة، ثم الوقف عليها.</li>
+<li>وصل الجميع.</li>
+<li>الوقف على آخر السورة ثم وصل البسملة بأول السورة التالية.</li></ol>
+<p>والوجه الممتنع: وصل البسملة بآخر السورة السابقة مع الوقف عليها ثم البدء بالتالية، لأنه يوهم أن البسملة من آخر السورة.</p><p><b>تنبيه:</b> الإتيان بالبسملة بين السورتين ﴿غير الأنفال والتوبة﴾ <b>ثابت لحفص</b> ومتعيّن، فلا يجوز تركها ولا إهمالها، وليس له بين هاتين السورتين وجه السكت أو الوصل بلا بسملة. وإنما ينفرد بترك البسملة الموضعُ المذكور بين الأنفال والتوبة.</p></div>
+</div></div></section>
+<section class="door-section"><h2 aria-expanded="false" aria-label="فتح الباب: مَخَارِجُ الْحُرُوفِ وَالْحَرَكَاتِ الْأصْلِيَّةِ" class="door-title" role="button" tabindex="0">مَخَارِجُ الْحُرُوفِ وَالْحَرَكَاتِ الْأصْلِيَّةِ</h2><div class="door-content"><div class="card"><div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">1</span><div class="txt"><span class="h">قَدْ عَدَّهَا الْخَلِيلُ سَبْعَةَ عَشَرْ</span> <span class="h">وَذَاكَ مِنْ بَيْنِ الْمَذَاهِبِ اشْتَهَرْ</span></div></div>
+<div class="ex">المخرج: موضع خروج الحرف وتمييزه عن غيره. عدّ الخليل بن أحمد المخارج <b>سبعة عشر</b> وهو المذهب المشهور. وللعلماء في عددها ثلاثة مذاهب:<ul><li><b>سبعة عشر مخرجًا:</b> عند الخليل بن أحمد ومن تبعه، وعليه الجمهور، واختاره ابن الجزري.</li><li><b>ستة عشر مخرجًا:</b> عند سيبويه ومن تبعه كالشاطبي وابن بري، بإسقاط مخرج الجوف وتوزيع حروف المد على مخارج الحلق واللسان والشفتين.</li><li><b>أربعة عشر مخرجًا:</b> عند الفراء ﴿يحيى بن زياد﴾ وقطرب والجرمي وابن كيسان ومن تبعهم، بإسقاط الجوف كسيبويه، وجعل اللام والنون والراء مخرجًا واحدًا هو طرف اللسان.</li></ul></div></div><div class="card"><div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">2</span><div class="txt"><span class="h">يَعُمُّهَا الْحَلْقُ اللِّسَانُ الْجَوْفُ</span> <span class="h">وَالشَّفَتَانِ هَكَذَا وَالْأَنْفُ</span></div></div>
+<div class="ex">المخارج السبعة عشر تندرج تحت <b>خمسة مخارج عامة</b>: الجوف، والحلق، واللسان، والشفتان، والخيشوم ﴿وهو الأنف﴾.</div></div><div class="card"><div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">3</span><div class="txt"><span class="h">وَالْفَمُ عَمَّ الْكُلَّ <span class="ml">(ضِفْ نَرِقَّ لَكْ)</span></span> <span class="h">مُفْرَدَةٌ وَغَيْرُ هَذِي مُشْتَرَكْ</span></div></div>
+<div class="ex">الفم يشمل مخارج اللسان والشفتين وغيرها. وقوله «ضِفْ نَرِقَّ لَكْ» رمز للحروف التي ينفرد كل واحد منها بمخرج خاص: الضاد والفاء والنون والراء والقاف واللام والكاف. وغيرها من الحروف <b>يشترك</b> كل مجموعة منها في مخرج واحد.</div></div><div class="card"><div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">4</span><div class="txt"><span class="h">فَالْجَوْفُ مِنْهُ خَرَجَتْ مُدُودُهَا</span> <span class="h">وَالْحَلْقُ مِنْ أَقْصَاهُ هَمْزَةٌ فَهَا</span></div></div>
+<div class="ex"><b>الجوف:</b> وهو الخلاء داخل الحلق والفم، ومنه تخرج حروف المد الثلاثة: الألف، والواو الساكنة المضموم ما قبلها، والياء الساكنة المكسور ما قبلها. <b>الحلق:</b> له ثلاثة مخارج، فمن <b>أقصاه</b> ﴿أبعده مما يلي الصدر﴾ تخرج الهمزة ثم الهاء.</div></div><div class="card"><div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">5</span><div class="txt"><span class="h">وَالْعَيْنُ مِنْ وَسَطِهِ فَالْحَاءُ</span> <span class="h">وَالغَيْنُ مِنْ أَدْنَاهُ ثُمَّ الْخَاءُ</span></div></div>
+<div class="ex">من <b>وسط الحلق</b> تخرج العين ثم الحاء، ومن <b>أدنى الحلق</b> ﴿أقربه إلى الفم﴾ تخرج الغين ثم الخاء.</div></div><div class="card"><div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">6</span><div class="txt"><span class="h">وَجَاءَ مِنْ أَقْصَى اللِّسَانِ الْقَافُ</span> <span class="h">مَعْ مَا يُحَاذِيهِ يَلِيهِ الْكَافُ</span></div></div>
+<div class="ex">تخرج <b>القاف</b> من أقصى اللسان ﴿مؤخره﴾ مع ما يحاذيه من الحنك الأعلى، ثم <b>الكاف</b> من موضع يلي ذلك أقرب إلى مقدم الفم. وتسميان اللهويتين.</div></div><div class="card"><div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">7</span><div class="txt"><span class="h">وَالْجِيمُ فَالشِّينُ فَيَاءٌ مِنْ وَسَطْ</span> <span class="h">وَالضَّادُ مِنْ حَافَتِهِ بَعْدُ انْضَبَطْ</span></div></div>
+<div class="ex">من <b>وسط اللسان</b> مع ما يحاذيه من الحنك الأعلى تخرج الجيم والشين والياء غير المدية. ومن <b>حافة اللسان</b> ﴿جانبه﴾ تخرج الضاد.</div></div><div class="card"><div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">8</span><div class="txt"><span class="h">مَعْ عُلْوِ أَضْرَاسٍ مِنَ الْيُسْرَى كَثُرْ</span> <span class="h">وَقَلَّ مِنْ يُمْنَى وَمِنْهُمَا نَدَرْ</span></div></div>
+<div class="ex">الضاد تخرج من حافة اللسان مع ما يلاقيها من <b>الأضراس العليا</b>. وأكثر خروجها من الجانب <b>الأيسر</b>، وأقل من الأيمن، وخروجها من الجانبين معًا نادر وعسير.</div></div><div class="card"><div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">9</span><div class="txt"><span class="h">وَاللَّامُ أَدْنَاهَا لِأُخْرَاهَا حُكِي</span> <span class="h">مَعْ لِثَةِ الضَّاحِكِ حَتَّى الضَّاحِكِ</span></div></div>
+<div class="ex"><b>اللام</b> تخرج من <b>أدنى حافتي اللسان</b>، أي أقربهما إلى مقدم الفم بعد مخرج الضاد، إلى منتهى طرف اللسان، مع ما يحاذيها من لثة الأسنان العليا، من الضاحك إلى الضاحك. وليس في الحروف أوسع مخرجًا منها.</div></div><div class="card"><div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">10</span><div class="txt"><span class="h">بِعَكْسِ ضَادٍ تَحْتُ نُونٌ مِنْ طَرَفْ</span> <span class="h">دَانَاهُ رَا لِمَدْخَلِ الظَّهْرِ انْحَرَفْ</span></div></div>
+<div class="ex"><p>قوله «<b>بِعَكْسِ ضَادٍ</b>» يرجع إلى اللام في البيت السابق. والمعنى أن اللام يمكن إخراجها من إحدى الحافتين، لكن خروجها من الحافة <b>اليمنى</b> أكثر وأسهل، ومن <b>اليسرى</b> أقل وأعسر، ومن الحافتين معًا عزيز وصعب. وهذا <b>بعكس الضاد</b> التي سبق أن اليسرى فيها هي الأكثر والأيسر.</p><p>وهذا المعنى مذكور في شروح المتأخرين، منها النجوم الطوالع للمارغني ﴿يتأتى إخراج اللام من الحافتين، لكن اليمنى فيها أمكن بخلاف الضاد﴾، وقد نقله المرصفي في هداية القاري، وذكره محمود علي بسة في العميد.</p><p><b>النون</b> تخرج من طرف اللسان تحت مخرج اللام قليلًا، مع ما يحاذيها من لثة الثنايا العليا. و<b>الراء</b> تدانيها في المخرج، لكنها أدخل منها في ظهر اللسان وفيها انحراف قليل.</p></div></div><div class="card"><div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">11</span><div class="txt"><span class="h">وَالطَّاءُ فَالدَّالُ فَتَا مِنْهُ وَمِنْ</span> <span class="h">عُلْيَا الثَّنَايَا مِنْ أُصُولِهَا زُكِنْ</span></div></div>
+<div class="ex">من <b>طرف اللسان</b> مع <b>أصول الثنايا العليا</b> تخرج الطاء والدال والتاء، وتسمى النطعية. ومعنى «زُكِنْ»: عُلِم.</div></div><div class="card"><div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">12</span><div class="txt"><span class="h">وَالصَّادُ فَالسِّينُ فَزَايٌ تُتْلَى</span> <span class="h">مِنْهُ مُصَاحِبَاً فُوَيْقَ السُّفْلَى</span></div></div>
+<div class="ex">الصاد والسين والزاي، وهي <b>حروف الصفير</b>، تخرج من طرف اللسان مع ما فوق <b>الثنايا السفلى</b> مصاحبةً له ﴿بين طرف اللسان وفويق الثنايا السفلى﴾.</div></div><div class="card"><div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">13</span><div class="txt"><span class="h">وَالظَّاءُ فَالذَّالُ فَثَاءٌ خَرَجَتْ</span> <span class="h">مِنْهُ وَمِنْ أَطْرَافِ عُلْيَاهَا أَتَتْ</span></div></div>
+<div class="ex">الظاء والذال والثاء تخرج من <b>طرف اللسان</b> مع <b>أطراف الثنايا العليا</b>، وتسمى اللثوية.</div></div><div class="card"><div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">14</span><div class="txt"><span class="h">وَالْفَا بِهَا مَعْ بَطْنِ سُفْلَى الشَّفَةِ</span> <span class="h">وَالْبَا فَمِيمَاً ثُمَّ وَاوًا أَثْبِتِ</span></div></div>
+<div class="ex"><b>الفاء</b> تخرج من بطن الشفة السفلى مع أطراف الثنايا العليا. أما <b>الباء والميم والواو</b> فمن الشفتين: الباء والميم بانطباقهما، والواو بانفتاحهما مع انضمامهما وهي غير المدية.</div></div><div class="card"><div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">15</span><div class="txt"><span class="h">لِلشَّفَتَيْنِ وَمِنَ الْخَيْشُومِ</span> <span class="h">غُنَّةُ نُونٍ مُطْلَقًا وَالْمِيمِ</span></div></div>
+<div class="ex"><b>الخيشوم</b> هو خرق الأنف المنجذب إلى داخل الفم، ومنه تخرج <b>الغنة</b>، وهي صوت لا عمل للسان فيه، وتصاحب النون والميم في جميع أحوالهما، ظاهرتين أو مخفاتين أو مدغمتين، ساكنتين أو متحركتين.</div></div><div class="card"><div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">16</span><div class="txt"><span class="h">وَالضَّمُّ كَالْوَاوِ وَفَتْحٌ كَالْأَلِفْ</span> <span class="h">وَالْكَسْرُ كَالْيَا فِي مَخَارِجٍ عُرِفْ</span></div></div>
+<div class="ex">الحركات الثلاث تخرج من مخارج حروف المد المجانسة لها: <b>الضمة</b> من مخرج الواو، و<b>الفتحة</b> من مخرج الألف، و<b>الكسرة</b> من مخرج الياء. وعلى هذا فهي في الأصل أبعاض من حروف المد.</div></div></div></section>
+<section class="door-section"><h2 aria-expanded="false" aria-label="فتح الباب: صِفَاتُ الْحُرُوفِ اللَّازِمَةُ الْمَشْهُورَةُ" class="door-title" role="button" tabindex="0">صِفَاتُ الْحُرُوفِ اللَّازِمَةُ الْمَشْهُورَةُ</h2><div class="door-content"><div class="card"><div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">1</span><div class="txt"><span class="h">جَهْرٌ وَرِخْوٌ وَاسْتِفَالٌ مُنْفَتِحْ</span> <span class="h">وَمُصْمَتٌ وَضِدُّهَا سَيَتَّضِحْ</span></div></div>
+<div class="ex"><p>الصفة هي الكيفية التي يكون عليها الحرف عند خروجه من مخرجه. وهذه الأبيات تبدأ بالصفات <b>التي لها ضد</b>، وهي خمس مع أضدادها:</p>
+<ul><li>الجهر، وضده الهمس.</li><li>الرخاوة، وضدها الشدة ﴿وبينهما التوسط﴾.</li><li>الاستفال، وضده الاستعلاء.</li><li>الانفتاح، وضده الإطباق.</li><li>الإصمات، وضده الإذلاق.</li></ul></div></div><div class="card"><div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">2</span><div class="txt"><span class="h">فَالهَمْسُ فِي <span class="ml">(فَحَثَّهُ شَخْصٌ سَكَتْ)</span></span> <span class="h">وَشِدَّةٌ <span class="ml">(أَجْدَتْ كَقُطْبٍ)</span> جُمِعَتْ</span></div></div>
+<div class="ex"><p><b>الهمس:</b> جريان النفَس عند النطق بالحرف لضعف الاعتماد على مخرجه. حروفه عشرة يجمعها «فَحَثَّهُ شَخْصٌ سَكَتْ». وباقي الحروف ﴿تسعة عشر﴾ <b>مجهورة</b>، وهي التي ينحبس النفَس عند النطق بها لقوة الاعتماد.</p>
+<p><b>الشدة:</b> انحباس جريان الصوت عند النطق بالحرف لقوة الاعتماد. حروفها ثمانية يجمعها «أَجِدُكَ قَطَبْتَ» ورمزها في البيت «أَجْدَتْ كَقُطْبٍ».</p></div></div><div class="card"><div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">3</span><div class="txt"><span class="h">وَبَيْنَ شِدَّةٍ وَرِخْوٍ <span class="ml">(لِنْ عُمَرْ)</span></span> <span class="h">وَ<span class="ml">(خُصَّ ضَغْطٍ قِظْ)</span> لِلِاسْتِعْلَا اسْتَقَرّْ</span></div></div>
+<div class="ex"><p><b>التوسط</b> ﴿بين الشدة والرخاوة﴾: حروفه خمسة يجمعها «لِنْ عُمَرْ»، لا ينحبس معها الصوت تمامًا ولا يجري كاملًا. أما <b>الرخاوة</b> فهي جريان الصوت عند النطق بالحرف لضعف الاعتماد، وحروفها ما بقي بعد الشديدة والمتوسطة.</p>
+<p><b>الاستعلاء:</b> ارتفاع أقصى اللسان إلى الحنك الأعلى عند النطق بالحرف. حروفه سبعة يجمعها «خُصَّ ضَغْطٍ قِظْ»، وما سواها <b>مستفل</b> أي ينخفض اللسان عنده.</p></div></div><div class="card"><div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">4</span><div class="txt"><span class="h">وَرَمْزُ<span class="ml">(طِ)</span>ـبْ <span class="ml">(صِـ)</span>ـفْ <span class="ml">(ظُ)</span>ـلْمَ <span class="ml">(ضِـ)</span>ـغْنٍ مُطْبَقَةْ</span> <span class="h">وَلَفْظُ <span class="ml">(نَلْ بِرَّ فَمٍ)</span> لِلْمُذْلَقَةْ</span></div></div>
+<div class="ex"><p><b>الإطباق:</b> انطباق اللسان على الحنك الأعلى عند النطق بالحرف. حروفه أربعة: الطاء والصاد والظاء والضاد، وأخذت أوائلها من الكلمات الأربع في البيت. وما سواها <b>منفتح</b>.</p>
+<p><b>الإذلاق:</b> خفة النطق بالحرف لخروجه من طرف اللسان أو الشفة. حروفه ستة يجمعها «نَلْ بِرَّ فَمٍ»: النون واللام والباء والراء والفاء والميم. وما سواها <b>مصمت</b> أي ثقيل النطق نسبيًا.</p></div></div><div class="card"><div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">5</span><div class="txt"><span class="h">قَلْقَلَةٌ <span class="ml">(قُطْبُ جَدٍ)</span> وَقُرِّبَتْ</span> <span class="h">لِفَتْحِ مَخْرَجٍ عَلَى الْأَوْلَى ثَبَتْ</span></div></div>
+<div class="ex">بعد الصفات التي لها ضد تبدأ الصفات التي <b>لا ضد لها</b>. أولها <b>القلقلة</b>: اضطراب المخرج عند النطق بالحرف الساكن حتى يُسمع له نبرة قوية. حروفها خمسة يجمعها «قُطْبُ جَدٍ». وتُقرَّب في النطق إلى الفتح، وهذا هو الأولى كما في البيت.</div></div><div class="card"><div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">6</span><div class="txt"><span class="h">كَبِيرَةٌ حَيْثُ لَدَى الْوَقْفِ أَتَتْ</span> <span class="h">أَكْبَرُ حَيْثُ عِنْدَ وَقْفٍ شُدِّدَتْ</span></div></div>
+<div class="ex"><p>للقلقلة مراتب بحسب موضعها:</p>
+<ul><li><b>صغرى:</b> إذا وقع الحرف ساكنًا في وسط الكلمة أو في آخرها مع الوصل، نحو «يَدْخُلُونَ».</li>
+<li><b>كبرى:</b> إذا وقع الحرف آخر الكلمة وسُكِّن للوقف، نحو «الْفَلَقِ» و«مُحِيطٌ».</li>
+<li><b>أكبر:</b> إذا كان الحرف مشددًا عند الوقف عليه، نحو «الْحَقّ» و«تَبّ».</li></ul></div></div><div class="card"><div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">7</span><div class="txt"><span class="h">وَغُنَّ فِي نُونٍ وَمِيمٍ بَادِيَا</span> <span class="h">إِنْ شُدِّدَا فَأُدْغِمَا فَأُخْفِيَا</span></div></div>
+<div class="ex"><b>الغنة</b> صفة لازمة للنون والميم، وتظهر في أحوال مرتبة من الأقوى إلى الأضعف. فأقواها إذا كان الحرفان <b>مشددين</b> نحو «إِنَّ» و«ثُمَّ»، ثم إذا كانا <b>مدغمين</b> نحو «مَنْ يَقُولُ»، ثم <b>مخفيين</b> نحو «مِنْ قَبْلُ» و«تَرْمِيهِمْ بِحِجَارَةٍ».</div></div><div class="card"><div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">8</span><div class="txt"><span class="h">فَأُظْهِرَا فَحُرِّكَا وَقُدِّرَتْ</span> <span class="h">بِأَلِفٍ لَا فِيهِمَا كَمَا ثَبَتْ</span></div></div>
+<div class="ex">ثم تليها الغنة في النون والميم <b>المظهرتين</b> الساكنتين نحو «مِنْ خَيْرٍ»، ثم أضعفها إذا كانا <b>متحركتين</b> نحو «نَاسٌ» و«مَاءٌ». وتُقدَّر الغنة بمقدار <b>ألف</b> أي حركتين في المراتب الثلاث الأولى، ولا يُقدَّر بذلك في المظهرتين والمتحركتين.</div></div><div class="card"><div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">9</span><div class="txt"><span class="h">وَالْهَاءُ مَعْ حُرُوفِ مَدٍّ لِلْخَفَا</span> <span class="h">وَنَحْوُ كَيْ وَلَوْ بِلِينٍ وُصِفَا</span></div></div>
+<div class="ex"><p><b>الخفاء:</b> صفة <b>الهاء</b> وحروف المد الثلاثة ﴿الألف والواو والياء المدية﴾، لخفاء صوتها عند النطق بها وبعدها عن مخرجها الظاهر.</p>
+<p><b>اللين:</b> صفة الواو والياء الساكنتين المفتوح ما قبلهما، نحو «كَيْ» و«لَوْ»، لأنهما تخرجان بسهولة وعدم كلفة على اللسان.</p></div></div><div class="card"><div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">10</span><div class="txt"><span class="h">وَالصَّادُ مَعْ سِينٍ وَزَاىٍ صُفِّرَتْ</span> <span class="h">وَاللَّامُ وَالرَّا انْحَرَفَا وَكُرِّرَتْ</span></div></div>
+<div class="ex"><p><b>الصفير:</b> صوت زائد يشبه صفير الطائر يخرج مع الصاد والسين والزاي.</p>
+<p><b>الانحراف:</b> ميل اللسان إلى جهة اللام والراء عند النطق بهما، فاللام تنحرف إلى حافة اللسان والراء إلى ظهره. <b>التكرير:</b> ارتعاد طرف اللسان عند النطق بالراء.</p></div></div><div class="card"><div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">11</span><div class="txt"><span class="h">وَأَخْفِهِ إِنْ شُدِّدَتْ وَاسْتَطِلَا</span> <span class="h">ضَادَاً وَلِلشِّينِ التَّفَشِّي جُعِلَا</span></div></div>
+<div class="ex"><p>التكرير صفة في الراء لا يُراد إظهارها، بل <b>يجب إخفاؤه</b> بإلصاق طرف اللسان باللثة إلصاقًا محكمًا، ويتأكد ذلك إذا كانت الراء مشددة نحو «الْبِرَّ» و«مَرَّ»، أو مشددة بالإدغام نحو «مِنْ رَبِّهِمْ».</p><p><b>تنبيه:</b> التكرير في <b>الراء المشددة</b> أظهر ما يكون، فيجب الحذر من المبالغة فيه، فلا يُرعَّد اللسان ولا تُنطق الراء المشددة راءات متعددة، وهذا لحن يجب الاحتراز منه.</p><p><b>معنى إخفاء التكرير:</b> هو إخفاء بعضه، أي التخفيف منه، وليس إعدامه بالكلية، لأن التكرير مركَّب في ذات الراء. والمطلوب هو <b>التوسط</b> بين إفراط التكرير الذي يولّد راءات متعددة، وإخفائه بالكلية الذي يُفقد الراء هويتها.</p>
+<p><b>الاستطالة:</b> امتداد الصوت في الضاد من أول حافة اللسان إلى آخرها.</p>
+<p><b>التفشي:</b> انتشار الريح في الفم عند النطق بالشين حتى تتصل بمخرج الظاء، وسببه اتساع مخرج الشين مع همسها ورخاوتها. وهو صفة الشين وحدها عند أكثر العلماء، لأن انتشار الريح فيها كامل بخلاف غيرها من الحروف.</p></div></div><div class="card"><div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">12</span><div class="txt"><span class="h">وَإِنْ يَكُنْ مُسَكَّنًا فَبَيِّنُ</span> <span class="h">وَحَيْثُمَا شُدِّدَ فَهْوَ أَبْيَنُ</span></div></div>
+<div class="ex"><p>الكلام هنا على <b>التفشي</b> ﴿صفة الشين﴾، وأنه يتفاوت ظهوره بحسب حال الشين:</p>
+<p><b>الشين الساكنة:</b> يجب <b>بيان تفشيها</b> وإظهاره نحو «اشْتَرَوْا» و«أَشْهَدُ» و«يَشْكُرُ».</p>
+<p><b>الشين المشددة:</b> التفشي فيها <b>أبين وأظهر</b>، فيجب إشباعه نحو «فَبَشِّرْهُمْ» و«الشَّمْسُ» و«الشَّيْطَانُ»، لقوة الحرف بالتشديد وطول مكثه على المخرج.</p>
+<p><b>الشين المتحركة:</b> التفشي فيها موجود لكنه أخف منه في الساكنة. فالترتيب في الظهور: المشددة ثم الساكنة ثم المتحركة.</p>
+<p><b>تنبيه:</b> إهمال التفشي يجعل الشين تقرب من الجيم، ويتأكد بيانه إذا جاء بعد الشين جيم نحو «شَجَرَ» و«شَجَرَةٍ»، وعند الوقف على نحو «الرُّشْدِ».</p></div></div></div></section>
+<section class="door-section"><h2 aria-expanded="false" aria-label="فتح الباب: أَلْقَابُ الْحُرُوفِ" class="door-title" role="button" tabindex="0">أَلْقَابُ الْحُرُوفِ</h2><div class="door-content"><div class="card"><div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">1</span><div class="txt"><span class="h">وَأَحْرُفُ الْمَدِّ إِلَى الْجَوْفِ انْتَمَتْ</span> <span class="h">وَهَكَذَا إلَى الْهَوَاءِ نُسِبَتْ</span></div></div>
+<div class="ex"><b>اللقب</b> هو اسم تُعرف به مجموعة من الحروف باعتبار مخرجها. فحروف المد الثلاثة ﴿الألف والواو والياء المدية﴾ تلقب <b>الجوفية</b> لخروجها من الجوف، وتلقب <b>الهوائية</b> لأنها تنتهي بانقطاع هواء الفم.</div></div><div class="card"><div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">2</span><div class="txt"><span class="h">وَأَحْرُفُ الْحَلْقِ أَتَتْ حَلْقِيَّةْ</span> <span class="h">وَالْقَافُ وَالْكَافُ مَعَاً لَهْوِيَّةْ</span></div></div>
+<div class="ex">حروف الحلق الستة ﴿الهمزة والهاء والعين والحاء والغين والخاء﴾ تسمى <b>الحلقية</b>. والقاف والكاف تسميان <b>اللهويتين</b> نسبة إلى اللهاة، وهي اللحمة المدلاة في أقصى سقف الفم.</div></div><div class="card"><div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">3</span><div class="txt"><span class="h">وَالْجِيمُ وَالشِّينُ وَيَاءٌ لُقِّبَتْ</span> <span class="h">مَعْ ضَادِهَا شَجْرِيَّةً كَمَا ثَبَتْ</span></div></div>
+<div class="ex">الجيم والشين والياء ﴿غير المدية﴾ مع الضاد تلقب <b>الشجرية</b>، نسبة إلى شجر الفم، وهو مفرج ما بين اللحيين.</div></div><div class="card"><div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">4</span><div class="txt"><span class="h">وَاللَّامُ وَالنُّونُ وَرَا ذَلْقِيَّهْ</span> <span class="h">وَالطَّاءُ وَالدَّالُ وَتَا نِطْعِيَّهْ</span></div></div>
+<div class="ex">اللام والنون والراء تلقب <b>الذلقية</b>، نسبة إلى ذلق اللسان وهو طرفه. والطاء والدال والتاء تلقب <b>النطعية</b>، نسبة إلى نطع الغار الأعلى، وهو الجزء المقدم من سقف الحنك.</div></div><div class="card"><div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">5</span><div class="txt"><span class="h">وَأَحْرُفُ الصَّفِيرِ قُلْ أَسْلِيَّهْ</span> <span class="h">وَالظَّاءُ والذَّالُ وَثَا لِثْوِيَّهْ</span></div></div>
+<div class="ex">الصاد والسين والزاي، وهي حروف الصفير، تلقب <b>الأسلية</b>، نسبة إلى أسلة اللسان وهي مستدقه. والظاء والذال والثاء تلقب <b>اللثوية</b>، نسبة إلى اللثة.</div></div><div class="card"><div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">6</span><div class="txt"><span class="h">وَالْفَا وَمِيمٌ بَا وَوَاوٌ سُمِّيَتْ</span> <span class="h">شَفْوِيَّةً فَتِلْكَ عَشْرَةٌ أَتَتْ</span></div></div>
+<div class="ex">الفاء والميم والباء والواو ﴿غير المدية﴾ تلقب <b>الشفوية</b>. وبهذا تتم الألقاب <b>عشرة</b> على عدّ الجوفية والهوائية لقبين.</div></div></div></section>
+<section class="door-section"><h2 aria-expanded="false" aria-label="فتح الباب: صِفَاتُ الْحُرُوفِ الْعَارِضَةُ" class="door-title" role="button" tabindex="0">صِفَاتُ الْحُرُوفِ الْعَارِضَةُ</h2><div class="door-content"><div class="card"><div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">1</span><div class="txt"><span class="h">إِظْهَارٌ ادْغَامٌ وَقَلْبٌ وَكَذَا</span> <span class="h">إِخْفَا وَتَفْخِيمٌ وَرِقٌّ أُخِذَا</span></div></div>
+<div class="ex"><p><b>الصفات العارضة</b> هي التي تعرض للحرف في بعض أحواله بحسب موقعه من الكلام، وتزول عنه إذا تغيّر موقعه، بخلاف الصفات اللازمة التي لا تفارق الحرف. وقد ذكر البيت منها ستًّا، ومعنى «أُخِذَا»: أُخذت صفاتٍ عارضة.</p>
+<ol>
+<li><b>الإظهار:</b> لغةً البيان. واصطلاحًا: إخراج الحرف من مخرجه من غير تشديد ولا إدخال في الحرف الذي بعده. نحو «مِنْ خَيْرٍ» و«مَنْ آمَنَ».</li>
+<li><b>الإدغام:</b> لغةً الإدخال. واصطلاحًا: التقاء حرف ساكن بحرف متحرك بعده، بحيث يصيران حرفًا واحدًا مشددًا. نحو «مَنْ يَقُولُ» و«مِنْ رَبِّهِمْ».</li>
+<li><b>القلب:</b> لغةً تحويل الشيء عن وجهه. واصطلاحًا: جعل حرف مكان حرف آخر، وهو هنا قلب النون الساكنة أو التنوين <b>ميمًا</b> عند الباء، مع إخفائها وبقاء الغنة. نحو «مِنْ بَعْدِ» و«سَمِيعٌ بَصِيرٌ».</li>
+<li><b>الإخفاء:</b> لغةً الستر. واصطلاحًا: النطق بالحرف الساكن على صفة بين الإظهار والإدغام، عاريًا من التشديد، مع بقاء الغنة. نحو «مِنْ قَبْلُ» و«أَنْتُمْ».</li>
+<li><b>التفخيم:</b> لغةً التسمين والتعظيم. واصطلاحًا: سِمَن يطرأ على صوت الحرف فيمتلئ الفم بصداه. نحو «قَالَ» و«وَاللَّهُ».</li>
+<li><b>الترقيق:</b> لغةً التنحيف. واصطلاحًا: نحول يدخل على صوت الحرف فلا يمتلئ الفم بصداه. نحو «بِسْمِ اللَّهِ» و«فِرْعَوْنَ». وهو المراد بقوله «رِقٌّ».</li>
+</ol>
+<p>والتفخيم والترقيق نوعان: لازم في حروف الاستعلاء ﴿مفخمة دائمًا﴾ وسائر الحروف ﴿مرققة أصالة﴾، وعارض في الراء واللام وألف المد، فتتبع ما قبلها. وتفصيله في باب الترقيق والتفخيم.</p></div></div><div class="card"><div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">2</span><div class="txt"><span class="h">وَالْمَدُّ وَالْقَصْرُ مَعَ التَّحَرُّكِ</span> <span class="h">وَأَيْضًا السُّكُونُ وَالسَّكْتُ حُكِي</span></div></div>
+<div class="ex"><p>يتمّ البيت الثاني عدّ الصفات العارضة، فيذكر خمسًا أخرى، ومعنى «حُكِي»: نُقل ورُوي.</p>
+<ol>
+<li><b>المد:</b> لغةً الزيادة والطول. واصطلاحًا: إطالة الصوت بحرف المد أو اللين عند ملاقاة همز أو سكون. نحو «جَاءَ» و«الضَّالِّينَ».</li>
+<li><b>القصر:</b> لغةً الحبس. واصطلاحًا: إثبات حرف المد من غير زيادة عليه، وهو المد الطبيعي بمقدار حركتين. نحو «قَالَ».</li>
+<li><b>التحرك:</b> كون الحرف مفتوحًا أو مضمومًا أو مكسورًا، وهو ضد السكون. نحو الباء في «بِسْمِ».</li>
+<li><b>السكون:</b> خلو الحرف من الحركة، وقد يكون أصليًّا أو عارضًا للوقف. نحو السين في «بِسْمِ».</li>
+<li><b>السكت:</b> لغةً المنع والإمساك. واصطلاحًا: قطع الصوت زمنًا يسيرًا من غير تنفس، بنية مواصلة القراءة، وهو أقصر من زمن الوقف. وهو ثابت لحفص في أربعة مواضع: «عِوَجًا» في الكهف، و«مَرْقَدِنَا» في يس، و«مَنْ رَاقٍ» في القيامة، و«بَلْ رَانَ» في المطففين. وتفصيله في باب الوقف والقطع والسكت.</li>
+</ol></div></div></div></section>
+<section class="door-section"><h2 aria-expanded="false" aria-label="فتح الباب: الْمِيمُ السَّاكِنَةُ" class="door-title" role="button" tabindex="0">الْمِيمُ السَّاكِنَةُ</h2><div class="door-content"><div class="card"><div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">1</span><div class="txt"><span class="h">وَأَخْفِ أَحْرَى عِنْدَ بَا وَأَدْغِمَا</span> <span class="h">فِي الْمِيمِ وَالْإظْهَارُ مَعْ سِوَاهُمَا</span></div></div>
+<div class="ex"><p><b>الميم الساكنة</b> هي الميم العارية من الحركة والتشديد، ولها <b>ثلاثة أحكام</b> بحسب الحرف الذي يليها، وتسمى كلها <b>شفوية</b> لأن مخرج الميم من الشفتين.</p>
+<ol>
+<li><b>الإخفاء الشفوي:</b> إذا وقعت بعدها <b>الباء</b>، نحو «تَرْمِيهِمْ بِحِجَارَةٍ» و«يَعْتَصِمْ بِاللَّهِ». ومعنى «أَحْرَى»: أجدر وأولى، أي إخفاؤها عندها هو الأولى، وهو المختار عند أهل الأداء، وقيل بإظهارها. ويكون الإخفاء مع الغنة.</li>
+<li><b>الإدغام الشفوي:</b> إذا وقعت بعدها <b>ميم</b> مثلها، فتدغم فيها حرفًا واحدًا مشددًا مع الغنة، نحو «لَهُمْ مَا» و«أَمْ مَنْ». ويسمى إدغام مثلين صغيرًا.</li>
+<li><b>الإظهار الشفوي:</b> إذا وقع بعدها أي حرف من <b>بقية الحروف</b>، وهي ستة وعشرون حرفًا، نحو «أَنْعَمْتَ» و«هُمْ فِيهَا» و«عَلَيْهِمْ وَلَا». ويكون الإظهار من غير غنة زائدة.</li>
+</ol>
+<p><b>تنبيه:</b> يتأكد الإظهار إذا وقع بعد الميم <b>فاء</b> أو <b>واو</b>، نحو «هُمْ فِيهَا» و«أَمْ وَلَا»، لقرب مخرجيهما من مخرج الميم، فيُخشى إخفاؤها أو إدغامها.</p></div></div></div></section>
+<section class="door-section"><h2 aria-expanded="false" aria-label="فتح الباب: النُّونُ السَّاكِنَةُ وَالتَّنْوينُ" class="door-title" role="button" tabindex="0">النُّونُ السَّاكِنَةُ وَالتَّنْوينُ</h2><div class="door-content"><div class="card"><div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">1</span><div class="txt"><span class="h">عِنْدَ حُرُوفِ الْحَلْقِ أَظْهِرَنْهُمَا</span> <span class="h">وَعِنْدَ <span class="ml">(يَرْمُلُونَ)</span> أَدْغِمَنْهُمَا</span></div></div>
+<div class="ex"><p><b>النون الساكنة</b> هي الثابتة لفظًا وخطًا ووصلًا ووقفًا. و<b>التنوين</b> نون ساكنة زائدة تلحق آخر الاسم لفظًا لا خطًا، وتثبت وصلًا وتسقط وقفًا. ولهما أربعة أحكام بحسب الحرف الذي بعدهما.</p>
+<p><b>الحكم الأول: الإظهار الحلقي.</b> يُظهران عند حروف الحلق الستة: الهمزة والهاء والعين والحاء والغين والخاء، لبُعد مخرجيهما من مخرج النون. نحو «مَنْ آمَنَ» و«مِنْ هَادٍ» و«مِنْ عِلْمٍ» و«مِنْ حَيْثُ» و«مِنْ غِلٍّ» و«مِنْ خَيْرٍ»، وفي التنوين «عَلِيمٌ خَبِيرٌ».</p>
+<p><b>الحكم الثاني: الإدغام.</b> يُدغمان عند حروف «يَرْمُلُونَ» الستة، وهي الياء والراء والميم واللام والواو والنون.</p></div></div><div class="card"><div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">2</span><div class="txt"><span class="h">لَكِنْ بِـ<span class="ml">(يَنْمُو)</span> أَدْغِمَاً بِغُنَّةِ</span> <span class="h">إِلَّا إِذَا مَا أَتَيَا بِكِلْمَةِ</span></div></div>
+<div class="ex"><p>ينقسم الإدغام قسمين. الأول <b>الإدغام بغنة</b>، وهو عند حروف «يَنْمُو»: الياء والنون والميم والواو. نحو «مَنْ يَقُولُ» و«مِنْ نِعْمَةٍ» و«مِنْ مَالٍ» و«مِنْ وَالٍ»، وفي التنوين «خَيْرًا يَرَهُ». ويسمى إدغامًا <b>ناقصًا</b> لبقاء صفة الغنة.</p>
+<p>ويُشترط للإدغام أن يكون الحرفان في <b>كلمتين</b>. فإن جاءت النون ومعها الواو أو الياء في <b>كلمة واحدة</b> وجب الإظهار، ويسمى <b>الإظهار المطلق</b>، لئلا يلتبس الكلام بالمضاعف.</p></div></div><div class="card"><div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">3</span><div class="txt"><span class="h">دُنْيَا وَبُنْيَانٌ كَذَا صِنْوَانُ</span> <span class="h">وَغَيْرُ صِنْوَانٍ كَذَا قِنْوَانُ</span></div></div>
+<div class="ex"><p>هذا البيت يمثل لما استُثني، وهو أربع كلمات في القرآن الكريم: «دُنْيَا» و«بُنْيَانٌ» و«صِنْوَانٌ» و«قِنْوَانٌ». فالنون فيها ساكنة بعدها ياء أو واو في كلمة واحدة، فتُظهر.</p>
+<p>وقوله «وَغَيْرُ صِنْوَانٍ» إشارة إلى قوله تعالى «صِنْوَانٌ وَغَيْرُ صِنْوَانٍ» في سورة الرعد، فالإظهار فيها جميعًا.</p></div></div><div class="card"><div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">4</span><div class="txt"><span class="h">وَنُونُ مَعْ يَاسِينُ بِالْإِظْهَارِ حَلّْ</span> <span class="h">وَأَدْغِمَاً بِغَيْرِ غُنَّةٍ بِـ<span class="ml">(رَلْ)</span></span></div></div>
+<div class="ex"><p>الاستثناء الآخر في <b>الهجاء</b>: نون «يس» ونون «ن» الواقعتان قبل الواو في «يس وَالْقُرْآنِ الْحَكِيمِ» و«ن وَالْقَلَمِ»، فالإظهار فيهما لحفص. ومعنى «حَلّْ»: نزل وثبت.</p>
+<p>والقسم الثاني من الإدغام <b>الإدغام بغير غنة</b>، وهو عند اللام والراء، ويسمى إدغامًا <b>كاملًا</b>. نحو «مِنْ رَبِّهِمْ» و«مِنْ لَدُنْهُ»، وفي التنوين «غَفُورٌ رَحِيمٌ» و«هُدًى لِلْمُتَّقِينَ».</p></div></div><div class="card"><div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">5</span><div class="txt"><span class="h">وَعِنْدَ <span class="ml">(بَاءٍ)</span> مِيمَاً اقْلِبَنْهُمَا</span> <span class="h">وَعِنْدَ بَاقِيهِنَّ أَخْفِيَنْهُمَا</span></div></div>
+<div class="ex"><p><b>الحكم الثالث: القلب.</b> يُقلبان <b>ميمًا</b> عند الباء، مع إخفاء الميم المقلوبة وبقاء الغنة. نحو «مِنْ بَعْدِ» و«أَنْبِئْهُمْ»، وفي التنوين «سَمِيعٌ بَصِيرٌ».</p>
+<p><b>الحكم الرابع: الإخفاء.</b> يُخفيان عند بقية الحروف، وهي خمسة عشر حرفًا، مع الغنة. وقد فُصلت في البيتين التاليين. نحو «مِنْ قَبْلُ» و«أَنْتُمْ»، وفي التنوين «رِيحًا صَرْصَرًا».</p></div></div><div class="card"><div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">6</span><div class="txt"><span class="h">وَقَارَبَ الْإِظْهَارَ عِنْدَ أَوَّلَيْ</span> <span class="h"><span class="ml">(كَـ)</span>ـمْ <span class="ml">(قَـ)</span>ـرَّ وَالْإدْغَامَ <span class="ml">(دَ)</span>وْمًا <span class="ml">(تِـ)</span>ـلْوُ<span class="ml">(طَ)</span>ـيْ</span></div></div>
+<div class="ex"><p>تتفاوت حروف الإخفاء الخمسة عشر في قربها من الإظهار والإدغام، وقد جمعها الناظم في ثلاث مراتب.</p>
+<p><b>الأولى:</b> أقرب إلى الإظهار عند أول حرفين من «كَمْ قَرَّ»، وهما <b>الكاف والقاف</b>، لبُعد مخرجهما من مخرج النون.</p>
+<p><b>الثانية:</b> أقرب إلى الإدغام عند الحروف المرموز لها بـ«دَوْمًا تِلْوُ طَيْ»، وهي <b>الدال والتاء والطاء</b>، لقرب مخارجها من مخرج النون.</p></div></div><div class="card"><div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">7</span><div class="txt"><span class="h">وَوَسَطٌ <span class="ml">(صِـ)</span>ـدْقٌ <span class="ml">(سَـ)</span>ـمَا <span class="ml">(زَ)</span>اهٍ <span class="ml">(ثَـ)</span>ـنَا</span> <span class="h"><span class="ml">(ظَ)</span>ـلَّ <span class="ml">(جَـ)</span>ـلِيلَاً <span class="ml">(ضِـ)</span>ـفْ <span class="ml">(شَـ)</span>ـرِيفَاً <span class="ml">(ذَ)</span>ا <span class="ml">(فِـ)</span>ـنَا</span></div></div>
+<div class="ex"><p><b>الثالثة:</b> الوسط بين الإظهار والإدغام، وهي عشرة أحرف مرموز لها بأوائل كلمات البيت: <b>الصاد والسين والزاي والثاء والظاء والجيم والضاد والشين والذال والفاء</b>.</p>
+<p>فيكون مجموع حروف الإخفاء خمسة عشر: حرفان في المرتبة الأولى، وثلاثة في الثانية، وعشرة في الثالثة. ومما يجمعها للحفظ، على غير هذا الترتيب، قولهم: «صِفْ ذَا ثَنَا كَمْ جَادَ شَخْصٌ قَدْ سَمَا دُمْ طَيِّبًا زِدْ فِي تُقًى ضَعْ ظَالِمًا».</p></div></div></div></section>
+<section class="door-section"><h2 aria-expanded="false" aria-label="فتح الباب: اللَّامَاتُ السَّواكِنُ" class="door-title" role="button" tabindex="0">اللَّامَاتُ السَّواكِنُ</h2><div class="door-content"><div class="card"><div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">1</span><div class="txt"><span class="h">أَلْ فِي <span class="ml">(ابْغِ حَجَّكَ وَخَفْ عَقِيمَهُ)</span></span> <span class="h">أَظْهِرْ وَكُنْ فِي غَيْرِهَا مُدْغِمَهُ</span></div></div>
+<div class="ex"><p>المراد بـ«أَلْ» لام التعريف الساكنة الداخلة على الأسماء، ولها حالتان بحسب الحرف الذي بعدها، وحروف الهجاء كلها مقسومة بينهما: أربعة عشر لكل حالة.</p>
+<p><b>الأولى: الإظهار.</b> عند الحروف الأربعة عشر المجموعة في قوله «ابْغِ حَجَّكَ وَخَفْ عَقِيمَهُ»، وهي: <b>الهمزة والباء والغين والحاء والجيم والكاف والواو والخاء والفاء والعين والقاف والياء والميم والهاء</b>. نحو «الْأَرْضُ» و«الْبَيْتُ» و«الْغَفُورُ» و«الْحَمْدُ» و«الْجَنَّةُ» و«الْكِتَابُ» و«الْوَاحِدُ» و«الْخَبِيرُ» و«الْفَتْحُ» و«الْعَلِيمُ» و«الْقَمَرُ» و«الْيَوْمُ» و«الْمَلِكُ» و«الْهُدَى».</p>
+<p><b>الثانية: الإدغام.</b> عند بقية الحروف، وهي أربعة عشر أيضًا: <b>التاء والثاء والدال والذال والراء والزاي والسين والشين والصاد والضاد والطاء والظاء واللام والنون</b>. نحو «التَّوَّابُ» و«الثَّمَرَاتِ» و«الدِّينِ» و«الذِّكْرَى» و«الرَّحْمَنِ» و«الزَّكَاةَ» و«السَّمَاءِ» و«الشَّمْسِ» و«الصَّلَاةَ» و«الضَّالِّينَ» و«الطَّيِّبَاتِ» و«الظَّالِمِينَ» و«اللَّيْلِ» و«النَّاسِ». وهو إدغام كامل بلا غنة.</p></div></div><div class="card"><div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">2</span><div class="txt"><span class="h">وَسَمِّ بِالْقَمْرِيَّةِ الْمُظْهَرَةَ</span> <span class="h">وَسَمِّ بِالشَّمْسِيَّةِ الْمُدْغَمَةَ</span></div></div>
+<div class="ex"><p>يُسمى لام التعريف المظهرة <b>لامًا قمرية</b>، نسبة إلى «الْقَمَرُ» لظهور لامها. ويُسمى المدغمة <b>لامًا شمسية</b>، نسبة إلى «الشَّمْسُ» لإدغام لامها في الشين.</p>
+<p>وفي الشمسية لا تُنطق اللام، ويُنطق ما بعدها حرفًا مشددًا. وفي القمرية تُنطق اللام ساكنة مظهرة، ويبقى الحرف بعدها غير مشدد.</p></div></div><div class="card"><div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">3</span><div class="txt"><span class="h">وَاللامُ مِنْ فِعْلٍ وَحَرْفٍ أَظْهِرَا</span> <span class="h">لَا قُلْ وَبَلْ فَأَدْغِمَنْهُمَا بِرَا</span></div></div>
+<div class="ex"><p>ينتقل البيت إلى اللام الساكنة في غير «أَلْ»، فيذكر منها لام الفعل ولام الحرف.</p>
+<p><b>لام الفعل:</b> تُظهر مطلقًا، نحو «أَلْقَى» و«قُلْنَا» و«جَعَلْنَا» و«أَنْزَلْنَا». <b>ولام الحرف:</b> تُظهر نحو «هَلْ» و«بَلْ»، نحو «هَلْ تَرَى» و«بَلْ تَأْتِيهِمْ».</p>
+<p>واستثنى من الإظهار لام <b>«قُلْ» و«بَلْ»</b>، فتدغمان في <b>الراء</b> إدغامًا كاملًا، نحو «قُلْ رَبِّ» و«بَلْ رَفَعَهُ اللَّهُ». وقوله «بِرَا» أي: بالراء.</p>
+<p><b>تنبيه:</b> «بَلْ رَانَ» في سورة المطففين مستثناة من الإدغام لحفص، لثبوت السكت عليها.</p></div></div><div class="card"><div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">4</span><div class="txt"><span class="h">وَمَعْهُمَا فِي اللَّامِ هَلْ وَأَظْهِرَا</span> <span class="h">فِي اسْمٍ وَلَامِ الْأَمْرِ خَمْسَةٌ تُرَى</span></div></div>
+<div class="ex"><p>تلحق «هَلْ» بـ«قُلْ» و«بَلْ» في الإدغام، لكن في <b>اللام</b> وحدها. فتدغم اللام في اللام نحو «قُلْ لَهُمْ» و«بَلْ لَهُمْ» و«هَلْ لَكُمْ»، ويسمى مثلين صغيرًا.</p>
+<p>ثم يذكر البيت بقية الأنواع، وهي <b>لام الاسم</b> و<b>لام الأمر</b>، وكلاهما يُظهر. فلام الاسم نحو «مُلْكٌ» و«أَلْسِنَتِكُمْ». و<b>لام الأمر</b> هي لام ساكنة تدخل على الفعل المضارع فتحوّله إلى معنى الأمر، وتكون مسبوقة بالواو أو الفاء أو «ثم»، نحو «وَلْيَتَلَطَّفْ» و«فَلْيَعْبُدُوا» و«ثُمَّ لْيَقْضُوا».</p>
+<p>ومعنى «خَمْسَةٌ تُرَى»: أن اللام الساكنة خمسة أنواع، وهي: لام التعريف، ولام الفعل، ولام الحرف، ولام الاسم، ولام الأمر.</p></div></div></div></section>
+<section class="door-section"><h2 aria-expanded="false" aria-label="فتح الباب: الْمُتَمَاثِلَانِ وَالْمُتَجَانِسَانِ وَالْمُتَقَارِبَانِ والْمُتَبَاعِدَانِ" class="door-title" role="button" tabindex="0">الْمُتَمَاثِلَانِ وَالْمُتَجَانِسَانِ وَالْمُتَقَارِبَانِ والْمُتَبَاعِدَانِ</h2><div class="door-content"><div class="card"><div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">1</span><div class="txt"><span class="h">إِنْ يَجْتَمِعْ حَرْفَانِ خَطًّا فَهُمَا</span> <span class="h">حَيٌّ عَلَى الظَّاهِرِ فِيمَا قُسِّمَا</span></div></div>
+<div class="ex"><p>هذا البيت تمهيد للباب. يبيّن أن الحرفين إذا اجتمعا <b>في الخط</b> انقسم اجتماعهما إلى <b>ثمانية عشر</b> قسمًا.</p><p><b>معنى «خَطًّا»:</b> أن المعتبر هو التقاء الحرفين في <b>الكتابة</b>، سواء التقيا في النطق أم لا. وسواء كانا في كلمة واحدة أو في كلمتين.</p><ul><li>«إِنَّهُ هُوَ»: الهاءان متجاورتان في الكتابة، فهما مثلان. وإن فصلت بينهما واو الصلة في النطق.</li><li>«أَنَا نَذِيرٌ»: النونان غير متجاورتين في الكتابة، لفصل الألف بينهما. فلا يُعدّان مثلين، وإن التقيا في النطق.</li></ul><p><b>معنى «حَيٌّ»:</b> رمز عددي بحساب الجمل. الحاء ثمانية، والياء عشرة، فالمجموع <b>ثمانية عشر</b>.</p><p><b>معنى «عَلَى الظَّاهِرِ فِيمَا قُسِّمَا»:</b> أن هذا العدد جارٍ على ظاهر التقسيم الذي يذكره الناظم في الأبيات التالية.</p></div></div><div class="card"><div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">2</span><div class="txt"><span class="h">الْمُتَمَاثِلَانِ إِنْ يَتَّحِدَا</span> <span class="h">فِي مَخْرَجٍ وَصِفَةٍ كَمَا بَدَا</span></div></div>
+<div class="ex"><p>هذا الباب أساس لفهم أحكام الإدغام. فالحرفان إذا التقيا نُسبا إلى أحد أربعة أقسام بحسب اتفاقهما في المخرج والصفة.</p>
+<p><b>المتماثلان:</b> الحرفان المتفقان في <b>المخرج والصفة</b> معًا. أي هما حرف واحد في الحقيقة، كالباء مع الباء، والتاء مع التاء، والميم مع الميم. نحو «اضْرِبْ بِّعَصَاكَ» و«رَبِحَتْ تِّجَارَتُهُمْ» و«لَهُمْ مَّا». ومعنى «كَمَا بَدَا»: كما ظهر واشتهر.</p></div></div><div class="card"><div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">3</span><div class="txt"><span class="h">وَالْمُتَجَانِسَانِ حَيْثُ ائْتَلَفَا</span> <span class="h">فِي مَخْرَجٍ وَ فِي الصِّفَاتِ اخْتَلَفَا</span></div></div>
+<div class="ex"><p><b>المتجانسان:</b> الحرفان المتفقان في <b>المخرج</b> المختلفان في <b>الصفة</b>. ومعنى «ائْتَلَفَا»: اجتمعا واتفقا.</p>
+<p>ومن أمثلتهما: التاء مع الدال، والتاء مع الطاء، والثاء مع الذال، والباء مع الميم. نحو «وَدَّتْ طَّائِفَةٌ» و«يَلْهَثْ ذَّلِكَ».</p></div></div><div class="card"><div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">4</span><div class="txt"><span class="h">وَالْمُتَقَارِبَانِ حَيْثُ فِيهِمَا</span> <span class="h">تَقَارُبٌ أَوْ كَانَ فِي أَيِّهِمَا</span></div></div>
+<div class="ex"><p><b>المتقاربان:</b> الحرفان المتقاربان في <b>المخرج والصفة</b> معًا، أو في <b>أحدهما</b> فقط. ولهما ثلاث صور:</p>
+<ol>
+<li><b>تقارب في المخرج والصفة:</b> اللام والراء، نحو «قُلْ رَّبِّ».</li>
+<li><b>تقارب في المخرج فقط:</b> الدال والسين، نحو «قَدْ سَمِعَ».</li>
+<li><b>تقارب في الصفة فقط:</b> التاء والشين، نحو «بِأَرْبَعَةِ شُهَدَاءَ».</li>
+</ol>
+<p>ومن أمثلة الأولى أيضًا القاف والكاف، نحو «نَخْلُقكُّم». ومعنى «أَيِّهِمَا»: أيٍّ من المخرج والصفة.</p></div></div><div class="card"><div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">5</span><div class="txt"><span class="h">وَالْمُتَبَاعِدَانِ إِنْ تَبَاعَدَا</span> <span class="h">فِي مَخْرَجٍ مَعْ خُلْفِ وَصْفٍ وَرَدَا</span></div></div>
+<div class="ex"><p><b>المتباعدان:</b> الحرفان المتباعدان في <b>المخرج</b> مع <b>اختلافهما في الصفة</b> غالبًا. وقد يتفقان في الصفة، وهو قليل. ومعنى «خُلْفِ»: اختلاف.</p>
+<p>نحو «الْحَمْدُ» فالحاء من الحلق والميم من الشفتين، ونحو «نَعْبُدُ». ولا يقع الإدغام بين المتباعدين.</p></div></div><div class="card"><div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">6</span><div class="txt"><span class="h">وَحَيْثُمَا تَحَرَّكَ الْحَرْفَانِ فِي</span> <span class="h">كُلٍّ فَسَمِّ بِالْكَبِيرِ وَاقْتَفِ</span></div></div>
+<div class="ex"><p>يقسم هذا البيت كل قسم من الأقسام الأربعة بحسب الحركة والسكون. فإذا كان الحرفان <b>متحركين</b> فهو <b>الكبير</b>، سُمي كبيرًا لكثرة وقوعه، إذ الحركة أكثر من السكون. نحو «جَعَلَ لَكُمْ» في المثلين، و«قَالَ رَجُلٌ» في المتقاربين.</p>
+<p>ومعنى «وَاقْتَفِ»: اتبع هذا الاصطلاح.</p></div></div><div class="card"><div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">7</span><div class="txt"><span class="h">وَسَمِّ بِالصَّغِيرِ حَيْثُمَا سَكَنْ</span> <span class="h">أَوَّلُهَا وَمُطْلَقٌ إِنْ تَعْكِسَنْ</span></div></div>
+<div class="ex"><p>إذا كان <b>الأول ساكنًا والثاني متحركًا</b> فهو <b>الصغير</b>، وهو الذي يجري فيه الإدغام. نحو «اضْرِبْ بِّعَصَاكَ» و«قُلْ رَّبِّ».</p>
+<p>وإذا انعكس الأمر، فكان <b>الأول متحركًا والثاني ساكنًا</b>، سُمي <b>مطلقًا</b>. ولا إدغام فيه لسكون الحرف الثاني.</p>
+<p>وبهذا تصير الأقسام <b>ثمانية عشر</b>: ست صور، المتماثلان، والمتجانسان، والمتقاربان في ثلاث صور، والمتباعدان. لكل صورة كبير وصغير ومطلق.</p></div></div></div></section>
+<section class="door-section"><h2 aria-expanded="false" aria-label="فتح الباب: الْإدْغَامُ" class="door-title" role="button" tabindex="0">الْإدْغَامُ</h2><div class="door-content"><div class="card"><div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">1</span><div class="txt"><span class="h">أَوَّلَ مِثْلَيِ الصَّغِيرِ غَيْرَ مَدّْ</span> <span class="h">أَدْغِمْ وَلَكِنْ سَكْتُ مَالِيَهْ أَسَدّْ</span></div></div>
+<div class="ex"><p><b>الإدغام</b> لغةً الإدخال. واصطلاحًا: النطق بحرفين حرفًا كالثاني مشددًا. وأول صوره <b>المثلان الصغير</b>، وهو أن يلتقي حرفان متماثلان، الأول ساكن والثاني متحرك.</p>
+<p>فيجب إدغام الأول في الثاني، نحو «اضْرِبْ بِّعَصَاكَ» و«رَبِحَتْ تِّجَارَتُهُمْ» و«اذْهَبْ بِّكِتَابِي».</p>
+<p>وقوله «غَيْرَ مَدّْ» أي: يُستثنى ما كان الأول فيه <b>حرف مد</b>، فلا يُدغم، نحو «فِي يَوْمٍ» و«قَالُوا وَهُمْ»، لئلا يذهب المد.</p>
+<p>واستُثنيت كذلك «مَالِيَهْ هَلَكَ» في الحاقة، فالسكت على الياء <b>أسدّ</b> أي أصوب، بدل إدغام الهاء. وهاء «مَالِيَهْ» هاء سكت.</p></div></div><div class="card"><div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">2</span><div class="txt"><span class="h">وَالجِنْسُ مِنْهُ الدَّالُ أَوْ طَا أُدْغِمَا</span> <span class="h">فِي التَّا مَعَ الْإِطْبَاقِ وَهْيَ فِيهِمَا</span></div></div>
+<div class="ex"><p>يبيّن البيت <b>المتجانسين الصغير</b>، وأول مثاله إدغام <b>الدال</b> و<b>الطاء</b> في <b>التاء</b>.</p>
+<p>فالدال تُدغم في التاء نحو «قَدْ تَّبَيَّنَ» و«عَبَدتُّمْ». والطاء تُدغم في التاء نحو «أَحَطتُ» و«فَرَّطتُّمْ» و«بَسَطتَّ».</p>
+<p>وقوله «مَعَ الْإِطْبَاقِ» أي: يبقى <b>إطباق الطاء</b> عند الإدغام، فيكون الإدغام <b>ناقصًا</b>. ويمتنع مع الإدغام الناقص <b>القلقلة</b> في الطاء.</p>
+<p>والمقصود بقوله «وَهْيَ فِيهِمَا»، أي: والتاء تُدغم في <b>الدال</b> و<b>الطاء</b>. وإدغامها فيهما <b>كامل</b>، نحو «أَثْقَلَت دَّعَوَا اللَّهَ» و«وَدَّت طَّائِفَةٌ».</p></div></div><div class="card"><div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">3</span><div class="txt"><span class="h">وَإِذْ بِظَا وَارْكَبْ وَيَلْهَثْ وَلَزِمْ</span> <span class="h">مِنْ قُرْبٍ ادْغَامٌ بِنَخْلُقْكُمْ يَتِمّْ</span></div></div>
+<div class="ex"><p>يتم البيت المتجانسين الصغير بثلاثة أمثلة:</p>
+<ol>
+<li><b>الذال في الظاء:</b> «إِذْ ظَّلَمُوا».</li>
+<li><b>الباء في الميم:</b> «ارْكَبْ مَّعَنَا».</li>
+<li><b>الثاء في الذال:</b> «يَلْهَثْ ذَّلِكَ».</li>
+</ol>
+<p>ثم ينتقل إلى <b>المتقاربين الصغير</b>، فيقول إن الإدغام فيه يلزم ويتم في <b>«نَخْلُقكُّم»</b>، فتُدغم القاف في الكاف إدغامًا <b>كاملًا</b>، في قوله تعالى «أَلَمْ نَخْلُقكُّم مِّن مَّاءٍ مَّهِينٍ».</p></div></div><div class="card"><div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">4</span><div class="txt"><span class="h">وَالنُّونَ فِي مَالَكَ لَا تَأْمَنَّا</span> <span class="h">أَشْمِمْهُ مُدْغِمَاً أَوَ اخْفِيَنَّا</span></div></div>
+<div class="ex"><p>يتناول البيت كلمة «تَأْمَنَّا» في قوله تعالى «مَا لَكَ لَا تَأْمَنَّا عَلَى يُوسُفَ» في سورة يوسف. وأصلها «تَأْمَنُنَا» بنونين، الأولى مضمومة والثانية ضمير.</p>
+<p>وللقارئ فيها وجهان:</p>
+<ol>
+<li><b>الإشمام ﴿مع الإدغام﴾:</b> ضم الشفتين من غير صوت، إشارة إلى الضمة. ويكون بعد إسكان النون الأولى مباشرة. وتبقى معه الغنة.</li>
+<li><b>الإخفاء ﴿الاختلاس﴾ ﴿بلا إدغام﴾:</b> الإتيان بثلثي ضمة النون الأولى مع الإسراع بها، فلا تُدغم في الثانية.<br/>ويسمى الروم تجوزًا، والأدق «الاختلاس»، لأن الروم ثلث الحركة. ولا يُضبط إلا بالمشافهة.</li>
+</ol>
+<p>وقوله «لَا تَأْمَنَّا» تنبيه إلى كيفية النطق بها، فلا تُقرأ بالإدغام المحض، بل بالإشمام مع الإدغام، أو بالاختلاس من غير إدغام.</p></div></div></div></section>
+<section class="door-section"><h2 aria-expanded="false" aria-label="فتح الباب: تَقْسِيمُ الْإدْغَامِ" class="door-title" role="button" tabindex="0">تَقْسِيمُ الْإدْغَامِ</h2><div class="door-content"><div class="card"><div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">1</span><div class="txt"><span class="h">ذَا نَاقِصٌ إِنْ يَبْقَ وَصْفُ الْمُدْغَمِ</span> <span class="h">وَكَامِلٌ إِنْ يُمْحَ ذَا فَلْتَعْلَمِ</span></div></div>
+<div class="ex"><p>ينقسم الإدغام من حيث بقاء <b>صفة الحرف المدغم</b> أو ذهابها قسمين.</p>
+<p><b>الإدغام الناقص:</b> ما بقيت فيه صفة الحرف الأول، كالغنة في النون والتنوين عند «يَنْمُو»، وكالإطباق في الطاء عند التاء. نحو «مَنْ يَقُولُ» و«أَحَطتُ» و«بَسَطتَّ».</p>
+<p><b>الإدغام الكامل:</b> ما ذهبت فيه صفة الحرف الأول ذهابًا تامًا، فلا يبقى لها أثر. نحو «مِنْ رَبِّهِمْ» و«قُلْ رَبِّ» و«اضْرِبْ بِّعَصَاكَ» و«قَدْ تَّبَيَّنَ» و«أَلَمْ نَخْلُقكُّم».</p>
+<p>ومعنى «يُمْحَ»: يزول. و«فَلْتَعْلَمِ»: فاعلم هذا الضابط.</p></div></div></div></section>
+<section class="door-section"><h2 aria-expanded="false" aria-label="فتح الباب: التَّرْقِيقُ وَالتَّفْخِيمُ" class="door-title" role="button" tabindex="0">التَّرْقِيقُ وَالتَّفْخِيمُ</h2><div class="door-content"><div class="card"><div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">1</span><div class="txt"><span class="h">حُرُوفَ الِاسْتِفَالِ حَتْمًا رَقِّقِ</span> <span class="h">وَالْعُلْوَ فَخِّمْ سِيَّمَا فِي الْمُطْبَقِ</span></div></div>
+<div class="ex"><p><b>التفخيم</b> لغةً التعظيم. واصطلاحًا: سِمَن يطرأ على صوت الحرف فيمتلئ الفم بصداه. و<b>الترقيق</b> ضده: نحول يدخل على الحرف فلا يمتلئ الفم بصداه.</p>
+<p>فحروف <b>الاستفال</b>، وهي ما سوى حروف الاستعلاء، <b>مرققة وجوبًا</b>. وحروف <b>الاستعلاء</b> سبعة يجمعها «خُصَّ ضَغْطٍ قِظْ»، وهي: الخاء والصاد والضاد والغين والطاء والقاف والظاء، وهي <b>مفخمة دائمًا</b>.</p>
+<p>ومعنى «سِيَّمَا»: خصوصًا. فأقواها تفخيمًا حروف <b>الإطباق</b> الأربعة: الصاد والضاد والطاء والظاء.</p>
+<p>ويستثنى من الاستفال ثلاثة أحرف فيها تفصيل، وهي الراء واللام والألف.</p></div></div><div class="card"><div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">2</span><div class="txt"><span class="h">أَعْلَاهُ فِي كَطَائِفٌ فَصَلَّى</span> <span class="h">فَقُرْبَةٌ فَلَا تُزِغْ فَظِلاَّ</span></div></div>
+<div class="ex"><p>يبيّن البيت أن التفخيم في حروف الاستعلاء <b>خمس مراتب</b>، من الأقوى إلى الأضعف:</p>
+<ol>
+<li>المفتوح بعده ألف: «طَائِفٌ».</li>
+<li>المفتوح بغير ألف: «فَصَلَّى».</li>
+<li>المضموم: «قُرْبَةٌ».</li>
+<li>الساكن بعد الكسر: «لَا تُزِغْ».</li>
+<li>المكسور: «ظِلًّا».</li>
+</ol>
+<p>و«لَا تُزِغْ» كلمة قرآنية، من قوله تعالى: «رَبَّنَا لَا تُزِغْ قُلُوبَنَا». أعطاها الناظم مثالًا للغين الساكنة بعد الكسرة.</p></div></div><div class="card"><div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">3</span><div class="txt"><span class="h">وَالْمُتَوَلِّي فِي السُّكُونِ فَصَّلَا</span> <span class="h">فَمِثْلُ مَفْتُوحٍ وَمَضْمُومٍ تَلَا</span></div></div>
+<div class="ex"><p>يفصّل هذا البيت حكم الساكن من حروف الاستعلاء، ويحيل فيه إلى تفصيل الشيخ المتولي. فالساكن يتبع ما قبله في المرتبة:</p>
+<ul>
+<li>الساكن بعد <b>فتح</b> يُلحق بالمفتوح، نحو «يَقْطَعُونَ».</li>
+<li>الساكن بعد <b>ضم</b> يُلحق بالمضموم، نحو «مُطْمَئِنَّةً».</li>
+</ul></div></div><div class="card"><div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">4</span><div class="txt"><span class="h">ثَمَّ سُكُونًا بَعْدَ كَسْرٍ جَعَلَا</span> <span class="h">وَمَنْ يُفَخِّمْ رَا كَإِخْرَاجٍ فَلَا</span></div></div>
+<div class="ex"><p>ثم يجعل الناظم الساكن <b>بعد الكسر</b> في مرتبة أضعف، وهو المثال المتقدم «تُزِغْ». فالغين فيه ساكنة بعد زاي مكسورة. فيبقى تفخيمه ولكنه أخفّ من غيره.</p>
+<p>أما الشطر الثاني فيشير إلى «إِخْرَاجٍ»، وكذلك «اخْرُجْ» في قوله تعالى: «وَقَالَتِ اخْرُجْ عَلَيْهِنَّ». فالخاء ساكنة بعد كسرة، وبعدها راء مفخمة.</p>
+<p>فلا تتبع هذه الكلمات القاعدة السابقة، لوجود الراء المفخمة بعد الخاء. فتأخذ <b>أعلى مراتب التفخيم</b>.</p>
+<p>ويلحق بها كل حرف استعلاء ساكن بعد كسرة وبعده راء مفخمة، نحو «فِطْرَتَ اللَّهِ» و«قِطْرًا» و«إِصْرَهُمْ».</p>
+<p><b>فائدة:</b> رأي الشيخ عامر السيد عثمان رحمه الله في كلمة «نَبْغِ» من سورة الكهف أنها تُنطق عند الوقف عليها بـ<b>أدنى مراتب التفخيم</b>، للدلالة على الياء المحذوفة من أصل الكلمة، إذ أصلها «نَبْغِي».</p></div></div><div class="card"><div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">5</span><div class="txt"><span class="h">وَاللَّامُ فِي اسْمِ اللهِ حَيْثُمَا أَتَتْ</span> <span class="h">مِنْ بَعْدِ فَتْحَةٍ وَضَمٍّ غُلِّظَتْ</span></div></div>
+<div class="ex"><p>من الأحرف التي يعرض لها التفخيم <b>اللام</b> في لفظ الجلالة. فتُغلَّظ إذا جاءت بعد <b>فتحة</b> أو <b>ضمة</b>، نحو «قَالَ اللَّهُ» و«رَسُولُ اللَّهِ».</p>
+<p>وتُرقَّق إذا جاءت بعد <b>كسرة</b>، نحو «بِسْمِ اللَّهِ» و«لِلَّهِ». وقوله «حَيْثُمَا أَتَتْ» أي في كل موضع.</p></div></div><div class="card"><div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">6</span><div class="txt"><span class="h">وَالرَّاءُ رُقِّقَتْ إِذَا مَا سَكَنَتْ</span> <span class="h">مِنْ بَعْدِ وَصْلِ كَسْرَةٍ تَأَصَّلَتْ</span></div></div>
+<div class="ex"><p>ينتقل الناظم إلى <b>الراء</b>، والأصل فيها التفخيم، ولا تُرقق إلا في مواضع محصورة.</p>
+<p><b>أولًا: الراء الساكنة سكونًا أصليًا.</b></p>
+<p>فتُرقَّق الراء <b>الساكنة</b> إذا وقعت بعد <b>كسرة متصلة بها أصلية</b>، نحو «فِرْعَوْنَ» و«مِرْيَةٍ» و«شِرْعَةً».</p>
+<p>وتُفخَّم الراء <b>الساكنة</b> إذا وقعت بعد <b>فتح</b> أو <b>ضم</b>، نحو «أَرْسَلْنَا» و«يَرْجِعُونَ» و«الْقُرْآنُ».</p>
+<p>وكذلك إذا كانت الكسرة عارضة أو منفصلة فتُفخَّم الراء. وتكون الراء حينئذ <b>مسبوقة بهمزة وصل</b>، نحو «ارْجِعُوا» و«الَّذِي ارْتَضَى» و«رَبِّ ارْحَمْهُمَا».</p></div></div><div class="card"><div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">7</span><div class="txt"><span class="h">وَلَمْ تَكُنْ مِنْ قَبْلِ فَتْحِ اسْتِعْلَا</span> <span class="h">مُتَّصِلٍ وَرِقُّ فِرْقٍ أَعْلَى</span></div></div>
+<div class="ex"><p><b>تتمة الراء الساكنة سكونًا أصليًا.</b> يُشترط في ترقيق الراء الساكنة ألا يقع بعدها <b>حرف استعلاء مفتوح في الكلمة نفسها</b>. فإن وقع فُخِّمت الراء، نحو «قِرْطَاسٍ» و«مِرْصَادًا» و«لَبِالْمِرْصَادِ» و«إِرْصَادًا» و«فِرْقَةٍ».</p>
+<p>ويُستثنى من ذلك «فِرْقٍ» في الشعراء، فالقاف فيها مكسورة. فيجوز فيها الترقيق والتفخيم، والترقيق <b>أعلى</b> أي أرجح.</p></div></div><div class="card"><div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">8</span><div class="txt"><span class="h">وَرُقِّقَتْ إِنْ مُيِّلَتْ أَوْ كُسِرَتْ</span> <span class="h">وَفُخِّمَتْ حَيْثُ لِوَقْفٍ سَكَنَتْ</span></div></div>
+<div class="ex"><p><b>ثانيًا: الراء الممالة.</b> تُرقَّق الراء إذا <b>أُميلت</b>، وهو في «مَجْرَاهَا» في هود لحفص.</p>
+<p><b>ثالثًا: الراء المتحركة.</b> تُرقَّق الراء إذا كانت <b>مكسورة</b>، نحو «رِزْقًا» و«الرِّجَالُ». وتُفخَّم إذا كانت <b>مفتوحة</b> أو <b>مضمومة</b>، نحو «رَسُولًا» و«رُسُلٌ».</p>
+<p><b>تنبيه:</b> الراء <b>المشددة بالفتح أو الضم</b> تُفخَّم ولو سبقها حرف مكسور، نحو «بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ» و«لَيْسَ الْبِرَّ». لأن الراء المشددة راءان: الأولى ساكنة والثانية متحركة، أُدغمت الأولى في الثانية، والإدغام يأخذ حكم الحرف المدغَم فيه وهو الراء الثانية المفتوحة أو المضمومة. فتُفخَّم الراءان معًا، ولا يصح ترقيق الأولى بسبب الكسر الذي قبلها.</p>
+<p><b>رابعًا: الراء الساكنة سكونًا عارضًا بسبب الوقف.</b> تُفخَّم الراء التي سكنت <b>للوقف</b> إلا ما استثناه البيت التالي، في الحالات الآتية:</p>
+<ol>
+<li>إذا سبقها <b>فتح</b> أو <b>ضم</b>، نحو «الْبَشَرِ» و«الْقَمَرِ».</li>
+<li>إذا سبقها <b>ساكن</b> مسبوق بفتح أو ضم، نحو «الْقَدْرِ» و«وَالْفَجْرِ» و«الْعُسْرِ» و«الْأُمُورِ».</li>
+</ol>
+<p>فالراء في «وَالْفَجْرِ» مكسورة وصلًا، ولكنها تُفخَّم عند الوقف.</p>
+<p>والسكون في هذه الأمثلة عارض للوقف فقط. والمثبت في الأمثلة هو ضبط المصحف.</p></div></div><div class="card"><div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">9</span><div class="txt"><span class="h">مَا لَمْ تَكُنْ بَعْدَ سُكُونِ يَا وَلَا</span> <span class="h">كَسْرٍ وَسَاكِنِ اسْتِفَالٍ فَصَلَا</span></div></div>
+<div class="ex"><p><b>تتمة الراء الساكنة سكونًا عارضًا بسبب الوقف.</b> تُستثنى من تفخيم الراء الموقوف عليها ثلاث حالات، فتُرقَّق:</p>
+<ol>
+<li>إذا وقعت بعد <b>ياء ساكنة</b>، نحو «خَبِيرٌ» و«بَصِيرٌ».</li>
+<li>إذا وقعت بعد <b>كسرة</b> مباشرة، نحو «سَاحِرٌ» و«بِقَادِرٍ».</li>
+<li>إذا فصل بينها وبين الكسرة <b>ساكن مستفل</b>، نحو «السِّحْرُ» و«الذِّكْرِ».</li>
+</ol>
+<p>والسكون في هذه الأمثلة عارض للوقف. والمثبت فيها ضبط المصحف.</p></div></div><div class="card"><div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">10</span><div class="txt"><span class="h">وَرِقُّ نَحْوِ يَسْرِ أَسْرِ أَحَرَى</span> <span class="h">كَالقِطْرِ مَعْ نُذُرِ عَكْسُ مِصرَ</span></div></div>
+<div class="ex"><p><b>تتمة الراء الساكنة سكونًا عارضًا بسبب الوقف.</b></p>
+<p><b>أولًا:</b> إذا وُقف على الراء وفصل بينها وبين الكسرة <b>ساكن مستعلٍ</b>، وهو الطاء في «الْقِطْرِ» والصاد في «مِصْرَ»، جاز <b>الوجهان</b>. فمن رقّق نظر إلى الكسرة ولم يعتدّ بالفاصل، ومن فخّم عدّ الفاصل المستعلي حاجزًا حصينًا بين الكسرة والراء. و«مِصْرَ» هنا غير المنونة.</p>
+<ul><li><b>«الْقِطْرِ»:</b> الأرجح <b>الترقيق</b>، لأن راءها مكسورة وصلًا.</li><li><b>«مِصْرَ»:</b> الأرجح <b>التفخيم</b>، لأن راءها مفتوحة وصلًا. وهذا معنى قوله «عَكْسُ مِصرَ».</li></ul>
+<p><b>ثانيًا: الكسر اللازم.</b> وهي كل راء مكسورة كسرة <b>لازمة</b> حُذفت بعدها ياء، نحو «يَسْرِ» و«أَنْ أَسْرِ» و«فَأَسْرِ» و«وَنُذُرِ» وما شابهها: «لَمْ أَدْرِ» و«الْجَوَارِ» و«تُمَارِ» و«هَارِ». فيها عند الوقف <b>الوجهان</b>، والأرجح <b>الترقيق</b> للدلالة على الياء المحذوفة، وللفرق بين الكسرة اللازمة والكسرة العارضة. ومن فخّم اعتدّ بالوقف وبالفتح قبل الراء.</p>
+<p>أما الراء المكسورة وصلًا التي ليست كسرتها لازمة، نحو «وَالْفَجْرِ» و«الْبَشَرِ» و«بِالنُّذُرِ»، فتُفخَّم وقفًا، وهو المعمول به. وفيها خلاف عند بعضهم.</p></div></div><div class="card"><div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">11</span><div class="txt"><span class="h">وَالرَّوْمُ كَالْوَصْلِ وَتَتْبَعُ الْأَلِفْ</span> <span class="h">مَا قَبْلَهَا وَالْعَكْسُ فِي الْغَنِّ أُلِفْ</span></div></div>
+<div class="ex"><p><b>الروم</b> هو النطق ببعض الحركة عند الوقف، وحكمه حكم الوصل، فتُرقَّق المكسورة وتُفخَّم غيرها.</p>
+<p><b>الألف</b> تتبع ما قبلها: فإن كان مفخمًا فُخِّمت، نحو «قَالَ» و«طَالَ». وإن كان مرققًا رُقِّقت، نحو «نَاعِمَةٌ» و«عَالِيَةٍ».</p>
+<p><b>الغنة</b> بعكس الألف: تتبع ما <b>بعدها</b>. فتُفخَّم قبل حرف الاستعلاء، نحو «مِنْ قَبْلُ»، وتُرقَّق قبل غيره، نحو «مِنْ تَحْتِهَا».</p></div></div></div></section>
+<section class="door-section"><h2 aria-expanded="false" aria-label="فتح الباب: بَابُ التَّحْذِيرِ وَالتَّحْسِينِ" class="door-title" role="button" tabindex="0">بَابُ التَّحْذِيرِ وَالتَّحْسِينِ</h2><div class="door-content"><div class="card"><div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">1</span><div class="txt"><span class="h">إِيَّاكَ أَنْ تُفَخِّمَ الْمُرَقَّقَا</span> <span class="h">إِنْ يَكُ مَعْ مُفَخَّمٍ قَدِ الْتَقَى</span></div></div>
+<div class="ex"><p>يحذّر الناظم من <b>تفخيم الحرف المرقق</b> إذا جاور حرفًا مفخمًا. فالحرف المستفل يبقى رقيقًا ولو جاءه بعده أو قبله حرف استعلاء، لأن التفخيم يسري بالمجاورة إلى ما لا يستحقه.</p></div></div><div class="card"><div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">2</span><div class="txt"><span class="h">كَأَطْهَرُ اغْلُظْ إِذْ نَتَقْنَا نَكَصَا</span> <span class="h">أَنْطَقَنَا اللهُ أَضَاءَ حَصْحَصَا</span></div></div>
+<div class="ex"><p>هذه أمثلة مما اجتمع فيه مرقق ومفخم، ويجب فيها حفظ الترقيق:</p>
+<ul>
+<li>الهاء في «أَطْهَرُ».</li>
+<li>اللام في «اغْلُظْ».</li>
+<li>التاء في «نَتَقْنَا».</li>
+<li>الكاف في «نَكَصَ».</li>
+<li>الهمزة في «أَضَاءَ».</li>
+<li>الحاء في «حَصْحَصَ».</li>
+</ul>
+<p>وكذلك «أَنْطَقَنَا اللَّهُ»، فيُحذر من تفخيم ما جاور الطاء والقاف فيها.</p></div></div><div class="card"><div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">3</span><div class="txt"><span class="h">لا تَخْتَلِسْ نَحْوَ وَلَنْ يَتِرَكُمْ</span> <span class="h">وَجِلَةٌ بِيَدَهِ يَعِدُكُمْ</span></div></div>
+<div class="ex"><p><b>الاختلاس</b> هو الإسراع بالحركة حتى يضعف النطق بها. فيحذّر الناظم منه في كلمات تتتابع فيها الحروف أو الحركات فيُظن أن الحركة تُختلس، وهي:</p>
+<ul>
+<li>«وَلَنْ يَتِرَكُمْ» في محمد.</li>
+<li>«وَجِلَةٌ» في المؤمنون.</li>
+<li>«بِيَدِهِ» في البقرة.</li>
+<li>«يَعِدُكُمْ» في البقرة.</li>
+</ul>
+<p>فتُعطى الحركة حقها كاملة، خصوصًا الكسرة.</p></div></div><div class="card"><div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">4</span><div class="txt"><span class="h">وَمِزْ مِنَ الْأَشْبَاهِ يُصْحَبُونَا</span> <span class="h">وَفَقَعُوا نَذَرَ تُحْصِنُونَا</span></div></div>
+<div class="ex"><p>المقصود من البيت <b>القاعدة</b>، وهي: «مِزْ مِنَ الْأَشْبَاهِ». ومعنى «مِزْ»: ميّز. و<b>الأشباه</b>: ما تشابه في النطق فيُخشى اللبس بينه.</p>
+<p>وما بعد ذلك أمثلة على هذه القاعدة، وهي:</p>
+<p>تحذير من قلب الصاد سينًا في «يُصْحَبُونَ»، لئلا تصير «يُسْحَبُونَ».</p>
+<p>كما ينبغي الحذر من اختلاس فتحة القاف من «فَقَعُوا»، لئلا يتحول المعنى من الوقوع إلى الفَقْع ﴿فَقْع العين﴾.</p>
+<p>وكذلك الحذر من إبدال الذال ظاءً في «نَذَرَ»، وتمييز الصاد والسين في «تُحْصِنُونَ» و«يُحْسِنُونَ».</p></div></div><div class="card"><div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">5</span><div class="txt"><span class="h">وَاحْرِصْ عَلَى الشِدَّةِ فِي كَشِرْكِكُمْ</span> <span class="h">وَتَتَوَفَّى وَأَتَتْ فِتْنَتُهُمْ</span></div></div>
+<div class="ex"><p>يوصي الناظم بالمحافظة على <b>الشدة</b>، وهي انحباس الصوت عند الحرف، في الحروف المتكررة أو المتجاورة. وهي:</p>
+<ul>
+<li>الكافان في «شِرْكِكُمْ» في فاطر.</li>
+<li>التاءات في «تَتَوَفَّى».</li>
+<li>التاء في «فِتْنَتُهُمْ» في الأنعام.</li>
+</ul>
+<p>فلا تُرخى الشدة بسبب التكرار فيصير الحرف رخوًا.</p></div></div><div class="card"><div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">6</span><div class="txt"><span class="h">وَالْجَهْرِ وَالشِّدَّةِ فِي كَالْفَجْرِ</span> <span class="h">وَالْحَجِّ يُجْبَى نَبْغِ حُبَّ الصَّبْرِ</span></div></div>
+<div class="ex"><p>ويوصي كذلك بالمحافظة على <b>الجهر والشدة</b> في الجيم والباء، وهما حرفان مجهوران شديدان. أمثلة الجيم: «الْفَجْرِ» و«الْحَجِّ» و«يُجْبَى». وأمثلة الباء: «نَبْغِ» و«حُبَّ» و«الصَّبْرِ».</p>
+<p>وهما من حروف القلقلة، فيتأكد بيانهما إذا سكنا أو شُددا.</p></div></div><div class="card"><div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">7</span><div class="txt"><span class="h">كَذَا سُكُونُ لا تُزِغْ سَبِّحْهُ مَعْ</span> <span class="h">فَاصْفَحْ وَمِيمٍ قَبْلَ فَا وَاوٍ تَقَعْ</span></div></div>
+<div class="ex"><p>يحذّر من تحريك الساكن أو إسقاطه، فيُحافظ على <b>السكون</b> في «لَا تُزِغْ» و«سَبِّحْهُ» و«فَاصْفَحْ».</p>
+<p>ويحذّر في <b>الميم الساكنة</b> إذا وقع بعدها فاء أو واو، فيجب إظهارها لئلا تخفى أو تُدغم، نحو «هُمْ فِيهَا» و«أَمْ وَلَا». وقد سبق ذلك في باب الميم الساكنة.</p></div></div><div class="card"><div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">8</span><div class="txt"><span class="h">وَالْكَزَّ دَعْ فِي الْمِيمِ حَيْثُ تَخْتَفِي</span> <span class="h">بَلْ خِفَّ الاِنْطِبَاقَ مَعْ تَلَطُّفِ</span></div></div>
+<div class="ex"><p>يبيّن هذا البيت كيفية أداء الإخفاء الشفوي. و<b>الكزّ</b> هو الضغط الشديد والتضييق. فيُترك الضغط على الشفتين عند إخفاء الميم، فلا تُطبقان إطباقًا محكمًا.</p>
+<p>بل يُخفَّف انطباقهما <b>برفق ولطف</b>، مع إظهار الغنة. ويُحذر من أمرين: إطباق الشفتين بقوة فتظهر الميم، وفتحهما فتفوت صفة الإخفاء.</p></div></div><div class="card"><div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">9</span><div class="txt"><span class="h">وَمَيِّزِ الضَّادَ مِنْ الظَّا إِذْ تَجِي</span> <span class="h">بِالاِسْتِطَالَةِ لَهَا وَالمَخْرَجِ</span></div></div>
+<div class="ex"><p>يوجب التمييز بين <b>الضاد</b> و<b>الظاء</b>، فهما يتفقان في الاستعلاء والإطباق والجهر ويختلفان في أمرين:</p>
+<ol>
+<li><b>المخرج:</b> الضاد من حافة اللسان مع ما يحاذيها من الأضراس، والظاء من طرف اللسان مع أطراف الثنايا العليا.</li>
+<li><b>الصفة:</b> للضاد صفة <b>الاستطالة</b>، وهي امتداد الصوت من أول حافة اللسان إلى آخرها، وليست للظاء.</li>
+</ol></div></div><div class="card"><div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">10</span><div class="txt"><span class="h">وَفِي التَّلَاقِي كَيَعَضُّ الظَّالِمُ</span> <span class="h">أَنْقَضَ ظَهْرَكَ الْبَيَانُ لَازِمُ</span></div></div>
+<div class="ex"><p>إذا التقى الضاد والظاء في كلمتين فالبيان لازم، لئلا يُدغم أحدهما في الآخر أو يتبدل. نحو «يَعَضُّ الظَّالِمُ» في الفرقان، و«أَنقَضَ ظَهْرَكَ» في الشرح.</p></div></div><div class="card"><div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">11</span><div class="txt"><span class="h">وَعَظْتَ خُضْتُمْ وَالَّذِي مَا ضُمَّا</span> <span class="h">إِلَّا بِضَمِّ الشَّفَتَيْنِ ضَمَّا</span></div></div>
+<div class="ex"><p>يمثل الشطر الأول لبيان الظاء والضاد الساكنتين قبل التاء: «أَوَعَظْتَ» في الشعراء، و«خُضْتُمْ» في التوبة. فيُبيّنان ولا يختلطان بالتاء.</p>
+<p>ويشير الشطر الثاني إلى أن الحرف المضموم لا يتحقق إلا بضم الشفتين ضمًّا تامًّا، فلا يُختلس.</p></div></div><div class="card"><div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">12</span><div class="txt"><span class="h">وَاحْذَرْ مِنْ النَّفْخِ بِصَوْتٍ يَمْتَزِجْ</span> <span class="h">وَإِنَّهُ فِي الْوَقْفِ أَوْلَى بِالْحَرَجْ</span></div></div>
+<div class="ex"><p><b>النفخ</b> هو خروج نفَس مع الحرف الشديد، حتى كأن بعده هاء، وهو عيب في الأداء. فيُحذر منه، ويتأكد التحذير <b>عند الوقف</b>، لأن الحرف يسكن فيظهر النفَس بعده. ومعنى «يَمْتَزِجْ»: يختلط.</p></div></div><div class="card"><div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">13</span><div class="txt"><span class="h">وَاكْسِرْ إلى الضَّاحِكِ فِي الْمَكْسُورِ</span> <span class="h">مِنْ نَحْوِ يَمْلِكُونَ مِنْ قِطْمِيرِ</span></div></div>
+<div class="ex"><p>هذا البيت في <b>تحسين الكسرة</b>. فالمقصود إعطاء الحرف المكسور كسرته كاملة، نحو «يَمْلِكُونَ» و«قِطْمِيرٍ»، وعدم اختلاسها. والضاحك: هو ضواحك الفكين من الأسنان. وهي تظهر وتتبين عند النطق بالكسرة. ففيها انبساط للفم عند النطق بالكسرة.</p></div></div><div class="card"><div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">14</span><div class="txt"><span class="h">وَبَيِّنِ التَّشْدِيدَ مِنْ كَالْحَقِّ قُلْ</span> <span class="h">وَهُوَ فِي كَيَتَوَلَّ اللهَ جَلْ</span></div></div>
+<div class="ex"><p>يوجب بيان <b>التشديد</b> في الحرف المشدد، نحو القاف المشددة في «الْحَقِّ قُلْ»، لتجاور القافين. ويتأكد في «يَتَوَلَّ اللَّهَ» في المائدة، لتجاور اللامين، فيُحافظ على تشديد اللام الأولى. ومعنى «جَلْ»: عَظُم.</p></div></div><div class="card"><div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">15</span><div class="txt"><span class="h">وَأُمَمٍ مِمَّنْ مَعَكْ أَجَلُّ</span> <span class="h">مِنْ أَجْلِ مِيمَاتٍ ثَمَانٍ تَتْلُو</span></div></div>
+<div class="ex"><p>«وَعَلَى أُمَمٍ مِّمَّن مَّعَكَ» في سورة هود، فيها <b>ثماني ميمات</b> متتابعة. وتكون هذه الكلمة من أعظم مواضع التحذير، لأن كل ميم فيها تحتاج إلى بيان وغنة. ومعنى «أَجَلُّ»: أعظم.</p></div></div><div class="card"><div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">16</span><div class="txt"><span class="h">وَجَاءَ إِلْ يَاسِينَ بِانْفِصَالِ</span> <span class="h">وَصَحَّ وَقْفُ مَنْ تَلَاهَا آلِ</span></div></div>
+<div class="ex"><p>يُبنى الوقف على الكلمتين المتجاورتين على رسمهما في المصحف العثماني.</p><ul><li><b>ما رُسم مقطوعًا:</b> يجوز الوقف على الكلمة الأولى وعلى الثانية، عند الاضطرار أو الاختبار أو التعليم، نحو «أَنْ لَا».</li><li><b>ما رُسم موصولًا:</b> لا يجوز الوقف على الكلمة الأولى، وإنما يُوقف على الثانية، نحو «عَمَّا» ﴿عَنْ + مَا﴾.</li></ul><p>في قوله تعالى «سَلَامٌ عَلَى إِلْ يَاسِينَ» في الصافات. كُتبت «إِلْ» في مصحف حفص <b>منفصلة</b> عن «يَاسِينَ» في الرسم، ومع ذلك <b>لا يجوز الوقف عليها</b>.</p>
+<p>فيُحذر من الوقف على «إِلْ»، لأن «إِلْ يَاسِينَ» عند حفص اسم واحد، وهو لغة في «إِلْيَاسَ»، فلا يُقطع بعضه عن بعض. والوقف إنما يكون على «<b>يَاسِينَ</b>».</p>
+<p>وقوله «وَصَحَّ وَقْفُ مَنْ تَلَاهَا آلِ» أي: من قرأها «آلِ يَاسِينَ» على قراءة نافع وابن عامر ويعقوب، فـ«آلِ» عندهم كلمة مستقلة، فصح وقفه عليها. وهذا خاص بقراءتهم، ولا يجوز لحفص.</p></div></div></div></section>
+<section class="door-section"><h2 aria-expanded="false" aria-label="فتح الباب: أَقْسَامُ الْمدِّ" class="door-title" role="button" tabindex="0">أَقْسَامُ الْمدِّ</h2><div class="door-content"><div class="card">
+<div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">1</span><div class="txt"><span class="h">وَالمَدُّ أَصْلِيٌّ وَفَرْعِيٌّ جَلَا</span> <span class="h">وَسَمِّ بِالْمَدِّ الطَّبِيعِي الْأَوَّلَا</span></div></div>
+<div class="ex"><p>المد لغةً الزيادة، واصطلاحًا إطالة الصوت بحرف المد. وهو قسمان: <b>أصلي</b> و<b>فرعي</b>. والأصلي يسمى أيضًا <b>المد الطبيعي</b>، لأن الطبع السليم لا يقتضي أقل منه.</p></div>
+</div><div class="card">
+<div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">2</span><div class="txt"><span class="h">وَهُوَ مَالَمْ يَكُ بَعْدَ حَرْفِ مَدّْ</span> <span class="h">حَرْفٌ مُسَكَّنٌ أَوِ الْهَمْزُ وَرَدْ</span></div></div>
+<div class="ex"><p><b>المد الطبيعي</b> هو الذي لا يقع بعد حرف المد فيه <b>سكون</b> ولا <b>همز</b>، ولا تقوم ذات الحرف بدونه. فإذا جاء بعد حرف المد همز أو حرف ساكن خرج من الطبيعي إلى الفرعي. ومقداره حركتان كما سيأتي في باب أحكام المد.</p></div>
+</div><div class="card">
+<div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">3</span><div class="txt"><span class="h">وَذَاكَ كِلْمِيٌّ وَحَرْفِيٌّ يُرَى</span> <span class="h">كَأَتُجَادِلُونَنِي طَهَ وَرَا</span></div></div>
+<div class="ex"><p>يأتي الطبيعي على نوعين: <b>كلمي</b> في الكلمات، مثل «أَتُجَادِلُونَنِي»، و<b>حرفي</b> في أسماء الحروف المقطعة في أوائل السور، مثل «طه» و«الر»، فالطاء والهاء والراء تنطق بمد طبيعي ﴿طَا هَا رَا﴾.</p></div>
+</div><div class="card">
+<div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">4</span><div class="txt"><span class="h">أمَّا الْأَخِيرُ فَهْوَ مَوْقُوفٌ عَلَى</span> <span class="h">هَمْزٍ كَذَا عَلَى السُّكُونِ مُسْجَلَا</span></div></div>
+<div class="ex"><p>أما القسم الأخير وهو <b>المد الفرعي</b>، فهو الذي <b>يتوقف</b> وجوده على سبب، والسبب إما <b>الهمز</b> وإما <b>السكون</b>. ومعنى «مُسْجَلَا»: مطلقًا مقررًا. وتفصيل أنواعه ﴿المتصل والمنفصل واللازم والعارض وغيرها﴾ يأتي في باب أحكام المد.</p></div>
+</div><div class="card">
+<div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">5</span><div class="txt"><span class="h">حُرُوفُهُ فِي لَفْظِ <span class="ml">(وَايٍ)</span> جُمِعَتْ</span> <span class="h">وَمَعْ شُرُوطِهَا بِـ <span class="ml">(نُوحِيهَا)</span> أَتَتْ</span></div></div>
+<div class="ex"><p><b>حروف المد</b> ثلاثة يجمعها لفظ «وَايٍ»: الواو والألف والياء. وشروطها يجمعها «نُوحِيهَا»:</p><ul><li><b>الواو:</b> ساكنة مضموم ما قبلها ﴿نُو﴾.</li><li><b>الياء:</b> ساكنة مكسور ما قبلها ﴿حِي﴾.</li><li><b>الألف:</b> ساكنة مفتوح ما قبلها ﴿هَا﴾، ولا تكون إلا كذلك.</li></ul></div>
+</div></div></section>
+<section class="door-section"><h2 aria-expanded="false" aria-label="فتح الباب: أَحْكَامُ الْمَدِّ" class="door-title" role="button" tabindex="0">أَحْكَامُ الْمَدِّ</h2><div class="door-content"><div class="card">
+<div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">1</span><div class="txt"><span class="h">أَحْكَامُهُ ثَلَاثَةٌ تَدُومُ</span> <span class="h">وُجُوبٌ الْجَوَازُ وَاللُّزُومُ</span></div></div>
+<div class="ex"><p>للمد الفرعي ثلاثة أحكام ثابتة: <b>الوجوب</b> و<b>الجواز</b> و<b>اللزوم</b>. ومعنى «تَدُومُ»: تثبت وتستمر.</p></div>
+</div><div class="card">
+<div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">2</span><div class="txt"><span class="h">فَوَاجِبٌ مَعْ سَبْقِهِ إنْ يَتَّصِلْ</span> <span class="h">بِهَمْزَةٍ وَجَائِزٌ إنْ يَنفَصِلْ</span></div></div>
+<div class="ex"><ul><li><b>الواجب ﴿المتصل﴾:</b> أن يسبق حرف المد همزة في كلمة واحدة، نحو «جَاءَ» و«السَّمَاءِ». وسمي واجبًا لاتفاق القراء على مده.</li><li><b>الجائز ﴿المنفصل﴾:</b> أن يكون حرف المد آخر كلمة والهمزة أول الكلمة التي بعدها، نحو «بِمَا أُنزِلَ» و«فِي أَنفُسِكُمْ». وسمي جائزًا لاختلاف القراء في مده وقصره.</li></ul></div>
+</div><div class="card">
+<div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">3</span><div class="txt"><span class="h">وَمَدَّ أَرْبَعَاً وَخَمْسَاً فِيهِمَا</span> <span class="h">حَفْصٌ وَوَقْفَاً زَادَ سِتَّاً كَالسَّمَا</span></div></div>
+<div class="ex"><p>يُمدّ <b>المتصل</b> و<b>المنفصل</b> لحفص <b>أربع حركات</b> ﴿التوسط﴾ أو <b>خمس حركات</b>.</p><p>وقوله «وَوَقْفَاً زَادَ سِتَّاً كَالسَّمَا» أي: إذا وقفتَ على المد المتصل الذي همزته <b>متطرفة</b> ﴿في آخر الكلمة﴾، نحو «السَّمَاءِ» و«الْمَاءِ» و«جَاءَ»، جاز لك <b>ست حركات</b> زيادةً على الأربع والخمس، فتصير أوجهه عند الوقف: 4 أو 5 أو 6.</p></div>
+</div><div class="card">
+<div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">4</span><div class="txt"><span class="h">أَوْ إِنْ عَلَيْهِ هَمْزةٌ تَقَدَّمَتْ</span> <span class="h">أَوْ عَارِضُ السُّكُونِ لِلْوَقْفِ ثَبَتْ</span></div></div>
+<div class="ex"><p>ويدخل في الجائز أيضًا نوعان:</p><ul><li><b>مد البدل:</b> أن تتقدم الهمزة على حرف المد، نحو «آمَنُوا» و«أُوتُوا» و«إِيمَانًا». وهو في رواية حفص بمقدار حركتين.</li><li><b>المد العارض للسكون:</b> أن يقع بعد حرف المد حرف يُسكَّن لأجل الوقف، نحو «الْعَالَمِينَ» و«نَسْتَعِينُ». فهو جائز لعروض سببه.</li></ul></div>
+</div><div class="card">
+<div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">5</span><div class="txt"><span class="h">وَاللِّينُ مُلْحَقٌ بِهِ إذا وُقِفْ</span> <span class="h">وَلَكِنِ الطُّولُ بِقِلَّةٍ وُصِفْ</span></div></div>
+<div class="ex"><p><b>مد اللين:</b> هو الواو والياء الساكنتان المفتوح ما قبلهما، نحو «خَوْفٍ» و«الْبَيْتِ»، ويُمدّان عند الوقف إذا سُكِّن ما بعدهما. فيلحق بالعارض للسكون في جوازه.</p><p>وقوله «ولكن الطول بقلة وصف» معناه أن الطول في اللين مقيّد بحال العارض: فإذا اجتمع اللين والعارض لم يجز أن يزيد اللين على العارض، ويأتي تفصيله بعد قليل.</p></div>
+</div><div class="card">
+<div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">6</span><div class="txt"><span class="h">إِنْ جَاءَ مَدٌّ قَبْلُ أَوْ لِينٌ جَرَى</span> <span class="h">فَأَشْبِعَاً أَوْ وَسِّطَاً أَوِ اقْصُرَا</span></div></div>
+<div class="ex"><p>إذا جاء حرف المد، أو حرف اللين، قبل سكون عارض للوقف، فالقارئ مخيّر بين ثلاثة أوجه:</p><ul><li><b>الإشباع:</b> ست حركات.</li><li><b>التوسط:</b> أربع حركات.</li><li><b>القصر:</b> حركتان في العارض، وفي اللين سقوط المد فيه كحالة الوصل.</li></ul><p>وهذا في المد العارض للسكون، نحو «الْعَالَمِينَ»، ومد اللين، نحو «خَوْفٍ».</p><p><b>إذا اجتمع اللين والعارض</b> ﴿كالوقف على «الظَّالِمِينَ» و«الْبَيْتِ»﴾: فلا يزيد اللين على العارض، فتصير الأوجه ستة:</p><ul><li>العارض بالطول: يجوز في اللين الطول والتوسط والقصر.</li><li>العارض بالتوسط: يجوز في اللين التوسط والقصر.</li><li>العارض بالقصر: يتعين في اللين القصر.</li></ul></div>
+</div><div class="card">
+<div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">7</span><div class="txt"><span class="h">وَأَنْ يُسَوَّي بَيْنَ كُلِّ حَرْفِ</span> <span class="h">وَمِثْلِهِ فِي لَفْظِهِ بِاللُّطْفِ</span></div></div>
+<div class="ex"><p>المقصود <b>التسوية بين الحرف ونظيره</b> في الأداء، فيدخل فيها كل ما جاز فيه وجهان فأكثر من المدود، وهي <b>المنفصلات والمتصلات والعوارض</b>. فمن اختار مرتبة في مد منها التزمها في نظائره، فلا يمد موضعًا بمقدار ويقدّر مثله في موضع آخر بمقدار مختلف.</p><p>ومعنى «<b>باللطف</b>»: أن يكون ذلك <b>بلا تكلف ولا تعسف، ولا تفريط ولا إفراط</b>.</p><p>المرجع: رياضة اللسان شرح تلخيص لآلئ البيان للسمنودي.</p></div>
+</div><div class="card">
+<div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">8</span><div class="txt"><span class="h">وَلَفْظُ قَصْرُ اللِّينِ مِثْلُ كَيْ وَلَوْ</span> <span class="h">خَوْفٌ عَلَيْهِمْ هَكَذَا الْقَوْمُ تَلَوْا</span></div></div>
+<div class="ex"><p>المراد بـ<b>قصر اللين</b> هنا: <b>سقوط المد فيه</b>، فيُنطق بحرف اللين عند الوقف كما يُنطق به في الوصل، من غير زيادة عليه.</p><p>ومثاله النطق بـ«كَيْ» و«لَوْ»، وبـ«خَوْفٌ عَلَيْهِمْ» كما تُنطق في الوصل. وقوله «هَكَذَا الْقَوْمُ تَلَوْا» أي: هكذا قرأ القراء به.</p><p>وللين أوجه العارض الثلاثة ﴿القصر والتوسط والطول﴾، بشرط ألا يزيد اللين على العارض عند اجتماعهما.</p></div>
+</div><div class="card">
+<div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">9</span><div class="txt"><span class="h">وَلَازِمٌ إِنْ سَاكِنٌ جَا بَعْدَ مَدْ</span> <span class="h">وَصْلَاً وَوَقْفًا وَبِسِتٍّ يُعْتَمَدْ</span></div></div>
+<div class="ex"><p><b>المد اللازم:</b> أن يقع بعد حرف المد حرف ساكن <b>سكونًا أصليًا</b> في الوصل والوقف معًا، نحو «الضَّالِّينَ» و«الْحَاقَّةُ». ويُعتمد فيه المد بمقدار <b>ست حركات</b>.</p></div>
+</div><div class="card">
+<div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">10</span><div class="txt"><span class="h">لَكِنَّ مِيمَ اللهُ وَصْلَاً أَشْبِعَا</span> <span class="h">وَاقْصُرْ وَعَيْنَ امْدُدْ وَوَسِّطْهُ مَعَا</span></div></div>
+<div class="ex"><p>استثناءان من حكم اللازم في الفواتح:</p><ul><li><b>ميم «الم» عند وصلها بلفظ الجلالة</b> في أول آل عمران ﴿«الم اللَّهُ»﴾: فيها وجهان: الإشباع ﴿ست حركات﴾ والقصر ﴿حركتان﴾، لأن حركة الميم هنا عارضة، فيجوز اعتبار أصل السكون أو اعتبار العارض.</li><li><b>عين</b> في فاتحتي مريم والشورى: تُمدّ بالطول وبالتوسط.</li></ul></div>
+</div><div class="card">
+<div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">11</span><div class="txt"><span class="h">وَإِنْ بِحَرْفٍ جَاءَ فَالْحَرْفِيُّ</span> <span class="h">وَإِنْ بِكِلْمَةٍ فَذَا الْكِلْمِيُّ</span></div></div>
+<div class="ex"><p>المد اللازم نوعان بحسب موضع السكون الأصلي: <b>حرفي</b> إذا جاء السكون في حرف من حروف فواتح السور، و<b>كلمي</b> إذا جاء في كلمة.</p></div>
+</div><div class="card">
+<div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">12</span><div class="txt"><span class="h">مُثَقَّلَانِ حَيْثُ كُلٌّ شُدِّدَا</span> <span class="h">مُخَفَّفَانِ حَيْثُ لَمْ يُشَدَّدَا</span></div></div>
+<div class="ex"><p>وكلٌّ من الحرفي والكلمي نوعان: <b>مثقل</b> إذا كان الحرف الساكن مدغمًا مشددًا، و<b>مخفف</b> إذا لم يكن مشددًا. فتصير أقسامه أربعة:</p><ul><li>كلمي مثقل: «الضَّالِّينَ» و«الْحَاقَّةُ».</li><li>كلمي مخفف: «آلْآنَ» في موضعي يونس.</li><li>حرفي مثقل: «الم» ﴿لام ميم، والميم مدغمة في الميم﴾.</li><li>حرفي مخفف: «ن» و«ق» و«ص».</li></ul></div>
+</div><div class="card">
+<div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">13</span><div class="txt"><span class="h">فِي <span class="ml">(سَنَقُصُّ عِلْمَكَ)</span> الْحَرْفِيُّ قَرّْ</span> <span class="h">وَمَعَ <span class="ml">(حَيٍّ طَاهِرٍ)</span> بَدْءَ السُّوَرْ</span></div></div>
+<div class="ex"><p>المد اللازم الحرفي يثبت في الحروف الثمانية التي يجمعها «<b>سَنَقُصُّ عِلْمَكَ</b>»، وهي: السين والنون والقاف والصاد والعين واللام والميم والكاف، لأن اسم كل منها ثلاثي ووسطه حرف مد يليه ساكن. ويأتي معها في فواتح السور حروف «<b>حَيٍّ طَاهِرٍ</b>»، وهي الحاء والياء والطاء والهاء والراء.</p></div>
+</div><div class="card">
+<div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">14</span><div class="txt"><span class="h">وَتِلْكَ إِمَّا لَازِمٌ أَوْ يَخْتَلِفْ</span> <span class="h">عَيْنٌ أَوِ اثْنَا <span class="ml">(حَيُّ طُهْرٍ)</span> أَوْ <span class="ml">(أَلِفْ)</span></span></div></div>
+<div class="ex"><p>فحروف الفواتح الأربعة عشر على ثلاثة أنواع:</p><ul><li><b>لازم:</b> سبعة حروف من «سنقص علمك» ﴿السين والنون والقاف والصاد واللام والميم والكاف﴾، فمدها ست حركات.</li><li><b>مختلف فيه:</b> العين، فيها الطول والتوسط.</li><li><b>ثنائية:</b> «حي طهر» ﴿الحاء والياء والطاء والهاء والراء﴾، اسم كل منها على حرفين، فمدها <b>طبيعي</b> حركتان.</li><li><b>الألف:</b> ينطق باسمها «أَلِفْ» دون حرف مد، فلا مد فيها.</li></ul></div>
+</div></div></section>
+<section class="door-section"><h2 aria-expanded="false" aria-label="فتح الباب: مَرَاتِبُ المُدُودِ" class="door-title" role="button" tabindex="0">مَرَاتِبُ المُدُودِ</h2><div class="door-content"><div class="card">
+<div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">1</span><div class="txt"><span class="h">أَقْوَى الْمُدودِ لَازمٌ فَمَا اتَّصَلْ</span> <span class="h">فَعَارِضٌ فَذُو انْفِصَالٍ فَبَدَلْ</span></div></div>
+<div class="ex"><p>يرتّب هذا البيت المدود الفرعية <b>من الأقوى إلى الأضعف</b>، وهي خمسة:</p><ol><li><b>اللازم:</b> ما جاء بعد حرف المد فيه سكون أصلي لازم، ومقداره 6 حركات، نحو «الضَّالِّينَ».</li><li><b>المتصل:</b> ما جاءت بعد حرف المد فيه همزة في كلمته، ومقداره 4 أو 5 حركات وصلًا، نحو «جَاءَ».</li><li><b>العارض للسكون:</b> ما جاء بعد حرف المد فيه سكون عارض للوقف، ومقداره 2 أو 4 أو 6، نحو «الْعَالَمِينَ».</li><li><b>المنفصل:</b> ما كان حرف المد فيه في آخر كلمة والهمزة في أول الكلمة التي بعدها، ومقداره 4 أو 5، نحو «بِمَا أُنزِلَ».</li><li><b>البدل:</b> ما تقدمت فيه الهمزة على حرف المد، ومقداره حركتان لحفص، نحو «آمَنُوا».</li></ol><p>ووجه الترتيب <b>قوة السبب</b>: فالسكون أقوى من الهمز، وما ثبت سببه في الوصل والوقف أقوى مما عرض، والبدل أضعفها لتقدم همزته على حرف المد.</p></div>
+</div><div class="card">
+<div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">2</span><div class="txt"><span class="h">وَسَبَبَا مَدٍّ إذا مَا وُجِدَا</span> <span class="h">فَإِنَّ أَقْوَى السَّبَبَيْنِ انْفَرَدَا</span></div></div>
+<div class="ex"><p>سبب المد إما <b>الهمز</b> وإما <b>السكون</b>. فإذا اجتمع في المد الواحد سببان، <b>عُمل بالأقوى</b> منهما وأُلغي الأضعف. ومعنى «انْفَرَدَا»: انفرد الأقوى بالحكم.</p><p>ومن أمثلة ذلك:</p><ul><li>اجتماع <b>البدل واللازم</b> في «آلْآنَ»: يُعمل باللازم، فيُمد ست حركات.</li><li>اجتماع <b>المتصل والعارض</b> في «السَّمَاءِ» وقفًا بالسكون المحض: يُعمل بقاعدة المد المتصل متطرف الهمز، فيُمد 4 أو 5 أو 6 حركات.</li></ul></div>
+</div></div></section>
+<section class="door-section"><h2 aria-expanded="false" aria-label="فتح الباب: هَاءُ الْكِنَايَةِ" class="door-title" role="button" tabindex="0">هَاءُ الْكِنَايَةِ</h2><div class="door-content"><div class="card">
+<div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">1</span><div class="txt"><span class="h">إِذَا أَتَتْ بَيْنَ مُحَرَّكَيْنِ صِلْ</span> <span class="h">وَاقْصُرْ لَهَا مِنْ قَبْلِ هَمْزٍ وَأَطِلْ</span></div></div>
+<div class="ex"><p><b>هاء الكناية</b> هي الهاء الزائدة الدالة على المفرد المذكر الغائب، وتتصل بالاسم أو الفعل أو الحرف، نحو «لَهُ» و«بِهِ» و«إِنَّهُ». وتكون مضمومة أو مكسورة.</p><p>فإذا وقعت <b>بين متحركين</b> وُصلت بحرف مد: <b>واو</b> إن كانت مضمومة، و<b>ياء</b> إن كانت مكسورة. والصلة نوعان:</p><ul><li><b>الصلة الصغرى:</b> إذا لم يأت بعدها همزة قطع، فتُقصر حركتين، نحو «لَهُ مَا فِي السَّمَاوَاتِ» و«يُضِلُّ بِهِ كَثِيرًا».</li><li><b>الصلة الكبرى:</b> إذا جاء بعدها همزة قطع، فتُمد 4 أو 5 حركات كالمنفصل، نحو «مَالَهُ أَخْلَدَهُ» و«بِهِ أَزْوَاجًا».</li></ul><p>وهذا معنى «وَأَطِلْ» قبل الهمز، والأصل القصر.</p></div>
+</div><div class="card">
+<div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">2</span><div class="txt"><span class="h">وَبَيْنَ سَاكِنَيْنِ أَوْ مُحَرَّكِ</span> <span class="h">فَسَاكِنٍ وَالْعَكْسِ لَا الْمَكِّي اتْرُكِ</span></div></div>
+<div class="ex"><p>لا تُوصل الهاء في ثلاث حالات:</p><ol><li>إذا وقعت <b>بين ساكنين</b>، نحو «أُنزِلَ فِيهِ الْقُرْآنُ».</li><li>إذا وقعت بين <b>متحرك قبلها وساكن بعدها</b>، نحو «لَهُ الْمُلْكُ».</li><li>إذا وقعت بين <b>ساكن قبلها ومتحرك بعدها</b>، نحو «فِيهِ هُدًى».</li></ol><p>وقوله «لَا الْمَكِّي اتْرُكِ» إشارة إلى أن ابن كثير المكي يصل في الحالة الثالثة، ولا يُتبع فيه لحفص.</p></div>
+</div><div class="card">
+<div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">3</span><div class="txt"><span class="h">فِيهِ مُهَانَاً مَعْهُ حَفْصٌ وَحُذِفْ</span> <span class="h">يَرْضَهْ لَكُمْ مِنْ أَجْلِ سَاكِنٍ حُذِفْ</span></div></div>
+<div class="ex"><p>يستثني البيت موضعين لحفص:</p><ul><li><b>«فِيهِ مُهَانًا»</b> في الفرقان: تُوصل الهاء بياء، وهو ما وافق فيه حفصٌ ابنَ كثير، مع أنها بعد ساكن، فتُقصر حركتين.</li><li><b>«يَرْضَهُ لَكُمْ»</b> في الزمر: تُنطق الهاء مضمومة <b>بلا صلة</b>، فلا تُمد بواو. وقوله «مِنْ أَجْلِ سَاكِنٍ حُذِفْ» تعليل لذلك: فأصل الكلمة «يَرْضَاهُ لَكُمْ»، فالهاء في الأصل واقعة بعد <b>ألف ساكنة</b>، والهاء بعد الساكن لا صلة لها. ثم حُذفت الألف للجزم لوقوعها في جواب الشرط «وَإِن تَشْكُرُوا يَرْضَهُ لَكُمْ»، فبقيت الهاء على حكمها الأصلي بلا صلة، اعتدادًا بالأصل لأن حذف الألف عارض.</li></ul></div>
+</div></div></section>
+<section class="door-section"><h2 aria-expanded="false" aria-label="فتح الباب: مَرَاتِبُ الْقِرَاءَةِ" class="door-title" role="button" tabindex="0">مَرَاتِبُ الْقِرَاءَةِ</h2><div class="door-content"><div class="card">
+<div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">1</span><div class="txt"><span class="h">وَالْحَدْرُ وَالتَّدْوِيرُ مَعْ تَحْقِيقِ</span> <span class="h">مَرَاتِبُ الْكُلِّ عَلَى التَّحْقِيقِ</span></div></div>
+<div class="ex"><p>لقراءة القرآن <b>ثلاث مراتب</b> بحسب السرعة والتؤدة، وهي:</p><ol><li><b>التحقيق:</b> لغةً المبالغة والإتقان. واصطلاحًا: إعطاء كل حرف حقه من إشباع المد، وتحقيق الهمز، وإتمام الحركات، وبيان الحروف، مع التؤدة والاطمئنان. ويكون في مقام التعليم والتدريب.</li><li><b>التدوير:</b> لغةً التوسط. واصطلاحًا: التوسط بين التحقيق والحدر، وهو الأكثر استعمالًا في التلاوة.</li><li><b>الحدر:</b> لغةً الإسراع. واصطلاحًا: إدراج القراءة وسرعتها وتخفيفها بالقصر والتسكين والإدغام وما صحت به الرواية. ويشترط فيه ألا يُخلّ بالحروف، ولا يُبتر مدٌّ ولا غنة.</li></ol><p>وقوله «عَلَى التَّحْقِيقِ» أي: على القول المحقق في عدّ المراتب.</p></div>
+</div><div class="card">
+<div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">2</span><div class="txt"><span class="h">وَقِيلَ وَسِّطْ إِنْ تُدَوِّرْ وَأَطِلْ</span> <span class="h">مُحَقِّقَاً وَاقْصُرْ بِحَدْرٍ مَا انفَصَلْ</span></div></div>
+<div class="ex"><p>ينقل الناظم قولًا في تقدير <b>المد المنفصل</b> بحسب مرتبة القراءة:</p><ul><li>عند <b>التدوير</b>: التوسط، أي 4 حركات.</li><li>عند <b>التحقيق</b>: الإطالة.</li><li>عند <b>الحدر</b>: القصر.</li></ul><p>وقوله «وَقِيلَ» حكاية لهذا القول عن بعضهم. وما استقر لحفص في المنفصل هو التوسط أو الإطالة ﴿4 أو 5﴾ كما سبق في باب أحكام المد، فيُراجع القصر في الحدر في شرح الناظم.</p></div>
+</div></div></section>
+<section class="door-section"><h2 aria-expanded="false" aria-label="فتح الباب: كَيْفِيَّةُ الْوَقْفِ عَلَى أَوَاخِرِ الْكَلاِمِ" class="door-title" role="button" tabindex="0">كَيْفِيَّةُ الْوَقْفِ عَلَى أَوَاخِرِ الْكَلاِمِ</h2><div class="door-content"><div class="card">
+<div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">1</span><div class="txt"><span class="h">وَالْأَصْلُ فِي الْوَقْفِ السُّكُونُ وَيُشَمْ</span> <span class="h">كَذَا يُرَامُ عِنْدَ ذِي رَفْعٍ وَضَمْ</span></div></div>
+<div class="ex"><p>للوقف على آخر الكلمة <b>ثلاث كيفيات</b>:</p><ol><li><b>السكون المحض:</b> وهو الأصل في الوقف، لأن العرب لا يقفون على متحرك، ولأن الغرض من الوقف الاستراحة، والسكون أخف من الحركة وأبلغ في الراحة.</li><li><b>الروم:</b> الإتيان ببعض الحركة، فيذهب معظم صوتها ويبقى منها صوت خفي لا يسمعه إلا القريب المصغي.</li><li><b>الإشمام:</b> ضم الشفتين بعد سكون الحرف كهيئتهما عند النطق بالضمة، من غير صوت، وهو إشارة إلى الضم، فلا يدركه إلا البصير.</li></ol><p>وفائدة الروم والإشمام: بيان الحركة الأصلية التي كانت للحرف في الوصل.</p><p>فيجري <b>السكون والروم والإشمام</b> معًا في المرفوع والمضموم، نحو «نَسْتَعِينُ» و«مِنْ قَبْلُ وَمِنْ بَعْدُ».</p></div>
+</div><div class="card">
+<div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">2</span><div class="txt"><span class="h">وَرُمْ لَدَى جَرٍّ وَكَسْرٍ وَكِلَا</span> <span class="h">هَذَيْنِ فِي نَصْبٍ وَفَتْحٍ أُهْمِلَا</span></div></div>
+<div class="ex"><p>في المجرور والمكسور يجري <b>السكون والروم فقط</b>، ولا يجوز الإشمام، لأنه إشارة إلى الضم. نحو «الرَّحْمَنِ الرَّحِيمِ» و«هَؤُلَاءِ».</p><p>وفي المنصوب والمفتوح يجري <b>السكون فقط</b>، فلا روم ولا إشمام. نحو «الْمُسْتَقِيمَ» و«لَا رَيْبَ». أما الروم فلخفة الفتحة وسرعتها، فلا تكاد تخرج إلا كاملة. وأما الإشمام فلأنه إشارة إلى الضم.</p><p>ومعنى «أُهْمِلَا»: تُرك الأمران في هذين الموضعين.</p></div>
+</div><div class="card">
+<div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">3</span><div class="txt"><span class="h">وَعِنْدَ هَا أُنْثَى وَمِيمِ الْجَمْعِ أَوْ</span> <span class="h">عَارِضِ تَحْرِيكٍ كِلَيْهِمَا نَفَوْا</span></div></div>
+<div class="ex"><p>ينفي البيت الروم والإشمام معًا في ثلاثة مواضع، فلا يوقف فيها إلا بالسكون:</p><ol><li><b>هاء التأنيث</b> الموقوف عليها بالهاء، نحو «الْجَنَّةَ». لأن مقصود الروم والإشمام بيان حركة الحرف في الوصل، ولا حركة للهاء في الوصل لأنها مبدلة من التاء.</li><li><b>ميم الجمع</b> الساكنة، نحو «عَلَيْهِمْ»، وما كان ساكنًا في الوصل، نحو «فَلَا تَنْهَرْ». لأن الروم والإشمام لا يكونان إلا في المتحرك.</li><li><b>الحركة العارضة</b>، نحو «وَأَنذِرِ النَّاسَ» و«وَلَا تَنسَوُا الْفَضْلَ». لأن الحركة عرضت للتخلص من التقاء الساكنين، وتزول في الوقف فلا يُعتد بها.</li></ol><p>ومن العارض أيضًا ميم الجمع المذكورة في البند الثاني إذا تحركت بالضم عند الوصل بساكن، نحو «وَأَنتُمُ الْأَعْلَوْنَ».</p></div>
+</div><div class="card">
+<div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">4</span><div class="txt"><span class="h">وَالْخُلْفُ فِي هَاءِ الضَّمِيرِ وَالْأتَمْ</span> <span class="h">دَعْ بَعْدَ يَا وَالْوَاوِ أَوْ كَسْرٍ وَضَمْ</span></div></div>
+<div class="ex"><p>اختُلف في إجراء الروم والإشمام في <b>هاء الضمير</b> وقفًا على ثلاثة أقوال:</p><ol><li>الجواز مطلقًا.</li><li>المنع مطلقًا.</li><li>التفصيل، وهو المختار.</li></ol><p>فعلى التفصيل <b>يُمنعان</b> إذا كان قبل الهاء ضمة أو واو ساكنة أو كسرة أو ياء ساكنة، نحو «يَرْفَعُهُ» و«عَقَلُوهُ» و«بِهِ» و«فِيهِ». <b>ويجوزان</b> إذا انفتح ما قبل الهاء أو وقعت بعد ألف أو ساكن صحيح، نحو «فَأَكْرَمَهُ» و«هَدَاهُ» و«عَنْهُ».</p><p>وقوله «وَالْأتَمْ دَعْ» أي: الأتم ترك الروم والإشمام بعد الياء والواو والكسر والضم. ووجه الجواز إجراء الهاء على القاعدة، ووجه المنع طلب الخفة.</p></div>
+</div></div></section>
+<section class="door-section"><h2 aria-expanded="false" aria-label="فتح الباب: الحَذْفُ وَالإِثْبَاتُ" class="door-title" role="button" tabindex="0">الحَذْفُ وَالإِثْبَاتُ</h2><div class="door-content"><div class="card">
+<div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">1</span><div class="txt"><span class="h">وَفِي سَلَاسِلاً وَمَا ءَاتَانِ قِفْ</span> <span class="h">بِالْحَذْفِ وَالْإِثْبَاتِ فِي الْيَا وَالْأَلِفْ</span></div></div>
+<div class="ex"><p>يتناول هذا الباب كلمات رُسمت فيها ألف أو ياء، ويختلف حكمها وصلًا ووقفًا. فبدأ بكلمتين يجوز الوقف عليهما <b>بالحذف والإثبات</b>:</p><ul><li><b>«آتَانِ»</b> في قوله تعالى «فَمَا آتَانِ اللَّهُ خَيْرٌ» في النمل: يجوز الوقف بحذف الياء وإثباتها، والإثبات هو المقدم في الأداء. وأما في الوصل فتثبت الياء مفتوحة.</li><li><b>«سَلَاسِلَا»</b> في قوله تعالى «سَلَاسِلَا وَأَغْلَالًا» في الإنسان: يجوز الوقف بحذف الألف وإثباتها، والحذف هو المقدم في الأداء. وأما في الوصل فتُحذف الألف.</li></ul></div>
+</div><div class="card">
+<div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">2</span><div class="txt"><span class="h">وَقِفْ بِهَا فِي لَيَكُونًا نَسْفَعَا</span> <span class="h">إِذَاً وَلَكِنَّا وَنَحْوِ رُكَّعَا</span></div></div>
+<div class="ex"><p>قوله «وَقِفْ بِهَا» أي: بالألف. فهذه مواضع <b>تثبت فيها الألف وقفًا وتُحذف وصلًا</b>:</p><ol><li><b>«لَيَكُونًا»</b> في يوسف: «وَلَيَكُونًا مِنَ الصَّاغِرِينَ».</li><li><b>«لَنَسْفَعًا»</b> في العلق: «لَنَسْفَعًا بِالنَّاصِيَةِ».</li><li><b>«إِذًا»</b>: «وَإِذًا لَا يَلْبَثُونَ».</li><li><b>«لَكِنَّا»</b> في الكهف: «لَكِنَّا هُوَ اللَّهُ رَبِّي».</li><li><b>المنون المنصوب</b>، وهو معنى «وَنَحْوِ رُكَّعَا»: فيُبدل التنوين ألفًا عند الوقف، نحو «اهْبِطُوا مِصْرًا» و«عَلِيمًا حَكِيمًا».</li></ol></div>
+</div><div class="card">
+<div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">3</span><div class="txt"><span class="h">أَنَا مَعَ الظُّنُونَ وَالرَّسُولَا</span> <span class="h">كَانَتْ قَوَارِيرَا مَعَ السَّبِيلَا</span></div></div>
+<div class="ex"><p>وهذه مواضع أخرى <b>تثبت فيها الألف وقفًا وتُحذف وصلًا</b>:</p><ul><li><b>«أَنَا»</b>: نحو «وَأَنَا رَبُّكُمْ» و«أَنَا نَذِيرٌ».</li><li><b>«الظُّنُونَا»</b> في «وَتَظُنُّونَ بِاللَّهِ الظُّنُونَا».</li><li><b>«الرَّسُولَا»</b> في «وَأَطَعْنَا الرَّسُولَا».</li><li><b>«السَّبِيلَا»</b> في «فَأَضَلُّونَا السَّبِيلَا»، وهذه الثلاثة في الأحزاب.</li><li><b>«قَوَارِيرَا»</b> في «كَانَتْ قَوَارِيرَا»، وهو الموضع الأول في الإنسان.</li></ul></div>
+</div><div class="card">
+<div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">4</span><div class="txt"><span class="h">وَحَذْفُهَا وَصْلَاً وَمُطْلَقَاً لَدَى</span> <span class="h">ثَمُودَ مَعْ أُخْرَى قَوَارِيرَ بَدَا</span></div></div>
+<div class="ex"><p>يجمع البيت حكمين:</p><ol><li><b>حذف الألف وصلًا</b> في المواضع السابقة كلها.</li><li><b>حذفها مطلقًا</b>، أي وصلًا ووقفًا، في كلمتين، وإن ثبتت الألف في الرسم:<ul><li><b>«ثَمُودَا»</b> في أربعة مواضع: هود «أَلَا إِنَّ ثَمُودَا كَفَرُوا»، والفرقان «وَثَمُودَا وَأَصْحَابَ الرَّسِّ»، والعنكبوت «وَثَمُودَا وَقَدْ تَبَيَّنَ»، والنجم «وَثَمُودَا فَمَا أَبْقَى».</li><li><b>«قَوَارِيرَا»</b> الثانية في الإنسان «قَوَارِيرَا مِنْ فِضَّةٍ».</li></ul></li></ol><p>فيُوقف عليهما بالإسكان من غير ألف. وقوله «بَدَا»: ظهر.</p></div>
+</div></div></section>
+<section class="door-section"><h2 aria-expanded="false" aria-label="فتح الباب: كَيْفِيَّةُ الاِبْتِدَاءِ بِهَمْزَةِ الْوَصْلِ" class="door-title" role="button" tabindex="0">كَيْفِيَّةُ الاِبْتِدَاءِ بِهَمْزَةِ الْوَصْلِ</h2><div class="door-content"><div class="card">
+<div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">1</span><div class="txt"><span class="h">وَهَمْزَةُ الْوَصْلِ مِنَ الْفِعْلِ تُضَمْ</span> <span class="h">بَدْءَاً إِذَا أُصِّلَ فِي الثَّالِثِ ضَمّْ</span></div></div>
+<div class="ex"><p><b>همزة الوصل</b> همزة زائدة يُتوصَّل بها إلى النطق بالساكن في أول الكلمة، فتثبت <b>ابتداءً</b> وتسقط <b>درجًا</b> ﴿أي في وصل الكلام﴾. وتقع في الأفعال والأسماء والحروف، وحركتها عند الابتداء تختلف بحسب الكلمة.</p><p>فتكون <b>مضمومة في الفعل</b> إذا كان الحرف <b>الثالث</b> من الفعل مضمومًا ضمًّا <b>أصليًا</b> لازمًا، وهو فعل الأمر من الثلاثي المضموم العين في المضارع، نحو «اُقْتُلُوا» و«اُنْظُرْ» و«اُدْعُ» و«اُنْصُرْنَا». فالحرف الثالث في «اُقْتُلُوا» هو التاء وضمتها أصلية، فضُمَّت الهمزة لتناسبها.</p></div>
+</div><div class="card">
+<div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">2</span><div class="txt"><span class="h">وَحِينَمَا يَعْرِضُ فَاكْسِرْ يَا أُخَيّْ</span> <span class="h">فِي ابْنُوا وَكُلِّ ائْتُوا أَنِ امْشُوا اقْضُوا إِلَيّْ</span></div></div>
+<div class="ex"><p>إذا كانت ضمة الحرف الثالث <b>عارضة</b>، أي ليست أصلية في بنية الفعل، فإن الهمزة <b>تُكسر</b> عند الابتداء، وذلك في أفعال الأمر المعتلة اللام بالياء إذا اتصلت بواو الجماعة، نحو:</p><ul><li>«ابْنُوا» في «ابْنُوا عَلَيْهِمْ بُنْيَانًا» ﴿الكهف﴾، وأصله: ابْنِيُوا.</li><li>«ائْتُوا» في «ائْتُوا صَفًّا» ﴿طه﴾ و«ائْتُونِي» ﴿يوسف﴾، وأصله: ائْتِيُوا.</li><li>«امْشُوا» في «أَنِ امْشُوا وَاصْبِرُوا» ﴿ص﴾، وأصله: امْشِيُوا.</li><li>«اقْضُوا» في «ثُمَّ اقْضُوا إِلَيَّ» ﴿يونس﴾، وأصله: اقْضِيُوا.</li></ul><p>فالأصل في هذه الأفعال كسر ما قبل الواو، ثم حُذفت الياء وضُمَّ ما قبل الواو لمناسبتها، فالضمة عارضة والأصل الكسر، فتُكسر الهمزة ولا تُضم. ويفترق عنها «اُدْعُوا» و«اُخْرُجُوا» لأن ضمة الثالث فيهما أصلية، فتُضم الهمزة.</p><p><b>الهمزة الساكنة بعد همزة الوصل:</b> إذا وقعت بعد همزة الوصل همزة ساكنة، فإنها تُبدل عند الابتداء حرف مد من جنس حركة همزة الوصل. فإن كانت مكسورة أُبدلت <b>ياءً</b>، وإن كانت مضمومة أُبدلت <b>واوًا</b>. وذلك لتعذر اجتماع همزتين متتاليتين، وتسمى هذه القاعدة <b>قاعدة البدل</b>.</p><ul><li>«ائْتُونِي» في «ائْتُونِي بِكِتَابٍ مِنْ قَبْلِ هَذَا» ﴿الأحقاف 4﴾: إذا ابتُدئ بها كُسرت همزة الوصل لأن ضمة الثالث عارضة، وأُبدلت الهمزة الساكنة ياءً، فيُنطق: «اِيتُونِي».</li><li>«اؤْتُمِنَ» في «فَلْيُؤَدِّ الَّذِي اؤْتُمِنَ أَمَانَتَهُ» ﴿البقرة 283﴾: إذا ابتُدئ بها اختبارًا ضُمت همزة الوصل لأن ضمة الثالث أصلية، وأُبدلت الهمزة الساكنة واوًا، فيُنطق: «اُوتُمِنَ».</li></ul><p>ومثل هذه الأفعال «وَامْضُوا» في «وَامْضُوا حَيْثُ تُؤْمَرُونَ» ﴿الحجر 65﴾، وأصلها: امْضِيُوا. ولم يذكرها الناظم، لأنها لم ترد في القرآن إلا مسبوقة بالواو، فلا يُبتدأ بها بهمزة الوصل.</p></div>
+</div><div class="card">
+<div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">3</span><div class="txt"><span class="h">وَكَسْرُهَا فِي الْفَتْحِ وَالْكَسْرِ كَذَا</span> <span class="h">وَفَتْحُهَا مَعْ لَامِ عُرْفٍ أُخِذَا</span></div></div>
+<div class="ex"><p><b>تُكسر</b> الهمزة أيضًا إذا كان الحرف الثالث من الفعل <b>مفتوحًا</b> أو <b>مكسورًا</b>، نحو «اِذْهَبْ» و«اِنْطَلَقَ» و«اِسْتَغْفَرَ» ﴿ثالثها مفتوح﴾، ونحو «اِضْرِبْ» و«اِهْدِنَا» و«اِهْبِطُوا» ﴿ثالثها مكسور﴾.</p><p>و<b>تُفتح</b> الهمزة مع <b>لام التعريف</b> ﴿ال﴾، نحو «الْحَمْدُ» و«الْكِتَابُ» و«الرَّحْمَنِ». وسُمّيت لام «عُرْف» لأنها تفيد التعريف.</p><p><b>فائدة:</b> إذا وقعت <b>راء ساكنة</b> بعد همزة الوصل، نحو «أَمِ ارْتَابُوا» ﴿النور﴾ و«لِمَنِ ارْتَضَى» ﴿الأنبياء﴾، فإن الراء <b>تُفخَّم</b> ولا تُرقَّق، لأن الكسر قبلها <b>عارض</b> وليس أصليًّا. ففي حال الوصل تسقط همزة الوصل، فتبقى الراء بعد كسرة الميم أو النون، وهي كسرة عارضة جاءت للتخلص من التقاء الساكنين. وفي حال الابتداء تكون الكسرة هي كسرة همزة الوصل نفسها، وهي عارضة أيضًا للتوصل إلى النطق بالساكن، نحو «ارْتَضَى» و«ارْكَعُوا». والراء الساكنة لا تُرقَّق إلا إذا سبقها كسر <b>أصلي</b> متصل بها، ولم يأتِ بعدها حرف استعلاء.</p></div>
+</div><div class="card">
+<div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">4</span><div class="txt"><span class="h">وَابْدَأْ بِهَمْزٍ أَوْ بِلَامٍ فِي ابْتِدَا</span> <span class="h">لاِسْمُ الْفُسُوقُ فِي اخْتِبَارٍ قُصِدَا</span></div></div>
+<div class="ex"><p>يُبتدأ بكلمة «الاسم» في قوله تعالى «بِئْسَ الِاسْمُ الْفُسُوقُ» ﴿الحجرات﴾ إذا وُقف على «بِئْسَ» واختُبر القارئ في الابتداء بما بعدها. وفيها وجهان:</p><ol><li>الابتداء <b>بهمزة الوصل</b> المفتوحة مع كسر اللام: «اَلِسْمُ».</li><li>الابتداء <b>باللام</b> المكسورة: «لِسْمُ».</li></ol><p>وعلة ذلك أن في الكلمة همزتي وصل ﴿همزة «ال» وهمزة «اسم»﴾، وفي الدرج تسقطان معًا فيُنطق بها «بِئْسَ لِسْمُ» بلام مكسورة، فيجوز الابتداء بما يُنطق في الدرج وهو اللام، أو بإثبات همزة «ال» مفتوحة. وأما وصلًا فلا يُلفظ بهمزة ولا بلام ساكنة، بل تُنطق اللام مكسورة.</p></div>
+</div><div class="card">
+<div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">5</span><div class="txt"><span class="h">وَكَسْرُهَا فِي مَصْدَرِ الْخُمَاسِي</span> <span class="h">يَأْتِي كَذَا فِي مَصْدَرِ السُّدَاسِي</span></div></div>
+<div class="ex"><p>تُكسر همزة الوصل في <b>مصدر الفعل الخماسي</b> و<b>السداسي</b>، وكذلك في ماضيهما وأمرهما ﴿لأن ثالثها مفتوح أو مكسور كما سبق﴾. ومما ورد في القرآن:</p><ul><li>من الخماسي: «افْتِرَاءً عَلَى اللَّهِ» ﴿الأنعام﴾ و«ابْتِغَاءَ مَرْضَاتِ اللَّهِ» ﴿البقرة﴾.</li><li>من السداسي: «اسْتِغْفَارُ إِبْرَاهِيمَ» ﴿التوبة﴾ و«اسْتِكْبَارًا فِي الْأَرْضِ» ﴿فاطر﴾.</li></ul></div>
+</div><div class="card">
+<div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">6</span><div class="txt"><span class="h">وَأَيْضًا اثْنَتَيْنِ وَابْنٍ وَابْنَتِ</span> <span class="h">وَاثْنَيْنِ وَاسْمٍ وَامْرِئٍ وَامْرَأَةِ</span></div></div>
+<div class="ex"><p>تُكسر الهمزة أيضًا في أسماء محفوظة ورد فيها همزة الوصل، وما ورد منها في القرآن:</p><ul><li>«ابْنُ مَرْيَمَ» و«ابْنَتَ عِمْرَانَ» ﴿التحريم﴾.</li><li>«اثْنَتَيْنِ» و«اثْنَيْنِ»، نحو «فَإِنْ كَانَتَا اثْنَتَيْنِ» ﴿النساء﴾ و«وَمِنَ الْإِبِلِ اثْنَيْنِ» ﴿الأنعام﴾، و«اثْنَانِ ذَوَا عَدْلٍ مِنْكُمْ» ﴿المائدة﴾، و«اثْنَتَا عَشْرَةَ عَيْنًا» ﴿البقرة﴾.</li><li>«اسْمُهُ أَحْمَدُ» ﴿الصف﴾.</li><li>«امْرُؤٌ هَلَكَ» ﴿النساء﴾ و«امْرَأَتُ عِمْرَانَ» ﴿آل عمران﴾.</li></ul></div>
+</div><div class="card">
+<div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">7</span><div class="txt"><span class="h">وَسُهِّلَتْ أَوْ أُبْدِلَتْ أَحْرَى لَدَى</span> <span class="h">أَلذَّكَرَيْنِ فِي كِلَيْهِ وَرَدَا</span></div></div>
+<div class="ex"><p>إذا دخلت <b>همزة الاستفهام</b> على كلمة أولها همزة وصل مفتوحة ﴿همزة «ال»﴾، لم يمكن إسقاط همزة الوصل لأن الاستفهام يلتبس بالخبر، ولم يحسن تحقيقها لاجتماع همزتين. فللقارئ فيها وجهان:</p><ul><li><b>الإبدال:</b> تُقلب همزة الوصل ألفًا مع المد <b>ست حركات</b> لالتقاء الساكنين ﴿الألف واللام المشددة﴾، نحو «آلذَّكَرَيْنِ».</li><li><b>التسهيل:</b> تُسهَّل الهمزة الثانية بين الهمزة والألف من غير إدخال ألف بينهما.</li></ul><p>والإبدال هو الأولى والأرجح في الأداء، والتسهيل جائز، وهما واردان في «آلذَّكَرَيْنِ» ﴿الأنعام﴾.</p></div>
+</div><div class="card">
+<div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">8</span><div class="txt"><span class="h">كَذَا كِلَا آلَاَنَ مَعْ أَللَّهُ مِنْ</span> <span class="h">بَعْدِ اصْطَفَى كَذَا الَّذِي قَبْلَ أَذِنْ</span></div></div>
+<div class="ex"><p>تجري الوجهان ﴿الإبدال والتسهيل﴾ في ستة مواضع في القرآن، وهي:</p><ol><li>«آلذَّكَرَيْنِ» موضعان في الأنعام: «قُلْ آلذَّكَرَيْنِ حَرَّمَ» ﴿الآية 143 و144﴾.</li><li>«آلْآنَ» موضعان في يونس: «آلْآنَ وَقَدْ كُنتُمْ بِهِ تَسْتَعْجِلُونَ» و«آلْآنَ وَقَدْ عَصَيْتَ».</li><li>«آللَّهُ» في النمل: «آللَّهُ خَيْرٌ أَمَّا يُشْرِكُونَ»، وهو الذي يأتي بعد «الَّذِينَ اصْطَفَى».</li><li>«آللَّهُ» في يونس: «آللَّهُ أَذِنَ لَكُمْ»، وهو الذي قبل «أَذِنَ».</li></ol><p>فالكلمات الثلاث الأولى ﴿«آلذَّكَرَيْنِ» و«آلْآنَ»﴾ وردت كل منها في موضعين، وفي الجميع يجري الوجهان.</p></div>
+</div></div></section>
+<section class="door-section"><h2 aria-expanded="false" aria-label="فتح الباب: تَحْرِيكُ السَّاكِنِ قَبْلَ هَمْزَةِ الْوَصْلِ" class="door-title" role="button" tabindex="0">تَحْرِيكُ السَّاكِنِ قَبْلَ هَمْزَةِ الْوَصْلِ</h2><div class="door-content"><div class="card">
+<div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">1</span><div class="txt"><span class="h">مَا قَبْلَهُ فَاكْسِرْهُ إِذْ يُسَكَّنُ</span> <span class="h">وَصْلَاً لِسَاكِنَيْنِ أَوْ يُنَوَّنُ</span></div></div>
+<div class="ex"><p>إذا وقع قبل <b>همزة الوصل</b> حرف ساكن، فإن الهمزة تسقط درجًا، فيلتقي ساكنان:</p><ul><li><b>الأول:</b> الحرف الساكن الذي قبل الهمزة.</li><li><b>الثاني:</b> الساكن الحقيقي الذي بعد الهمزة.</li></ul><p>والضمير «الهاء» في قول الناظم «ما قبله» يعود على الساكن الحقيقي الذي بعد همزة الوصل.</p><p>فيُحرَّك الساكن الأول <b>بالكسر</b> للتخلص من التقاء الساكنين، لأن الكسر هو الأصل في ذلك. ويكون الساكن قبلها أحد أمرين:</p><ul><li><b>حرفًا ساكنًا:</b> نحو «قُلِ ادْعُوا اللَّهَ» ﴿الإسراء﴾ و«أَنِ امْشُوا» ﴿ص﴾ و«لَمْ يَكُنِ الَّذِينَ» ﴿البينة﴾ و«وَقَالَتِ اخْرُجْ» ﴿يوسف﴾ و«أَوِ اخْرُجُوا» ﴿النساء﴾.</li><li><b>تنوينًا:</b> فيُكسر التنوين، أي تُنطق النون المقدرة مكسورة، نحو «أَحَدٌ اللَّهُ» ﴿الإخلاص﴾ فتُنطق «أَحَدُنِ اللَّهُ»، و«خَبِيثَةٍ اجْتُثَّتْ» ﴿إبراهيم﴾ فتُنطق «خَبِيثَةِنِ اجْتُثَّتْ».</li></ul><p>ويُستثنى من الكسر نون «مِنْ» إذا جاء بعدها لام التعريف، فتُفتح تخفيفًا لكثرة الاستعمال، نحو «مِنَ الْأَرْضِ» و«مِنَ الْكِتَابِ». أما إذا جاء بعدها همزة وصل غير لام التعريف فتُكسر كغيرها، نحو «مَنِ اسْتَطَاعَ» ﴿آل عمران﴾.</p></div>
+</div><div class="card">
+<div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">2</span><div class="txt"><span class="h">وَمِيمَ جَمْعٍ إِنْ يَكُنْ أَوْ مَدَّا</span> <span class="h">أَوْ هَاءَ مُضْمَرٍ فَلَا تَمُدَّا</span></div></div>
+<div class="ex"><p>لا يُكسر الساكن في ثلاثة مواضع، بل يبقى على حاله ولا يُمدّ:</p><ol><li><b>ميم الجمع:</b> تُضم من غير صلة بواو، فلا تُمدّ، نحو «عَلَيْهِمُ الْقِتَالُ» ﴿البقرة﴾ و«عَلَيْهِمُ الذِّلَّةُ» ﴿البقرة﴾.</li><li><b>حرف المد:</b> يسقط لفظًا لالتقاء الساكنين ولا يُكسر ولا يُمدّ، نحو «فِي الْأَرْضِ» فتُنطق «فِلْأَرْضِ»، و«قَالُوا اتَّخَذَ» فتُنطق «قَالُتَّخَذَ».</li><li><b>هاء الضمير:</b> تُنطق بلا صلة، فلا تُمدّ بواو ولا ياء، نحو «لَهُ الْمُلْكُ وَلَهُ الْحَمْدُ» ﴿التغابن﴾.</li></ol><p>والسبب أن المد والصلة في هذه المواضع يؤدي إلى التقاء ساكنين، فتُحذف الصلة ويُكتفى بالحركة القصيرة، وتُحذف حروف المد لفظًا.</p></div>
+</div><div class="card">
+<div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">3</span><div class="txt"><span class="h">وَإِنْ يُحَرَّكْ فَعَلَي إِبْقَاءِ</span> <span class="h">حَرَكَةِ الْإِعْرَابِ وَالْبِنَاءِ</span></div></div>
+<div class="ex"><p>إذا كان الحرف قبل همزة الوصل <b>متحركًا</b> فلا شيء يُغيَّر، بل تبقى حركته على ما هي عليه، سواء أكانت حركة <b>إعراب</b> أم حركة <b>بناء</b>، لأنه لا التقاء ساكنين فيه:</p><ul><li>حركة الإعراب، نحو «رَبُّ الْعَالَمِينَ» و«اللَّهُ الصَّمَدُ» و«ذَلِكَ الْكِتَابُ».</li><li>حركة البناء، نحو «قَالَ اللَّهُ» و«ثُمَّ الْجَحِيمَ».</li></ul><p>فتُوصل الكلمتان بحركة الحرف المتحرك كما هي، وتسقط همزة الوصل.</p></div>
+</div></div></section>
+
+<section class="door-section"><h2 aria-expanded="false" aria-label="فتح الباب: الوَقْفُ الاِخْتِيَارِيُّ وَالقَطْعُ وَالسَّكْتُ" class="door-title" role="button" tabindex="0">الوَقْفُ الاِخْتِيَارِيُّ وَالقَطْعُ وَالسَّكْتُ</h2><div class="door-content"><div class="card">
+<div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">1</span><div class="txt"><span class="h">الْوَقْفُ تَامٌ حَيْثُ لَا تَعَلُّقَا</span> <span class="h">فِيْهِ وَكَافٍ حَيْثُ مَعْنَىً عُلِّقَا</span></div></div>
+<div class="ex"><p><b>الوقف</b> هو قطع الصوت على الكلمة زمنًا يُتنفَّس فيه عادةً، بنية استئناف القراءة. و<b>الاختياري</b> منه ما يقصده القارئ ابتداءً لا لعارض، بخلاف الاضطراري ﴿لانقطاع نفس أو عطاس﴾ والاختباري ﴿للامتحان﴾ والانتظاري ﴿لجمع الروايات﴾. وأقسامه بحسب التعلق بما بعده:</p><ul><li><b>الوقف التام:</b> ما لا تعلق له بما بعده <b>لا لفظًا ولا معنى</b>، فيحسن الوقف عليه والابتداء بما بعده، نحو «وَأُولَئِكَ هُمُ الْمُفْلِحُونَ» ﴿البقرة﴾.</li><li><b>الوقف الكافي:</b> ما له تعلق بما بعده في <b>المعنى فقط</b> دون اللفظ، فيحسن الوقف عليه والابتداء بما بعده، نحو «وَمِمَّا رَزَقْنَاهُمْ يُنْفِقُونَ» ﴿البقرة﴾.</li></ul></div>
+</div><div class="card">
+<div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">2</span><div class="txt"><span class="h">قِفْ وَابْتَدِئْ وَحَيْثُ لَفْظًا فَحَسَنْ</span> <span class="h">فَقِفْ وَلَا تَبْدَأْ وَفِي الْآيِ يُسَنْ</span></div></div>
+<div class="ex"><p><b>الوقف الحسن:</b> ما له تعلق بما بعده في <b>اللفظ</b>، فيحسن الوقف عليه لأن الكلام مفيد في نفسه، لكن <b>لا يُبتدأ</b> بما بعده، نحو «الْحَمْدُ لِلَّهِ» ﴿الفاتحة﴾، فيُقف عليها ولا يُبتدأ بـ«رَبِّ الْعَالَمِينَ» لأنه صفة متعلقة بما قبله.</p><p>إلا إذا كان الموضع <b>رأس آية</b> فإن الوقف عليه <b>سنة</b> ويجوز الابتداء بما بعده وإن كان متعلقًا به لفظًا، نحو «الرَّحْمَنِ الرَّحِيمِ» ثم «مَالِكِ يَوْمِ الدِّينِ»، لأن رؤوس الآي مقاطع، وقد وقف النبي ﷺ عليها.</p><p>ويشمل ذلك ما اشتد تعلقه بما بعده، نحو «فَوَيْلٌ لِلْمُصَلِّينَ» ﴿الماعون﴾ ثم «الَّذِينَ هُمْ عَنْ صَلَاتِهِمْ سَاهُونَ»، فيجوز الوقف على رأس الآية والابتداء بما بعدها <b>اتباعًا للسنة</b>، بشرط أن يستمر القارئ في قراءته ولا يقطعها عند هذا الموضع.</p></div>
+</div><div class="card">
+<div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">3</span><div class="txt"><span class="h">ثُمَّ الْبَيَانُ مَا بِهِ تَبَيَّنَا</span> <span class="h">مَعْنَيً يُرَادُ مَا بِوَصْلٍ بُيِّنَا</span></div></div>
+<div class="ex"><p><b>وقف البيان</b> هو الوقف الذي يتبيّن به <b>معنى مقصود</b> لا يتبيّن بالوصل، فيُوقف عليه لدفع توهم معنى فاسد، نحو «وَلَا يَحْزُنْكَ قَوْلُهُمْ» ﴿يونس﴾، فيُوقف على «قَوْلُهُمْ» ثم يُبتدأ بـ«إِنَّ الْعِزَّةَ لِلَّهِ جَمِيعًا»، لئلا يُتوهم أن هذه الجملة من قولهم، وهي استئناف من الله تعالى. ومثله «فَلَا يَحْزُنْكَ قَوْلُهُمْ إِنَّا نَعْلَمُ مَا يُسِرُّونَ» ﴿يس﴾.</p></div>
+</div><div class="card">
+<div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">4</span><div class="txt"><span class="h">وَلَوْ بِمَا يَلِيهِ ذُو تَعَلُّقٍ</span> <span class="h">وَالْوَقْفُ بَيْنَ اثْنَيْنِ ذُو تَعَانُقٍ</span></div></div>
+<div class="ex"><p>يجوز وقف البيان <b>ولو كان له تعلق بما بعده</b>، لأن المقصود دفع الإيهام وبيان المعنى.</p><p>أما <b>الوقف بين اثنين ذوي تعانق</b> فهو <b>المعانقة</b> ﴿ويسمى المراقبة﴾: أن يكون في الكلام موضعان متقاربان يصح الوقف على كل منهما، لكن إذا وُقف على أحدهما <b>لم يُوقف على الآخر</b>، فيُوقف على أحدهما ويُوصل الآخر. ومثاله «ذَلِكَ الْكِتَابُ لَا رَيْبَ فِيهِ هُدًى لِلْمُتَّقِينَ» ﴿البقرة﴾: فيُوقف إما على «لَا رَيْبَ» وإما على «فِيهِ»، ولا يجمع بينهما. ويُرمز له في المصحف بثلاث نقاط (∴).</p></div>
+</div><div class="card">
+<div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">5</span><div class="txt"><span class="h">وَحَيْثُ لَمْ يَتِمَّ فَالْقَبِيحُ قِفْ</span> <span class="h">ضَرُورَةً وَابْدَأْ بِمَا قَبْلُ عُرِفْ</span></div></div>
+<div class="ex"><p><b>الوقف القبيح:</b> ما لا يتم عليه المعنى أو يوهم معنى فاسدًا، كالوقف على المضاف دون المضاف إليه، نحو «الْحَمْدُ لِلَّهِ رَبِّ» ﴿على «رَبِّ»﴾، أو على «لَا تَقْرَبُوا الصَّلَاةَ» ﴿النساء﴾ فإنه يوهم النهي عن الصلاة مطلقًا.</p><p>وحكمه إذا كان في <b>وسط الآية</b>: لا يجوز تعمده، ولا يُوقف عليه إلا لضرورة كانقطاع النفس أو العطاس ونحوهما، فإذا وُقف عليه لضرورة رجع القارئ فابتدأ بما قبله مما يتم به المعنى.</p><p>أما إذا كان الموضع <b>رأس آية</b>، نحو «فَوَيْلٌ لِلْمُصَلِّينَ» ﴿الماعون﴾ و«مَبْعُوثُونَ» ﴿المطففين﴾، فالجمهور على <b>جواز الوقف عليه</b> والابتداء بما بعده اتباعًا للسنة في الوقف على رؤوس الآي، بشرط أن يستمر القارئ في قراءته ولا يقطعها عند ذلك الموضع. ومنع بعض أهل الوقف ذلك وعدّوه قبيحًا مع كونه رأس آية، فلا يُوقف عليه عندهم إلا لضرورة.</p></div>
+</div><div class="card">
+<div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">6</span><div class="txt"><span class="h">وَلَمْ يَجِبْ وَقْفٌ وَلَمْ يَحْرُمْ عَدَا</span> <span class="h">مَا يَقْتَضِي مِنْ سَبَبٍ إِنْ قُصِدَا</span></div></div>
+<div class="ex"><p>ليس في القرآن وقف <b>واجب</b> يأثم القارئ بتركه، ولا وقف <b>حرام</b> يأثم بفعله، لأن الوقف يرجع إلى المعنى وإلى اختيار القارئ.</p><p>ويُستثنى من ذلك ما اقتضاه <b>سبب</b>، وهو أن يقصد القارئ بوقفه أو وصله <b>معنى فاسدًا</b> مخالفًا لما أراده الله تعالى، فيحرم حينئذ، كمن وقف على «لَا إِلَهَ» قاصدًا نفي الإله مطلقًا، أو وصل ما يوهم معنى باطلًا وهو يقصده. فالحرمة بسبب القصد لا بسبب الوقف نفسه.</p></div>
+</div><div class="card">
+<div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">7</span><div class="txt"><span class="h">وَالْقَطْعُ كَالْوَقْفِ وَفِي الْآيَاتِ جَا</span> <span class="h">وَاسْكُتْ عَلَى مَرْقَدِنَا وَعِوَجَا</span></div></div>
+<div class="ex"><p><b>القطع</b> هو قطع القراءة رأسًا والانتهاء منها، فالقارئ به كالمنتقل من حال إلى حال، كمن يقطع على حزب أو عشر أو ربع، أو ينصرف إلى التعوذ أو الدعاء. وهو <b>كالوقف</b> في <b>أقسامه وحكمه</b>، فيكون على:</p><ul><li><b>القطع التام:</b> على كلام تم معناه ولا تعلق له بما بعده لفظًا ولا معنى، نحو «وَأُولَئِكَ هُمُ الْمُفْلِحُونَ» ﴿البقرة﴾.</li><li><b>القطع الكافي:</b> على ما تعلق بما بعده في المعنى لا في اللفظ، نحو «وَجِئْنَا بِكَ عَلَى هَؤُلَاءِ شَهِيدًا» ﴿النساء﴾.</li><li><b>القطع الحسن:</b> على ما تعلق بما بعده في اللفظ، نحو «الْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ» ﴿الفاتحة﴾.</li></ul><p>أما <b>القطع القبيح</b> فلا يجوز، وهو القطع على ما لا يتم معناه أو يوهم معنى فاسدًا، نحو «فَوَيْلٌ لِلْمُصَلِّينَ» ﴿الماعون﴾. فالوقف على هذا الموضع مع استمرار القراءة جائز كما سبق، أما قطع القراءة والانتهاء عنده فلا يجوز.</p><p>ويشترط في القطع أن يكون على <b>رأس آية</b> فلا يكون في وسط الآية، بخلاف الوقف فإنه يكون على رأس الآية وعلى أبعاضها، وأن تُراعى فيه <b>الرسم</b> كما في الوقف.</p><p><b>السكت</b> هو قطع الصوت زمنًا يسيرًا <b>بلا تنفس</b>، نحو حركتين، وهو أقل من زمن الوقف، ثم تُستأنف القراءة. وهو لحفص في مواضع محددة مروية:</p><ol><li><b>«عِوَجًا»</b> في أول الكهف: «وَلَمْ يَجْعَلْ لَهُ عِوَجًا ۜ قَيِّمًا»، يُسكت على الألف المبدلة من التنوين.</li><li><b>«مَرْقَدِنَا»</b> في يس: «مَنْ بَعَثَنَا مِنْ مَرْقَدِنَا ۜ هَذَا مَا وَعَدَ الرَّحْمَنُ»، يُسكت على الألف من «مرقدنا».</li></ol></div>
+</div><div class="card">
+<div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">8</span><div class="txt"><span class="h">بِالْكَهْفِ مَعْ بَلْ رَانَ مَنْ رَاقٍ وَمَرّْ</span> <span class="h">خُلْفٌ بِمَالِيَهْ فَفِي الْخَمْسِ انْحَصَرْ</span></div></div>
+<div class="ex"><ol start="3"><li><b>«مَنْ رَاقٍ»</b> في القيامة: «وَقِيلَ مَنْ ۜ رَاقٍ»، يُسكت على نون «مَنْ» ولا تُدغم في الراء.</li><li><b>«بَلْ رَانَ»</b> في المطففين: «كَلَّا بَلْ ۜ رَانَ عَلَى قُلُوبِهِمْ»، يُسكت على لام «بَلْ» ولا تُدغم في الراء.</li><li><b>«مَالِيَهْ هَلَكَ»</b> في الحاقة: «مَا أَغْنَى عَنِّي مَالِيَهْ ۜ هَلَكَ عَنِّي سُلْطَانِيَهْ»، وفيها وجهان: <b>السكت</b> على الهاء، أو <b>الإدغام</b> بإدغام هاء السكت في هاء «هَلَكَ».</li></ol><p>فتنحصر مواضع السكت في خمسة: أربعة متفق عليها ﴿«عِوَجًا» و«مَرْقَدِنَا» و«مَنْ رَاقٍ» و«بَلْ رَانَ»﴾، وخامس مختلف فيه ﴿«مَالِيَهْ»﴾. ويُرمز للسكت في المصحف بحرف ﴿س﴾ صغير فوق موضعه.</p></div>
+</div></div></section>
+<section class="door-section"><h2 aria-expanded="false" aria-label="فتح الباب: مَا يُرَاعَى لِحَفْصٍ" class="door-title" role="button" tabindex="0">مَا يُرَاعَى لِحَفْصٍ</h2><div class="door-content"><div class="card">
+<div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">1</span><div class="txt"><span class="h">ءَأَعْجَمِيٌّ سُهِّلَتْ أُخْرَاهَا</span> <span class="h">لِحَفْصِنَا وَمُيِّلَتْ مَجْرَاهَا</span></div></div>
+<div class="ex"><p>يُراعى لحفص في قراءته من طريق الشاطبية أمور خاصة بكلمات معينة، فمنها:</p><ol><li><b>«ءَأَعْجَمِيٌّ»</b> في فصلت: «أَأَعْجَمِيٌّ وَعَرَبِيٌّ». فيها همزتان في كلمة واحدة: همزة الاستفهام وهمزة القطع بعدها، فتُقرأ بـ<b>تسهيل الهمزة الثانية</b> بين الهمزة والألف، وجهًا واحدًا لا يجوز غيره.</li><li><b>«مَجْرَاهَا»</b> في هود: «بِسْمِ اللَّهِ مَجْرَاهَا وَمُرْسَاهَا». فتُقرأ بـ<b>الإمالة</b>، أي تُقرَّب الفتحة نحو الكسرة والألف نحو الياء، وهي الكلمة الوحيدة التي أمالها حفص في القرآن.</li></ol></div>
+</div><div class="card">
+<div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">2</span><div class="txt"><span class="h">وَاضْمُمْ أَوِ افْتَحْ ضُعْفَ رُومٍ وَاثْبِتَا</span> <span class="h">سِينَا وَيَبْصُطُ وَثَانِي بَصْطَةَ</span></div></div>
+<div class="ex"><p>ومن الأمور التي تُراعى أيضًا:</p><ol start="3"><li><b>«ضَعْفٍ»</b> في الروم: «مِنْ ضَعْفٍ ثُمَّ جَعَلَ مِنْ بَعْدِ ضَعْفٍ قُوَّةً ثُمَّ جَعَلَ مِنْ بَعْدِ قُوَّةٍ ضَعْفًا وَشَيْبَةً». فيجوز في الضاد في المواضع الثلاثة <b>الفتح والضم</b>، والفتح هو المقدم في الأداء.</li><li><b>«وَيَبْسُطُ»</b> في البقرة: «وَاللَّهُ يَقْبِضُ وَيَبْسُطُ»، و<b>«بَسْطَةً»</b> الثانية في الأعراف: «وَزَادَكُمْ فِي الْخَلْقِ بَسْطَةً». فتُقرآن <b>بالسين الخالصة</b>، وإن كُتبتا في المصحف بالصاد مع سين صغيرة فوقها للدلالة على ذلك.</li></ol></div>
+</div><div class="card">
+<div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">3</span><div class="txt"><span class="h">وَالصَّادَ فِي مُصَيْطِرٍ خُذْ وَكِلَا</span> <span class="h">هَذَيْنِ فِي المُصَيْطِرُونَ نُقِلَا</span></div></div>
+<div class="ex"><p>ويتصل بها في الصاد والسين:</p><ol start="5"><li><b>«بِمُصَيْطِرٍ»</b> في الغاشية: «لَسْتَ عَلَيْهِمْ بِمُصَيْطِرٍ». فتُقرأ <b>بالصاد الخالصة</b>.</li><li><b>«الْمُصَيْطِرُونَ»</b> في الطور: «أَمْ هُمُ الْمُصَيْطِرُونَ». ففيها <b>وجهان</b>: الصاد والسين، والصاد هو المقدم والأشهر في الأداء.</li></ol><p>فتكون الكلمات الأربع ﴿«يَبْسُطُ» و«بَسْطَةً» و«الْمُصَيْطِرُونَ» و«بِمُصَيْطِرٍ»﴾ مما يجتمع فيه حرفا السين والصاد، فيجب التفريق بينها بحسب ما سبق.</p></div>
+</div></div></section>
+<section class="door-section"><h2 aria-expanded="false" aria-label="فتح الباب: قَصْرُ الْمُنْفَصِلِ مِنْ طَرِيقِ رَوْضَةِ الْحُفَّاظِ لِابْنِ الْمُعَدِّلِ" class="door-title" role="button" tabindex="0">قَصْرُ الْمُنْفَصِلِ مِنْ طَرِيقِ رَوْضَةِ الْحُفَّاظِ لِابْنِ الْمُعَدِّلِ</h2><div class="door-content"><div class="card"><div class="ex">
+<p><b>المنفصل:</b> أن يقع حرف المد آخر كلمة، وتقع الهمزة أول الكلمة التي تليها، نحو «بِمَا أُنزِلَ». وسمي منفصلًا لانفصال سببه ﴿الهمز﴾ عن حرف المد، فكل منهما في كلمة.</p>
+<p><b>حكمه لحفص:</b> في طريق الشاطبية يُمد أربع حركات أو خمسًا. والأربع هي المقدمة في الأداء، والخمس من زيادات القصيد، ذكرها صاحب التيسير عن عاصم. وقال صاحب «غيث النفع»: الأربع أولى للأمن معها من التخليط.</p>
+<p><b>القصر:</b> أي مده حركتين. وليس هذا من طريق الشاطبية، وإنما هو من طرق «طيبة النشر».</p>
+<p><b>سبب الباب:</b> يحتاج القارئ بالحدر وفي صلاة القيام إلى قصر المنفصل. فوجب أن يعرف ما يترتب عليه من أحكام، حتى لا يخلط بين الطرق. وهذا الباب هو الموضع الذي أحال عليه شرح «مراتب القراءة».</p>
+<p><b>منهج الناظم:</b> حرّر الأحكام المترتبة على القصر من «روضة الحفاظ»، وهي «الروضة في القراءات السبع» لأبي إسماعيل موسى بن الحسين المعروف بالمعدل ﴿ت 480هـ﴾.</p>
+<p><b>فائدة:</b> متن «تجويد الكلمات القرآنية بطريقة الشاطبية» منظوم على <b>بحر الرجز</b>، وتفعيلاته في كل شطر «مُسْتَفْعِلُنْ مُسْتَفْعِلُنْ مُسْتَفْعِلُنْ». أما متن «روضة الحفاظ» بطريقة الطيبة فمنظوم على <b>البحر الطويل</b>، وتفعيلاته في كل شطر «فَعُولُنْ مَفَاعِيلُنْ فَعُولُنْ مَفَاعِلُنْ». ومعرفة البحر تعين القارئ على قراءة المتن قراءة صحيحة، فيستقيم الوزن، ويتبين له موضع كل حركة وسكون، ويُعرف به ضبط الكلمة إذا اشتبه عليه شيء منها.</p>
+</div></div><div class="card">
+<div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">1</span><div class="txt"><span class="h">وَبَـعْـدُ فَـهَـذَا مَـا رَوَاهُ مُـعَـدِّلٌ</span> <span class="h">بِـرَوْضَتِهِ الْفَيْحَاءِ مِـنْ طَيِّـبِ النَّشْـرِ</span></div></div>
+<div class="ex"><p>«وبعد»: كلمة تفصل بين المقدمة والمقصود. و«هذا» إشارة إلى الأحكام التي تأتي بعدها.</p>
+<p>«معدِّل»: هو الإمام أبو إسماعيل موسى بن الحسين، المعروف بالمعدل، صاحب «الروضة». توفي سنة 480هـ.</p>
+<p>و«الفيحاء»: الواسعة الطيبة. و«النشر»: الرائحة الطيبة. ولعل في اللفظ إشارة إلى «طيبة النشر»، لأن هذه الطريق من طرقها.</p></div>
+</div><div class="card">
+<div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">2</span><div class="txt"><span class="h">بِإِسْنَادِهِ عَنْ حَفْصٍ الْحَبْـرِ مَـنْ تَـلَا</span> <span class="h">عَلَى عَاصِمٍ وَهْـوَ الْمُكَنَّـى أَبَـا بَكْـرِ</span></div></div>
+<div class="ex"><p>«بإسناده»: أي برواية المعدل بإسناده المتصل. و«الحبر»: العالم. والمراد حفص بن سليمان ﴿ت 180هـ﴾، راوي عاصم.</p>
+<p>وعاصم هو ابن أبي النجود الكوفي، وكنيته «أبو بكر» كما قال الناظم. ولا يلتبس بكنية راويه الآخر شعبة، فالمراد هنا عاصم.</p>
+<p><b>السند:</b> المعدل، ثم الفيل وزرعان، عن عمرو بن الصباح، عن حفص، عن عاصم.</p></div>
+</div><div class="card">
+<div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">3</span><div class="txt"><span class="h">فَفِي الْبَـدْءِ بِالْأَجْـزَاءِ لَيْـسَ مُخَيِّـراً</span> <span class="h">لِبَسْمَلَـةٍ بَــلْ لِلتَّـبَـرُّكِ مُسْتَـقْـرِي</span></div></div>
+<div class="ex"><p>«الأجزاء»: أجزاء السورة، أي ما بعد أولها. و«ليس مخيرًا»: لا خيار فيها بين البسملة وتركها.</p>
+<p>فتتعين <b>البسملة</b> عند الابتداء من أثناء السورة في هذه الطريق. وهي للتبرك، لا للتخيير.</p>
+<p>وقد سبق في باب الاستعاذة والبسملة أن الشاطبية تخيّر البادئ بأجزاء السور. فهذا أول ما تفارق به الروضة. وحكم سورة براءة على ما تقدم في بابه.</p>
+<p>و«مستقري»: متتبع ملتزم بما رُوي.</p></div>
+</div><div class="card">
+<div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">4</span><div class="txt"><span class="h">وَمُتَّصِلَاً وَسِّطْ وَمَا انْفَصَـلَ اقْصُـرَاً</span> <span class="h">وَلَا سَكْتَ قَبْلَ الْهَمْزِ مِنْ طُرُقِ الْقَصْـرِ</span></div></div>
+<div class="ex"><p>هذا البيت أصل الباب، وفيه ثلاثة أحكام:</p>
+<ol>
+<li><b>توسط المتصل:</b> أي مده أربع حركات فقط، نحو «جَاءَ» و«السَّمَاءِ». فلا يُمد خمسًا، بخلاف الشاطبية ﴿4 أو 5﴾.</li>
+<li><b>قصر المنفصل:</b> أي مده حركتين، نحو «بِمَا أُنزِلَ» و«فِي أَنفُسِكُمْ».</li>
+<li><b>ترك السكت قبل الهمز:</b> في «أل» نحو «الْأَرْضِ»، وفي «شيء» نحو «شَيْءٍ»، وفي الساكن المفصول نحو «مَنْ آمَنَ»، وفي الموصول نحو «قُرْآنَ».</li>
+</ol>
+<p>وقوله «مِنْ طُرُقِ الْقَصْرِ» أي: في طرق القصر لا سكت قبل الهمز. وقد ورد السكت لحفص من طرق أخرى، فلا يُخلط بينها وبين هذه الطريق.</p>
+<p>وما يعرض للمتصل عند الوقف على الهمز المتطرف يُرجع فيه إلى كتب التحرير والمشافهة.</p></div>
+</div><div class="card">
+<div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">5</span><div class="txt"><span class="h">وَمَا مُـدَّ لِلتَّعْظِيـمِ مِنْهَا وَلَـمْ يَجِـئْ</span> <span class="h">بِهَـا وَجْـهُ تَكْبِيـرٍ وَلَا غُنَّـةٍ تَسْـرِي</span></div></div>
+<div class="ex"><p>«ما مُدّ للتعظيم»: هو مد التعظيم، أي المبالغة في مد «لا» في «لَا إِلَهَ إِلَّا اللَّهُ». ولا يؤتى به في هذه الطريق.</p>
+<p>«ولم يجئ بها وجه تكبير»: لا تكبير بين السورتين، من آخر الضحى إلى آخر الناس.</p>
+<p>«ولا غنة تسري»: لا غنة عند إدغام النون الساكنة والتنوين في اللام والراء، نحو «مِن رَّبِّهِمْ» و«هُدًى لِّلْمُتَّقِينَ». ومعنى «تسري»: تجري.</p>
+<p>وهذا الحكم الأخير موافق للشاطبية. وإنما نُبّه عليه لأن من طرق القصر ما ذُكر فيه إبقاء الغنة، كطريق الكامل للهذلي.</p></div>
+</div><div class="card">
+<div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">6</span><div class="txt"><span class="h">وَفِي مَوْضِعَيْ ءَالَانَ أَلذَّكَرَيْـنِ مَـعْ</span> <span class="h">أَأَللَّهُ أَبْدِلْهَـا مَـعَ الْمَـدِّ ذِي الْـوَفْـرِ</span></div></div>
+<div class="ex"><p>المراد بها: «آلْآنَ» في موضعي يونس، و«آلذَّكَرَيْنِ» في موضعي الأنعام، و«آللَّهُ» في يونس والنمل.</p>
+<p>في هذه الكلمات دخلت همزة الاستفهام على «أل»، فاجتمعت همزتان. وفي بابها يجوز الإبدال أو التسهيل، كما سبق في باب أحكام همزة الوصل.</p>
+<p>وفي طريق الروضة يتعين <b>الإبدال</b>: تُقلب همزة الوصل ألفًا، وتُمد <b>ست حركات</b>. ومعنى «ذي الوفر»: ذي الزيادة، أي الإشباع.</p>
+<p>وهو من المد اللازم الكلمي: المثقل في «آلذَّكَرَيْنِ» و«آللَّهُ»، والمخفف في «آلْآنَ».</p></div>
+</div><div class="card">
+<div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">7</span><div class="txt"><span class="h">وَأَشْمِـمْ بِتَأْمَنَّـا وَيَلْهَـثْ فَأَدْغِـمَـاً</span> <span class="h">مَعَ ارْكَـبْ وَنَخْلُقْكُـمْ أَتِـمَّ وَلَا تُـزْرِ</span></div></div>
+<div class="ex"><p>يذكر الناظم أربعة مواضع يتعين فيها وجه واحد:</p>
+<ol>
+<li><b>«تَأْمَنَّا»</b> في يوسف: يتعين <b>الإشمام</b>. وهو ضم الشفتين عند النطق بالنون المشددة، دلالةً على أن الأصل «تَأْمَنُنَا». ويُترك وجه الإخفاء المذكور في بابه.</li>
+<li><b>«يَلْهَثْ ذَّلِكَ»</b> في الأعراف: يتعين <b>الإدغام</b>.</li>
+<li><b>«ارْكَب مَّعَنَا»</b> في هود: يتعين <b>الإدغام</b>.</li>
+<li><b>«نَخْلُقكُّم»</b> في المرسلات: يتعين الإدغام <b>التام</b>. ومعنى «أتم»: أتمَّ الإدغام.</li>
+</ol>
+<p>وقد سبق بيان الإدغام في هذه الكلمات في باب المتماثلين والمتجانسين والمتقاربين. فيُرجع إليه.</p>
+<p>و«لا تُزرِ»: أي لا تقصّر ولا تهمل.</p></div>
+</div><div class="card">
+<div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">8</span><div class="txt"><span class="h">وَبَـلْ رَانَ مَـنْ رَاقٍ وَمَرْقَدِنَـا كَـذَا</span> <span class="h">لَهُ عِوَجَاً لاَ سَكْتَ فِـي الْأَرْبَـعِ الْغُـرِّ</span></div></div>
+<div class="ex"><p>«الأربع الغر»: أي الأربع المشهورة الواضحة. وهي مواضع السكت لحفص في الشاطبية. ويتعين في هذه الطريق <b>تركه</b> فيها:</p>
+<ul>
+<li>«عِوَجًا» في الكهف: «عِوَجًا قَيِّمًا».</li>
+<li>«مَرْقَدِنَا» في يس: «مِن مَّرْقَدِنَا هَٰذَا».</li>
+<li>«مَنْ رَاقٍ» في القيامة.</li>
+<li>«بَلْ رَانَ» في المطففين.</li>
+</ul>
+<p>فيُوصل «عِوَجًا» بـ«قَيِّمًا»، و«مَرْقَدِنَا» بـ«هَذَا». وتُدغم النون في الراء في «مَنْ رَاقٍ»، واللام في الراء في «بَلْ رَانَ»، من غير غنة.</p></div>
+</div><div class="card">
+<div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">9</span><div class="txt"><span class="h">وَعَنْهُ سُقُـوطُ الْمَـدِّ فِـي عَيْـنَ وَارِدٌ</span> <span class="h">وَتَفْخِيمُ رَا فِـرْقٍ لَـدَى ءَايَـةِ الْبَحْـرِ</span></div></div>
+<div class="ex"><p>«سقوط المد في عين»: أي <b>ترك المد</b> في «عين» بالكلية، في فاتحتي مريم «كهيعص» والشورى «حم عسق»، لأن الياء في «عين» <b>حرف لين</b> ﴿ياء ساكنة مفتوح ما قبلها﴾ وليست حرف مد، وحرف اللين لا يُمد، فتُنطق «عَيْنْ» من غير زيادة عليها. وليس المراد مدّها حركتين. وقد سبق أن الشاطبية فيها الطول والتوسط، فيتعين هنا سقوط المد.</p>
+<p>«تفخيم را فرق»: يريد راء «فِرْقٍ» في الشعراء: «فَكَانَ كُلُّ فِرْقٍ كَالطَّوْدِ الْعَظِيمِ». و«آية البحر»: الآية التي فيها انفلاق البحر.</p>
+<p>وفي «فِرْقٍ» يجوز الترقيق والتفخيم لكسر القاف، والترقيق أعلى. أما في هذه الطريق فيتعين <b>التفخيم</b>.</p></div>
+</div><div class="card">
+<div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">10</span><div class="txt"><span class="h">وَءَاتَانِ نَمْـلٍ فَاحْـذِفِ الْيَـاءَ وَاقِفَـاً</span> <span class="h">كَذَا الْأَلِفَ احْذِفْ مِنْ سَلاَسِـلَ فِي الدَّهْـرِ</span></div></div>
+<div class="ex"><p>«آتَانِ» في النمل: «فَمَا آتَانِ اللَّهُ». تُحذف الياء عند الوقف، وتثبت وصلًا مفتوحة.</p>
+<p>«سَلَاسِلَا» في الدهر ﴿الإنسان﴾: «سَلَاسِلَا وَأَغْلَالًا». تُحذف الألف عند الوقف، وتُحذف وصلًا كذلك.</p>
+<p>وفي الشاطبية يجوز الحذف والإثبات، كما سبق في باب الحذف والإثبات. أما هنا فيتعين <b>الحذف</b> فيهما.</p></div>
+</div><div class="card">
+<div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">11</span><div class="txt"><span class="h">وَبِالْسِّينِ لَا بِالْصَّادِ قُلْ أَمْ هُمُ الْمُصَـيْـ</span> <span class="h">ـطِرُونَ وَبِالْوَجْهَيْنِ فِـي فَـرْدِهِ النُّكْـرِ</span></div></div>
+<div class="ex"><p>«الْمُصَيْطِرُونَ» في الطور: «أَمْ هُمُ الْمُصَيْطِرُونَ». تُقرأ <b>بالسين فقط</b>. وقوله «لا بالصاد» نفي لوجه الصاد.</p>
+<p>«فرده النكر»: مفرده المنكَّر، وهو «بِمُصَيْطِرٍ» في الغاشية. فيه <b>وجهان</b>: السين أو الصاد.</p>
+<p>وفي الشاطبية: «الْمُصَيْطِرُونَ» بالصاد أو السين، و«بِمُصَيْطِرٍ» بالصاد فقط، كما سبق في باب ما يراعى لحفص.</p></div>
+</div><div class="card">
+<div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">12</span><div class="txt"><span class="h">وَفِي يَبْصُطُ الْأُولَى وَفِي الْخَلْقِ بَصْطَةً</span> <span class="h">وَيَاسِينَ نُونٍ ضُعْـفِ رُومٍ كَـذَا أَجْـرِ</span></div></div>
+<div class="ex"><p>يذكر الناظم مواضع أخرى فيها وجهان في هذه الطريق:</p>
+<ul>
+<li>«يَبْصُطُ» الأولى، أي في البقرة: «وَاللَّهُ يَقْبِضُ وَيَبْسُطُ». السين أو الصاد.</li>
+<li>«بَصْطَةً» في الأعراف: «وَزَادَكُمْ فِي الْخَلْقِ بَسْطَةً». السين أو الصاد.</li>
+<li>«يس» و«ن»: الإدغام أو الإظهار.</li>
+<li>«ضَعْف» في الروم، في مواضعها الثلاثة: الفتح أو الضم.</li>
+</ul>
+<p>و«كذا أَجْرِ» أي: أجرِ الوجهين فيها. وهذه الأوجه ليست على التخيير المطلق، بل يتبع كل وجه منها طريقًا بعينه، كما في البيتين بعده.</p>
+<p>وفي الشاطبية: «يَبْسُطُ» و«بَسْطَةً» بالسين الخالصة، كما سبق في باب ما يراعى لحفص.</p></div>
+</div><div class="card">
+<div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">13</span><div class="txt"><span class="h">وَلَكِنْ مَعَ الْإِظْهَـارِ صَـادُ مُصَيْطِـرٍ</span> <span class="h">وَفِي بَصْطَةً سِينٌ كَـذَا يَبْصُـطُ الْبِكْـرِ</span></div></div>
+<div class="ex"><p>تبين هذه الأبيات ارتباط هذه الأوجه بالإظهار والإدغام في «يس» و«ن».</p>
+<p>فمع <b>الإظهار</b> ﴿وهو طريق الفيل﴾:</p>
+<ul>
+<li>«مُصَيْطِر»: الصاد فقط.</li>
+<li>«بَصْطَة» في الأعراف: السين فقط.</li>
+<li>«يَبْصُط» في البقرة: السين فقط.</li>
+</ul>
+<p>و«الْبِكْر»: الأول، أي موضع البقرة.</p></div>
+</div><div class="card">
+<div aria-expanded="false" class="verse" role="button" tabindex="0"><span class="num">14</span><div class="txt"><span class="h">وَفَتْحٌ لَدَى ضُعْـفٍ عَنِ الْفِيـلِ وَارِدٌ</span> <span class="h">وَبِالْعَكْسِ عَنْ زَرْعَانَ وَالْكُلُّ عَنْ عَمْرِو</span></div></div>
+<div class="ex"><p>«وفتح لدى ضعف عن الفيل وارد»: أي مع الإظهار يتعين <b>الفتح</b> في «ضَعْف» بالروم.</p>
+<p>«وبالعكس عن زرعان»: أي مع <b>الإدغام</b> في «يس» و«ن» تنعكس الأوجه. فيتعين السين في «مُصَيْطِر»، والصاد في «يَبْصُط» و«بَصْطَة»، والضم في «ضَعْف».</p>
+<p>«والكل عن عمرو»: أي أن الفيل وزرعان كليهما يرويان عن عمرو بن الصباح، عن حفص. فهما طريقان صحيحان، ولا يُخلط بينهما.</p>
+<p><b>تنبيه مهم:</b> هذه القراءة صحيحة متواترة ومنتشرة في زماننا لمناسبتها لمرتبة الحدر وصلاة القيام. لكنها طريق مختلف عن الطريق المعتمد في نص هذا المصحف ﴿طريق الشاطبية﴾، فلا يجوز مزج أحكام الطريقين أثناء التلاوة. من أراد القراءة بهذا الطريق فعليه تلقيه بالسند المتصل عن معلّم متقن له تحديدًا.</p></div>
+</div><script>
+(function () {
+  "use strict";
+
+  function toggleVerse(verse) {
+    var card = verse.closest(".card");
+    if (!card || !card.querySelector(".verse")) return;
+
+    var isOpen = card.classList.toggle("is-open");
+    verse.setAttribute("aria-expanded", String(isOpen));
+
+    // Use the same light haptic feedback as door and tab navigation.
+    try {
+      if (window.parent && window.parent.UI &&
+          typeof window.parent.UI.haptic === "function") {
+        window.parent.UI.haptic();
+      }
+    } catch (_e) {}
+  }
+
+  document.addEventListener("click", function (event) {
+    var verse = event.target.closest(".verse[role='button']");
+    if (verse) toggleVerse(verse);
+  });
+
+  document.addEventListener("keydown", function (event) {
+    var verse = event.target.closest(".verse[role='button']");
+    if (!verse || (event.key !== "Enter" && event.key !== " ")) return;
+
+    event.preventDefault();
+    toggleVerse(verse);
+  });
+})();
+</script><script>
+(function () {
+  "use strict";
+
+  function toggleSummaryTable(heading) {
+    var next = heading.nextElementSibling;
+    while (next && !(next.classList && next.classList.contains("card"))) {
+      next = next.nextElementSibling;
+    }
+    if (!next || !next.querySelector("table")) return;
+
+    var isOpen = next.classList.contains("summary-table-open");
+    next.classList.toggle("summary-table-open", !isOpen);
+    next.classList.toggle("summary-table-collapsed", isOpen);
+    heading.setAttribute("aria-expanded", String(!isOpen));
+    var icon = heading.querySelector(".table-toggle-icon");
+    if (icon) icon.textContent = isOpen ? "＋" : "−";
+  }
+
+  document.addEventListener("click", function (event) {
+    var heading = event.target.closest("h2.table-toggle");
+    if (heading) toggleSummaryTable(heading);
+  });
+
+  document.addEventListener("keydown", function (event) {
+    var heading = event.target.closest("h2.table-toggle");
+    if (!heading || (event.key !== "Enter" && event.key !== " ")) return;
+    event.preventDefault();
+    toggleSummaryTable(heading);
+  });
+
+  document.querySelectorAll("h2.table-toggle").forEach(function (heading) {
+    var next = heading.nextElementSibling;
+    while (next && !(next.classList && next.classList.contains("card"))) {
+      next = next.nextElementSibling;
+    }
+    if (next && next.querySelector("table")) next.classList.add("summary-table-collapsed");
+  });
+})();
+</script></div></section>
+<script>
+(function () {
+  "use strict";
+  function toggleDoor(title) {
+    var section = title.closest(".door-section");
+    if (!section) return;
+    var isOpen = section.classList.toggle("is-open");
+    title.setAttribute("aria-expanded", String(isOpen));
+
+    // Match the light haptic feedback used by the app's tab navigation.
+    // The content runs inside a same-origin iframe, so call the parent UI.
+    try {
+      if (window.parent && window.parent.UI &&
+          typeof window.parent.UI.haptic === "function") {
+        window.parent.UI.haptic();
+      }
+    } catch (_e) {}
+  }
+  document.addEventListener("click", function (event) {
+    var title = event.target.closest("h2.door-title");
+    if (title) toggleDoor(title);
+  });
+  document.addEventListener("keydown", function (event) {
+    var title = event.target.closest("h2.door-title");
+    if (!title || (event.key !== "Enter" && event.key !== " ")) return;
+    event.preventDefault();
+    toggleDoor(title);
+  });
+})();
+</script></body>
+</html>

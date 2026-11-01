@@ -67,8 +67,16 @@
     t = t.replace(/<[^>]+>/g, '');
     t = t.replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>');
     t = t.replace(/(^|﴾)\s*\(\s*[\d\u0660-\u0669]+\s*\)\s*[-–—]\s*/g, '$1 ');
+    // Convert regular parentheses to ornamental ones used throughout the app
+    t = t.replace(/\(([^)]+)\)/g, '﴿$1﴾');
     t = t.replace(/[ \t\r\n]+/g, ' ').trim();
     return t;
+  }
+
+  // Normalize parentheses for display (covers cached text that was stored before the conversion)
+  function normalizeTafsirParens(text){
+    if(!text || typeof text !== 'string') return text || '';
+    return text.replace(/\(([^)]+)\)/g, '﴿$1﴾');
   }
 
   function extractAysarText(json){
@@ -1471,7 +1479,7 @@
           '</span>' +
           ttsBtn +
         '</div>';
-      var text = cache[cacheKey(a.surah, a.ayah)] || '';
+      var text = normalizeTafsirParens(cache[cacheKey(a.surah, a.ayah)] || '');
       var divider = i > 0 ? '<hr class="tafsir-divider">' : '';
       return divider + '<div class="tafsir-item" id="' + entryId(a.surah, a.ayah) + '">' + head +
         '<p class="tafsir-text">' + UI.escapeHtml(text) + '</p>' +
@@ -1496,7 +1504,7 @@
       p.textContent = 'تعذّر تحميل تفسير هذه الآية.';
     } else {
       p.className = 'tafsir-text';
-      p.textContent = text;
+      p.textContent = normalizeTafsirParens(text);
 
       // CATT page warm-up is started once the current tafsir page has
       // finished loading, not once per ayah.

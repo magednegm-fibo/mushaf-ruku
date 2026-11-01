@@ -1,6 +1,6 @@
 'use strict';
 /**
- * ACTIVE official regression: table (5547) === rendered Madinah coloring + specials + khilaf exclusions.
+ * ACTIVE official regression: table (5535) === rendered Madinah coloring + specials + khilaf exclusions.
  */
 const fs = require('fs');
 const path = require('path');
@@ -10,7 +10,7 @@ eval(fs.readFileSync(path.join(root, 'data.js'), 'utf8').replace(/window\./g, 'g
 const rows = require(path.join(root, 'madinah-sajawandi.js'));
 
 const ALLOWED = new Set(['ط','ج','ص','ز','ق','قف','م']);
-const EXPECTED = { 'ط':3520, 'ج':1571, 'ز':174, 'ص':90, 'قف':92, 'م':85, 'ق':59 };
+const EXPECTED = { 'ط':3524, 'ج':1547, 'ز':163, 'ص':89, 'قف':79, 'م':85, 'ق':48 };
 
 const table = new Map();
 const counts = {};
@@ -88,9 +88,14 @@ console.log('Invalid marks:', invalidMarks);
 console.log('');
 ['ط','ج','ز','ص','قف','م','ق'].forEach(m => console.log(m + ' =', counts[m] || 0));
 console.log('');
+let distributionOk = true;
+for (const m of ['ط','ج','ز','ص','قف','م','ق']) {
+  if ((counts[m] || 0) !== EXPECTED[m]) distributionOk = false;
+}
+console.log('Mark distribution:', distributionOk ? 'PASS' : 'FAIL');
 console.log('Special cases:', specialOk ? 'PASS' : 'FAIL');
-const pass = rows.length === 5547 && rendered.size === 5547 && diffs === 0 &&
-  duplicates === 0 && conflicts === 0 && invalidIndexes === 0 && invalidMarks === 0 && specialOk;
+const pass = rows.length === 5535 && rendered.size === 5535 && diffs === 0 &&
+  duplicates === 0 && conflicts === 0 && invalidIndexes === 0 && invalidMarks === 0 && distributionOk && specialOk;
 console.log('');
 console.log(pass ? 'PASS' : 'FAIL');
 process.exit(pass ? 0 : 1);

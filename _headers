@@ -28,6 +28,9 @@
 /version.js
   Cache-Control: no-cache, no-store, must-revalidate
 
+/ahkam-altajweed.html
+  Cache-Control: no-cache, no-store, must-revalidate
+
 /manifest.json
   Cache-Control: no-cache, no-store, must-revalidate
 

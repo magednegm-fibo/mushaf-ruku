@@ -1,0 +1,18 @@
+const fs = require('node:fs');
+const path = require('node:path');
+const assert = require('node:assert/strict');
+const sw = fs.readFileSync(path.join(__dirname, '..', 'sw.js'), 'utf8');
+const html = fs.readFileSync(path.join(__dirname, '..', 'ahkam-altajweed.html'), 'utf8');
+const guide = fs.readFileSync(path.join(__dirname, '..', 'reader-guide.js'), 'utf8');
+const index = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+assert.ok(html.length > 1000, 'Tajweed HTML document must exist and contain content');
+assert.match(sw, /'\.\/ahkam-altajweed\.html'/, 'Tajweed HTML must be a core precache asset');
+assert.match(sw, /function isTajweedDocument\(request\)/, 'Service worker must identify Tajweed document');
+assert.match(sw, /function matchTajweedCached\(request\)/, 'Service worker must resolve Tajweed via canonical cache key');
+assert.match(sw, /fetch\(tajweedUrl/, 'Network fetch must use canonical URL string');
+assert.match(guide, /function loadTajweedHtml/, 'Reader guide must load Tajweed');
+assert.match(guide, /tajweedContentHost|tajweed-content-host/, 'Tajweed must inject into a host div');
+assert.match(guide, /extractTajweedParts/, 'Must parse fetched HTML before inject');
+assert.match(index, /id="tajweedContentHost"/, 'Host div must exist');
+assert.doesNotMatch(index, /<iframe[^>]*tajweed/i, 'Must not use iframe for Tajweed');
+console.log('tajweed-iframe-cache-regression: passed');

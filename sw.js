@@ -69,7 +69,8 @@ const DYNAMIC_ASSETS = [
   './app.js',
   './qcf-override.css',
   './qcf-override.js',
-  './manifest.json'
+  './manifest.json',
+  './ahkam-altajweed.html'
 ];
 
 const CORE_ASSETS = [
@@ -81,13 +82,27 @@ const CORE_ASSETS = [
   './style.css',
   // Prayer/Qibla must be offline-capable on first open after install
   // (see e2e/prayer-offline.spec.js + tests/prayer-offline-precache-regression.js).
-  './prayer.js'
+  './prayer.js',
+  // The guide's Tajweed tab loads this document in a same-origin iframe.
+  './ahkam-altajweed.html'
 ];
 
 // Store the app shell under every URL the browser may request for a
 // document navigation on GitHub Pages and on Cloudflare Workers.
-function mirrorAppShell(cache, response){
-  if(!response || !response.ok) return Promise.resolve();
+function isAppShellUrl(url){
+  try {
+    var target = new URL(url, self.location.href);
+    var scopePath = new URL(self.registration.scope).pathname;
+    if(scopePath.charAt(scopePath.length - 1) !== '/') scopePath += '/';
+    return target.origin === self.location.origin &&
+      (target.pathname === scopePath || target.pathname === scopePath + 'index.html');
+  } catch(e) { return false; }
+}
+
+// Only the actual app shell may be mirrored to the root navigation keys.
+// Never allow an iframe/document such as ahkam-altajweed.html to overwrite it.
+function mirrorAppShell(cache, response, sourceUrl){
+  if(!response || !response.ok || !isAppShellUrl(sourceUrl || assetUrl('index.html'))) return Promise.resolve();
   var base = self.location.href.replace(/sw\.js(?:\?.*)?$/, '');
   var keys = [
     assetUrl('index.html'),
@@ -254,7 +269,50 @@ function matchAppShell(){
   });
 }
 
+function isTajweedDocument(request){
+  try {
+    var path = new URL(request.url).pathname;
+    // Match any scope depth: /ahkam-altajweed.html or /foo/ahkam-altajweed.html
+    return /(?:^|\/)ahkam-altajweed\.html$/.test(path);
+  } catch(e) { return false; }
+}
+
+// Resolve the precached Tajweed document even when the iframe request URL
+// does not byte-match the key used at install time (scope, trailing slash,
+// ignoreSearch, or relative vs absolute differences on Android WebView).
+function matchTajweedCached(request){
+  var canonical = assetUrl('./ahkam-altajweed.html');
+  return caches.match(request).then(function(hit){
+    if(hit) return hit;
+    return caches.match(request, { ignoreSearch: true }).then(function(hit2){
+      if(hit2) return hit2;
+      return caches.match(canonical).then(function(hit3){
+        if(hit3) return hit3;
+        return caches.match(canonical, { ignoreSearch: true });
+      });
+    });
+  });
+}
+
+function tajweedUnavailableResponse(){
+  return new Response(
+    '<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="utf-8">' +
+    '<meta name="viewport" content="width=device-width,initial-scale=1">' +
+    '<title>تعذر تحميل صفحة التجويد</title></head>' +
+    '<body style="font-family:sans-serif;padding:2rem;text-align:center;background:#F6F1E4;color:#16493A">' +
+    '<h2>تعذر تحميل صفحة التجويد</h2>' +
+    '<p>تحقق من اتصالك أو أعد فتح التطبيق لتحديث الملفات، ثم حاول مرة أخرى.</p>' +
+    '</body></html>',
+    { status: 503, statusText: 'Tajweed document unavailable', headers: { 'Content-Type': 'text/html; charset=utf-8' } }
+  );
+}
+
 function offlineFallback(request){
+  if(isTajweedDocument(request)){
+    return matchTajweedCached(request).then(function(hit){
+      return hit || tajweedUnavailableResponse();
+    });
+  }
   return caches.match(request).then(function(hit){
     if(hit) return hit;
     return caches.match(request, { ignoreSearch: true }).then(function(hit2){
@@ -270,6 +328,45 @@ self.addEventListener('fetch', function(e){
   var url = e.request.url;
   if(new URL(url).origin !== self.location.origin) return;
 
+  // ---- Tajweed document: always cache-first (iframe OR top-level) ----
+  // Iframe loads often use destination:"iframe", not mode:"navigate".
+  // Always fetch by the canonical absolute URL string — re-fetching the
+  // original Request object can net::ERR_FAILED on Android WebView.
+  if(isTajweedDocument(e.request)){
+    var tajweedUrl = assetUrl('./ahkam-altajweed.html');
+    e.respondWith(
+      matchTajweedCached(e.request).then(function(cached){
+        if(cached){
+          e.waitUntil(
+            fetch(tajweedUrl, { cache: 'no-cache', credentials: 'same-origin' }).then(function(res){
+              if(res && res.status === 200){
+                return caches.open(CACHE).then(function(cache){
+                  return cache.put(tajweedUrl, res.clone())
+                    .then(function(){ return cache.put(e.request, res.clone()); });
+                });
+              }
+            }).catch(function(){})
+          );
+          return cached;
+        }
+        return fetch(tajweedUrl, { cache: 'no-cache', credentials: 'same-origin' }).then(function(res){
+          if(res && res.status === 200){
+            var clone = res.clone();
+            e.waitUntil(
+              caches.open(CACHE).then(function(cache){
+                return cache.put(tajweedUrl, clone.clone())
+                  .then(function(){ return cache.put(e.request, clone); });
+              })
+            );
+            return res;
+          }
+          return tajweedUnavailableResponse();
+        }).catch(function(){ return tajweedUnavailableResponse(); });
+      })
+    );
+    return;
+  }
+
   // ---- Document navigations: explicit offline path (Cloudflare Workers) ----
   // cache:'no-cache' bypasses HTTP/CDN stale copies so network-first is real.
   if(isNavigateRequest(e.request)){
@@ -279,7 +376,7 @@ self.addEventListener('fetch', function(e){
         e.waitUntil(
           caches.open(CACHE).then(function(cache){
             return cache.put(e.request, clone.clone()).then(function(){
-              return mirrorAppShell(cache, clone);
+              if(isAppShellUrl(e.request.url)) return mirrorAppShell(cache, clone, e.request.url);
             });
           })
         );
@@ -293,6 +390,11 @@ self.addEventListener('fetch', function(e){
           setTimeout(function(){ reject(new Error('sw-network-timeout')); }, 4000);
         })
       ]).catch(function(){
+        if(isTajweedDocument(e.request)){
+          return matchTajweedCached(e.request).then(function(hit){
+            return hit || tajweedUnavailableResponse();
+          });
+        }
         return offlineFallback(e.request).then(function(hit){
           // offlineFallback for navigations always yields a Response.
           return hit || matchAppShell();

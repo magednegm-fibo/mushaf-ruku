@@ -125,7 +125,7 @@
   function applyVerseByVerse(){
     // Normalize + keep stored so full-backup always carries the field.
     // Default: OFF (continuous mushaf layout).
-    if(state.verseByVerse === undefined) state.verseByVerse = true;
+    if(state.verseByVerse === undefined) state.verseByVerse = false;
     state.verseByVerse = !!state.verseByVerse;
     var on = state.verseByVerse;
     document.body.classList.toggle('verse-by-verse', on);
@@ -155,6 +155,11 @@
     document.body.classList.toggle('hide-waqf-marks', !show);
     if(els.waqfToggle) els.waqfToggle.checked = show;
     applyKhilafHighlightVisibility();
+    // مزامنة شكل رؤوس الآيات فور تغيير الخيار، دون إعادة رسم الصفحة أو المساس بالتلوين.
+    if(typeof window !== 'undefined' && window.ReaderManager &&
+       typeof window.ReaderManager.refreshAyahMarkerShapes === 'function'){
+      window.ReaderManager.refreshAyahMarkerShapes();
+    }
   }
 
   // -----------------------------------------------------------------
@@ -426,10 +431,9 @@
             }
           }catch(e){}
           UI.showToast('تمت إعادة ضبط التطبيق');
-          // Defaults have keepScreenAwake:true — re-request wake lock after
-          // rehydrate so the screen stays on as the new default intends.
-          if(typeof requestWakeLock === 'function') requestWakeLock();
-          else if(typeof releaseWakeLock === 'function') releaseWakeLock();
+          // The default is keepScreenAwake:false, so make sure no screen
+          // wake lock remains active after the factory reset.
+          if(typeof releaseWakeLock === 'function') releaseWakeLock();
         }).catch(function(){
           UI.showToast('تعذّرت إعادة ضبط التطبيق');
         });

@@ -61,8 +61,15 @@
     return !!(set && set.has(surah + ':' + ayah));
   }
 
+  // عند إيقاف خيار «علامات تذكير الوقف»، تُعرض جميع رؤوس الآيات كدوائر؛
+  // وعند تفعيله نعود إلى المواضع المحددة في MADINAH_CIRCLE_HEADS.
+  function shouldRenderAyahHeadAsCircle(surah, ayah){
+    if(state && state.showWaqfMarksUthmani === false) return true;
+    return isMadinahCircleHead(surah, ayah);
+  }
+
   function ayahMarkerShapeSvg(surah, ayah){
-    var isCircleHead = isMadinahCircleHead(surah, ayah);
+    var isCircleHead = shouldRenderAyahHeadAsCircle(surah, ayah);
     // الدائرة: لا محتوى SVG — الحلقة تُرسَم بـ CSS ::before على .ayah-num-circle
     return isCircleHead ? '' : AYAH_NUM_STAR_PATH;
   }
@@ -70,7 +77,7 @@
   function ayahMarker(surah, ayah){
     var num = toArabicDigits(ayah);
     var digitClass = ayah >= 100 ? ' three-digit' : '';
-    var isCircle = isMadinahCircleHead(surah, ayah);
+    var isCircle = shouldRenderAyahHeadAsCircle(surah, ayah);
     var circleClass = isCircle ? ' ayah-num-circle' : '';
     return '<span class="ayah-num' + digitClass + circleClass + '" aria-hidden="false" data-surah="' + surah + '" data-ayah="' + ayah + '">' +
       '<svg viewBox="0 0 40 40">' +
@@ -90,7 +97,7 @@
       if(!svg) continue;
       var s = parseInt(el.getAttribute('data-surah'), 10);
       var a = parseInt(el.getAttribute('data-ayah'), 10);
-      var shouldBeCircle = isMadinahCircleHead(s, a);
+      var shouldBeCircle = shouldRenderAyahHeadAsCircle(s, a);
       // الدائرة: SVG فارغ + فئة CSS (::before يرسم الحلقة). النجمة: مسار النجمة بدون الفئة.
       var hasStarNow = !!svg.querySelector('.ayah-num-outer');
       if(shouldBeCircle){

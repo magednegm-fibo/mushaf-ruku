@@ -2419,7 +2419,7 @@ body.night .radio-status-dot.live{ background:#4CAF50; box-shadow:0 0 0 3px rgba
 .radio-play-btn svg.hidden{ display:none; }
 
 .khatm-dua-text{
-  font-family: 'Amiri', 'Traditional Arabic', serif;
+  font-family: 'Amiri Quran', Amiri, 'Traditional Arabic', serif;
   font-size: 20.5px;
   line-height: 2.3;
   color: var(--ink);
@@ -2807,9 +2807,9 @@ body.night .tafsir-item.tts-speaking .tafsir-ayah-tts{
 }
 .tafsir-text{
   margin:0;
-  font-family: var(--font-ui);
-  font-size:18.5px;
-  line-height:1.95;
+  font-family: 'Amiri Quran', Amiri, 'Traditional Arabic', serif;
+  font-size:21px;
+  line-height:2;
   color: var(--ink);
   text-align:justify;
   /* Same Smart Text Selection / Google Dictionary bug as the mushaf page.
@@ -3099,12 +3099,10 @@ body.night .prayer-countdown{ color:#7dceA0; }
   width:100%;
   margin:12px 0 0;
 }
-/* Salah tab: touch-action pan-y allows native vertical scrolling while
-   leaving horizontal panning unclaimed by the browser. Without this,
-   a sideways drag here is read as Chrome/Android's own page-drag /
-   history-navigation gesture instead of app content. */
+/* Salah tab: keep native vertical scrolling and allow pinch zoom,
+   matching the other tabs in the Reader Guide. */
 #salahTab{
-  touch-action: pan-y;
+  touch-action: pan-y pinch-zoom;
 }
 .prayer-qibla-title{
   margin-top:0;
@@ -3427,4 +3425,41 @@ body.night .prayer-icon-btn{ color:#9A9A9E; border-color:rgba(255,255,255,.14); 
   padding:8px 10px;
   font-size:13px;
   border-radius:8px;
+}
+
+
+/* Tajweed content injected into the guide (no iframe). */
+.tajweed-content-host{
+  display:block;
+  width:calc(100% + 24px);
+  margin-inline:-12px;
+  min-height:240px;
+  border-radius:8px;
+  background:#fdfaf0;
+  overflow:visible;
+}
+.tajweed-content-host.hidden{ display:none !important; }
+.tajweed-injected-root{
+  padding:4px 2px 24px;
+  max-width:920px;
+  margin:0 auto;
+}
+/* Scope injected Amiri size so it doesn't blow up the guide chrome */
+.tajweed-injected-root{
+  font-size:18px;
+  line-height:2;
+  color:#2B2013;
+}
+
+
+.tajweed-load-error{
+  margin:16px 12px;
+  padding:14px 16px;
+  text-align:center;
+  color:#16493A;
+  background:#F6F1E4;
+  border:1px solid #E1D4B8;
+  border-radius:10px;
+  font-size:15px;
+  line-height:1.7;
 }
