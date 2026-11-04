@@ -2516,6 +2516,9 @@ body.night .waqf-guide-symbol.tajweed-guide-number{ color:#F2F2F2; }
 #tajweedRulesTab .tajweed-guide-intro{
   font-size: 13.5px;
 }
+/* تقليل الفراغ أعلى تعليمات تبويب التجويد فقط دون المساس ببقية التبويبات. */
+#tajweedRulesTab .tajweed-injected-root{ padding-top:2px; }
+#tajweedRulesTab .tajweed-injected-root .tajweed-guide-intro{ margin-top:0; }
 #tajweedRulesTab .waqf-guide-footnote{
   font-size: 13px;
 }
