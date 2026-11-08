@@ -1063,6 +1063,9 @@ body.night .waqf-info-popup.info-plain .waqf-info-label{ color:#F2F0EA; }
    الناتج عن حذف الرمز بلا كسر تخطيط الـflex. */
 .waqf-info-popup.info-khilaf .waqf-info-symbol,
 .waqf-info-popup.info-khilaf .waqf-info-label{ color: var(--khilaf-highlight); }
+/* overflow visible حتى لا تُقص ميم U+06D8 بعد التكبير والإنزال */
+.waqf-info-popup.info-khilaf{ overflow: visible; }
+.waqf-info-popup.info-khilaf .waqf-info-label{ overflow: visible; }
 .waqf-info-symbol.is-empty{ display:none; }
 /* الرمز بين القوسين داخل نافذة "خلاف مع روضة الحفاظ" (مرقدنا/ويبصط)
    يأخذ لون علامته الخاصة، لا البنفسجي المحيط به — طلب مباشر لاحق
@@ -1076,7 +1079,22 @@ body.night .waqf-info-popup.info-plain .waqf-info-label{ color:#F2F0EA; }
    المسافة الفاصلة يجب أن تكون margin على العنصر نفسه، لا مسافة داخل
    السلسلة النصية، وإلا اختفت بصريًا رغم وجودها في الكود. */
 .khilaf-inline-symbol{ font-weight:700; margin-inline-start:4px; }
-.waqf-info-popup.info-khilaf .waqf-info-label .khilaf-inline-symbol-red{ color:#C62828; }
+/* الميم اللازم (U+06D8) داخل [ ] في نافذة الخلاف: خط المصحف + تكبير
+   + إنزال طفيف حتى تظهر واضحة (كانت شبه مختفية بخط الواجهة الصغير). */
+.waqf-info-popup.info-khilaf .waqf-info-label .khilaf-inline-symbol-red{
+  color:#C62828;
+  font-family: var(--font-quran);
+  /* نفس منطق .waqf-info-popup.info-red .waqf-info-symbol:
+     U+06D8 عالية فوق السطر — تكبير + إنزال 0.55em حتى توازي النص */
+  font-size: 1.85em;
+  font-weight: 400;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  height: 1em;
+  overflow: visible;
+  transform: translateY(0.55em);
+}
 .waqf-info-popup.info-khilaf .waqf-info-label .khilaf-inline-symbol-green{ color:#2E7D32; }
 .waqf-info-popup.info-khilaf .waqf-info-label .khilaf-inline-symbol-blue{ color:#1565C0; }
 .waqf-info-popup.info-khilaf .waqf-info-label .khilaf-inline-symbol-brown{ color:#A9793B; }

@@ -1,1 +1,1 @@
-window.JUZ_INFO = {"name":"مصحف الركوع","shortName":"مصحف الركوع","ayahCount":6236,"rukuCount":556,"fullMushaf":true};
+window.JUZ_INFO = {"name":"مصحف الركوع","shortName":"مصحف الركوع","ayahCount":6236,"rukuCount":558,"fullMushaf":true};

@@ -1528,7 +1528,7 @@ var KNOWN_SPLIT_WORD_FRAGMENTS = ["اٰ تُوۡهُمۡ", "اٰ تَيۡتُم�
   // -----------------------------------------------------------------
   // Find which page (ruku) index contains a given surah:ayah — used by
   // "الانتقال إلى آية" (go-to-ayah dialog, opened from فهرس السور).
-  // Linear scan is fine here (556 ruku pages, each with a handful of
+  // Linear scan is fine here (558 ruku pages, each with a handful of
   // ayahs) since this only runs once per dialog confirmation, not on
   // every render. Returns -1 if the surah/ayah combination isn't found
   // (shouldn't happen once the dialog validates against SURAH_META, but

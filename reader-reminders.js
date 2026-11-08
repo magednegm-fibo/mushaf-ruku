@@ -78,39 +78,24 @@
     return {symbol: '۝', label: label, color: color};
   }
   // Long-press على كلمة بنفسجية (khilaf-word — موضع خلاف بين طريق
-  // الشاطبية وطريق روضة الحفاظ، راجع docs/khilaf-munfasil-words.md):
-  // طلب مباشر 2026-08-01. نفس منطق resolveNonKufiMarkInfo أعلاه بالضبط
-  // في طريقة تركيب النص — إن كانت نفس الكلمة تحمل أيضًا علامة سجاوندي
-  // افتراضية (مرقدنا 36:52 → وقف لازم، ويبصط 2:245 → وقف مرخص)، يُضاف
-  // رمز تلك العلامة بين قوسين لنفس التسمية.
-  // UPDATE (طلب مباشر لاحق 2026-08-01): الرمز نفسه بين القوسين يأخذ لون
-  // علامته الخاصة (الميم أحمر، الصاد أخضر، وهكذا) — عكس القرار الأول
-  // الذي كان يُبقي كل شيء بنفسجيًا بلا استثناء. بقية النص ("خلاف مع
-  // روضة الحفاظ") يبقى بنفسجيًا دائمًا (info-khilaf على .waqf-info-label
-  // نفسها) — التلوين هنا جزئي فقط على [ الرمز ] معًا (القوسان داخل نفس
-  // الـspan الملوَّن، وليسا نصًّا بنفسجيًا خارجه — طلب مباشر لاحق آخر)،
-  // لا على كامل النافذة، ولذلك يُبنى كـHTML (span مضمَّن بلون خاص) بدل
-  // نص عادي؛ راجع .khilaf-inline-symbol-* في style.css. لا رمز كبير أعلى
-  // النافذة إطلاقًا (طلب مباشر سابق) — symbol فارغ عمدًا، يُخفى بصريًا في
-  // openInfoPopup بدل حذف العنصر من الـDOM.
+  // الشاطبية وطريق روضة الحفاظ، راجع docs/khilaf-munfasil-words.md).
+  // طلب مباشر 2026-11-06: النص فقط «خلاف مع روضة الحفاظ» بدون [ م/ص/... ]
+  // لأن لون النجمة الحمراء/الخضراء/... يكفي للدلالة على نوع الوقف السجاوندي.
+  // لا رمز كبير أعلى النافذة (symbol فارغ) — يُخفى بصريًا في openInfoPopup.
   function resolveKhilafMarkInfo(wordEl){
-    if(!wordEl.classList.contains('khilaf-word')) return null;
-    var label = 'خلاف مع روضة الحفاظ';
-    var defaultInfoSameWord = resolveDefaultMarkInfo(wordEl);
-    if(defaultInfoSameWord){
-      // U+00A0 (مسافة غير قابلة للكسر) بدل مسافة عادية: تقرير جهاز حقيقي
-      // مباشر (v1.0.230) أن إصلاح margin-inline-start وحده (v1.0.229) لم
-      // يكفِ — المسافة ظلت غير ظاهرة رغم وجوده في الكود المُغلَّف فعليًا
-      // (تحقَّق حينها بالمقارنة المباشرة). المسافة العادية بين نص خام
-      // وعنصر HTML مضمَّن داخل حاوية inline-flex يمكن أن تُقلَّم عند حدود
-      // عنصر الـflex الضمني في بعض محركات العرض، بخلاف U+00A0 التي لا
-      // تخضع لقواعد كسر/تقليم المسافات إطلاقًا مهما كان موضعها — حل أكثر
-      // اعتمادية من الاتكال على هامش CSS وحده. margin-inline-start يبقى
-      // في style.css كطبقة أمان إضافية، لا كحل وحيد بعد الآن.
-      label += '\u00A0<span class="khilaf-inline-symbol khilaf-inline-symbol-' +
-        defaultInfoSameWord.color + '">[ ' + defaultInfoSameWord.symbol + ' ]</span>';
-    }
-    return {symbol: '', label: label, color: 'khilaf'};
+    // أي مصدر من مصادر تلوين الخلاف (ليس فقط .khilaf-word) —
+    // يضمن أن ويبصط (seen-as-sad) ومرقدنا (sakta) تظهرا بنافذة الخلاف
+    // لا بنافذة الوقف السجاوندي العادية حتى لو تغيّر ترتيب الـclass.
+    var isKhilaf = wordEl.classList.contains('khilaf-word')
+      || wordEl.classList.contains('sakta-word')
+      || wordEl.classList.contains('seen-as-sad-word')
+      || wordEl.classList.contains('muqattaat-mad-word')
+      || wordEl.classList.contains('mad-farq-word')
+      || wordEl.classList.contains('tajweed-note-word');
+    if(!isKhilaf) return null;
+    // طلب مباشر 2026-11-06: النص فقط «خلاف مع روضة الحفاظ» بدون [ م/ص/... ]
+    // لأن لون النجمة (أحمر = لازم، أخضر = مرخص، ...) يكفي للدلالة على نوع الوقف.
+    return {symbol: '', label: 'خلاف مع روضة الحفاظ', color: 'khilaf'};
   }
 
   function loadWaqfMarks(){ return StorageManager.loadReminder('uthmani'); }
@@ -320,15 +305,15 @@
         // long-pressed specifically to learn what the small star means.
         var nonKufiInfo = resolveNonKufiMarkInfo(wordEl);
         if(nonKufiInfo){ openInfoPopup(nonKufiInfo, x, y); return; }
-        // خلاف الروضة/الشاطبية (كلمة بنفسجية) يأتي بعد رأس غير الكوفيين
-        // مباشرة وقبل فحص العلامة الافتراضية — لأن مرقدنا (36:52) وويبصط
-        // (2:245) بنفسجيتان وتحملان أيضًا has-default-* في نفس الوقت؛
-        // يجب أن تظهرا بنافذة الخلاف (مع رمز العلامة بين قوسين) لا
-        // بالنافذة العادية للعلامة وحدها. راجع resolveKhilafMarkInfo.
-        var khilafInfo = resolveKhilafMarkInfo(wordEl);
-        if(khilafInfo){ openInfoPopup(khilafInfo, x, y); return; }
         var defaultInfo = resolveDefaultMarkInfo(wordEl);
+        var khilafInfo = resolveKhilafMarkInfo(wordEl);
+        // تقاطع خلاف + سجاوندي (طلب مباشر 2026-11-06 / تحديث 2026-11-06):
+        // إن وُجدت علامة سجاوندي افتراضية على كلمة خلاف، تُعرض نافذة الوقف
+        // الصريحة (وقف لازم / مرخص / جائز …) لأن نوع الوقف أهم من تسمية الخلاف.
+        // أمثلة: مرقدنا → وقف لازم، ويبصط → وقف مرخص، بصطة → وقف جائز.
+        // كلمة خلاف بلا علامة سجاوندي → «خلاف مع روضة الحفاظ» فقط.
         if(defaultInfo){ openInfoPopup(defaultInfo, x, y); return; }
+        if(khilafInfo){ openInfoPopup(khilafInfo, x, y); return; }
         // Decide add vs. delete at fire time (not at press-start), so it
         // always reflects this exact word's current state, no matter
         // whether the finger landed on the dot or elsewhere on the word.
