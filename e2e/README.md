@@ -1,100 +1,107 @@
 # اختبارات المتصفح الحقيقي (Playwright E2E)
 
-## الهدف
+## الغرض وحدود التغطية
 
-الاختبارات الحالية في `tests/` ممتازة للمنطق والانحدارات (Node + mocks)، لكنها لا تغطي:
+هذا المجلد يحتوي اختبارات تعمل داخل متصفح حقيقي عبر Playwright. وجود الاختبار في المستودع لا يعني أنه نُفّذ أو اجتاز؛ يجب تسجيل نتيجة التشغيل وتاريخها بصورة منفصلة.
 
-| السيناريو | مغطى حاليًا؟ |
-|-----------|-------------|
-| فتح التطبيق بدون إنترنت | ❌ |
-| استعادة نسخة احتياطية كبيرة | جزئي (وحدة) |
-| تشغيل الصوت على Android/iOS | ❌ |
-| صلاحية GPS والبوصلة | ❌ |
-| تبديل الخطوط على أجهزة مختلفة | ❌ |
-| الضغط المطوّل والسحب والتكبير | ❌ |
-| توافق RTL مع Safari | ❌ |
-| تحديث Service Worker مع نسخة قديمة مفتوحة | ❌ |
-| امتلاء التخزين / رفض صلاحية الموقع | ❌ |
+| المجال | الاختبار الموجود | حالة التحقق في مراجعة 1.0.946 |
+|---|---|---|
+| فتح التطبيق Offline بعد زيارة Online | `basic-scenarios.spec.js` | موجود؛ لم يُشغّل Playwright في هذه المراجعة |
+| الصلاة/القبلة Offline عند أول فتح للتبويب | `prayer-offline.spec.js` | اختبار Node البنيوي 16/16 ناجح؛ اختبار المتصفح لم يُشغّل |
+| عرض الهاتف وعدم التمرير الأفقي | `mobile-storage-sw.spec.js` | موجود لمحاكاة Pixel 7 وiPhone 13؛ لم يُشغّل |
+| فشل الكتابة بسبب `QuotaExceededError` | `storage-quota-regression.js` + اختبار E2E | Node 4/4 ناجح؛ E2E لم يُشغّل |
+| دورة حياة Service Worker | `sw-update-lifecycle-regression.js` + اختبار E2E | Node 4/4 ناجح؛ E2E لم يُشغّل |
+| التحديث الفعلي من عامل قديم إلى عامل جديد مع تبويب قديم | لا يوجد اختبار قبول كامل حاليًا | غير مثبت |
+| الصوت الفعلي على أجهزة Android/iOS | لا يوجد اختبار جهاز فعلي | غير مثبت |
+| GPS والبوصلة والحساسات الفعلية | اختبارات صلاحيات/واجهة فقط | يلزم اختبار جهاز فعلي |
+| Safari على iOS فعليًا | WebKit محاكاة عبر Playwright فقط | غير مثبت على iPhone فعلي |
+| استعادة نسخة احتياطية كبيرة تحت ضغط | لا يوجد اختبار حجم/ضغط شامل | غير مثبت |
 
-هذه الحزمة تضيف طبقة **Playwright** للسيناريوهات الأساسية.
+**تمييز مهم:** اختبار `mobile-webkit` يستخدم محرك WebKit مع إعدادات جهاز iPhone 13؛ لا يساوي اختبار Safari على iOS. ومحاكاة `QuotaExceededError` لا تملأ قرص الهاتف فعليًا.
 
-## التثبيت (مرة واحدة)
+## متطلبات التثبيت
+
+من جذر المشروع:
 
 ```bash
 npm install
 npx playwright install chromium
-# أو لكل المتصفحات:
-# npx playwright install
+npx playwright install webkit
+```
+
+على Linux قد تحتاج إلى:
+
+```bash
+npx playwright install-deps chromium
+npx playwright install-deps webkit
 ```
 
 ## التشغيل
 
 ```bash
-# كل اختبارات e2e
+# اختبارات الوحدة والانحدار (Node)
+npm run test:unit
+
+# كل اختبارات المتصفح وفق المشاريع المعرفة في playwright.config.js
 npm run test:e2e
 
-# واجهة مرئية
+# اختبارات المتصفح الأساسية فقط
+npx playwright test e2e/basic-scenarios.spec.js --project=chromium
+
+# اختبار Offline للصلاة/القبلة
+npx playwright test e2e/prayer-offline.spec.js --project=chromium
+
+# محاكاة هاتف Android
+npx playwright test e2e/mobile-storage-sw.spec.js --project=mobile-chromium
+
+# محاكاة WebKit/iPhone
+npx playwright test e2e/mobile-storage-sw.spec.js --project=mobile-webkit
+
+# واجهة Playwright
 npm run test:e2e:ui
 
-# مع فتح المتصفح
+# تشغيل مرئي
 npm run test:e2e:headed
-
-# اختبار واحد
-npx playwright test e2e/basic-scenarios.spec.js
 ```
 
-السيرفر المحلي يُشغَّل تلقائيًا على `http://127.0.0.1:4173` عبر `serve`.
+يشغّل Playwright خادم `serve` تلقائيًا على `http://127.0.0.1:4173` وفق الإعدادات الحالية.
 
-## الملفات
+## توزيع الملفات
 
-| ملف | المحتوى |
-|-----|---------|
-| `basic-scenarios.spec.js` | السيناريوهات 1–7 الموصى بها |
-| `advanced-scenarios.spec.js` | RTL، long-press، SW، GPS deny، حفظ الخط |
+| الملف | المسؤولية |
+|---|---|
+| `basic-scenarios.spec.js` | فتح التطبيق، التنقل، البحث، إعدادات العرض، النسخ الاحتياطي، Offline |
+| `advanced-scenarios.spec.js` | سيناريوهات RTL والتفاعل والصلاحيات وService Worker |
+| `prayer-offline.spec.js` | زيارة Online أولًا، التحقق من تخزين `prayer.js`، ثم أول فتح للصلاة/القبلة Offline |
+| `mobile-storage-sw.spec.js` | محاكاة الهاتف، فشل التخزين، تسجيل/تحديث Service Worker |
 | `helpers.js` | دوال مساعدة مشتركة |
-| `../playwright.config.js` | إعدادات Playwright |
+| `../playwright.config.js` | المشاريع والأجهزة والمحاكاة وإعداد الخادم |
 
-## السيناريوهات الأساسية (basic)
+## حالة Offline الصحيحة في التطبيق
 
-1. **فتح التطبيق** — الشاشة الرئيسية تظهر
-2. **الانتقال إلى ركوع** — القارئ يعرض نصًا + تنقل next/prev
-3. **البحث عن آية** — نتائج تظهر والانتقال يعمل
-4. **تغيير الخط والوضع الليلي**
-5. **حفظ/استعادة نسخة** (smoke على التخزين)
-6. **تشغيل/إيقاف التلاوة**
-7. **فتح التطبيق Offline** بعد التحميل الأول
+- `prayer.js` محمّل مباشرة من `index.html`، وموجود في `CORE_ASSETS` و`DYNAMIC_ASSETS` في `sw.js`. لذلك فهو ليس Lazy-loaded.
+- `reader-tafsir.js` محمّل مباشرة من `index.html` وموجود في `DYNAMIC_ASSETS`؛ ليس Lazy-loaded.
+- `radio-player.js` يُحمّل عند الحاجة عبر `LazyLoader`، لكنه موجود في `DYNAMIC_ASSETS` ليُخزّن مسبقًا عند نجاح طلب التخزين.
+- `quran-tashkeel-dictionary.js` و`tts-diacritizer.js` يُحمّلان في الخلفية بعد تهيئة التفسير عبر `LazyLoader.loadMany`.
+- ملفات `CORE_ASSETS` تُخزّن بالتتابع، ويُرفض تثبيت العامل الجديد إذا لم تكتمل. بقية `STATIC_ASSETS` و`DYNAMIC_ASSETS` تُخزّن في مرحلة Best-effort؛ فشل ملف غير Core لا يمنع تثبيت العامل.
+- نجاح اختبار Offline يتطلب زيارة Online أولًا، واكتمال تسجيل/تثبيت Service Worker وتخزين الملف المطلوب. لا يعني ذلك أن البث الصوتي الخارجي أو كل مورد اختياري متاح دون إنترنت.
 
-## ملاحظات مهمة
-
-- **Offline**: يعتمد على تسجيل Service Worker وتخزين الأصول. في CI قد يحتاج `chromium` فقط.
-- **الصوت**: في بيئات headless قد لا يعمل TTS/Audio فعليًا — الاختبار يتحقق من UI فقط.
-- **GPS / Compass**: تحتاج أجهزة حقيقية أو محاكيات؛ الاختبار الحالي يتحقق من عدم الكسر عند الرفض.
-- **Safari / iOS**: أضف مشروع `Mobile Safari` في `playwright.config.js` وشغّل على macOS.
-- **نسخة احتياطية كبيرة**: يمكن توسيع الاختبار لاحقًا بحقن بيانات كبيرة في `localStorage`/`IndexedDB` ثم استعادة.
-
-## توسيع مستقبلي مقترح
-
-```js
-// مثال: اختبار استعادة نسخة كبيرة
-test('استعادة نسخة احتياطية كبيرة', async ({ page }) => {
-  // 1. حقن بيانات كبيرة في localStorage
-  // 2. تصدير
-  // 3. مسح
-  // 4. استيراد
-  // 5. التحقق من سلامة البيانات
-});
-```
-
-```js
-// مثال: تحديث SW مع تبويب قديم
-test('تحديث Service Worker مع نسخة قديمة مفتوحة', async ({ context }) => {
-  // افتح تبويبين، غيّر sw.js، انتظر activate، تحقق من السلوك
-});
-```
-
-## الربط مع الاختبارات الحالية
+## الاختبارات البنيوية المرتبطة بـ Offline والتخزين والتحديث
 
 ```bash
-# وحدات + e2e
-npm run test:unit && npm run test:e2e
+node tests/prayer-offline-precache-regression.js
+node tests/storage-quota-regression.js
+node tests/sw-update-lifecycle-regression.js
+npm run version:check
 ```
+
+هذه الاختبارات لا تستبدل E2E. الاختبارات البنيوية تفحص الكود وشروطه، بينما E2E تتحقق من السلوك داخل المتصفح. ولا يُعلن اجتياز E2E إلا بعد تشغيل Playwright فعليًا وتسجيل النتائج.
+
+## سياسة تسجيل النتائج
+
+عند كل مراجعة، سجّل:
+1. الأمر الذي تم تشغيله.
+2. عدد الاختبارات الناجحة والفاشلة والمتخطاة.
+3. اسم المتصفح/المشروع وإصدار Playwright عند تشغيل E2E.
+4. أي فشل معروف مع مرجعه وسبب عدم اعتباره نجاحًا.
+5. لا تصف محاكاة الجهاز بأنها اختبار جهاز فعلي.

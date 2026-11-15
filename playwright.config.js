@@ -36,11 +36,19 @@ module.exports = defineConfig({
   projects: [
     {
       name: 'chromium',
+      testIgnore: '**/mobile-storage-sw.spec.js',
       use: { ...devices['Desktop Chrome'] },
     },
-    // يمكن تفعيلها لاحقًا:
-    // { name: 'Mobile Chrome', use: { ...devices['Pixel 5'] } },
-    // { name: 'Mobile Safari', use: { ...devices['iPhone 13'] } },
+    {
+      name: 'mobile-chromium',
+      testMatch: '**/mobile-storage-sw.spec.js',
+      use: { ...devices['Pixel 7'] },
+    },
+    {
+      name: 'mobile-webkit',
+      testMatch: '**/mobile-storage-sw.spec.js',
+      use: { ...devices['iPhone 13'] },
+    },
   ],
 
   webServer: {
